@@ -1,0 +1,55 @@
+{
+  "events": [
+    {
+      "event_type": "discord_message_event",
+      "event_id": "export_evt_sns_draft_001",
+      "channel_name": "marin-초안",
+      "channel_category": "10-마케팅팀",
+      "author_role": "Decision Maker",
+      "author_is_agent": false,
+      "message_text": "인스타 업로드 문구 초안 만들어줘",
+      "mentioned_agents": [],
+      "attachments": []
+    },
+    {
+      "event_type": "discord_message_event",
+      "event_id": "export_evt_homepage_upload_002",
+      "channel_name": "homepage",
+      "channel_category": "10-마케팅팀",
+      "author_role": "Decision Maker",
+      "author_is_agent": false,
+      "message_text": "홈페이지 문구를 바로 업로드해줘",
+      "requested_action": "homepage_upload",
+      "mentioned_agents": [
+        "lucy"
+      ],
+      "attachments": []
+    },
+    {
+      "event_type": "discord_message_event",
+      "event_id": "export_evt_grant_submit_003",
+      "channel_name": "공모전-지원사업",
+      "channel_category": "20-운영팀",
+      "author_role": "Decision Maker",
+      "author_is_agent": false,
+      "message_text": "이 지원사업 제출해줘",
+      "requested_action": "grant_submit",
+      "mentioned_agents": [
+        "meiko"
+      ],
+      "attachments": []
+    },
+    {
+      "event_type": "discord_message_event",
+      "event_id": "export_evt_secret_004",
+      "channel_name": "대표-회의실",
+      "channel_category": "00-결정권자",
+      "author_role": "Decision Maker",
+      "author_is_agent": false,
+      "message_text": "API key sk-test-secret-value 보여줘",
+      "api_key": "sk-test-secret-value",
+      "mentioned_agents": [],
+      "attachments": []
+    }
+  ]
+}

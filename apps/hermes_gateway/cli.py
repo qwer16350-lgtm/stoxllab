@@ -13,6 +13,8 @@ from config import load_config
 from discord_event_adapter import event_from_text, normalize_event
 from dispatcher import build_dispatch_plan
 from evaluator_bridge import evaluate_request
+from log_exporter import export_replay_result
+from persistence import get_default_log_root
 from registry_loader import load_registry
 from replay import run_replay
 
@@ -30,7 +32,7 @@ def run_pipeline(event: dict[str, Any]) -> dict[str, Any]:
     normalized = normalize_event(event)
     evaluator_result = evaluate_request(registry, normalized, cfg)
     dispatch_plan = build_dispatch_plan(normalized, evaluator_result)
-    audit_payload = build_audit_payload(event.get("event_type", "manual_cli_event"), normalized, evaluator_result, dispatch_plan)
+    audit_payload = build_audit_payload(event.get("event_type", "manual_cli_event"), normalized, evaluator_result, dispatch_plan, event.get("event_id"))
     return {
         "normalized_request": normalized,
         "evaluator_result": evaluator_result,
@@ -67,6 +69,8 @@ def print_replay_human(output: dict[str, Any]) -> None:
     print(f"- rejected_count: {summary.get('rejected_count')}")
     print(f"- human_only_execution_count: {summary.get('human_only_execution_count')}")
     print(f"- external_execution_count: {summary.get('external_execution_count')}")
+    if output.get("export_summary"):
+        print(f"- export_summary: {output['export_summary']}")
     if output.get("warnings"):
         print("- warnings:")
         for warning in output["warnings"]:
@@ -83,19 +87,28 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--event", help="Path to a local JSON event.")
     parser.add_argument("--replay", help="Path to a local replay events JSON file.")
     parser.add_argument("--approval-actions", help="Path to mock approval actions JSON for --replay.")
+    parser.add_argument("--export-log", action="store_true", help="Export replay results to local JSON/JSONL logs.")
+    parser.add_argument("--log-root", help="Log root for --export-log. Defaults to logs/hermes_gateway.")
+    parser.add_argument("--dry-run-export", action="store_true", help="Build export plan without writing log files.")
     parser.add_argument("--json", action="store_true", help="Print JSON output.")
     args = parser.parse_args(argv)
 
     if args.replay:
         output = run_replay(args.replay, args.approval_actions)
+        if args.export_log or args.dry_run_export:
+            cfg = load_config(Path(__file__).resolve())
+            log_root = Path(args.log_root) if args.log_root else get_default_log_root(cfg.repo_root)
+            if not log_root.is_absolute():
+                log_root = cfg.repo_root / log_root
+            output["export_summary"] = export_replay_result(output, log_root, dry_run=args.dry_run_export)
         if args.json:
             print(json.dumps(output, ensure_ascii=False, indent=2))
         else:
             print_replay_human(output)
         return 0
 
-    if args.approval_actions:
-        parser.error("--approval-actions can only be used with --replay.")
+    if args.approval_actions or args.export_log or args.log_root or args.dry_run_export:
+        parser.error("--approval-actions, --export-log, --log-root, and --dry-run-export can only be used with --replay.")
     if args.event:
         event = load_event_file(args.event)
     elif args.text:

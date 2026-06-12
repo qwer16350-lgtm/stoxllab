@@ -7,3 +7,7 @@ __pycache__/
 .DS_Store
 Thumbs.db
 *.log
+
+# Hermes Gateway local dry-run logs
+logs/hermes_gateway/
+logs/hermes_gateway_test/

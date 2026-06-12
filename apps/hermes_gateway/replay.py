@@ -21,10 +21,15 @@ def utc_now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
-def load_json_list(path: str | Path, key: str) -> list[dict[str, Any]]:
+def resolve_input_path(path: str | Path) -> Path:
     source = Path(path)
     if not source.is_absolute():
         source = Path.cwd() / source
+    return source
+
+
+def load_json_list(path: str | Path, key: str) -> list[dict[str, Any]]:
+    source = resolve_input_path(path)
     data = json.loads(source.read_text(encoding="utf-8"))
     if isinstance(data, list):
         return data
@@ -46,14 +51,20 @@ def process_event(
     registry: dict[str, Any],
     config: Any,
     queue: ApprovalQueue,
-) -> dict[str, Any]:
+) -> tuple[dict[str, Any], dict[str, Any]]:
     source_event_id = event_id(event, index)
     normalized = normalize_event(event)
     evaluator_result = evaluate_request(registry, normalized, config)
     dispatch_plan = build_dispatch_plan(normalized, evaluator_result)
     queue_item = queue.add_if_required(source_event_id, evaluator_result, dispatch_plan)
-    audit_payload = build_audit_payload(event.get("event_type", "replay_event"), normalized, evaluator_result, dispatch_plan)
-    return {
+    audit_payload = build_audit_payload(
+        event.get("event_type", "replay_event"),
+        normalized,
+        evaluator_result,
+        dispatch_plan,
+        event_id=source_event_id,
+    )
+    processed = {
         "event_index": index,
         "event_id": source_event_id,
         "event_type": event.get("event_type", "replay_event"),
@@ -65,6 +76,7 @@ def process_event(
         "block_reasons": dispatch_plan.get("block_reasons", []),
         "audit_id": audit_payload.get("audit_id"),
     }
+    return processed, audit_payload
 
 
 def build_summary(events: list[dict[str, Any]], queue: ApprovalQueue) -> dict[str, int]:
@@ -107,24 +119,33 @@ def run_replay(
 ) -> dict[str, Any]:
     config = load_config(Path(__file__).resolve())
     registry = load_registry(config)
-    events_input = load_json_list(events_path, "events")
+    events_source = resolve_input_path(events_path)
+    actions_source = resolve_input_path(approval_actions_path) if approval_actions_path else None
+    created_at = utc_now()
+    events_input = load_json_list(events_source, "events")
     queue = ApprovalQueue()
     replay_events: list[dict[str, Any]] = []
     audit_trail: list[dict[str, Any]] = []
 
     for index, event in enumerate(events_input, start=1):
-        processed = process_event(event, index, registry, config, queue)
+        processed, audit_payload = process_event(event, index, registry, config, queue)
         replay_events.append(processed)
-        audit_trail.append({"event_id": processed["event_id"], "audit_id": processed["audit_id"], "blocked": processed["blocked"]})
+        audit_trail.append(audit_payload)
 
     approval_actions: list[dict[str, Any]] = []
-    if approval_actions_path:
-        actions = load_json_list(approval_actions_path, "actions")
+    if actions_source:
+        actions = load_json_list(actions_source, "actions")
         approval_actions = queue.apply_actions(actions)
 
     summary = build_summary(replay_events, queue)
     return {
-        "replay_id": "replay_" + sha256(f"{events_path}|{utc_now()}".encode("utf-8")).hexdigest()[:12],
+        "replay_id": "replay_" + sha256(f"{events_source}|{created_at}".encode("utf-8")).hexdigest()[:12],
+        "created_at": created_at,
+        "source_event_file": str(events_source),
+        "approval_actions_file": str(actions_source) if actions_source else None,
+        "external_execution_count": summary["external_execution_count"],
+        "human_only_execution_count": summary["human_only_execution_count"],
+        "exportable": True,
         "events_processed": len(replay_events),
         "events": replay_events,
         "approval_queue": queue.snapshot(),

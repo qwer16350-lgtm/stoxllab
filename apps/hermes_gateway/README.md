@@ -2,7 +2,7 @@
 
 This folder is a fresh local runtime skeleton for the STOXL Hermes Discord Agent Organization.
 
-It does not replace any NAS or production Hermes Gateway project. It exists so the Phase 0-12 STOXL registry, prompts, dry-run Discord structure, mock evaluators, and Phase 14 replay/approval mock can be connected through a safe local boundary before any real Discord work is considered.
+It does not replace any NAS or production Hermes Gateway project. It exists so the Phase 0-12 STOXL registry, prompts, dry-run Discord structure, mock evaluators, replay/approval mock, and local audit export can be connected through a safe local boundary before any real Discord work is considered.
 
 ## Current Capabilities
 
@@ -11,10 +11,11 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - Load `registry/stoxl_agent_registry.example.json`.
 - Call the Phase 10 mock evaluator in-process when available.
 - Build a local dispatch plan.
-- Build an audit payload without writing it to disk by default.
+- Build an audit payload.
 - Replay multiple local mock events in order.
 - Create in-memory approval queue items.
 - Apply mock approve/reject decisions without external execution.
+- Export replay results to local JSON/JSONL logs.
 
 ## Explicit Non-Goals
 
@@ -35,8 +36,11 @@ python apps\hermes_gateway\cli.py --text "인스타 업로드 문구 초안 만�
 python apps\hermes_gateway\cli.py --event apps\hermes_gateway\examples\local_message_event.json --json
 python apps\hermes_gateway\cli.py --replay apps\hermes_gateway\examples\replay_events.example.json --json
 python apps\hermes_gateway\cli.py --replay apps\hermes_gateway\examples\replay_events.example.json --approval-actions apps\hermes_gateway\examples\approval_actions.example.json --json
+python apps\hermes_gateway\cli.py --replay apps\hermes_gateway\examples\replay_events.example.json --export-log --dry-run-export --json
+python apps\hermes_gateway\cli.py --replay apps\hermes_gateway\examples\replay_events.example.json --approval-actions apps\hermes_gateway\examples\approval_actions.example.json --export-log --json
 python apps\hermes_gateway\tests\test_local_pipeline.py
 python apps\hermes_gateway\tests\test_replay_approval.py
+python apps\hermes_gateway\tests\test_persistent_audit_export.py
 ```
 
 If the registry file is missing, generate it from the repo root:
