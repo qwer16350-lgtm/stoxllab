@@ -37,3 +37,7 @@ live event
 ## Phase 31 Candidate
 
 A later Phase 31 may design private test reply behavior. That phase should remain opt-in, require explicit safety review, and keep human-only execution for external actions.
+
+## Phase 31A Viewer
+
+Phase 31A adds a local operations packet viewer for the Phase 30 artifacts. It reads only local logs and exports, supports JSON/Markdown stdout, and keeps Discord reply/send, LLM/RAG, and external execution disabled.

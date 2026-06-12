@@ -1,0 +1,78 @@
+{
+  "report_type": "operations_packet_viewer",
+  "version": "phase31a_local_viewer",
+  "created_at": "2026-06-13T00:00:00+00:00",
+  "root": "C:\\tmp\\STOXL_LAB",
+  "date": "20260613",
+  "recent_live_events": [
+    {
+      "event_id": "event_redacted_0000",
+      "created_at": "2026-06-13T00:00:00+00:00",
+      "decision": "accepted_mapped_channel",
+      "channel_name": "marketing-brief",
+      "workflow_role": "marketing_intake",
+      "agent_route_candidate": "marin",
+      "content_present": true,
+      "content_length": 24,
+      "content_preview": "Sample redacted content.",
+      "message_sent": false,
+      "external_execution": false,
+      "llm_called": false,
+      "rag_called": false
+    }
+  ],
+  "recent_review_packets": [
+    {
+      "event_id": "event_redacted_0000",
+      "created_at": "2026-06-13T00:00:00+00:00",
+      "packet_path": "exports\\hermes_gateway\\live_event_packets\\20260613\\event_redacted_0000.json",
+      "channel_name": "marketing-brief",
+      "workflow_role": "marketing_intake",
+      "agent_route_candidate": "marin",
+      "decision": "accepted_mapped_channel",
+      "human_review_required": true,
+      "message_sent": false,
+      "llm_called": false,
+      "rag_called": false
+    }
+  ],
+  "daily_manifest_summary": {
+    "date": "20260613",
+    "total_events": 1,
+    "accepted_mapped_channel": 1,
+    "ignored_self_message": 0,
+    "ignored_guild_not_allowed": 0,
+    "ignored_unmapped_channel": 0,
+    "content_unavailable_or_empty": 0,
+    "channels": {
+      "marketing-brief": 1
+    },
+    "workflow_roles": {
+      "marketing_intake": 1
+    },
+    "agent_route_candidates": {
+      "marin": 1
+    },
+    "message_sent_count": 0,
+    "external_execution_count": 0,
+    "llm_called_count": 0,
+    "rag_called_count": 0
+  },
+  "filters": {
+    "channel_name": null,
+    "workflow_role": null,
+    "agent_route_candidate": null,
+    "decision": null
+  },
+  "safety_assertions": {
+    "discord_api_called": false,
+    "message_sent": false,
+    "external_execution": false,
+    "llm_called": false,
+    "rag_called": false,
+    "env_file_read": false,
+    "local_mapping_file_read": false,
+    "raw_token_logged": false,
+    "raw_discord_ids_logged": false
+  }
+}

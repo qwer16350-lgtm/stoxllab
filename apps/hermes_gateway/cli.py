@@ -33,6 +33,11 @@ from live_event_routing_report import build_live_event_routing_report
 from log_exporter import export_replay_result
 from local_mapping_manager import build_local_mapping_manager_report, copy_template_to_local
 from mapping_validator import build_mapping_validation_report
+from operations_packet_viewer import (
+    build_operations_packet_viewer_report,
+    load_review_packet,
+    render_operations_summary_markdown,
+)
 from persistence import get_default_log_root
 from readonly_runtime_stub import build_readonly_runtime_stub_report
 from live_capture_stub import build_live_capture_stub_report
@@ -168,7 +173,7 @@ def main(argv: list[str] | None = None) -> int:
         sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description="Run a local STOXL Hermes Gateway dry-run pipeline.")
     parser.add_argument("--text", help="Local request text.")
-    parser.add_argument("--channel", default="대표-회의실", help="Source channel name for --text input.")
+    parser.add_argument("--channel", help="Source channel name for --text input, or channel filter for operations viewer.")
     parser.add_argument("--author-role", default="Decision Maker", help="Author role for --text input.")
     parser.add_argument("--event", help="Path to a local JSON event.")
     parser.add_argument("--discord-readiness", action="store_true", help="Run Phase 17 read-only Discord readiness checks.")
@@ -193,6 +198,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--would-send-preview-report", action="store_true", help="Print Phase 30 would-send preview report.")
     parser.add_argument("--live-event-review-packet-report", action="store_true", help="Print Phase 30 live event review packet report.")
     parser.add_argument("--phase30-audit-ops-report", action="store_true", help="Print Phase 30 audit operations bundle report.")
+    parser.add_argument("--operations-viewer", action="store_true", help="Print Phase 31A operations packet viewer report.")
+    parser.add_argument("--operations-packet", action="store_true", help="Print Phase 31A operations packet detail.")
+    parser.add_argument("--markdown", action="store_true", help="Print supported reports as Markdown.")
+    parser.add_argument("--limit", type=int, default=20, help="Limit rows for viewer reports.")
+    parser.add_argument("--date", help="Date filter in YYYYMMDD or YYYY-MM-DD format.")
+    parser.add_argument("--workflow-role", help="Workflow role filter for operations viewer.")
+    parser.add_argument("--agent", help="Agent route filter for operations viewer.")
+    parser.add_argument("--decision", help="Decision filter for operations viewer.")
+    parser.add_argument("--event-id", help="Event id for operations packet detail.")
     parser.add_argument("--force", action="store_true", help="Allow overwriting local mapping with --init-local-mapping.")
     parser.add_argument("--strict", action="store_true", help="Treat TODO placeholders as validation failures for --validate-mapping.")
     parser.add_argument("--mapping", help="Discord runtime mapping template for --discord-readiness.")
@@ -444,6 +458,46 @@ def main(argv: list[str] | None = None) -> int:
             print("- rag_called: false")
         return 0
 
+    if args.operations_viewer:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_operations_packet_viewer_report(
+            cfg.repo_root,
+            limit=args.limit,
+            date=args.date,
+            channel_name=args.channel,
+            workflow_role=args.workflow_role,
+            agent_route_candidate=args.agent,
+            decision=args.decision,
+        )
+        if args.markdown:
+            print(render_operations_summary_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL operations packet viewer")
+            print(f"- recent_live_events: {len(output.get('recent_live_events', []))}")
+            print(f"- recent_review_packets: {len(output.get('recent_review_packets', []))}")
+            print(f"- message_sent: {output.get('safety_assertions', {}).get('message_sent')}")
+        return 0
+
+    if args.operations_packet:
+        cfg = load_config(Path(__file__).resolve())
+        output = load_review_packet(cfg.repo_root, event_id=args.event_id)
+        if args.markdown:
+            if output:
+                from live_event_review_packet import render_live_event_review_packet_markdown
+
+                print(render_live_event_review_packet_markdown(output))
+            else:
+                print("# Live Event Review Packet\n\nNo packet found.\n")
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL operations packet detail")
+            print(f"- found: {bool(output)}")
+            print(f"- event_id: {output.get('event_id', '') if output else ''}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -569,6 +623,8 @@ def main(argv: list[str] | None = None) -> int:
         or args.would_send_preview_report
         or args.live_event_review_packet_report
         or args.phase30_audit_ops_report
+        or args.operations_viewer
+        or args.operations_packet
         or args.force
         or args.strict
         or args.export_log
@@ -577,12 +633,20 @@ def main(argv: list[str] | None = None) -> int:
         or args.export_review_packet
         or args.review_export_root
         or args.dry_run_export
+        or args.markdown
+        or args.limit != 20
+        or args.date
+        or args.channel
+        or args.workflow_role
+        or args.agent
+        or args.decision
+        or args.event_id
     ):
         parser.error("Replay/export/readiness options require the matching mode option.")
     if args.event:
         event = load_event_file(args.event)
     elif args.text:
-        event = event_from_text(args.text, args.channel, args.author_role)
+        event = event_from_text(args.text, args.channel or "대표-회의실", args.author_role)
     else:
         parser.error("Provide --text, --event, or --replay.")
 

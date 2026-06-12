@@ -27,6 +27,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - Build Phase 29 read-only Discord runtime reports.
 - Provide an explicitly gated read-only Gateway runtime path for a later manual run.
 - Build Phase 30 live event audit records, routing reports, would-send previews, review packets, and daily manifests without sending Discord messages.
+- View Phase 30 operations artifacts with a local-only Phase 31A packet viewer.
 
 ## Explicit Non-Goals
 
@@ -66,6 +67,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - `docs/STOXL_WOULD_SEND_PREVIEW.md`
 - `docs/STOXL_LIVE_EVENT_REVIEW_PACKET.md`
 - `docs/STOXL_PHASE30_AUDIT_OPERATIONS.md`
+- `docs/STOXL_OPERATIONS_PACKET_VIEWER.md`
 
 These documents prepare for a later private server read-only connection review. They do not authorize or perform a Discord connection.
 
@@ -108,6 +110,9 @@ python apps\hermes_gateway\cli.py --live-event-audit-report --json
 python apps\hermes_gateway\cli.py --would-send-preview-report --json
 python apps\hermes_gateway\cli.py --live-event-review-packet-report --json
 python apps\hermes_gateway\cli.py --phase30-audit-ops-report --json
+python apps\hermes_gateway\cli.py --operations-viewer --json
+python apps\hermes_gateway\cli.py --operations-viewer --markdown
+python apps\hermes_gateway\cli.py --operations-packet --event-id EVENT_ID --json
 python apps\hermes_gateway\tests\test_local_pipeline.py
 python apps\hermes_gateway\tests\test_replay_approval.py
 python apps\hermes_gateway\tests\test_persistent_audit_export.py
@@ -124,6 +129,7 @@ python apps\hermes_gateway\tests\test_live_event_pipeline.py
 python apps\hermes_gateway\tests\test_live_event_audit_persistence.py
 python apps\hermes_gateway\tests\test_would_send_preview.py
 python apps\hermes_gateway\tests\test_live_event_review_packet.py
+python apps\hermes_gateway\tests\test_operations_packet_viewer.py
 ```
 
 The `--run-discord-readonly` option is intentionally not part of normal local
