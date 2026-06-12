@@ -57,6 +57,26 @@ def _event_value(source: Any, key: str, default: Any = "") -> Any:
     return getattr(source, key, default)
 
 
+def _event_author_is_bot(source: Any) -> bool:
+    if isinstance(source, dict):
+        if source.get("author_is_bot") is True:
+            return True
+        author = source.get("author", {}) or {}
+        return bool(author.get("bot")) if isinstance(author, dict) else False
+    author = getattr(source, "author", None)
+    return bool(getattr(author, "bot", False) or getattr(source, "author_is_bot", False))
+
+
+def _event_author_id(source: Any) -> str:
+    if isinstance(source, dict):
+        author = source.get("author", {}) or {}
+        if isinstance(author, dict):
+            return str(author.get("id", "") or "")
+        return str(source.get("author_id", "") or "")
+    author = getattr(source, "author", None)
+    return str(getattr(author, "id", "") or getattr(source, "author_id", "") or "")
+
+
 def redact_text(text: str | None, max_chars: int = 1200) -> str:
     if not text:
         return ""
@@ -127,6 +147,10 @@ def _safety(write_allowed: bool) -> dict[str, Any]:
 
 def is_private_test_reply_allowed(event: Any, policy: dict[str, Any]) -> tuple[bool, str]:
     channel_id = str(_event_value(event, "channel_id", "") or "")
+    author_id = _event_author_id(event)
+    bot_user_id = str(policy.get("_bot_user_id", "") or "")
+    if _event_author_is_bot(event) or (bot_user_id and author_id and author_id == bot_user_id):
+        return False, "self_message"
     if not policy.get("send_messages"):
         return False, "send_messages_disabled"
     if not policy.get("private_test_reply_enabled"):

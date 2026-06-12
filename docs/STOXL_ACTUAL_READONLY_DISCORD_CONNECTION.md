@@ -69,6 +69,19 @@ Blocked cases print only the reason, for example:
 [PRIVATE_TEST_REPLY] blocked reason=channel_not_private_test
 ```
 
+Self messages are skipped before private reply decision/build/send:
+
+```text
+[READONLY_EVENT] ignored_self_message channel=hermes-private-test ...
+[PRIVATE_TEST_REPLY] skipped reason=self_message
+```
+
+Duplicate message IDs are skipped in memory to avoid repeat replies:
+
+```text
+[PRIVATE_TEST_REPLY] skipped reason=skipped_duplicate_message
+```
+
 ## Phase 23 vs Phase 29 Readiness
 
 Phase 23 no-connection preflight still treats a declared Discord runtime dependency as a failure, because that phase is planning-only.

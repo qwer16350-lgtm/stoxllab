@@ -98,6 +98,46 @@ def handle_readonly_message_event(
     )
 
 
+def _message_value(message: Any, key: str, default: Any = "") -> Any:
+    if isinstance(message, dict):
+        return message.get(key, default)
+    return getattr(message, key, default)
+
+
+def _message_author_value(message: Any, key: str, default: Any = "") -> Any:
+    author = _message_value(message, "author", {}) or {}
+    if isinstance(author, dict):
+        return author.get(key, default)
+    return getattr(author, key, default)
+
+
+def get_message_identity(message: Any) -> str:
+    return str(_message_value(message, "id", _message_value(message, "event_id", "")) or "")
+
+
+def should_skip_private_test_reply_event(
+    message: Any,
+    result: dict[str, Any],
+    bot_user_id: Any = "",
+    processed_message_ids: set[str] | None = None,
+) -> str:
+    visibility = result.get("visibility_event", {})
+    decision = visibility.get("decision") or result.get("decision", "")
+    author_is_bot = bool(_message_author_value(message, "bot", False) or visibility.get("author_is_bot") or result.get("author_is_bot"))
+    author_id = str(_message_author_value(message, "id", "") or "")
+    bot_id = str(bot_user_id or "")
+    if author_is_bot or (bot_id and author_id and author_id == bot_id) or decision == "ignored_self_message":
+        return "self_message"
+    if str(decision).startswith("ignored_"):
+        return str(decision)
+    if decision != "accepted_private_test_channel":
+        return "not_private_test_channel"
+    message_id = get_message_identity(message)
+    if processed_message_ids is not None and message_id and message_id in processed_message_ids:
+        return "skipped_duplicate_message"
+    return ""
+
+
 def build_readonly_client(root: str | Path | None = None) -> dict[str, Any]:
     return {
         "client_type": "discord.py Client",
@@ -191,6 +231,7 @@ def run_readonly_discord_bot(root: str | Path | None = None, runtime_env: dict[s
 
     visibility_context = load_visibility_context(repo_root)
     visibility_context["private_test_channel_id"] = private_reply_policy.get("_private_test_channel_id", "")
+    processed_private_reply_message_ids: set[str] = set()
 
     @client.event
     async def on_ready() -> None:
@@ -205,9 +246,22 @@ def run_readonly_discord_bot(root: str | Path | None = None, runtime_env: dict[s
             visibility_context=visibility_context,
         )
         print(format_readonly_event_line(result), flush=True)
+        skip_reason = should_skip_private_test_reply_event(
+            message,
+            result,
+            bot_user_id=getattr(client.user, "id", ""),
+            processed_message_ids=processed_private_reply_message_ids,
+        )
+        if skip_reason:
+            if skip_reason in {"self_message", "skipped_duplicate_message"} or result.get("visibility_event", {}).get("channel_is_private_test"):
+                print(f"[PRIVATE_TEST_REPLY] skipped reason={skip_reason}", flush=True)
+            return
         placeholder = result.get("agent_placeholder_response", {})
         payload = build_private_test_reply_payload(message, placeholder, private_reply_policy)
         if payload.get("will_send"):
+            message_id = get_message_identity(message)
+            if message_id:
+                processed_private_reply_message_ids.add(message_id)
             print(
                 "[PRIVATE_TEST_REPLY] "
                 f"private_test_reply_allowed channel={payload.get('decision', {}).get('channel_name', '')} "

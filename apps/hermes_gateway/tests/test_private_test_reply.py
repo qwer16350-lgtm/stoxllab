@@ -17,7 +17,7 @@ if str(APP_DIR) not in sys.path:
     sys.path.insert(0, str(APP_DIR))
 
 from agent_placeholder_response import build_agent_placeholder_response
-from discord_readonly_runtime import build_ready_visibility
+from discord_readonly_runtime import build_ready_visibility, should_skip_private_test_reply_event
 from discord_safety_wrapper import is_outgoing_action_allowed
 from live_event_audit_persistence import build_live_event_audit_record, build_sample_visibility_event
 from live_event_routing_report import build_live_event_routing_report
@@ -62,6 +62,13 @@ def private_event(channel_id: str = "private_test_channel") -> dict[str, object]
         "channel_id": channel_id,
         "channel_name": "private-test",
     }
+
+
+def private_bot_event(channel_id: str = "private_test_channel") -> dict[str, object]:
+    event = private_event(channel_id)
+    event["author"] = {"id": "bot_user", "bot": True}
+    event["author_is_bot"] = True
+    return event
 
 
 def public_mapped_event() -> dict[str, object]:
@@ -121,6 +128,12 @@ def test_channel_mismatch_blocked() -> None:
     assert_true(decision_reason(allowed_env(), channel_id="other_channel") == "channel_not_private_test", "channel mismatch should block")
 
 
+def test_self_message_policy_blocked() -> None:
+    payload = build_private_test_reply_payload(private_bot_event(), placeholder_response(), build_private_test_reply_policy(allowed_env()))
+    assert_true(payload["will_send"] is False, "Self/bot message should never be allowed")
+    assert_true(payload["decision"]["reason"] == "self_message", "Self/bot message should use self_message reason")
+
+
 def test_private_test_channel_name_match_but_id_mismatch_blocked() -> None:
     event = {"event_id": "event_redacted_0000", "channel_id": "other_channel", "channel_name": "hermes-private-test"}
     payload = build_private_test_reply_payload(event, placeholder_response(), build_private_test_reply_policy(allowed_env()))
@@ -149,6 +162,43 @@ def test_all_conditions_true_allowed() -> None:
     payload = build_private_test_reply_payload(private_event(), placeholder_response(), build_private_test_reply_policy(allowed_env()))
     assert_true(payload["will_send"] is True, "All private test reply gates should allow would-send")
     assert_true(payload["decision"]["reason"] == "private_test_reply_allowed", "Allowed reason should be explicit")
+
+
+def test_runtime_skip_self_message_before_private_reply_decision() -> None:
+    message = {"id": "msg-1", "channel_id": "private_test_channel", "author": {"id": "bot_user", "bot": True}}
+    result = {"visibility_event": {"decision": "ignored_self_message", "author_is_bot": True, "channel_is_private_test": True}}
+    assert_true(
+        should_skip_private_test_reply_event(message, result, bot_user_id="bot_user") == "self_message",
+        "Runtime should skip self messages before private reply decision",
+    )
+
+
+def test_runtime_skip_author_id_matching_bot_user() -> None:
+    message = {"id": "msg-2", "channel_id": "private_test_channel", "author": {"id": "bot_user", "bot": False}}
+    result = {"visibility_event": {"decision": "accepted_private_test_channel", "author_is_bot": False, "channel_is_private_test": True}}
+    assert_true(
+        should_skip_private_test_reply_event(message, result, bot_user_id="bot_user") == "self_message",
+        "Runtime should skip author id matching the bot user id",
+    )
+
+
+def test_runtime_allows_human_private_test_message_to_reach_payload() -> None:
+    message = {"id": "msg-3", "channel_id": "private_test_channel", "author": {"id": "human_user", "bot": False}}
+    result = {"visibility_event": {"decision": "accepted_private_test_channel", "author_is_bot": False, "channel_is_private_test": True}}
+    assert_true(
+        should_skip_private_test_reply_event(message, result, bot_user_id="bot_user") == "",
+        "Human private test message should reach payload decision",
+    )
+
+
+def test_duplicate_message_id_skipped() -> None:
+    processed = {"msg-4"}
+    message = {"id": "msg-4", "channel_id": "private_test_channel", "author": {"id": "human_user", "bot": False}}
+    result = {"visibility_event": {"decision": "accepted_private_test_channel", "author_is_bot": False, "channel_is_private_test": True}}
+    assert_true(
+        should_skip_private_test_reply_event(message, result, bot_user_id="bot_user", processed_message_ids=processed) == "skipped_duplicate_message",
+        "Duplicate message id should be skipped",
+    )
 
 
 def test_public_mapped_channel_reply_blocked() -> None:
@@ -279,10 +329,15 @@ def main() -> int:
         test_reply_mode_not_private_test_only_blocked,
         test_no_channel_id_blocked,
         test_channel_mismatch_blocked,
+        test_self_message_policy_blocked,
         test_private_test_channel_name_match_but_id_mismatch_blocked,
         test_llm_rag_external_true_blocked,
         test_non_placeholder_source_blocked,
         test_all_conditions_true_allowed,
+        test_runtime_skip_self_message_before_private_reply_decision,
+        test_runtime_skip_author_id_matching_bot_user,
+        test_runtime_allows_human_private_test_message_to_reach_payload,
+        test_duplicate_message_id_skipped,
         test_public_mapped_channel_reply_blocked,
         test_runtime_ready_visibility_marks_private_test_flags,
         test_allowed_decision_message_sent_false_until_runtime_send,

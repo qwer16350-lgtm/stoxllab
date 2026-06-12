@@ -84,6 +84,17 @@ def test_bot_message_is_ignored() -> None:
     assert_true(result["would_send_payload"]["message_sent"] is False, "Ignored bot message should not send")
 
 
+def test_private_test_bot_message_is_ignored_before_private_accept() -> None:
+    event = sample_event()
+    event["channel_name"] = "hermes-private-test"
+    event["channel_id"] = "777777777777777777"
+    event["author"]["bot"] = True
+    result = process_live_event_audit_only(event, root=ROOT, visibility_context=private_test_visibility_context())
+    assert_true(result["decision"] == "ignored_self_message", "Bot message in private test channel should be ignored first")
+    assert_true(result["visibility_event"]["channel_is_private_test"] is True, "Private test ID can be recorded while still ignored")
+    assert_true(result["message_sent"] is False, "Bot/private test self message should not send")
+
+
 def test_unmapped_channel_is_ignored() -> None:
     event = sample_event()
     event["channel_name"] = "random-channel"
@@ -181,6 +192,7 @@ def main() -> int:
         test_normalize_redacts_discord_ids,
         test_process_live_event_is_audit_only,
         test_bot_message_is_ignored,
+        test_private_test_bot_message_is_ignored_before_private_accept,
         test_unmapped_channel_is_ignored,
         test_unmapped_private_test_channel_id_match_is_accepted,
         test_private_test_channel_name_only_stays_unmapped,

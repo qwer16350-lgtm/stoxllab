@@ -20,6 +20,37 @@ All gates must be true before a reply can be attempted:
 
 If any gate fails, the runtime records a blocked private test reply audit decision and sends nothing.
 
+## Self-message Loop Guard
+
+Self messages and bot-authored messages never enter the private test reply path.
+
+The runtime skips private reply decision/build/send when any of these are true:
+
+- `message.author.bot=true`
+- `message.author.id` matches the connected bot user ID
+- visibility decision is `ignored_self_message`
+- event `author_is_bot=true`
+
+Expected self-message visibility:
+
+```text
+[READONLY_EVENT] ignored_self_message channel=hermes-private-test ...
+[PRIVATE_TEST_REPLY] skipped reason=self_message
+```
+
+These lines must never appear for a self message:
+
+```text
+[PRIVATE_TEST_REPLY] private_test_reply_allowed ...
+[PRIVATE_TEST_REPLY_SENT] message_sent=true ...
+```
+
+The runtime also keeps an in-memory processed message ID set. A repeated private test message ID is skipped with:
+
+```text
+[PRIVATE_TEST_REPLY] skipped reason=skipped_duplicate_message
+```
+
 ## Unmapped Private Test Channel
 
 The private test channel is not added to the normal work channel mapping.
