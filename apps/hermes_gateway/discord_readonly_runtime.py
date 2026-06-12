@@ -13,6 +13,11 @@ from connection_preflight import build_phase29_runtime_readiness_report
 from discord_safety_wrapper import assert_send_disabled, block_outgoing_action
 from discord_token_loader import build_token_loader_report, load_discord_runtime_env
 from live_event_pipeline import load_visibility_context, process_live_event_audit_only, redact_discord_id
+from private_test_reply import (
+    build_private_test_reply_payload,
+    build_private_test_reply_policy,
+    send_private_test_reply_only,
+)
 
 
 def build_discord_intents() -> dict[str, Any]:
@@ -133,9 +138,14 @@ def build_readonly_runtime_report(root: str | Path | None = None) -> dict[str, A
 def run_readonly_discord_bot(root: str | Path | None = None, runtime_env: dict[str, Any] | None = None) -> dict[str, Any]:
     repo_root = Path(root or Path.cwd()).resolve()
     env = runtime_env or load_discord_runtime_env(repo_root, load_dotenv_file=True, include_token_value=True)
-    readiness = build_phase29_runtime_readiness_report(repo_root, runtime_env=env)
+    private_reply_policy = build_private_test_reply_policy(env)
+    readiness_env = dict(env)
+    if private_reply_policy.get("send_messages") and private_reply_policy.get("private_test_reply_enabled"):
+        readiness_env["send_messages"] = False
+    readiness = build_phase29_runtime_readiness_report(repo_root, runtime_env=readiness_env)
     try:
-        assert_send_disabled(env)
+        if not (private_reply_policy.get("send_messages") and private_reply_policy.get("private_test_reply_enabled")):
+            assert_send_disabled(env)
     except ValueError as exc:
         return {
             "started": False,
@@ -186,6 +196,16 @@ def run_readonly_discord_bot(root: str | Path | None = None, runtime_env: dict[s
             visibility_context=visibility_context,
         )
         print(format_readonly_event_line(result), flush=True)
+        placeholder = result.get("agent_placeholder_response", {})
+        payload = build_private_test_reply_payload(message, placeholder, private_reply_policy)
+        if payload.get("will_send"):
+            reply_audit = await send_private_test_reply_only(message.channel, payload, private_reply_policy)
+            print(
+                "[PRIVATE_TEST_REPLY] "
+                f"sent={str(reply_audit.get('message_sent', False)).lower()} "
+                f"reason={reply_audit.get('reason', '')}",
+                flush=True,
+            )
 
     client.run(env["_token_value"])
     return {

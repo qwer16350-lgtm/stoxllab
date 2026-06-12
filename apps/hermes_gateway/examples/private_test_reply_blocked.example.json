@@ -1,0 +1,23 @@
+{
+  "decision_type": "private_test_reply_decision",
+  "version": "phase31b_private_test_only",
+  "allowed": false,
+  "blocked": true,
+  "reason": "send_messages_disabled",
+  "event_id": "event_redacted_0000",
+  "channel_name": "private-test",
+  "channel_is_private_test": false,
+  "will_send": false,
+  "message_sent": false,
+  "message_source": "agent_placeholder_response",
+  "requires_manual_enable": true,
+  "safety_assertions": {
+    "discord_api_write_allowed": false,
+    "message_sent": false,
+    "llm_called": false,
+    "rag_called": false,
+    "external_execution": false,
+    "raw_token_logged": false,
+    "raw_discord_ids_logged": false
+  }
+}

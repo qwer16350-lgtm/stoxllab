@@ -16,11 +16,31 @@ This phase does not run the Gateway, does not call the Discord API during tests,
 
 - `HERMES_DISCORD_RUNTIME_MODE=readonly`
 - `HERMES_DISCORD_SEND_MESSAGES=false`
+- `HERMES_DISCORD_PRIVATE_TEST_REPLY=false`
+- `HERMES_DISCORD_REPLY_MODE=disabled`
+- `HERMES_DISCORD_PRIVATE_TEST_CHANNEL_ID=`
 - `HERMES_DISCORD_EXTERNAL_EXECUTION=false`
 - `HERMES_DISCORD_LLM_ENABLED=false`
 - `HERMES_DISCORD_RAG_ENABLED=false`
 
 The read-only runtime may only be started by a human with explicit approval. The normal validation and report commands do not connect to Discord.
+
+## Phase 31B Private Test Reply Exception
+
+The runtime can support one manually enabled private test channel reply path. It is disabled by default and is not part of the normal read-only report flow.
+
+The exception requires:
+
+- `HERMES_DISCORD_SEND_MESSAGES=true`
+- `HERMES_DISCORD_PRIVATE_TEST_REPLY=true`
+- `HERMES_DISCORD_REPLY_MODE=private_test_only`
+- `HERMES_DISCORD_PRIVATE_TEST_CHANNEL_ID` matching the observed event channel
+- deterministic `agent_placeholder_response` source
+- `HERMES_DISCORD_EXTERNAL_EXECUTION=false`
+- `HERMES_DISCORD_LLM_ENABLED=false`
+- `HERMES_DISCORD_RAG_ENABLED=false`
+
+All mapped work channels and public/team channels remain no-reply zones. The exception does not allow LLM, RAG, external execution, reactions, slash commands, server modification, channel modification, or role modification.
 
 ## Live Visibility
 

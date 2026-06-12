@@ -25,16 +25,18 @@ Before private test replies or LLM generation, the system needs a stable respons
 - Would-send preview can include a placeholder title and summary.
 - Review packet can include the same placeholder summary.
 - Operations viewer can display placeholder availability, title, and summary.
+- Phase 31B private test channel replies can render this placeholder as the only allowed reply source.
 
 ## Still Disabled
 
-- Discord reply
+- General Discord reply
 - Discord write API
 - LLM generation
 - RAG access
 - external execution
 
+The Phase 31B private test reply path is a narrow manual exception. It does not change the default no-send behavior for public or team channels.
+
 ## Next Phase Candidates
 
-- Phase 31B: private test channel only reply
 - Phase 32: LLM response generation

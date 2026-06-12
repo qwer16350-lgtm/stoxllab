@@ -15,6 +15,9 @@ REQUIRED_ENV_KEYS = [
     "HERMES_CONFIG_PATH",
     "HERMES_DISCORD_RUNTIME_MODE",
     "HERMES_DISCORD_SEND_MESSAGES",
+    "HERMES_DISCORD_PRIVATE_TEST_REPLY",
+    "HERMES_DISCORD_REPLY_MODE",
+    "HERMES_DISCORD_PRIVATE_TEST_CHANNEL_ID",
     "HERMES_DISCORD_EXTERNAL_EXECUTION",
     "HERMES_DISCORD_LLM_ENABLED",
     "HERMES_DISCORD_RAG_ENABLED",
@@ -52,6 +55,7 @@ def load_discord_runtime_env(
     repo_root = Path(root or Path.cwd()).resolve()
     env_file_loaded = _load_dotenv_if_available(repo_root) if load_dotenv_file else False
     token = os.environ.get("DISCORD_BOT_TOKEN", "")
+    private_test_channel_id = os.environ.get("HERMES_DISCORD_PRIVATE_TEST_CHANNEL_ID", "")
     runtime = {
         "runtime_mode": os.environ.get("HERMES_DISCORD_RUNTIME_MODE", "readonly"),
         "token_present": bool(token and token != "TODO"),
@@ -60,6 +64,10 @@ def load_discord_runtime_env(
         "owner_lee_id_present": bool(os.environ.get("OWNER_LEE_DISCORD_ID")),
         "hermes_config_path_present": bool(os.environ.get("HERMES_CONFIG_PATH")),
         "send_messages": _bool_env("HERMES_DISCORD_SEND_MESSAGES", False),
+        "private_test_reply_enabled": _bool_env("HERMES_DISCORD_PRIVATE_TEST_REPLY", False),
+        "reply_mode": os.environ.get("HERMES_DISCORD_REPLY_MODE", "disabled"),
+        "private_test_channel_id_present": bool(private_test_channel_id),
+        "_private_test_channel_id": private_test_channel_id,
         "external_execution": _bool_env("HERMES_DISCORD_EXTERNAL_EXECUTION", False),
         "llm_enabled": _bool_env("HERMES_DISCORD_LLM_ENABLED", False),
         "rag_enabled": _bool_env("HERMES_DISCORD_RAG_ENABLED", False),
@@ -90,6 +98,9 @@ def build_token_loader_report(root: str | Path | None = None) -> dict[str, Any]:
         "runtime_flags": {
             "runtime_mode": env["runtime_mode"],
             "send_messages": env["send_messages"],
+            "private_test_reply_enabled": env["private_test_reply_enabled"],
+            "reply_mode": env["reply_mode"],
+            "private_test_channel_id_present": env["private_test_channel_id_present"],
             "external_execution": env["external_execution"],
             "llm_enabled": env["llm_enabled"],
             "rag_enabled": env["rag_enabled"],

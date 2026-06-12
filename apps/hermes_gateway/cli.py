@@ -42,6 +42,7 @@ from operations_packet_viewer import (
     load_review_packet,
     render_operations_summary_markdown,
 )
+from private_test_reply import build_private_test_reply_report, render_private_test_reply_report_markdown
 from persistence import get_default_log_root
 from readonly_runtime_stub import build_readonly_runtime_stub_report
 from live_capture_stub import build_live_capture_stub_report
@@ -207,6 +208,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--operations-viewer", action="store_true", help="Print Phase 31A operations packet viewer report.")
     parser.add_argument("--operations-packet", action="store_true", help="Print Phase 31A operations packet detail.")
     parser.add_argument("--agent-placeholder-response-report", action="store_true", help="Print Phase 31C deterministic agent placeholder response report.")
+    parser.add_argument("--private-test-reply-report", action="store_true", help="Print Phase 31B private test channel reply report.")
     parser.add_argument("--markdown", action="store_true", help="Print supported reports as Markdown.")
     parser.add_argument("--limit", type=int, default=20, help="Limit rows for viewer reports.")
     parser.add_argument("--date", help="Date filter in YYYYMMDD or YYYY-MM-DD format.")
@@ -519,6 +521,20 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- llm_enabled: {output.get('llm_enabled')}")
         return 0
 
+    if args.private_test_reply_report:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_private_test_reply_report(cfg.repo_root)
+        if args.markdown:
+            print(render_private_test_reply_report_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL private test reply report")
+            print(f"- allowed_example: {output.get('allowed_example', {}).get('allowed')}")
+            print(f"- blocked_example: {output.get('blocked_example', {}).get('blocked')}")
+            print(f"- message_sent: {output.get('message_sent')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -647,6 +663,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.operations_viewer
         or args.operations_packet
         or args.agent_placeholder_response_report
+        or args.private_test_reply_report
         or args.force
         or args.strict
         or args.export_log

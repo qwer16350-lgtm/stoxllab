@@ -29,6 +29,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - Build Phase 30 live event audit records, routing reports, would-send previews, review packets, and daily manifests without sending Discord messages.
 - View Phase 30 operations artifacts with a local-only Phase 31A packet viewer.
 - Build Phase 31C deterministic agent placeholder responses without LLM, RAG, or Discord replies.
+- Build Phase 31B private test channel reply reports and a guarded private-test-only reply path.
 
 ## Explicit Non-Goals
 
@@ -43,6 +44,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - No real Discord approval buttons or messages.
 - No real Discord readiness check connects to Discord.
 - No Phase 30 audit artifact sends a Discord reply or calls LLM/RAG.
+- No general Discord reply path exists; Phase 31B permits only a manually enabled private test channel reply.
 
 ## Phase 21 Read-Only Planning Docs
 
@@ -70,6 +72,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - `docs/STOXL_PHASE30_AUDIT_OPERATIONS.md`
 - `docs/STOXL_OPERATIONS_PACKET_VIEWER.md`
 - `docs/STOXL_AGENT_PLACEHOLDER_RESPONSE.md`
+- `docs/STOXL_PRIVATE_TEST_CHANNEL_REPLY.md`
 
 These documents prepare for a later private server read-only connection review. They do not authorize or perform a Discord connection.
 
@@ -117,6 +120,8 @@ python apps\hermes_gateway\cli.py --operations-viewer --markdown
 python apps\hermes_gateway\cli.py --operations-packet --event-id EVENT_ID --json
 python apps\hermes_gateway\cli.py --agent-placeholder-response-report --json
 python apps\hermes_gateway\cli.py --agent-placeholder-response-report --markdown
+python apps\hermes_gateway\cli.py --private-test-reply-report --json
+python apps\hermes_gateway\cli.py --private-test-reply-report --markdown
 python apps\hermes_gateway\tests\test_local_pipeline.py
 python apps\hermes_gateway\tests\test_replay_approval.py
 python apps\hermes_gateway\tests\test_persistent_audit_export.py
@@ -135,12 +140,17 @@ python apps\hermes_gateway\tests\test_would_send_preview.py
 python apps\hermes_gateway\tests\test_live_event_review_packet.py
 python apps\hermes_gateway\tests\test_operations_packet_viewer.py
 python apps\hermes_gateway\tests\test_agent_placeholder_response.py
+python apps\hermes_gateway\tests\test_private_test_reply.py
 ```
 
 The `--run-discord-readonly` option is intentionally not part of normal local
 test usage. It is reserved for a separately approved private server read-only
-connection run, and it still blocks message sending, LLM, RAG, and external
-execution.
+connection run. Message sending remains blocked by default. The only Phase 31B
+exception is a private-test-only reply when `HERMES_DISCORD_SEND_MESSAGES=true`,
+`HERMES_DISCORD_PRIVATE_TEST_REPLY=true`,
+`HERMES_DISCORD_REPLY_MODE=private_test_only`, and the event channel exactly
+matches `HERMES_DISCORD_PRIVATE_TEST_CHANNEL_ID`. LLM, RAG, external execution,
+public replies, and team channel replies remain blocked.
 
 If the registry file is missing, generate it from the repo root:
 

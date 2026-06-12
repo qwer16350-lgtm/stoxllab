@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from audit_log import build_audit_payload
+from agent_placeholder_response import build_agent_placeholder_response
 from discord_adapter_stub import build_dispatch_from_evaluation, build_would_send_payload, evaluate_discord_raw_event
 from discord_safety_wrapper import block_outgoing_action
 from live_event_audit_persistence import append_live_event_audit_record, build_live_event_audit_record
@@ -275,8 +276,10 @@ def process_live_event_audit_only(
     audit_record = build_live_event_audit_record(visibility, content=event.get("content", ""))
     audit_record_path = str(append_live_event_audit_record(audit_record, root=root)) if write_log else ""
     routing_report = build_live_event_routing_report(audit_record)
-    preview = build_would_send_preview(audit_record, routing_report)
+    placeholder = build_agent_placeholder_response(audit_record, routing_report, event.get("content", ""))
+    preview = build_would_send_preview(audit_record, routing_report, placeholder)
     if visibility["decision"] != "accepted_mapped_channel":
+        review_packet = build_live_event_review_packet(audit_record, routing_report, preview, placeholder)
         return {
             "pipeline_mode": "audit_only",
             "status": visibility["decision"],
@@ -294,6 +297,8 @@ def process_live_event_audit_only(
             "audit_record_path": audit_record_path,
             "routing_report": routing_report,
             "would_send_preview": preview,
+            "review_packet": review_packet,
+            "agent_placeholder_response": placeholder,
             "would_send_payload": {"will_send": False, "message_sent": False},
             "reply_plan": {"will_send": False, "reply_enabled": False},
             "outgoing_action_guard": block,
@@ -318,7 +323,7 @@ def process_live_event_audit_only(
         event.get("event_id"),
     )
     preview_path = str(write_would_send_preview(preview, root=root)) if write_log else ""
-    review_packet = build_live_event_review_packet(audit_record, routing_report, preview)
+    review_packet = build_live_event_review_packet(audit_record, routing_report, preview, placeholder)
     review_packet_paths = write_live_event_review_packet(review_packet, root=root) if write_log else {}
     return {
         "pipeline_mode": "audit_only",
@@ -340,6 +345,7 @@ def process_live_event_audit_only(
         "would_send_preview_path": preview_path,
         "review_packet": review_packet,
         "review_packet_paths": review_packet_paths,
+        "agent_placeholder_response": placeholder,
         "normalized_request": evaluation["normalized_request"],
         "dispatch_plan": dispatch_plan,
         "would_send_payload": payload,

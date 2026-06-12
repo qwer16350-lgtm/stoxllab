@@ -12,6 +12,7 @@ from typing import Any
 
 OUTGOING_ACTION_TYPES = [
     "message_create",
+    "private_test_reply_send",
     "message_update",
     "reaction_create",
     "channel_create",
@@ -50,6 +51,25 @@ def assert_send_disabled(config: dict[str, Any]) -> None:
         raise ValueError("Unsafe Phase 29 runtime flags enabled: " + ", ".join(unsafe))
 
 
+def _private_test_reply_allowed(config: dict[str, Any] | None) -> bool:
+    if not config:
+        return False
+    private_channel_configured = bool(
+        config.get("private_test_channel_id_present")
+        or config.get("private_test_channel_configured")
+        or config.get("_private_test_channel_id")
+    )
+    return (
+        _flag(config.get("send_messages"))
+        and _flag(config.get("private_test_reply_enabled", config.get("private_test_reply")))
+        and config.get("reply_mode") == "private_test_only"
+        and private_channel_configured
+        and not _flag(config.get("external_execution"))
+        and not _flag(config.get("llm_enabled"))
+        and not _flag(config.get("rag_enabled"))
+    )
+
+
 def block_outgoing_action(action_type: str, reason: str | None = None) -> dict[str, Any]:
     """Return a denial record without executing the requested action."""
 
@@ -68,8 +88,12 @@ def block_outgoing_action(action_type: str, reason: str | None = None) -> dict[s
 
 
 def is_outgoing_action_allowed(action_type: str, config: dict[str, Any] | None = None) -> bool:
-    """Phase 29 never allows outbound actions."""
+    """Allow only the Phase 31B private test reply exception."""
 
+    if action_type == "private_test_reply_send":
+        return _private_test_reply_allowed(config)
+    if action_type == "message_create":
+        return False
     if config:
         assert_send_disabled(config)
     return False
