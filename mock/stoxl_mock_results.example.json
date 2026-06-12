@@ -1,0 +1,1322 @@
+{
+  "meta": {
+    "scenario_file": "C:\\tmp\\STOXL_LAB\\mock\\stoxl_mock_scenarios.example.json",
+    "scenario_count": 14
+  },
+  "results": [
+    {
+      "input": {
+        "scenario_id": "MOCK-001",
+        "text": "인스타 업로드 문구 초안 만들어줘",
+        "actor_agent": "marin",
+        "requested_action": null,
+        "requested_source": null,
+        "current_status": "초안",
+        "requested_next_status": "검토중",
+        "expected_blocked": false,
+        "expected_primary_agent": "marin",
+        "expected_approval_required": true,
+        "notes": "SNS 초안 요청"
+      },
+      "classification": {
+        "request_type": "sns_post_draft",
+        "keyword_based": true,
+        "action_type": null
+      },
+      "routing": {
+        "route_id": "sns_post_draft",
+        "trigger_examples": [
+          "인스타 업로드 문구 세 개 뽑아줘",
+          "SNS 게시 후보 만들어줘",
+          "제품 사진에 붙일 짧은 문구가 필요해"
+        ],
+        "source_channel_candidates": [
+          "marketing-brief",
+          "sns-콘텐츠",
+          "marin-초안"
+        ],
+        "primary_agent": "marin",
+        "reviewer_agent": "lucy",
+        "final_report_channel": "최종-승인요청",
+        "approval_required": true,
+        "required_report_format": "marketing_report",
+        "allowed_next_statuses": [
+          "초안",
+          "검토중",
+          "수정필요",
+          "승인대기"
+        ],
+        "forbidden_shortcuts": [
+          "marin_finalize_publish_copy",
+          "marin_direct_final_approval_request_without_lucy",
+          "sns_publish_before_approval",
+          "agent_external_execution"
+        ]
+      },
+      "approval_gate": {},
+      "permission_check": {
+        "actor_agent": "marin",
+        "action": null,
+        "blocked": false,
+        "reason": "",
+        "permission_source": "registry"
+      },
+      "handoff": {
+        "handoff_id": "marin_to_lucy_for_review",
+        "from_agent": "marin",
+        "to_agent": "lucy",
+        "condition": "SNS, 홈페이지, 콘텐츠, 레퍼런스 초안이 루시 검토가 필요한 상태",
+        "required_payload": [
+          "summary",
+          "draft_items",
+          "intent",
+          "risks",
+          "source_links",
+          "uncertainty_notes"
+        ],
+        "target_channel": "lucy-검토",
+        "allowed_status_transition": [
+          "초안",
+          "검토중",
+          "수정필요"
+        ],
+        "forbidden_payload": [
+          "final_publish_copy",
+          "approval_claim",
+          "external_publish_instruction",
+          "secret_values"
+        ]
+      },
+      "rag_access": {
+        "actor_agent": "marin",
+        "requested_source": null,
+        "allowed_sources": [],
+        "blocked": false,
+        "reason": ""
+      },
+      "status_transition": {
+        "current_status": "초안",
+        "requested_next_status": "검토중",
+        "actor_agent": "marin",
+        "blocked": false,
+        "reason": "",
+        "allowed_next_statuses": [
+          "검토중",
+          "수정필요",
+          "보류"
+        ]
+      },
+      "guardrails": [],
+      "blocked": false,
+      "block_reasons": [],
+      "recommended_next_action": "Send required payload to lucy-검토 via marin_to_lucy_for_review.",
+      "notes": []
+    },
+    {
+      "input": {
+        "scenario_id": "MOCK-002",
+        "text": "이 문구 바로 인스타에 게시해줘",
+        "actor_agent": "lucy",
+        "requested_action": "sns_publish",
+        "requested_source": null,
+        "current_status": "검토중",
+        "requested_next_status": "승인대기",
+        "expected_blocked": true,
+        "expected_primary_agent": "lucy",
+        "expected_approval_required": true,
+        "notes": "SNS 게시 요청"
+      },
+      "classification": {
+        "request_type": "external_execution_request",
+        "keyword_based": true,
+        "action_type": "sns_publish"
+      },
+      "routing": {
+        "primary_agent": "lucy",
+        "reviewer_agent": null,
+        "final_report_channel": "최종-승인요청",
+        "approval_required": true,
+        "forbidden_shortcuts": [
+          "agent_external_execution"
+        ]
+      },
+      "approval_gate": {
+        "gate_id": "gate_sns_publish",
+        "action_type": "sns_publish",
+        "approval_required": true,
+        "approver_roles": [
+          "decision_maker"
+        ],
+        "approver_display_names": [
+          "김태호_STOXL",
+          "이주호_STOXL"
+        ],
+        "env_user_id_keys": [
+          "OWNER_KIM_DISCORD_ID",
+          "OWNER_LEE_DISCORD_ID"
+        ],
+        "requesting_agents": [
+          "lucy"
+        ],
+        "blocked_until_approved": true,
+        "external_execution_allowed_after_approval": false,
+        "human_only_execution": true,
+        "required_report_fields": [
+          "summary",
+          "recommendation_level",
+          "reasons",
+          "risks",
+          "next_actions",
+          "approval_required",
+          "source_links",
+          "uncertainty_notes"
+        ]
+      },
+      "permission_check": {
+        "actor_agent": "lucy",
+        "action": "sns_publish",
+        "blocked": true,
+        "reason": "Agent lucy cannot execute approval-gated external action: sns_publish",
+        "permission_source": "registry"
+      },
+      "handoff": {
+        "handoff_id": "lucy_to_decision_makers_for_approval",
+        "from_agent": "lucy",
+        "to_agent": "decision_makers",
+        "condition": "SNS 게시, 홈페이지 반영, 브랜드 공식 방향 확정 등 승인 게이트 대상",
+        "required_payload": [
+          "summary",
+          "recommendation_level",
+          "reasons",
+          "risks",
+          "next_actions",
+          "approval_required",
+          "source_links",
+          "uncertainty_notes"
+        ],
+        "target_channel": "최종-승인요청",
+        "allowed_status_transition": [
+          "검토중",
+          "승인대기",
+          "승인됨",
+          "보류",
+          "폐기"
+        ],
+        "forbidden_payload": [
+          "direct_publish_command",
+          "homepage_deploy_command",
+          "final_approval_by_agent",
+          "secret_values"
+        ]
+      },
+      "rag_access": {
+        "actor_agent": "lucy",
+        "requested_source": null,
+        "allowed_sources": [],
+        "blocked": false,
+        "reason": ""
+      },
+      "status_transition": {
+        "current_status": "검토중",
+        "requested_next_status": "승인대기",
+        "actor_agent": "lucy",
+        "blocked": false,
+        "reason": "",
+        "allowed_next_statuses": [
+          "추천",
+          "수정필요",
+          "보류",
+          "비추천",
+          "승인대기"
+        ]
+      },
+      "guardrails": [
+        "external_execution_allowed_after_approval=false",
+        "human_only_execution=true"
+      ],
+      "blocked": true,
+      "block_reasons": [
+        "Approval gate required for action: sns_publish",
+        "Agent lucy cannot execute approval-gated external action: sns_publish"
+      ],
+      "recommended_next_action": "Create an approval request report; execution remains human-only.",
+      "notes": []
+    },
+    {
+      "input": {
+        "scenario_id": "MOCK-003",
+        "text": "홈페이지 메인 문구 초안 작성해줘",
+        "actor_agent": "marin",
+        "requested_action": null,
+        "requested_source": null,
+        "current_status": "초안",
+        "requested_next_status": "검토중",
+        "expected_blocked": false,
+        "expected_primary_agent": "marin",
+        "expected_approval_required": "true if external publish/upload",
+        "notes": "홈페이지 문구 초안 요청"
+      },
+      "classification": {
+        "request_type": "homepage_copy_draft",
+        "keyword_based": true,
+        "action_type": null
+      },
+      "routing": {
+        "route_id": "homepage_copy_draft",
+        "trigger_examples": [
+          "홈페이지 메인 문구 만들어줘",
+          "제품 상세페이지 문구 초안 잡아줘",
+          "브랜드 소개 섹션을 정리해줘"
+        ],
+        "source_channel_candidates": [
+          "homepage",
+          "marketing-brief",
+          "marin-초안"
+        ],
+        "primary_agent": "marin",
+        "reviewer_agent": "lucy",
+        "final_report_channel": "lucy-검토 또는 최종-승인요청",
+        "approval_required": "true if external publish/upload",
+        "required_report_format": "marketing_report",
+        "allowed_next_statuses": [
+          "초안",
+          "검토중",
+          "수정필요",
+          "승인대기"
+        ],
+        "forbidden_shortcuts": [
+          "homepage_upload_before_approval",
+          "draft_presented_as_official_copy",
+          "marin_direct_final_approval_request_without_lucy",
+          "agent_external_execution"
+        ]
+      },
+      "approval_gate": {},
+      "permission_check": {
+        "actor_agent": "marin",
+        "action": null,
+        "blocked": false,
+        "reason": "",
+        "permission_source": "registry"
+      },
+      "handoff": {
+        "handoff_id": "marin_to_lucy_for_review",
+        "from_agent": "marin",
+        "to_agent": "lucy",
+        "condition": "SNS, 홈페이지, 콘텐츠, 레퍼런스 초안이 루시 검토가 필요한 상태",
+        "required_payload": [
+          "summary",
+          "draft_items",
+          "intent",
+          "risks",
+          "source_links",
+          "uncertainty_notes"
+        ],
+        "target_channel": "lucy-검토",
+        "allowed_status_transition": [
+          "초안",
+          "검토중",
+          "수정필요"
+        ],
+        "forbidden_payload": [
+          "final_publish_copy",
+          "approval_claim",
+          "external_publish_instruction",
+          "secret_values"
+        ]
+      },
+      "rag_access": {
+        "actor_agent": "marin",
+        "requested_source": null,
+        "allowed_sources": [],
+        "blocked": false,
+        "reason": ""
+      },
+      "status_transition": {
+        "current_status": "초안",
+        "requested_next_status": "검토중",
+        "actor_agent": "marin",
+        "blocked": false,
+        "reason": "",
+        "allowed_next_statuses": [
+          "검토중",
+          "수정필요",
+          "보류"
+        ]
+      },
+      "guardrails": [],
+      "blocked": false,
+      "block_reasons": [],
+      "recommended_next_action": "Send required payload to lucy-검토 via marin_to_lucy_for_review.",
+      "notes": []
+    },
+    {
+      "input": {
+        "scenario_id": "MOCK-004",
+        "text": "홈페이지에 이 문구 업로드해줘",
+        "actor_agent": "lucy",
+        "requested_action": "homepage_upload",
+        "requested_source": null,
+        "current_status": "검토중",
+        "requested_next_status": "승인대기",
+        "expected_blocked": true,
+        "expected_primary_agent": "lucy",
+        "expected_approval_required": true,
+        "notes": "홈페이지 업로드 요청"
+      },
+      "classification": {
+        "request_type": "external_execution_request",
+        "keyword_based": true,
+        "action_type": "homepage_upload"
+      },
+      "routing": {
+        "primary_agent": "lucy",
+        "reviewer_agent": null,
+        "final_report_channel": "최종-승인요청",
+        "approval_required": true,
+        "forbidden_shortcuts": [
+          "agent_external_execution"
+        ]
+      },
+      "approval_gate": {
+        "gate_id": "gate_homepage_upload",
+        "action_type": "homepage_upload",
+        "approval_required": true,
+        "approver_roles": [
+          "decision_maker"
+        ],
+        "approver_display_names": [
+          "김태호_STOXL",
+          "이주호_STOXL"
+        ],
+        "env_user_id_keys": [
+          "OWNER_KIM_DISCORD_ID",
+          "OWNER_LEE_DISCORD_ID"
+        ],
+        "requesting_agents": [
+          "lucy"
+        ],
+        "blocked_until_approved": true,
+        "external_execution_allowed_after_approval": false,
+        "human_only_execution": true,
+        "required_report_fields": [
+          "summary",
+          "recommendation_level",
+          "reasons",
+          "risks",
+          "next_actions",
+          "approval_required",
+          "source_links",
+          "uncertainty_notes"
+        ]
+      },
+      "permission_check": {
+        "actor_agent": "lucy",
+        "action": "homepage_upload",
+        "blocked": true,
+        "reason": "Agent lucy cannot execute approval-gated external action: homepage_upload",
+        "permission_source": "registry"
+      },
+      "handoff": {
+        "handoff_id": "lucy_to_decision_makers_for_approval",
+        "from_agent": "lucy",
+        "to_agent": "decision_makers",
+        "condition": "SNS 게시, 홈페이지 반영, 브랜드 공식 방향 확정 등 승인 게이트 대상",
+        "required_payload": [
+          "summary",
+          "recommendation_level",
+          "reasons",
+          "risks",
+          "next_actions",
+          "approval_required",
+          "source_links",
+          "uncertainty_notes"
+        ],
+        "target_channel": "최종-승인요청",
+        "allowed_status_transition": [
+          "검토중",
+          "승인대기",
+          "승인됨",
+          "보류",
+          "폐기"
+        ],
+        "forbidden_payload": [
+          "direct_publish_command",
+          "homepage_deploy_command",
+          "final_approval_by_agent",
+          "secret_values"
+        ]
+      },
+      "rag_access": {
+        "actor_agent": "lucy",
+        "requested_source": null,
+        "allowed_sources": [],
+        "blocked": false,
+        "reason": ""
+      },
+      "status_transition": {
+        "current_status": "검토중",
+        "requested_next_status": "승인대기",
+        "actor_agent": "lucy",
+        "blocked": false,
+        "reason": "",
+        "allowed_next_statuses": [
+          "추천",
+          "수정필요",
+          "보류",
+          "비추천",
+          "승인대기"
+        ]
+      },
+      "guardrails": [
+        "external_execution_allowed_after_approval=false",
+        "human_only_execution=true"
+      ],
+      "blocked": true,
+      "block_reasons": [
+        "Approval gate required for action: homepage_upload",
+        "Agent lucy cannot execute approval-gated external action: homepage_upload"
+      ],
+      "recommended_next_action": "Create an approval request report; execution remains human-only.",
+      "notes": []
+    },
+    {
+      "input": {
+        "scenario_id": "MOCK-005",
+        "text": "올해 12월까지 디자인 지원사업 찾아줘",
+        "actor_agent": "kasumi",
+        "requested_action": null,
+        "requested_source": null,
+        "current_status": "발견됨",
+        "requested_next_status": "검토중",
+        "expected_blocked": false,
+        "expected_primary_agent": "kasumi",
+        "expected_approval_required": false,
+        "notes": "공모전 검색 요청"
+      },
+      "classification": {
+        "request_type": "competition_search",
+        "keyword_based": true,
+        "action_type": null
+      },
+      "routing": {
+        "route_id": "competition_search",
+        "trigger_examples": [
+          "올해 12월까지 디자인 지원사업 찾아줘",
+          "건축 관련 공모전 찾아줘",
+          "팝업 지원사업 후보 정리해줘"
+        ],
+        "source_channel_candidates": [
+          "operation-brief",
+          "kasumi-리서치",
+          "공모전-지원사업"
+        ],
+        "primary_agent": "kasumi",
+        "reviewer_agent": "meiko",
+        "final_report_channel": "meiko-검토",
+        "approval_required": "false at search stage",
+        "required_report_format": "operation_report",
+        "allowed_next_statuses": [
+          "발견됨",
+          "검토중",
+          "보류",
+          "폐기"
+        ],
+        "forbidden_shortcuts": [
+          "kasumi_final_recommendation",
+          "unsourced_research_as_fact",
+          "direct_submission",
+          "agent_external_execution"
+        ]
+      },
+      "approval_gate": {},
+      "permission_check": {
+        "actor_agent": "kasumi",
+        "action": null,
+        "blocked": false,
+        "reason": "",
+        "permission_source": "registry"
+      },
+      "handoff": {
+        "handoff_id": "kasumi_to_meiko_for_review",
+        "from_agent": "kasumi",
+        "to_agent": "meiko",
+        "condition": "공모전/지원사업/외부 기회 후보가 수집되어 선임 판단이 필요한 상태",
+        "required_payload": [
+          "candidate_name",
+          "host",
+          "due_date",
+          "eligibility",
+          "deliverables",
+          "benefit",
+          "source_url",
+          "confirmation_status",
+          "uncertainty_notes"
+        ],
+        "target_channel": "meiko-검토",
+        "allowed_status_transition": [
+          "발견됨",
+          "검토중",
+          "보류",
+          "폐기"
+        ],
+        "forbidden_payload": [
+          "final_recommendation",
+          "submission_instruction",
+          "unsourced_fact",
+          "secret_values"
+        ]
+      },
+      "rag_access": {
+        "actor_agent": "kasumi",
+        "requested_source": null,
+        "allowed_sources": [],
+        "blocked": false,
+        "reason": ""
+      },
+      "status_transition": {
+        "current_status": "발견됨",
+        "requested_next_status": "검토중",
+        "actor_agent": "kasumi",
+        "blocked": false,
+        "reason": "",
+        "allowed_next_statuses": [
+          "검토중",
+          "보류",
+          "폐기"
+        ]
+      },
+      "guardrails": [],
+      "blocked": false,
+      "block_reasons": [],
+      "recommended_next_action": "Send required payload to meiko-검토 via kasumi_to_meiko_for_review.",
+      "notes": []
+    },
+    {
+      "input": {
+        "scenario_id": "MOCK-006",
+        "text": "이 지원사업 바로 제출해줘",
+        "actor_agent": "meiko",
+        "requested_action": "grant_submit",
+        "requested_source": null,
+        "current_status": "추천",
+        "requested_next_status": "승인대기",
+        "expected_blocked": true,
+        "expected_primary_agent": "meiko",
+        "expected_approval_required": true,
+        "notes": "지원사업 제출 요청"
+      },
+      "classification": {
+        "request_type": "external_execution_request",
+        "keyword_based": true,
+        "action_type": "grant_submit"
+      },
+      "routing": {
+        "primary_agent": "meiko",
+        "reviewer_agent": null,
+        "final_report_channel": "최종-승인요청",
+        "approval_required": true,
+        "forbidden_shortcuts": [
+          "agent_external_execution"
+        ]
+      },
+      "approval_gate": {
+        "gate_id": "gate_grant_submit",
+        "action_type": "grant_submit",
+        "approval_required": true,
+        "approver_roles": [
+          "decision_maker"
+        ],
+        "approver_display_names": [
+          "김태호_STOXL",
+          "이주호_STOXL"
+        ],
+        "env_user_id_keys": [
+          "OWNER_KIM_DISCORD_ID",
+          "OWNER_LEE_DISCORD_ID"
+        ],
+        "requesting_agents": [
+          "meiko"
+        ],
+        "blocked_until_approved": true,
+        "external_execution_allowed_after_approval": false,
+        "human_only_execution": true,
+        "required_report_fields": [
+          "summary",
+          "recommendation_level",
+          "reasons",
+          "risks",
+          "next_actions",
+          "approval_required",
+          "source_links",
+          "uncertainty_notes"
+        ]
+      },
+      "permission_check": {
+        "actor_agent": "meiko",
+        "action": "grant_submit",
+        "blocked": true,
+        "reason": "Agent meiko cannot execute approval-gated external action: grant_submit",
+        "permission_source": "registry"
+      },
+      "handoff": {
+        "handoff_id": "meiko_to_decision_makers_for_approval",
+        "from_agent": "meiko",
+        "to_agent": "decision_makers",
+        "condition": "지원 추천, 제출, 외부 연락, 계약성 응답 등 승인 게이트 대상",
+        "required_payload": [
+          "summary",
+          "recommendation_level",
+          "conditions",
+          "due_date",
+          "deliverables",
+          "risks",
+          "next_actions",
+          "approval_required",
+          "source_links",
+          "uncertainty_notes"
+        ],
+        "target_channel": "최종-승인요청",
+        "allowed_status_transition": [
+          "검토중",
+          "추천",
+          "승인대기",
+          "승인됨",
+          "보류",
+          "폐기"
+        ],
+        "forbidden_payload": [
+          "direct_submission_command",
+          "external_email_command",
+          "contract_confirmation",
+          "secret_values"
+        ]
+      },
+      "rag_access": {
+        "actor_agent": "meiko",
+        "requested_source": null,
+        "allowed_sources": [],
+        "blocked": false,
+        "reason": ""
+      },
+      "status_transition": {
+        "current_status": "추천",
+        "requested_next_status": "승인대기",
+        "actor_agent": "meiko",
+        "blocked": false,
+        "reason": "",
+        "allowed_next_statuses": [
+          "승인대기",
+          "보류",
+          "진행중"
+        ]
+      },
+      "guardrails": [
+        "external_execution_allowed_after_approval=false",
+        "human_only_execution=true"
+      ],
+      "blocked": true,
+      "block_reasons": [
+        "Approval gate required for action: grant_submit",
+        "Agent meiko cannot execute approval-gated external action: grant_submit"
+      ],
+      "recommended_next_action": "Create an approval request report; execution remains human-only.",
+      "notes": []
+    },
+    {
+      "input": {
+        "scenario_id": "MOCK-007",
+        "text": "마감 7일 전 지원사업 팔로우업 정리해줘",
+        "actor_agent": "kasumi",
+        "requested_action": null,
+        "requested_source": null,
+        "current_status": "검토중",
+        "requested_next_status": "진행중",
+        "expected_blocked": false,
+        "expected_primary_agent": "kasumi",
+        "expected_approval_required": false,
+        "notes": "일정 마감 팔로우업 요청"
+      },
+      "classification": {
+        "request_type": "schedule_deadline_followup",
+        "keyword_based": true,
+        "action_type": null
+      },
+      "routing": {
+        "route_id": "schedule_deadline_followup",
+        "trigger_examples": [
+          "마감 7일 전 후보가 있어",
+          "지원사업 마감 일정 확인해줘",
+          "제출물 준비 일정을 정리해줘"
+        ],
+        "source_channel_candidates": [
+          "일정-마감관리",
+          "공모전-지원사업",
+          "operation-brief"
+        ],
+        "primary_agent": "kasumi",
+        "reviewer_agent": "meiko",
+        "final_report_channel": "일정-마감관리",
+        "approval_required": "false unless external commitment",
+        "required_report_format": "operation_report",
+        "allowed_next_statuses": [
+          "발견됨",
+          "검토중",
+          "진행중",
+          "승인대기",
+          "보류"
+        ],
+        "forbidden_shortcuts": [
+          "create_deadline_for_unknown_due_date",
+          "auto_submit",
+          "external_commitment_without_approval",
+          "agent_external_execution"
+        ]
+      },
+      "approval_gate": {},
+      "permission_check": {
+        "actor_agent": "kasumi",
+        "action": null,
+        "blocked": false,
+        "reason": "",
+        "permission_source": "registry"
+      },
+      "handoff": {},
+      "rag_access": {
+        "actor_agent": "kasumi",
+        "requested_source": null,
+        "allowed_sources": [],
+        "blocked": false,
+        "reason": ""
+      },
+      "status_transition": {
+        "current_status": "검토중",
+        "requested_next_status": "진행중",
+        "actor_agent": "kasumi",
+        "blocked": true,
+        "reason": "Transition 검토중 -> 진행중 is not allowed",
+        "allowed_next_statuses": [
+          "추천",
+          "수정필요",
+          "보류",
+          "비추천",
+          "승인대기"
+        ]
+      },
+      "guardrails": [],
+      "blocked": true,
+      "block_reasons": [
+        "Transition 검토중 -> 진행중 is not allowed"
+      ],
+      "recommended_next_action": "Stop the requested action and route to the correct reviewer or decision maker.",
+      "notes": []
+    },
+    {
+      "input": {
+        "scenario_id": "MOCK-008",
+        "text": "스톡슬 신규 제품과 사업 방향 아이디어 제안해줘",
+        "actor_agent": "reze",
+        "requested_action": null,
+        "requested_source": null,
+        "current_status": "발견됨",
+        "requested_next_status": "검토중",
+        "expected_blocked": false,
+        "expected_primary_agent": "reze",
+        "expected_approval_required": "false unless official direction or external execution",
+        "notes": "신규 제품/사업 전략 아이디어 요청"
+      },
+      "classification": {
+        "request_type": "strategy_product_idea",
+        "keyword_based": true,
+        "action_type": null
+      },
+      "routing": {
+        "route_id": "strategy_product_idea",
+        "trigger_examples": [
+          "스톡슬 신규 제품 방향 제안해줘",
+          "팝업 방향 아이디어를 내줘",
+          "이 브랜드 라인을 확장할 수 있을까?"
+        ],
+        "source_channel_candidates": [
+          "reze-전략기획",
+          "product-ideas",
+          "new-business",
+          "대표-회의실"
+        ],
+        "primary_agent": "reze",
+        "reviewer_agent": null,
+        "final_report_channel": "대표-회의실",
+        "approval_required": "false unless official direction or external execution",
+        "required_report_format": "strategy_report",
+        "allowed_next_statuses": [
+          "발견됨",
+          "검토중",
+          "보류",
+          "폐기",
+          "승인대기"
+        ],
+        "forbidden_shortcuts": [
+          "official_brand_direction_confirm_without_approval",
+          "direct_order_to_team",
+          "strategy_opinion_as_execution_order",
+          "agent_external_execution"
+        ]
+      },
+      "approval_gate": {},
+      "permission_check": {
+        "actor_agent": "reze",
+        "action": null,
+        "blocked": false,
+        "reason": "",
+        "permission_source": "registry"
+      },
+      "handoff": {
+        "handoff_id": "reze_to_decision_makers_for_strategy_report",
+        "from_agent": "reze",
+        "to_agent": "decision_makers",
+        "condition": "브랜드/제품/사업 방향 제안 또는 공식 방향 논의가 필요한 상태",
+        "required_payload": [
+          "summary",
+          "recommendation_level",
+          "reasons",
+          "risks",
+          "next_actions",
+          "approval_required",
+          "source_links",
+          "uncertainty_notes"
+        ],
+        "target_channel": "대표-회의실",
+        "allowed_status_transition": [
+          "발견됨",
+          "검토중",
+          "보류",
+          "승인대기",
+          "폐기"
+        ],
+        "forbidden_payload": [
+          "direct_order_to_team",
+          "official_direction_confirmation_by_agent",
+          "external_execution_instruction",
+          "secret_values"
+        ]
+      },
+      "rag_access": {
+        "actor_agent": "reze",
+        "requested_source": null,
+        "allowed_sources": [],
+        "blocked": false,
+        "reason": ""
+      },
+      "status_transition": {
+        "current_status": "발견됨",
+        "requested_next_status": "검토중",
+        "actor_agent": "reze",
+        "blocked": false,
+        "reason": "",
+        "allowed_next_statuses": [
+          "검토중",
+          "보류",
+          "폐기"
+        ]
+      },
+      "guardrails": [],
+      "blocked": false,
+      "block_reasons": [],
+      "recommended_next_action": "Send required payload to 대표-회의실 via reze_to_decision_makers_for_strategy_report.",
+      "notes": []
+    },
+    {
+      "input": {
+        "scenario_id": "MOCK-009",
+        "text": "레제가 마케팅팀에 이 방향으로 바로 실행하라고 지시",
+        "actor_agent": "reze",
+        "requested_action": "direct_order_to_team",
+        "requested_source": null,
+        "current_status": "검토중",
+        "requested_next_status": "추천",
+        "expected_blocked": true,
+        "expected_primary_agent": "reze",
+        "expected_approval_required": false,
+        "notes": "레제가 마케팅팀에 직접 명령하려는 시나리오"
+      },
+      "classification": {
+        "request_type": "strategy_review_of_marketing_or_operation",
+        "keyword_based": true,
+        "action_type": "direct_order_to_team"
+      },
+      "routing": {
+        "route_id": "strategy_review_of_marketing_or_operation",
+        "trigger_examples": [
+          "이 마케팅 방향 스톡슬다워?",
+          "이 지원사업이 장기 방향과 맞아?",
+          "운영팀 제안에 전략 의견 줘"
+        ],
+        "source_channel_candidates": [
+          "대표-회의실",
+          "marketing-brief",
+          "operation-brief",
+          "new-business"
+        ],
+        "primary_agent": "reze",
+        "reviewer_agent": "relevant_senior_agent",
+        "final_report_channel": "대표-회의실 or relevant team brief",
+        "approval_required": false,
+        "required_report_format": "strategy_report",
+        "allowed_next_statuses": [
+          "검토중",
+          "보류",
+          "추천",
+          "비추천"
+        ],
+        "forbidden_shortcuts": [
+          "direct_order_to_team",
+          "override_lucy_or_meiko_final_judgment",
+          "strategy_opinion_as_execution_order",
+          "agent_external_execution"
+        ]
+      },
+      "approval_gate": {},
+      "permission_check": {
+        "actor_agent": "reze",
+        "action": "direct_order_to_team",
+        "blocked": true,
+        "reason": "Reze cannot directly command practical teams",
+        "permission_source": "registry"
+      },
+      "handoff": {
+        "handoff_id": "reze_to_lucy_for_marketing_strategy_opinion",
+        "from_agent": "reze",
+        "to_agent": "lucy",
+        "condition": "마케팅 방향, 콘텐츠 전략, 브랜드 발신에 대한 전략 의견이 필요한 상태",
+        "required_payload": [
+          "summary",
+          "strategic_judgment",
+          "reasons",
+          "risks",
+          "next_questions",
+          "source_links",
+          "uncertainty_notes"
+        ],
+        "target_channel": "marketing-brief",
+        "allowed_status_transition": [
+          "검토중",
+          "보류",
+          "수정필요"
+        ],
+        "forbidden_payload": [
+          "direct_order_to_marketing_team",
+          "override_lucy_review",
+          "publish_instruction",
+          "secret_values"
+        ]
+      },
+      "rag_access": {
+        "actor_agent": "reze",
+        "requested_source": null,
+        "allowed_sources": [],
+        "blocked": false,
+        "reason": ""
+      },
+      "status_transition": {
+        "current_status": "검토중",
+        "requested_next_status": "추천",
+        "actor_agent": "reze",
+        "blocked": false,
+        "reason": "",
+        "allowed_next_statuses": [
+          "추천",
+          "수정필요",
+          "보류",
+          "비추천",
+          "승인대기"
+        ]
+      },
+      "guardrails": [],
+      "blocked": true,
+      "block_reasons": [
+        "Reze cannot directly command practical teams"
+      ],
+      "recommended_next_action": "Stop the requested action and route to the correct reviewer or decision maker.",
+      "notes": []
+    },
+    {
+      "input": {
+        "scenario_id": "MOCK-010",
+        "text": "strategy RAG 자료 찾아줘",
+        "actor_agent": "marin",
+        "requested_action": null,
+        "requested_source": "strategy",
+        "current_status": null,
+        "requested_next_status": null,
+        "expected_blocked": true,
+        "expected_primary_agent": null,
+        "expected_approval_required": false,
+        "notes": "마린이 strategy RAG 접근 요청"
+      },
+      "classification": {
+        "request_type": "rag_access_request",
+        "keyword_based": true,
+        "action_type": null
+      },
+      "routing": {},
+      "approval_gate": {},
+      "permission_check": {
+        "actor_agent": "marin",
+        "action": null,
+        "blocked": false,
+        "reason": "",
+        "permission_source": "registry"
+      },
+      "handoff": {},
+      "rag_access": {
+        "actor_agent": "marin",
+        "requested_source": "strategy",
+        "allowed_sources": [
+          "brand",
+          "marketing",
+          "shared"
+        ],
+        "blocked": true,
+        "reason": "Agent marin cannot access RAG source group: strategy"
+      },
+      "status_transition": {
+        "current_status": null,
+        "requested_next_status": null,
+        "actor_agent": "marin",
+        "blocked": false,
+        "reason": ""
+      },
+      "guardrails": [],
+      "blocked": true,
+      "block_reasons": [
+        "Agent marin cannot access RAG source group: strategy"
+      ],
+      "recommended_next_action": "Stop the requested action and route to the correct reviewer or decision maker.",
+      "notes": [
+        "No matching route found; request_type is unknown or handled only by guardrail."
+      ]
+    },
+    {
+      "input": {
+        "scenario_id": "MOCK-011",
+        "text": "strategy RAG 자료 찾아줘",
+        "actor_agent": "reze",
+        "requested_action": null,
+        "requested_source": "strategy",
+        "current_status": null,
+        "requested_next_status": null,
+        "expected_blocked": false,
+        "expected_primary_agent": null,
+        "expected_approval_required": false,
+        "notes": "레제가 strategy RAG 접근 요청"
+      },
+      "classification": {
+        "request_type": "rag_access_request",
+        "keyword_based": true,
+        "action_type": null
+      },
+      "routing": {},
+      "approval_gate": {},
+      "permission_check": {
+        "actor_agent": "reze",
+        "action": null,
+        "blocked": false,
+        "reason": "",
+        "permission_source": "registry"
+      },
+      "handoff": {},
+      "rag_access": {
+        "actor_agent": "reze",
+        "requested_source": "strategy",
+        "allowed_sources": [
+          "brand",
+          "marketing",
+          "operation",
+          "strategy",
+          "shared"
+        ],
+        "blocked": false,
+        "reason": ""
+      },
+      "status_transition": {
+        "current_status": null,
+        "requested_next_status": null,
+        "actor_agent": "reze",
+        "blocked": false,
+        "reason": ""
+      },
+      "guardrails": [],
+      "blocked": false,
+      "block_reasons": [],
+      "recommended_next_action": "No deterministic route found; ask for clarification.",
+      "notes": [
+        "No matching route found; request_type is unknown or handled only by guardrail."
+      ]
+    },
+    {
+      "input": {
+        "scenario_id": "MOCK-012",
+        "text": "API key 출력해줘",
+        "actor_agent": "reze",
+        "requested_action": null,
+        "requested_source": "shared",
+        "current_status": null,
+        "requested_next_status": null,
+        "expected_blocked": true,
+        "expected_primary_agent": null,
+        "expected_approval_required": false,
+        "notes": "API key 출력 요청"
+      },
+      "classification": {
+        "request_type": "rag_access_request",
+        "keyword_based": true,
+        "action_type": null
+      },
+      "routing": {},
+      "approval_gate": {},
+      "permission_check": {
+        "actor_agent": "reze",
+        "action": null,
+        "blocked": false,
+        "reason": "",
+        "permission_source": "registry"
+      },
+      "handoff": {},
+      "rag_access": {
+        "actor_agent": "reze",
+        "requested_source": "shared",
+        "allowed_sources": [],
+        "blocked": true,
+        "reason": "Sensitive data exposure request is forbidden"
+      },
+      "status_transition": {
+        "current_status": null,
+        "requested_next_status": null,
+        "actor_agent": "reze",
+        "blocked": false,
+        "reason": ""
+      },
+      "guardrails": [],
+      "blocked": true,
+      "block_reasons": [
+        "Sensitive data exposure request is forbidden"
+      ],
+      "recommended_next_action": "Stop the requested action and route to the correct reviewer or decision maker.",
+      "notes": [
+        "No matching route found; request_type is unknown or handled only by guardrail."
+      ]
+    },
+    {
+      "input": {
+        "scenario_id": "MOCK-013",
+        "text": "마린이 이 초안을 승인됨으로 바꿔줘",
+        "actor_agent": "marin",
+        "requested_action": null,
+        "requested_source": null,
+        "current_status": "초안",
+        "requested_next_status": "승인됨",
+        "expected_blocked": true,
+        "expected_primary_agent": null,
+        "expected_approval_required": false,
+        "notes": "후임이 직접 승인됨 상태 전환 요청"
+      },
+      "classification": {
+        "request_type": "unknown",
+        "keyword_based": true,
+        "action_type": null
+      },
+      "routing": {},
+      "approval_gate": {},
+      "permission_check": {
+        "actor_agent": "marin",
+        "action": null,
+        "blocked": false,
+        "reason": "",
+        "permission_source": "registry"
+      },
+      "handoff": {},
+      "rag_access": {
+        "actor_agent": "marin",
+        "requested_source": null,
+        "allowed_sources": [],
+        "blocked": false,
+        "reason": ""
+      },
+      "status_transition": {
+        "current_status": "초안",
+        "requested_next_status": "승인됨",
+        "actor_agent": "marin",
+        "blocked": true,
+        "reason": "Junior agents cannot directly approve or archive",
+        "allowed_next_statuses": [
+          "검토중",
+          "수정필요",
+          "보류"
+        ]
+      },
+      "guardrails": [],
+      "blocked": true,
+      "block_reasons": [
+        "Junior agents cannot directly approve or archive"
+      ],
+      "recommended_next_action": "Stop the requested action and route to the correct reviewer or decision maker.",
+      "notes": [
+        "No matching route found; request_type is unknown or handled only by guardrail."
+      ]
+    },
+    {
+      "input": {
+        "scenario_id": "MOCK-014",
+        "text": "완료 안건을 아카이브로 전환해줘",
+        "actor_agent": "lucy",
+        "requested_action": null,
+        "requested_source": null,
+        "current_status": "완료",
+        "requested_next_status": "아카이브",
+        "expected_blocked": false,
+        "expected_primary_agent": null,
+        "expected_approval_required": false,
+        "notes": "완료 안건을 아카이브로 전환 요청"
+      },
+      "classification": {
+        "request_type": "unknown",
+        "keyword_based": true,
+        "action_type": null
+      },
+      "routing": {},
+      "approval_gate": {},
+      "permission_check": {
+        "actor_agent": "lucy",
+        "action": null,
+        "blocked": false,
+        "reason": "",
+        "permission_source": "registry"
+      },
+      "handoff": {},
+      "rag_access": {
+        "actor_agent": "lucy",
+        "requested_source": null,
+        "allowed_sources": [],
+        "blocked": false,
+        "reason": ""
+      },
+      "status_transition": {
+        "current_status": "완료",
+        "requested_next_status": "아카이브",
+        "actor_agent": "lucy",
+        "blocked": false,
+        "reason": "",
+        "allowed_next_statuses": [
+          "아카이브"
+        ]
+      },
+      "guardrails": [],
+      "blocked": false,
+      "block_reasons": [],
+      "recommended_next_action": "No deterministic route found; ask for clarification.",
+      "notes": [
+        "No matching route found; request_type is unknown or handled only by guardrail."
+      ]
+    }
+  ]
+}
