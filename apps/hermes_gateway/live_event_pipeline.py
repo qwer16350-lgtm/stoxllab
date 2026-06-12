@@ -12,7 +12,11 @@ from typing import Any
 from audit_log import build_audit_payload
 from discord_adapter_stub import build_dispatch_from_evaluation, build_would_send_payload, evaluate_discord_raw_event
 from discord_safety_wrapper import block_outgoing_action
+from live_event_audit_persistence import append_live_event_audit_record, build_live_event_audit_record
+from live_event_review_packet import build_live_event_review_packet, write_live_event_review_packet
+from live_event_routing_report import build_live_event_routing_report
 from reply_planner import build_reply_plan
+from would_send_preview import build_would_send_preview, write_would_send_preview
 
 
 LONG_ID_RE = re.compile(r"\b\d{15,25}\b")
@@ -268,6 +272,10 @@ def process_live_event_audit_only(
     block = block_outgoing_action("message_create", "Live event pipeline is audit-only in Phase 29.")
     visibility = build_visibility_event(event, visibility_context or load_visibility_context(root))
     written_log_path = str(write_visibility_log(visibility, root=root, log_path=log_path)) if write_log else ""
+    audit_record = build_live_event_audit_record(visibility, content=event.get("content", ""))
+    audit_record_path = str(append_live_event_audit_record(audit_record, root=root)) if write_log else ""
+    routing_report = build_live_event_routing_report(audit_record)
+    preview = build_would_send_preview(audit_record, routing_report)
     if visibility["decision"] != "accepted_mapped_channel":
         return {
             "pipeline_mode": "audit_only",
@@ -282,6 +290,10 @@ def process_live_event_audit_only(
             },
             "visibility_event": visibility,
             "visibility_log_path": written_log_path,
+            "audit_record": audit_record,
+            "audit_record_path": audit_record_path,
+            "routing_report": routing_report,
+            "would_send_preview": preview,
             "would_send_payload": {"will_send": False, "message_sent": False},
             "reply_plan": {"will_send": False, "reply_enabled": False},
             "outgoing_action_guard": block,
@@ -305,6 +317,9 @@ def process_live_event_audit_only(
         dispatch_plan,
         event.get("event_id"),
     )
+    preview_path = str(write_would_send_preview(preview, root=root)) if write_log else ""
+    review_packet = build_live_event_review_packet(audit_record, routing_report, preview)
+    review_packet_paths = write_live_event_review_packet(review_packet, root=root) if write_log else {}
     return {
         "pipeline_mode": "audit_only",
         "status": "processed_audit_only",
@@ -318,6 +333,13 @@ def process_live_event_audit_only(
         },
         "visibility_event": visibility,
         "visibility_log_path": written_log_path,
+        "audit_record": audit_record,
+        "audit_record_path": audit_record_path,
+        "routing_report": routing_report,
+        "would_send_preview": preview,
+        "would_send_preview_path": preview_path,
+        "review_packet": review_packet,
+        "review_packet_paths": review_packet_paths,
         "normalized_request": evaluation["normalized_request"],
         "dispatch_plan": dispatch_plan,
         "would_send_payload": payload,

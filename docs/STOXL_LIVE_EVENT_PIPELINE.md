@@ -66,6 +66,21 @@ logs/hermes_gateway/live_events/readonly_events_YYYYMMDD.jsonl
 
 The `logs/hermes_gateway/` folder is ignored by git. Each JSONL line records the decision, reason, channel name, workflow role, content presence/length, and safety assertions.
 
+## Phase 30 Audit Operations
+
+After visibility classification, Phase 30 can create local-only audit artifacts:
+
+```text
+visibility event
+-> audit record
+-> routing report
+-> would-send preview
+-> review packet
+-> daily manifest
+```
+
+This flow is still read-only. It does not send a Discord message, call LLM/RAG, or perform external execution.
+
 ## Safety Rules
 
 - No Discord write API call.

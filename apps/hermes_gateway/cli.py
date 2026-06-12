@@ -22,7 +22,14 @@ from discord_token_loader import build_token_loader_report
 from discord_event_adapter import event_from_text, normalize_event
 from dispatcher import build_dispatch_plan
 from evaluator_bridge import evaluate_request
+from live_event_audit_persistence import (
+    build_daily_live_event_manifest,
+    build_live_event_audit_record,
+    build_sample_visibility_event,
+)
 from live_event_pipeline import build_live_event_pipeline_report
+from live_event_review_packet import build_live_event_review_packet
+from live_event_routing_report import build_live_event_routing_report
 from log_exporter import export_replay_result
 from local_mapping_manager import build_local_mapping_manager_report, copy_template_to_local
 from mapping_validator import build_mapping_validation_report
@@ -33,6 +40,7 @@ from registry_loader import load_registry
 from replay import run_replay
 from reply_planner import build_reply_planner_report
 from review_packet import build_review_packet, export_review_packet
+from would_send_preview import build_would_send_preview
 
 
 def load_event_file(path: str) -> dict[str, Any]:
@@ -123,6 +131,38 @@ def build_safety_scaffold_report(root: str | Path) -> dict[str, Any]:
     }
 
 
+def build_phase30_sample_bundle(root: str | Path | None = None) -> dict[str, Any]:
+    visibility = build_sample_visibility_event()
+    audit_record = build_live_event_audit_record(visibility, content="Sample live message content for Phase 30 audit preview.")
+    routing_report = build_live_event_routing_report(audit_record)
+    preview = build_would_send_preview(audit_record, routing_report)
+    packet = build_live_event_review_packet(audit_record, routing_report, preview)
+    manifest = build_daily_live_event_manifest(root=root, date=audit_record["created_at"]) if root else {
+        "manifest_type": "live_event_daily_manifest",
+        "version": "phase30_audit_persistence",
+        "date": audit_record["created_at"][:10].replace("-", ""),
+        "record_count": 0,
+        "message_sent": False,
+        "external_execution": False,
+        "llm_called": False,
+        "rag_called": False,
+    }
+    return {
+        "audit_record": audit_record,
+        "routing_report": routing_report,
+        "would_send_preview": preview,
+        "review_packet": packet,
+        "daily_manifest": manifest,
+        "safety_assertions": {
+            "discord_api_write_called": False,
+            "message_sent": False,
+            "external_execution": False,
+            "llm_called": False,
+            "rag_called": False,
+        },
+    }
+
+
 def main(argv: list[str] | None = None) -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
@@ -149,6 +189,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--live-event-pipeline-report", action="store_true", help="Print Phase 29 audit-only live event pipeline report.")
     parser.add_argument("--discord-readonly-runtime-report", action="store_true", help="Print Phase 29 read-only runtime report.")
     parser.add_argument("--run-discord-readonly", action="store_true", help="Run the Phase 29 read-only Discord Gateway runtime.")
+    parser.add_argument("--live-event-audit-report", action="store_true", help="Print Phase 30 live event audit record report.")
+    parser.add_argument("--would-send-preview-report", action="store_true", help="Print Phase 30 would-send preview report.")
+    parser.add_argument("--live-event-review-packet-report", action="store_true", help="Print Phase 30 live event review packet report.")
+    parser.add_argument("--phase30-audit-ops-report", action="store_true", help="Print Phase 30 audit operations bundle report.")
     parser.add_argument("--force", action="store_true", help="Allow overwriting local mapping with --init-local-mapping.")
     parser.add_argument("--strict", action="store_true", help="Treat TODO placeholders as validation failures for --validate-mapping.")
     parser.add_argument("--mapping", help="Discord runtime mapping template for --discord-readiness.")
@@ -343,6 +387,63 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- token_value_logged: {output.get('token_value_logged')}")
         return 0
 
+    if args.live_event_audit_report:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_phase30_sample_bundle(cfg.repo_root)["audit_record"]
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL live event audit record")
+            print(f"- decision: {output.get('decision')}")
+            print(f"- message_sent: {output.get('message_sent')}")
+        return 0
+
+    if args.would_send_preview_report:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_phase30_sample_bundle(cfg.repo_root)["would_send_preview"]
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL would-send preview")
+            print(f"- would_send_kind: {output.get('would_send_kind')}")
+            print(f"- will_send: {output.get('will_send')}")
+        return 0
+
+    if args.live_event_review_packet_report:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_phase30_sample_bundle(cfg.repo_root)["review_packet"]
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL live event review packet")
+            print(f"- required: {output.get('human_review', {}).get('required')}")
+            print(f"- message_sent: {output.get('safety_assertions', {}).get('message_sent')}")
+        return 0
+
+    if args.phase30_audit_ops_report:
+        cfg = load_config(Path(__file__).resolve())
+        output = {
+            "report_type": "phase30_audit_operations",
+            "version": "phase30_local_only",
+            "bundle": build_phase30_sample_bundle(cfg.repo_root),
+            "flow": ["visibility_event", "audit_record", "routing_report", "would_send_preview", "review_packet", "daily_manifest"],
+            "safety_assertions": {
+                "discord_api_write_called": False,
+                "message_sent": False,
+                "external_execution": False,
+                "llm_called": False,
+                "rag_called": False,
+            },
+        }
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 30 audit operations")
+            print("- message_sent: false")
+            print("- llm_called: false")
+            print("- rag_called: false")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -464,6 +565,10 @@ def main(argv: list[str] | None = None) -> int:
         or args.live_event_pipeline_report
         or args.discord_readonly_runtime_report
         or args.run_discord_readonly
+        or args.live_event_audit_report
+        or args.would_send_preview_report
+        or args.live_event_review_packet_report
+        or args.phase30_audit_ops_report
         or args.force
         or args.strict
         or args.export_log

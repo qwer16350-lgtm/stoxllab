@@ -1,0 +1,24 @@
+﻿{
+    "preview_type":  "would_send_preview",
+    "version":  "phase30_no_send",
+    "created_at":  "2026-06-12T16:19:43+00:00",
+    "event_id":  "",
+    "agent_route_candidate":  "marin",
+    "target_channel_name":  "marketing-brief",
+    "would_send_kind":  "needs_senior_review",
+    "content_preview":  "[NO SEND] Received live event in marketing-brief. Candidate route: marin. Reply generation is disabled.",
+    "will_send":  false,
+    "requires_manual_enable":  true,
+    "requires_future_reply_phase":  true,
+    "message_sent":  false,
+    "llm_called":  false,
+    "rag_called":  false,
+    "external_execution":  false,
+    "safety_assertions":  {
+                              "discord_api_write_called":  false,
+                              "message_sent":  false,
+                              "llm_called":  false,
+                              "rag_called":  false,
+                              "external_execution":  false
+                          }
+}

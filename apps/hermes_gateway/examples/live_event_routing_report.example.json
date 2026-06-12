@@ -1,0 +1,17 @@
+﻿{
+    "report_type":  "live_event_routing_report",
+    "version":  "phase30_routing_report",
+    "created_at":  "2026-06-12T16:19:43+00:00",
+    "event_id":  "",
+    "channel_name":  "marketing-brief",
+    "workflow_role":  "marketing_intake",
+    "agent_route_candidate":  "marin",
+    "senior_review_required":  true,
+    "approval_relevant":  false,
+    "external_execution_allowed":  false,
+    "routing_confidence":  "high",
+    "routing_reason":  "workflow_role=marketing_intake maps to marin",
+    "message_sent":  false,
+    "llm_called":  false,
+    "rag_called":  false
+}
