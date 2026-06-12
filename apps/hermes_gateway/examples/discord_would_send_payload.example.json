@@ -1,0 +1,55 @@
+{
+  "adapter_type": "discord_adapter_stub",
+  "normalized_request": {
+    "text": "인스타 업로드 문구 초안 만들어줘",
+    "actor_role": "Decision Maker",
+    "actor_agent": "marin",
+    "author_display_name": "김태호_STOXL",
+    "source_channel": "marin-초안",
+    "source_category": "10-마케팅팀",
+    "mentioned_agents": [],
+    "requested_action": null,
+    "requested_source": null,
+    "current_status": null,
+    "requested_next_status": null,
+    "attachments": [],
+    "timestamp": "2026-01-01T09:00:00+09:00"
+  },
+  "dispatch_plan": {
+    "should_dispatch": true,
+    "dispatch_to_agent": "marin",
+    "reviewer_agent": "lucy",
+    "dispatch_channel": "lucy-검토",
+    "final_report_channel": "최종-승인요청",
+    "approval_required": true,
+    "human_only_execution": true,
+    "required_handoff": "marin_to_lucy_for_review",
+    "blocked": false,
+    "block_reasons": []
+  },
+  "would_send_payload": {
+    "would_send": true,
+    "message_kind": "agent_dispatch",
+    "target_channel": "lucy-검토",
+    "content": "이 요청은 marin에게 배정되고, lucy 검토 흐름으로 이어집니다. 실제 외부 실행은 하지 않습니다.",
+    "metadata": {
+      "dispatch_to_agent": "marin",
+      "reviewer_agent": "lucy",
+      "approval_required": true,
+      "blocked": false
+    },
+    "safety": {
+      "discord_api_called": false,
+      "message_sent": false,
+      "external_execution": false,
+      "human_only_execution": true
+    }
+  },
+  "safety": {
+    "discord_api_called": false,
+    "gateway_connected": false,
+    "message_sent": false,
+    "external_execution": false,
+    "human_only_execution": true
+  }
+}

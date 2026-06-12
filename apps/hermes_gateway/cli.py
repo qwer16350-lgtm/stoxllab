@@ -11,6 +11,7 @@ from typing import Any
 from audit_log import build_audit_payload
 from config import load_config
 from discord_readiness import build_readiness_report
+from discord_adapter_stub import load_raw_events, run_discord_adapter_stub
 from discord_event_adapter import event_from_text, normalize_event
 from dispatcher import build_dispatch_plan
 from evaluator_bridge import evaluate_request
@@ -92,6 +93,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--author-role", default="Decision Maker", help="Author role for --text input.")
     parser.add_argument("--event", help="Path to a local JSON event.")
     parser.add_argument("--discord-readiness", action="store_true", help="Run Phase 17 read-only Discord readiness checks.")
+    parser.add_argument("--discord-raw-event", help="Run Phase 18 local Discord raw event adapter stub.")
     parser.add_argument("--mapping", help="Discord runtime mapping template for --discord-readiness.")
     parser.add_argument("--replay", help="Path to a local replay events JSON file.")
     parser.add_argument("--approval-actions", help="Path to mock approval actions JSON for --replay.")
@@ -116,6 +118,24 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- blocked_reasons: {len(output.get('blocked_reasons', []))}")
             print(f"- discord_api_called: {output.get('safety_assertions', {}).get('discord_api_called')}")
             print(f"- gateway_connected: {output.get('safety_assertions', {}).get('gateway_connected')}")
+        return 0
+
+    if args.discord_raw_event:
+        path = Path(args.discord_raw_event)
+        if not path.is_absolute():
+            path = Path.cwd() / path
+        events = load_raw_events(path)
+        cfg = load_config(Path(__file__).resolve())
+        results = [run_discord_adapter_stub(event, root=cfg.repo_root) for event in events]
+        output = {"adapter_type": "discord_adapter_stub_batch", "event_count": len(results), "results": results}
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Discord adapter stub result")
+            print(f"- event_count: {len(results)}")
+            for index, result in enumerate(results, start=1):
+                payload = result.get("would_send_payload", {})
+                print(f"- {index}: {payload.get('message_kind')} -> {payload.get('target_channel')}")
         return 0
 
     if args.replay:
@@ -149,6 +169,7 @@ def main(argv: list[str] | None = None) -> int:
     if (
         args.approval_actions
         or args.mapping
+        or args.discord_raw_event
         or args.export_log
         or args.log_root
         or args.review_packet
