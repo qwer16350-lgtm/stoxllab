@@ -1,0 +1,71 @@
+{
+  "checklist_type": "private_server_readonly_connection_checklist",
+  "version": "phase21_manual_plan",
+  "items": [
+    {"id": "git_clean", "label": "Git working tree is clean before connection planning", "required": true, "status": "manual_required"},
+    {"id": "config_validation_passed", "label": "Config validation passes", "required": true, "status": "manual_required"},
+    {"id": "local_tests_passed", "label": "All local Hermes Gateway tests pass", "required": true, "status": "manual_required"},
+    {"id": "mapping_copy_created", "label": "Runtime mapping copy is created outside committed template", "required": true, "status": "manual_required"},
+    {"id": "todo_placeholders_removed", "label": "TODO placeholders are removed from runtime mapping", "required": true, "status": "manual_required"},
+    {"id": "strict_mapping_validation_passed", "label": "Mapping validator strict mode passes", "required": true, "status": "manual_required"},
+    {"id": "owner_kim_confirmed", "label": "OWNER_KIM_DISCORD_ID is confirmed", "required": true, "status": "manual_required"},
+    {"id": "owner_lee_confirmed", "label": "OWNER_LEE_DISCORD_ID is confirmed", "required": true, "status": "manual_required"},
+    {"id": "required_roles_confirmed", "label": "All required roles are confirmed", "required": true, "status": "manual_required"},
+    {"id": "required_channels_confirmed", "label": "All required channels are confirmed", "required": true, "status": "manual_required"},
+    {"id": "approval_channel_confirmed", "label": "Final approval channel is confirmed", "required": true, "status": "manual_required"},
+    {"id": "audit_channel_confirmed", "label": "Audit log channel is confirmed", "required": true, "status": "manual_required"},
+    {"id": "readonly_bot_role_confirmed", "label": "Read Only Bot role is confirmed", "required": true, "status": "manual_required"},
+    {"id": "bot_token_not_in_mapping", "label": "Bot Token is not stored in mapping JSON", "required": true, "status": "manual_required"},
+    {"id": "env_not_created_yet", "label": ".env is still not created in this planning phase", "required": true, "status": "manual_required"},
+    {"id": "message_send_disabled", "label": "Message sending remains disabled", "required": true, "status": "manual_required"},
+    {"id": "external_execution_disabled", "label": "External execution remains disabled", "required": true, "status": "manual_required"},
+    {"id": "human_only_execution_preserved", "label": "human_only_execution is preserved", "required": true, "status": "manual_required"},
+    {"id": "rollback_plan_reviewed", "label": "Rollback plan is reviewed", "required": true, "status": "manual_required"},
+    {"id": "audit_log_plan_reviewed", "label": "Audit log plan is reviewed", "required": true, "status": "manual_required"},
+    {"id": "private_server_only", "label": "Testing is limited to a private Discord server", "required": true, "status": "manual_required"},
+    {"id": "no_rag_original_access", "label": "No external DB/RAG original access is planned", "required": true, "status": "manual_required"},
+    {"id": "no_secret_output", "label": "Secret redaction policy is confirmed", "required": true, "status": "manual_required"},
+    {"id": "approval_not_execution", "label": "Approval does not trigger external execution", "required": true, "status": "manual_required"}
+  ],
+  "required_values": [
+    "DISCORD_GUILD_ID",
+    "OWNER_KIM_DISCORD_ID",
+    "OWNER_LEE_DISCORD_ID",
+    "actual_channel_ids",
+    "actual_role_ids",
+    "audit_log_channel_id",
+    "read_only_bot_role_id",
+    "private_test_server_confirmation",
+    "bot_invite_permission_scope"
+  ],
+  "blocking_conditions": [
+    "git working tree is not clean",
+    "config validation fails",
+    "any local test fails",
+    "strict mapping validation fails",
+    "TODO placeholders remain",
+    "secret-like value appears in mapping or report",
+    "message sending is enabled",
+    "external execution is enabled",
+    "Bot Token appears in mapping JSON",
+    "target server is not private test server"
+  ],
+  "ready_definition": {
+    "all_required_items_complete": true,
+    "mapping_validator_strict_overall_valid": true,
+    "mapping_validator_ready_for_readonly_connection": true,
+    "message_send_disabled": true,
+    "external_execution_enabled": false,
+    "human_only_execution_preserved": true,
+    "discord_api_called_in_phase21": false,
+    "gateway_connected_in_phase21": false
+  },
+  "safety_assertions": {
+    "discord_api_called": false,
+    "gateway_connected": false,
+    "message_sent": false,
+    "external_execution_enabled": false,
+    "human_only_execution_preserved": true,
+    "bot_token_required_in_phase21": false
+  }
+}

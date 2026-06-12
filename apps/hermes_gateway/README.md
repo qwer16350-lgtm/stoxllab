@@ -35,6 +35,16 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - No real Discord approval buttons or messages.
 - No real Discord readiness check connects to Discord.
 
+## Phase 21 Read-Only Planning Docs
+
+- `docs/STOXL_PRIVATE_SERVER_READONLY_PLAN.md`
+- `docs/STOXL_DISCORD_MANUAL_MAPPING_GUIDE.md`
+- `docs/STOXL_DISCORD_ROLLBACK_AND_SAFETY.md`
+- `apps/hermes_gateway/examples/private_server_readonly_checklist.example.json`
+- `apps/hermes_gateway/examples/manual_mapping_fill_guide.example.md`
+
+These documents prepare for a later private server read-only connection review. They do not authorize or perform a Discord connection.
+
 ## Local Usage
 
 ```powershell
