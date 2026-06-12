@@ -1,0 +1,88 @@
+{
+  "version": 1,
+  "dry_run_only": true,
+  "source_of_truth": [
+    "config/stoxl/agents.yaml",
+    "config/stoxl/routing_rules.yaml",
+    "config/stoxl/status_tags.yaml"
+  ],
+  "handoffs": [
+    {
+      "handoff_id": "marin_to_lucy_for_review",
+      "from_agent": "marin",
+      "to_agent": "lucy",
+      "condition": "SNS, 홈페이지, 콘텐츠, 레퍼런스 초안이 루시 검토가 필요한 상태",
+      "required_payload": ["summary", "draft_items", "intent", "risks", "source_links", "uncertainty_notes"],
+      "target_channel": "lucy-검토",
+      "allowed_status_transition": ["초안", "검토중", "수정필요"],
+      "forbidden_payload": ["final_publish_copy", "approval_claim", "external_publish_instruction", "secret_values"],
+      "notes": "마린은 루시 검토 없이 최종 발행 또는 승인 요청을 확정하지 않는다."
+    },
+    {
+      "handoff_id": "lucy_to_decision_makers_for_approval",
+      "from_agent": "lucy",
+      "to_agent": "decision_makers",
+      "condition": "SNS 게시, 홈페이지 반영, 브랜드 공식 방향 확정 등 승인 게이트 대상",
+      "required_payload": ["summary", "recommendation_level", "reasons", "risks", "next_actions", "approval_required", "source_links", "uncertainty_notes"],
+      "target_channel": "최종-승인요청",
+      "allowed_status_transition": ["검토중", "승인대기", "승인됨", "보류", "폐기"],
+      "forbidden_payload": ["direct_publish_command", "homepage_deploy_command", "final_approval_by_agent", "secret_values"],
+      "notes": "루시는 보고와 승인 요청만 한다. 승인 후에도 실행은 human-only이다."
+    },
+    {
+      "handoff_id": "kasumi_to_meiko_for_review",
+      "from_agent": "kasumi",
+      "to_agent": "meiko",
+      "condition": "공모전/지원사업/외부 기회 후보가 수집되어 선임 판단이 필요한 상태",
+      "required_payload": ["candidate_name", "host", "due_date", "eligibility", "deliverables", "benefit", "source_url", "confirmation_status", "uncertainty_notes"],
+      "target_channel": "meiko-검토",
+      "allowed_status_transition": ["발견됨", "검토중", "보류", "폐기"],
+      "forbidden_payload": ["final_recommendation", "submission_instruction", "unsourced_fact", "secret_values"],
+      "notes": "카스미는 최종 추천을 확정하지 않는다. source_url과 확인 상태가 필요하다."
+    },
+    {
+      "handoff_id": "meiko_to_decision_makers_for_approval",
+      "from_agent": "meiko",
+      "to_agent": "decision_makers",
+      "condition": "지원 추천, 제출, 외부 연락, 계약성 응답 등 승인 게이트 대상",
+      "required_payload": ["summary", "recommendation_level", "conditions", "due_date", "deliverables", "risks", "next_actions", "approval_required", "source_links", "uncertainty_notes"],
+      "target_channel": "최종-승인요청",
+      "allowed_status_transition": ["검토중", "추천", "승인대기", "승인됨", "보류", "폐기"],
+      "forbidden_payload": ["direct_submission_command", "external_email_command", "contract_confirmation", "secret_values"],
+      "notes": "메이코는 판단과 보고만 한다. 실제 제출/연락/계약성 실행은 human-only이다."
+    },
+    {
+      "handoff_id": "reze_to_decision_makers_for_strategy_report",
+      "from_agent": "reze",
+      "to_agent": "decision_makers",
+      "condition": "브랜드/제품/사업 방향 제안 또는 공식 방향 논의가 필요한 상태",
+      "required_payload": ["summary", "recommendation_level", "reasons", "risks", "next_actions", "approval_required", "source_links", "uncertainty_notes"],
+      "target_channel": "대표-회의실",
+      "allowed_status_transition": ["발견됨", "검토중", "보류", "승인대기", "폐기"],
+      "forbidden_payload": ["direct_order_to_team", "official_direction_confirmation_by_agent", "external_execution_instruction", "secret_values"],
+      "notes": "레제는 전략 의견을 제시한다. 공식 방향 확정은 결정권자 승인 대상이다."
+    },
+    {
+      "handoff_id": "reze_to_lucy_for_marketing_strategy_opinion",
+      "from_agent": "reze",
+      "to_agent": "lucy",
+      "condition": "마케팅 방향, 콘텐츠 전략, 브랜드 발신에 대한 전략 의견이 필요한 상태",
+      "required_payload": ["summary", "strategic_judgment", "reasons", "risks", "next_questions", "source_links", "uncertainty_notes"],
+      "target_channel": "marketing-brief",
+      "allowed_status_transition": ["검토중", "보류", "수정필요"],
+      "forbidden_payload": ["direct_order_to_marketing_team", "override_lucy_review", "publish_instruction", "secret_values"],
+      "notes": "레제 의견은 보완 의견이다. 루시의 마케팅 검토를 덮어쓰지 않는다."
+    },
+    {
+      "handoff_id": "reze_to_meiko_for_operation_strategy_opinion",
+      "from_agent": "reze",
+      "to_agent": "meiko",
+      "condition": "운영 후보나 지원사업이 장기 브랜드 방향과 맞는지 전략 의견이 필요한 상태",
+      "required_payload": ["summary", "strategic_judgment", "reasons", "risks", "next_questions", "source_links", "uncertainty_notes"],
+      "target_channel": "operation-brief",
+      "allowed_status_transition": ["검토중", "보류", "추천", "비추천"],
+      "forbidden_payload": ["direct_order_to_operation_team", "override_meiko_decision", "submission_instruction", "secret_values"],
+      "notes": "레제 의견은 전략 참고 자료다. 메이코의 운영 판단을 덮어쓰지 않는다."
+    }
+  ]
+}

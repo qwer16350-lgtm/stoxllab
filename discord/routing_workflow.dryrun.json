@@ -1,0 +1,194 @@
+{
+  "version": 1,
+  "dry_run_only": true,
+  "source_of_truth": [
+    "config/stoxl/routing_rules.yaml",
+    "config/stoxl/workflow_rules.yaml",
+    "config/stoxl/report_formats.yaml",
+    "config/stoxl/status_tags.yaml"
+  ],
+  "phase_5_decisions": {
+    "discord_guild_id": "TODO in .env.example; real server target is not decided",
+    "role_id_style": "english_snake_case",
+    "role_display_name_style": "Korean display names allowed",
+    "decision_maker_can_execute_external_actions": false,
+    "external_execution_policy": "human_only"
+  },
+  "routes": [
+    {
+      "route_id": "sns_post_draft",
+      "trigger_examples": [
+        "인스타 업로드 문구 세 개 뽑아줘",
+        "SNS 게시 후보 만들어줘",
+        "제품 사진에 붙일 짧은 문구가 필요해"
+      ],
+      "source_channel_candidates": ["marketing-brief", "sns-콘텐츠", "marin-초안"],
+      "primary_agent": "marin",
+      "reviewer_agent": "lucy",
+      "final_report_channel": "최종-승인요청",
+      "approval_required": true,
+      "required_report_format": "marketing_report",
+      "allowed_next_statuses": ["초안", "검토중", "수정필요", "승인대기"],
+      "forbidden_shortcuts": [
+        "marin_finalize_publish_copy",
+        "marin_direct_final_approval_request_without_lucy",
+        "sns_publish_before_approval",
+        "agent_external_execution"
+      ],
+      "notes": "마린은 초안/후보만 작성하고 루시가 검토한다. 승인 후에도 봇은 직접 게시하지 않는다."
+    },
+    {
+      "route_id": "homepage_copy_draft",
+      "trigger_examples": [
+        "홈페이지 메인 문구 만들어줘",
+        "제품 상세페이지 문구 초안 잡아줘",
+        "브랜드 소개 섹션을 정리해줘"
+      ],
+      "source_channel_candidates": ["homepage", "marketing-brief", "marin-초안"],
+      "primary_agent": "marin",
+      "reviewer_agent": "lucy",
+      "final_report_channel": "lucy-검토 또는 최종-승인요청",
+      "approval_required": "true if external publish/upload",
+      "required_report_format": "marketing_report",
+      "allowed_next_statuses": ["초안", "검토중", "수정필요", "승인대기"],
+      "forbidden_shortcuts": [
+        "homepage_upload_before_approval",
+        "draft_presented_as_official_copy",
+        "marin_direct_final_approval_request_without_lucy",
+        "agent_external_execution"
+      ],
+      "notes": "초안 단계는 루시 검토로 넘기고, 실제 홈페이지 반영은 최종 승인 게이트 대상이다."
+    },
+    {
+      "route_id": "marketing_strategy_request",
+      "trigger_examples": [
+        "다음 달 마케팅 방향 잡아줘",
+        "콘텐츠 캘린더 방향을 정리해줘",
+        "이 캠페인 아이디어 검토해줘"
+      ],
+      "source_channel_candidates": ["marketing-brief", "lucy-검토", "대표-회의실"],
+      "primary_agent": "marin",
+      "reviewer_agent": "lucy",
+      "final_report_channel": "marketing-brief 또는 대표-회의실",
+      "approval_required": "false unless external execution",
+      "required_report_format": "marketing_report",
+      "allowed_next_statuses": ["초안", "검토중", "수정필요", "보류", "승인대기"],
+      "forbidden_shortcuts": [
+        "official_brand_direction_confirm_without_approval",
+        "reze_opinion_as_execution_order",
+        "agent_external_execution"
+      ],
+      "notes": "전략 의견은 내부 검토까지 가능하다. 공식 브랜드 방향 확정 또는 외부 실행으로 이어지면 승인 게이트를 적용한다."
+    },
+    {
+      "route_id": "competition_search",
+      "trigger_examples": [
+        "올해 12월까지 디자인 지원사업 찾아줘",
+        "건축 관련 공모전 찾아줘",
+        "팝업 지원사업 후보 정리해줘"
+      ],
+      "source_channel_candidates": ["operation-brief", "kasumi-리서치", "공모전-지원사업"],
+      "primary_agent": "kasumi",
+      "reviewer_agent": "meiko",
+      "final_report_channel": "meiko-검토",
+      "approval_required": "false at search stage",
+      "required_report_format": "operation_report",
+      "allowed_next_statuses": ["발견됨", "검토중", "보류", "폐기"],
+      "forbidden_shortcuts": [
+        "kasumi_final_recommendation",
+        "unsourced_research_as_fact",
+        "direct_submission",
+        "agent_external_execution"
+      ],
+      "notes": "검색 단계에서는 source_url과 확인 상태가 필요하다. 카스미는 최종 추천을 확정하지 않는다."
+    },
+    {
+      "route_id": "grant_or_competition_decision",
+      "trigger_examples": [
+        "이 지원사업 우리가 넣을만해?",
+        "이 공모전 지원 추천이야?",
+        "이 후보를 제출할지 판단해줘"
+      ],
+      "source_channel_candidates": ["meiko-검토", "공모전-지원사업", "일정-마감관리"],
+      "primary_agent": "meiko",
+      "reviewer_agent": null,
+      "final_report_channel": "최종-승인요청",
+      "approval_required": true,
+      "required_report_format": "operation_report",
+      "allowed_next_statuses": ["검토중", "추천", "비추천", "보류", "승인대기"],
+      "forbidden_shortcuts": [
+        "submit_before_approval",
+        "recommend_without_risk",
+        "external_contact_before_approval",
+        "agent_external_execution"
+      ],
+      "notes": "메이코는 추천/보류/비추천 판단을 보고한다. 실제 제출과 외부 연락은 human-only action이다."
+    },
+    {
+      "route_id": "schedule_deadline_followup",
+      "trigger_examples": [
+        "마감 7일 전 후보가 있어",
+        "지원사업 마감 일정 확인해줘",
+        "제출물 준비 일정을 정리해줘"
+      ],
+      "source_channel_candidates": ["일정-마감관리", "공모전-지원사업", "operation-brief"],
+      "primary_agent": "kasumi",
+      "reviewer_agent": "meiko",
+      "final_report_channel": "일정-마감관리",
+      "approval_required": "false unless external commitment",
+      "required_report_format": "operation_report",
+      "allowed_next_statuses": ["발견됨", "검토중", "진행중", "승인대기", "보류"],
+      "forbidden_shortcuts": [
+        "create_deadline_for_unknown_due_date",
+        "auto_submit",
+        "external_commitment_without_approval",
+        "agent_external_execution"
+      ],
+      "notes": "마감 추적과 알림은 가능하지만 자동 제출은 금지한다."
+    },
+    {
+      "route_id": "strategy_product_idea",
+      "trigger_examples": [
+        "스톡슬 신규 제품 방향 제안해줘",
+        "팝업 방향 아이디어를 내줘",
+        "이 브랜드 라인을 확장할 수 있을까?"
+      ],
+      "source_channel_candidates": ["reze-전략기획", "product-ideas", "new-business", "대표-회의실"],
+      "primary_agent": "reze",
+      "reviewer_agent": null,
+      "final_report_channel": "대표-회의실",
+      "approval_required": "false unless official direction or external execution",
+      "required_report_format": "strategy_report",
+      "allowed_next_statuses": ["발견됨", "검토중", "보류", "폐기", "승인대기"],
+      "forbidden_shortcuts": [
+        "official_brand_direction_confirm_without_approval",
+        "direct_order_to_team",
+        "strategy_opinion_as_execution_order",
+        "agent_external_execution"
+      ],
+      "notes": "레제는 전략 의견을 제시한다. 공식 방향 확정은 승인 게이트 대상이다."
+    },
+    {
+      "route_id": "strategy_review_of_marketing_or_operation",
+      "trigger_examples": [
+        "이 마케팅 방향 스톡슬다워?",
+        "이 지원사업이 장기 방향과 맞아?",
+        "운영팀 제안에 전략 의견 줘"
+      ],
+      "source_channel_candidates": ["대표-회의실", "marketing-brief", "operation-brief", "new-business"],
+      "primary_agent": "reze",
+      "reviewer_agent": "relevant_senior_agent",
+      "final_report_channel": "대표-회의실 or relevant team brief",
+      "approval_required": false,
+      "required_report_format": "strategy_report",
+      "allowed_next_statuses": ["검토중", "보류", "추천", "비추천"],
+      "forbidden_shortcuts": [
+        "direct_order_to_team",
+        "override_lucy_or_meiko_final_judgment",
+        "strategy_opinion_as_execution_order",
+        "agent_external_execution"
+      ],
+      "notes": "레제는 마케팅팀/운영팀에 전략 의견을 낼 수 있지만 실무 명령권은 없다."
+    }
+  ]
+}
