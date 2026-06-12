@@ -1,0 +1,91 @@
+{
+  "version": 1,
+  "dry_run_only": true,
+  "scope": "status transition guardrail scenarios only; no executable tests",
+  "status_tags": [
+    "발견됨",
+    "초안",
+    "검토중",
+    "수정필요",
+    "추천",
+    "비추천",
+    "보류",
+    "승인대기",
+    "승인됨",
+    "진행중",
+    "완료",
+    "폐기",
+    "아카이브"
+  ],
+  "allowed_transitions_reference": {
+    "발견됨": ["검토중", "보류", "폐기"],
+    "초안": ["검토중", "수정필요", "보류"],
+    "검토중": ["추천", "수정필요", "보류", "비추천", "승인대기"],
+    "수정필요": ["초안", "검토중", "보류"],
+    "추천": ["승인대기", "보류", "진행중"],
+    "비추천": ["보류", "폐기"],
+    "보류": ["검토중", "폐기", "아카이브"],
+    "승인대기": ["승인됨", "보류", "폐기"],
+    "승인됨": ["진행중", "완료"],
+    "진행중": ["완료", "보류", "폐기"],
+    "완료": ["아카이브"],
+    "폐기": ["아카이브"],
+    "아카이브": []
+  },
+  "test_cases": [
+    {
+      "test_id": "STATUS-DRY-001",
+      "description": "후임이 직접 승인됨으로 전환 불가.",
+      "actor": "marin_or_kasumi",
+      "from_status": "초안",
+      "to_status": "승인됨",
+      "expected_result": "blocked",
+      "pass_condition": "후임은 선임 검토와 승인대기를 거쳐야 한다."
+    },
+    {
+      "test_id": "STATUS-DRY-002",
+      "description": "후임이 직접 아카이브 확정 불가.",
+      "actor": "marin_or_kasumi",
+      "from_status": "보류",
+      "to_status": "아카이브",
+      "expected_result": "blocked",
+      "pass_condition": "관련 선임 또는 결정권자가 archive 이동을 확정한다."
+    },
+    {
+      "test_id": "STATUS-DRY-003",
+      "description": "승인대기 없이 승인됨으로 점프 불가.",
+      "actor": "any_agent",
+      "from_status": "검토중",
+      "to_status": "승인됨",
+      "expected_result": "blocked",
+      "pass_condition": "검토중에서 승인대기를 거쳐야 승인됨으로 갈 수 있다."
+    },
+    {
+      "test_id": "STATUS-DRY-004",
+      "description": "폐기 후에는 아카이브로만 이동 가능.",
+      "actor": "authorized_senior_or_owner",
+      "from_status": "폐기",
+      "to_status": "검토중",
+      "expected_result": "blocked",
+      "pass_condition": "폐기 상태의 allowed_next_statuses는 아카이브뿐이다."
+    },
+    {
+      "test_id": "STATUS-DRY-005",
+      "description": "완료 후에는 아카이브로만 이동 가능.",
+      "actor": "authorized_senior_or_owner",
+      "from_status": "완료",
+      "to_status": "진행중",
+      "expected_result": "blocked",
+      "pass_condition": "완료 상태의 allowed_next_statuses는 아카이브뿐이다."
+    },
+    {
+      "test_id": "STATUS-DRY-006",
+      "description": "외부 실행이 필요한 작업은 승인됨 이후에도 봇 실행으로 가지 않고 human-only 상태로 남음.",
+      "actor": "any_agent",
+      "from_status": "승인됨",
+      "to_status": "bot_external_execution",
+      "expected_result": "blocked",
+      "pass_condition": "승인됨 이후에도 external_execution_allowed_after_approval=false, human_only_execution=true이다."
+    }
+  ]
+}

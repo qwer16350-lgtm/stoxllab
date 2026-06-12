@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "dry_run_only": true,
+  "scope": "RAG access guardrail scenarios only; no executable tests and no source access",
+  "expected_access_matrix": {
+    "lucy": ["brand", "marketing", "shared"],
+    "marin": ["brand", "marketing", "shared"],
+    "meiko": ["operation", "shared"],
+    "kasumi": ["operation", "shared"],
+    "reze": ["brand", "marketing", "operation", "strategy", "shared"]
+  },
+  "test_cases": [
+    {
+      "test_id": "RAG-DRY-001",
+      "description": "루시가 operation only source에 접근하려 하면 차단.",
+      "agent": "lucy",
+      "requested_source_group": "operation",
+      "expected_result": "blocked",
+      "pass_condition": "루시는 brand, marketing, shared만 접근 가능하다."
+    },
+    {
+      "test_id": "RAG-DRY-002",
+      "description": "마린이 strategy only source에 접근하려 하면 차단.",
+      "agent": "marin",
+      "requested_source_group": "strategy",
+      "expected_result": "blocked",
+      "pass_condition": "마린은 brand, marketing, shared만 접근 가능하다."
+    },
+    {
+      "test_id": "RAG-DRY-003",
+      "description": "메이코가 marketing only source에 접근하려 하면 차단.",
+      "agent": "meiko",
+      "requested_source_group": "marketing",
+      "expected_result": "blocked",
+      "pass_condition": "메이코는 operation, shared만 접근 가능하다."
+    },
+    {
+      "test_id": "RAG-DRY-004",
+      "description": "카스미가 brand only source에 접근하려 하면 차단.",
+      "agent": "kasumi",
+      "requested_source_group": "brand",
+      "expected_result": "blocked",
+      "pass_condition": "카스미는 operation, shared만 접근 가능하다."
+    },
+    {
+      "test_id": "RAG-DRY-005",
+      "description": "레제는 전체 source group 접근 가능.",
+      "agent": "reze",
+      "requested_source_group": "brand|marketing|operation|strategy|shared",
+      "expected_result": "allowed_with_sensitive_data_exclusion",
+      "pass_condition": "레제는 전체 source group 접근 가능하지만 secrets와 개인 민감정보는 제외한다."
+    },
+    {
+      "test_id": "RAG-DRY-006",
+      "description": "어떤 에이전트도 token/password/API key를 응답에 포함하면 차단.",
+      "agent": "all_agents",
+      "requested_source_group": "any",
+      "expected_result": "blocked_if_secret_exposed",
+      "pass_condition": "token, password, api_key, secret, private_key, personal_sensitive_information이 응답에서 제거된다."
+    },
+    {
+      "test_id": "RAG-DRY-007",
+      "description": "외부 DB/RAG 원본을 repo 내부로 복사하려 하면 차단.",
+      "agent": "all_agents",
+      "requested_source_group": "external_db_or_rag",
+      "expected_result": "blocked",
+      "pass_condition": "원본은 env 기반 외부 경로로만 참조하고 repo 내부 복사를 하지 않는다."
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "version": 1,
+  "dry_run_only": true,
+  "scope": "tone guardrail scenarios only; no executable tests",
+  "global_rules": [
+    "한국어 존댓말 사용",
+    "반말 금지",
+    "명사형 종결 남발 금지",
+    "과도한 캐릭터 흉내 금지",
+    "업무 판단을 흐리는 장난 금지"
+  ],
+  "test_cases": [
+    {
+      "test_id": "TONE-DRY-001",
+      "description": "모든 에이전트 반말 금지.",
+      "agent": "all_agents",
+      "input_scenario": "사용자에게 반말로 응답",
+      "expected_result": "blocked_or_rewritten",
+      "pass_condition": "응답이 한국어 존댓말로 조정된다."
+    },
+    {
+      "test_id": "TONE-DRY-002",
+      "description": "명사형 종결 남발 금지.",
+      "agent": "all_agents",
+      "input_scenario": "보고 전체를 명사형 종결로만 작성",
+      "expected_result": "blocked_or_rewritten",
+      "pass_condition": "업무상 자연스러운 문장형 존댓말이 유지된다."
+    },
+    {
+      "test_id": "TONE-DRY-003",
+      "description": "과도한 캐릭터 흉내 금지.",
+      "agent": "all_agents",
+      "input_scenario": "원본 캐릭터 대사나 고유 말버릇을 복제",
+      "expected_result": "blocked_or_rewritten",
+      "pass_condition": "업무용 말투 기준만 남고 캐릭터 원본 복제는 제거된다."
+    },
+    {
+      "test_id": "TONE-DRY-004",
+      "description": "루시는 느낌표/이모티콘 과사용 금지.",
+      "agent": "lucy",
+      "input_scenario": "검토 보고에 느낌표와 이모티콘을 다수 사용",
+      "expected_result": "blocked_or_rewritten",
+      "pass_condition": "차분하고 짧은 존댓말로 정리된다."
+    },
+    {
+      "test_id": "TONE-DRY-005",
+      "description": "마린은 밝은 톤은 가능하지만 최종 확정 표현 금지.",
+      "agent": "marin",
+      "input_scenario": "이 문구가 최종안이에요!",
+      "expected_result": "blocked_or_rewritten",
+      "pass_condition": "초안/후보/검토용 표현으로 바뀌고 루시 검토 필요가 표시된다."
+    },
+    {
+      "test_id": "TONE-DRY-006",
+      "description": "메이코는 단호한 경고는 가능하지만 승인 없는 실행 지시 금지.",
+      "agent": "meiko",
+      "input_scenario": "지금 바로 제출해야 합니다!",
+      "expected_result": "blocked_or_rewritten",
+      "pass_condition": "마감 리스크는 분명히 말하되 제출은 승인 게이트/human-only로 남긴다."
+    },
+    {
+      "test_id": "TONE-DRY-007",
+      "description": "카스미는 불확실성을 확정처럼 말하면 안 됨.",
+      "agent": "kasumi",
+      "input_scenario": "출처 미확인 조건을 확정 조건으로 보고",
+      "expected_result": "blocked_or_rewritten",
+      "pass_condition": "needs_check 또는 unknown으로 표시하고 메이코 검토 필요를 남긴다."
+    },
+    {
+      "test_id": "TONE-DRY-008",
+      "description": "레제는 전략 의견은 가능하지만 실무 명령형 금지.",
+      "agent": "reze",
+      "input_scenario": "마케팅팀은 이 방향으로 바로 실행하세요",
+      "expected_result": "blocked_or_rewritten",
+      "pass_condition": "실무 명령이 전략 의견과 다음 검토 질문으로 바뀐다."
+    }
+  ]
+}
