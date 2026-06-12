@@ -12,6 +12,7 @@ from audit_log import build_audit_payload
 from config import load_config
 from discord_readiness import build_readiness_report
 from discord_adapter_stub import load_raw_events, run_discord_adapter_stub
+from discord_replay import load_discord_raw_events, run_discord_raw_event_replay
 from discord_event_adapter import event_from_text, normalize_event
 from dispatcher import build_dispatch_plan
 from evaluator_bridge import evaluate_request
@@ -94,6 +95,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--event", help="Path to a local JSON event.")
     parser.add_argument("--discord-readiness", action="store_true", help="Run Phase 17 read-only Discord readiness checks.")
     parser.add_argument("--discord-raw-event", help="Run Phase 18 local Discord raw event adapter stub.")
+    parser.add_argument("--discord-replay", help="Run Phase 19 local Discord raw event replay.")
     parser.add_argument("--mapping", help="Discord runtime mapping template for --discord-readiness.")
     parser.add_argument("--replay", help="Path to a local replay events JSON file.")
     parser.add_argument("--approval-actions", help="Path to mock approval actions JSON for --replay.")
@@ -138,6 +140,48 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"- {index}: {payload.get('message_kind')} -> {payload.get('target_channel')}")
         return 0
 
+    if args.discord_replay:
+        path = Path(args.discord_replay)
+        if not path.is_absolute():
+            path = Path.cwd() / path
+        cfg = load_config(Path(__file__).resolve())
+        events = load_discord_raw_events(path)
+        approval_actions = None
+        if args.approval_actions:
+            actions_path = Path(args.approval_actions)
+            if not actions_path.is_absolute():
+                actions_path = Path.cwd() / actions_path
+            actions_data = json.loads(actions_path.read_text(encoding="utf-8"))
+            approval_actions = actions_data if isinstance(actions_data, list) else actions_data.get("actions", [])
+        output = run_discord_raw_event_replay(
+            events,
+            root=cfg.repo_root,
+            approval_actions=approval_actions,
+            include_review_packet=args.review_packet or args.export_review_packet,
+        )
+        output["source_event_file"] = str(path)
+        if args.export_log:
+            log_root = Path(args.log_root) if args.log_root else get_default_log_root(cfg.repo_root)
+            if not log_root.is_absolute():
+                log_root = cfg.repo_root / log_root
+            output["export_summary"] = export_replay_result(output, log_root, dry_run=args.dry_run_export)
+        elif args.log_root:
+            parser.error("--log-root can only be used with --export-log.")
+        if args.export_review_packet:
+            if not output.get("review_packet"):
+                output["review_packet"] = build_review_packet(output)
+            export_root = Path(args.review_export_root) if args.review_export_root else cfg.repo_root / "exports" / "hermes_gateway" / "review_packets"
+            if not export_root.is_absolute():
+                export_root = cfg.repo_root / export_root
+            output["review_packet_export"] = export_review_packet(output["review_packet"], export_root, dry_run=args.dry_run_export)
+        elif args.review_export_root:
+            parser.error("--review-export-root can only be used with --export-review-packet.")
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print_replay_human(output)
+        return 0
+
     if args.replay:
         output = run_replay(args.replay, args.approval_actions)
         cfg = load_config(Path(__file__).resolve())
@@ -170,6 +214,7 @@ def main(argv: list[str] | None = None) -> int:
         args.approval_actions
         or args.mapping
         or args.discord_raw_event
+        or args.discord_replay
         or args.export_log
         or args.log_root
         or args.review_packet
