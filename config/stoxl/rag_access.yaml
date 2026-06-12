@@ -7,7 +7,7 @@ external_data_sources:
     preferred_runtime_path: UNC
     mapped_drive_note: Z 드라이브는 사용자 세션에 의존하므로 런타임에서는 UNC fallback을 우선 권장한다.
     repo_operation_folder_canonical: rag\operation
-    plural_operations_normalization: operation
+    plural_operation_normalization: operation
   roots:
     database:
       mapped_drive_env_key: STOXL_DB_ROOT

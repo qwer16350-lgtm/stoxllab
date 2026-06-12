@@ -15,7 +15,7 @@
       "purpose": "최종 승인, 공식 결정, 운영 원칙 확정",
       "permission_summary": "모든 주요 채널 read/write, 최종-승인요청 승인 가능",
       "can_approve": true,
-      "can_execute_external_actions": true
+      "can_execute_external_actions": false
     },
     {
       "role_id": "role_marketing_senior",
