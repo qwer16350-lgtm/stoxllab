@@ -1,0 +1,20 @@
+{
+  "actions": [
+    {
+      "source_event_id": "rp_evt_sns_publish_001",
+      "decision": "approve",
+      "decision_by": "TODO_DECISION_MAKER",
+      "decision_role": "Decision Maker",
+      "decision_note": "SNS 게시 방향은 승인하지만 실제 게시 실행은 사람이 직접 진행한다.",
+      "decided_at": "2026-06-12T10:00:00+09:00"
+    },
+    {
+      "source_event_id": "rp_evt_homepage_upload_002",
+      "decision": "reject",
+      "decision_by": "TODO_DECISION_MAKER",
+      "decision_role": "Decision Maker",
+      "decision_note": "홈페이지 반영 전 문구 재검토가 필요하다.",
+      "decided_at": "2026-06-12T10:05:00+09:00"
+    }
+  ]
+}

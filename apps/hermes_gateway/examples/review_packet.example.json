@@ -1,0 +1,87 @@
+{
+  "packet_id": "review_packet_example",
+  "packet_type": "approval_review_packet",
+  "created_at": "2026-06-12T00:00:00+00:00",
+  "source_replay_id": "replay_example",
+  "summary": {
+    "total_events": 6,
+    "blocked_count": 4,
+    "approval_required_count": 4,
+    "pending_count": 2,
+    "approved_count": 1,
+    "rejected_count": 1,
+    "human_only_execution_count": 4,
+    "external_execution_count": 0
+  },
+  "decision_maker_notice": "This packet is for review only. It is not a Discord button/message UI, and approval does not trigger SNS posting, homepage upload, grant submission, email, or contract execution.",
+  "items": [
+    {
+      "approval_id": "approval_example_sns",
+      "source_event_id": "rp_evt_sns_publish_001",
+      "requested_action": "sns_publish",
+      "request_summary": "SNS publish request for review.",
+      "primary_agent": "marin",
+      "reviewer_agent": null,
+      "final_report_channel": "최종-승인요청",
+      "status": "approved",
+      "risk_level": "medium",
+      "risk_reasons": [
+        "Public-facing publish/upload action: sns_publish"
+      ],
+      "human_only_execution": true,
+      "external_execution_allowed": false,
+      "decision_options": [
+        "approve",
+        "reject"
+      ],
+      "recommended_decision": "manual_review_required",
+      "decision_note_template": "Approval does not trigger external execution; a human must perform any approved external action separately.",
+      "block_reasons": [
+        "Approval gate required for action: sns_publish"
+      ],
+      "audit_refs": [
+        "audit_example_sns"
+      ]
+    },
+    {
+      "approval_id": "blocked_example_secret",
+      "source_event_id": "[REDACTED]",
+      "requested_action": "sensitive_info_request",
+      "request_summary": "[REDACTED]",
+      "primary_agent": null,
+      "reviewer_agent": null,
+      "final_report_channel": null,
+      "status": "blocked",
+      "risk_level": "high",
+      "risk_reasons": [
+        "[REDACTED]"
+      ],
+      "human_only_execution": true,
+      "external_execution_allowed": false,
+      "decision_options": [
+        "reject"
+      ],
+      "recommended_decision": "reject",
+      "decision_note_template": "Reject. Do not expose tokens, API keys, passwords, or secrets.",
+      "block_reasons": [
+        "Sensitive data exposure request is forbidden"
+      ],
+      "audit_refs": [
+        "audit_example_secret"
+      ]
+    }
+  ],
+  "safety_assertions": [
+    {
+      "rule": "external_execution_count_is_zero",
+      "passed": true,
+      "details": "Replay never converts approvals into external execution."
+    }
+  ],
+  "recommended_actions": [
+    "Review each high/medium risk item manually.",
+    "Reject any sensitive information request.",
+    "Keep approved external actions human-only."
+  ],
+  "redaction_applied": true
+}

@@ -17,6 +17,7 @@ from log_exporter import export_replay_result
 from persistence import get_default_log_root
 from registry_loader import load_registry
 from replay import run_replay
+from review_packet import build_review_packet, export_review_packet
 
 
 def load_event_file(path: str) -> dict[str, Any]:
@@ -69,6 +70,10 @@ def print_replay_human(output: dict[str, Any]) -> None:
     print(f"- rejected_count: {summary.get('rejected_count')}")
     print(f"- human_only_execution_count: {summary.get('human_only_execution_count')}")
     print(f"- external_execution_count: {summary.get('external_execution_count')}")
+    if output.get("review_packet"):
+        print(f"- review_packet_items: {len(output['review_packet'].get('items', []))}")
+    if output.get("review_packet_export"):
+        print(f"- review_packet_export: {output['review_packet_export']}")
     if output.get("export_summary"):
         print(f"- export_summary: {output['export_summary']}")
     if output.get("warnings"):
@@ -89,26 +94,51 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--approval-actions", help="Path to mock approval actions JSON for --replay.")
     parser.add_argument("--export-log", action="store_true", help="Export replay results to local JSON/JSONL logs.")
     parser.add_argument("--log-root", help="Log root for --export-log. Defaults to logs/hermes_gateway.")
-    parser.add_argument("--dry-run-export", action="store_true", help="Build export plan without writing log files.")
+    parser.add_argument("--review-packet", action="store_true", help="Build an approval review packet from replay results.")
+    parser.add_argument("--export-review-packet", action="store_true", help="Export review packet JSON and Markdown.")
+    parser.add_argument("--review-export-root", help="Export root for review packets. Defaults to exports/hermes_gateway/review_packets.")
+    parser.add_argument("--dry-run-export", action="store_true", help="Build export plan without writing files.")
     parser.add_argument("--json", action="store_true", help="Print JSON output.")
     args = parser.parse_args(argv)
 
     if args.replay:
         output = run_replay(args.replay, args.approval_actions)
-        if args.export_log or args.dry_run_export:
-            cfg = load_config(Path(__file__).resolve())
+        cfg = load_config(Path(__file__).resolve())
+        if args.export_log:
             log_root = Path(args.log_root) if args.log_root else get_default_log_root(cfg.repo_root)
             if not log_root.is_absolute():
                 log_root = cfg.repo_root / log_root
             output["export_summary"] = export_replay_result(output, log_root, dry_run=args.dry_run_export)
+        elif args.log_root:
+            parser.error("--log-root can only be used with --export-log.")
+
+        if args.review_packet or args.export_review_packet:
+            packet = build_review_packet(output)
+            output["review_packet"] = packet
+            if args.export_review_packet:
+                export_root = Path(args.review_export_root) if args.review_export_root else cfg.repo_root / "exports" / "hermes_gateway" / "review_packets"
+                if not export_root.is_absolute():
+                    export_root = cfg.repo_root / export_root
+                output["review_packet_export"] = export_review_packet(packet, export_root, dry_run=args.dry_run_export)
+        elif args.review_export_root:
+            parser.error("--review-export-root can only be used with --export-review-packet.")
+
         if args.json:
             print(json.dumps(output, ensure_ascii=False, indent=2))
         else:
             print_replay_human(output)
         return 0
 
-    if args.approval_actions or args.export_log or args.log_root or args.dry_run_export:
-        parser.error("--approval-actions, --export-log, --log-root, and --dry-run-export can only be used with --replay.")
+    if (
+        args.approval_actions
+        or args.export_log
+        or args.log_root
+        or args.review_packet
+        or args.export_review_packet
+        or args.review_export_root
+        or args.dry_run_export
+    ):
+        parser.error("Replay/export options can only be used with --replay.")
     if args.event:
         event = load_event_file(args.event)
     elif args.text:

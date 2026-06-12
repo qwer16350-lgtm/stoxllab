@@ -11,3 +11,6 @@ Thumbs.db
 # Hermes Gateway local dry-run logs
 logs/hermes_gateway/
 logs/hermes_gateway_test/
+
+# Hermes Gateway local export artifacts
+exports/hermes_gateway/
