@@ -33,6 +33,7 @@ def build_discord_intents() -> dict[str, Any]:
 
 def build_ready_visibility(client: Any, runtime_env: dict[str, Any] | None = None) -> dict[str, Any]:
     env = runtime_env or {}
+    private_policy = build_private_test_reply_policy(env)
     user = getattr(client, "user", None)
     guilds = getattr(client, "guilds", []) or []
     return {
@@ -42,6 +43,9 @@ def build_ready_visibility(client: Any, runtime_env: dict[str, Any] | None = Non
         "connected_guild_count": len(guilds),
         "target_guild_configured": bool(env.get("guild_id_present") or env.get("target_guild_configured")),
         "send_disabled": not bool(env.get("send_messages")),
+        "general_send_disabled": True,
+        "private_test_reply_enabled": bool(private_policy.get("private_test_reply_enabled") and private_policy.get("send_messages")),
+        "private_test_channel_configured": bool(private_policy.get("private_test_channel_id_present")),
         "external_disabled": not bool(env.get("external_execution")),
         "llm_disabled": not bool(env.get("llm_enabled")),
         "rag_disabled": not bool(env.get("rag_enabled")),
@@ -57,7 +61,9 @@ def print_ready_visibility(client: Any, runtime_env: dict[str, Any] | None = Non
         f"bot_user={visibility['bot_user_name']}:{visibility['bot_user_id']} "
         f"guilds={visibility['connected_guild_count']} "
         f"target_guild_configured={str(visibility['target_guild_configured']).lower()} "
-        f"send_disabled={str(visibility['send_disabled']).lower()} "
+        f"general_send_disabled={str(visibility['general_send_disabled']).lower()} "
+        f"private_test_reply_enabled={str(visibility['private_test_reply_enabled']).lower()} "
+        f"private_test_channel_configured={str(visibility['private_test_channel_configured']).lower()} "
         f"external_disabled={str(visibility['external_disabled']).lower()} "
         f"llm_disabled={str(visibility['llm_disabled']).lower()} "
         f"rag_disabled={str(visibility['rag_disabled']).lower()}",
@@ -120,6 +126,8 @@ def build_readonly_runtime_report(root: str | Path | None = None) -> dict[str, A
         "rag_enabled": False,
         "token_present": token_report["token_present"],
         "token_value_logged": False,
+        "private_test_reply_enabled": bool(runtime_env.get("private_test_reply_enabled")),
+        "private_test_channel_configured": bool(runtime_env.get("private_test_channel_id_present")),
         "runtime_readiness": readiness,
         "ready_for_phase29_readonly_runtime": readiness["ready_for_phase29_readonly_runtime"],
         "intents": build_discord_intents(),
@@ -182,6 +190,7 @@ def run_readonly_discord_bot(root: str | Path | None = None, runtime_env: dict[s
     client = discord.Client(intents=intents)
 
     visibility_context = load_visibility_context(repo_root)
+    visibility_context["private_test_channel_id"] = private_reply_policy.get("_private_test_channel_id", "")
 
     @client.event
     async def on_ready() -> None:
@@ -199,11 +208,24 @@ def run_readonly_discord_bot(root: str | Path | None = None, runtime_env: dict[s
         placeholder = result.get("agent_placeholder_response", {})
         payload = build_private_test_reply_payload(message, placeholder, private_reply_policy)
         if payload.get("will_send"):
-            reply_audit = await send_private_test_reply_only(message.channel, payload, private_reply_policy)
             print(
                 "[PRIVATE_TEST_REPLY] "
-                f"sent={str(reply_audit.get('message_sent', False)).lower()} "
-                f"reason={reply_audit.get('reason', '')}",
+                f"private_test_reply_allowed channel={payload.get('decision', {}).get('channel_name', '')} "
+                "source=agent_placeholder_response "
+                f"will_send={str(payload.get('will_send', False)).lower()}",
+                flush=True,
+            )
+            reply_audit = await send_private_test_reply_only(message.channel, payload, private_reply_policy)
+            print(
+                "[PRIVATE_TEST_REPLY_SENT] "
+                f"message_sent={str(reply_audit.get('message_sent', False)).lower()} "
+                f"channel={payload.get('decision', {}).get('channel_name', '')}",
+                flush=True,
+            )
+        elif result.get("visibility_event", {}).get("channel_is_private_test") or private_reply_policy.get("private_test_reply_enabled"):
+            print(
+                "[PRIVATE_TEST_REPLY] "
+                f"blocked reason={payload.get('decision', {}).get('reason', '')}",
                 flush=True,
             )
 

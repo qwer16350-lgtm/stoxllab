@@ -1,10 +1,11 @@
-"""Audit-only processing for live Discord message events."""
+﻿"""Audit-only processing for live Discord message events."""
 
 from __future__ import annotations
 
 import re
 import json
 import base64
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -28,20 +29,14 @@ KNOWN_MAPPED_CHANNELS = {
     "brand-rag": "rag_summary",
     "new-business": "new_business",
     "product-ideas": "product_ideas",
-    "marin-초안": "junior_draft",
-    "lucy-검토": "senior_review",
-    "sns-콘텐츠": "sns_content",
-    "meiko-검토": "senior_operation_review",
-    "kasumi-리서치": "junior_research",
-    "공모전-지원사업": "grant_competition",
-    "일정-마감관리": "deadline_management",
-    "reze-전략기획": "strategy_planning",
-    "marin-珥덉븞": "junior_draft",
-    "lucy-寃??": "senior_review",
-    "sns-肄섑뀗痢?": "sns_content",
-    "meiko-寃??": "senior_operation_review",
-    "kasumi-由ъ꽌移?": "junior_research",
-    "reze-?꾨왂湲고쉷": "strategy_planning",
+    "marin-draft": "junior_draft",
+    "lucy-review": "senior_review",
+    "sns-content": "sns_content",
+    "meiko-review": "senior_operation_review",
+    "kasumi-research": "junior_research",
+    "grant-support": "grant_competition",
+    "deadline-management": "deadline_management",
+    "reze-strategy": "strategy_planning",
 }
 
 
@@ -133,6 +128,7 @@ def load_visibility_context(root: str | Path | None = None) -> dict[str, Any]:
         "allowed_guild_id": "",
         "mapped_channel_names": dict(KNOWN_MAPPED_CHANNELS),
         "mapped_channel_ids": {},
+        "private_test_channel_id": os.environ.get("HERMES_DISCORD_PRIVATE_TEST_CHANNEL_ID", ""),
     }
     for path in candidates:
         if not path.exists():
@@ -175,7 +171,9 @@ def build_visibility_event(event: dict[str, Any], context: dict[str, Any] | None
     visibility_context = context or load_visibility_context()
     initial_channel = _channel_mapping(event, visibility_context)
     raw_guild_id = _decode_internal_id(event.get("_raw_guild_id", ""))
+    raw_channel_id = _decode_internal_id(event.get("_raw_channel_id", ""))
     allowed_guild_id = visibility_context.get("allowed_guild_id", "")
+    private_test_channel_id = str(visibility_context.get("private_test_channel_id", "") or "")
     target_guild_configured = bool(visibility_context.get("guild_configured") and allowed_guild_id)
     guild_matches_target = target_guild_configured and bool(raw_guild_id) and raw_guild_id == allowed_guild_id
     guild_unknown = not bool(raw_guild_id)
@@ -188,6 +186,7 @@ def build_visibility_event(event: dict[str, Any], context: dict[str, Any] | None
     author_is_bot = bool(event.get("author", {}).get("bot") or event.get("author_is_bot"))
     content = str(event.get("content") or "")
     content_present = bool(content.strip())
+    channel_is_private_test = bool(private_test_channel_id and raw_channel_id == private_test_channel_id)
 
     if author_is_bot:
         decision = "ignored_self_message"
@@ -195,6 +194,9 @@ def build_visibility_event(event: dict[str, Any], context: dict[str, Any] | None
     elif not guild_allowed:
         decision = "ignored_guild_not_allowed"
         reason = "ignored_guild_not_allowed"
+    elif channel_is_private_test:
+        decision = "accepted_private_test_channel"
+        reason = "accepted_private_test_channel"
     elif not channel["mapped"]:
         decision = "ignored_unmapped_channel"
         reason = "ignored_unmapped_channel"
@@ -214,6 +216,7 @@ def build_visibility_event(event: dict[str, Any], context: dict[str, Any] | None
         "channel_mapped": bool(channel["mapped"]),
         "channel_name": channel["channel_name"],
         "workflow_role": channel["workflow_role"],
+        "channel_is_private_test": channel_is_private_test,
         "author_is_bot": author_is_bot,
         "author_id": redact_discord_id(_decode_internal_id(event.get("_raw_author_id", ""))),
         "content_present": content_present,
@@ -230,7 +233,40 @@ def build_visibility_event(event: dict[str, Any], context: dict[str, Any] | None
             "raw_token_logged": False,
             "raw_discord_ids_logged": False,
         },
-    }
+}
+
+
+def resolve_private_test_agent_route(content: str | None) -> str:
+    text = str(content or "").lower()
+    route_markers = [
+        ("marin", ["\ub9c8\ub9b0", "marin"]),
+        ("lucy", ["\ub8e8\uc2dc", "lucy"]),
+        ("kasumi", ["\uce74\uc2a4\ubbf8", "kasumi"]),
+        ("meiko", ["\uba54\uc774\ucf54", "meiko"]),
+        ("reze", ["\ub808\uc81c", "reze"]),
+    ]
+    for agent, markers in route_markers:
+        if any(marker in text for marker in markers):
+            return agent
+    return "marin"
+
+
+def _apply_private_test_route(audit_record: dict[str, Any], routing_report: dict[str, Any], content: str | None) -> dict[str, Any]:
+    if audit_record.get("decision") != "accepted_private_test_channel":
+        return routing_report
+    agent = resolve_private_test_agent_route(content)
+    updated = dict(routing_report)
+    updated.update(
+        {
+            "agent_route_candidate": agent,
+            "routing_confidence": "medium",
+            "routing_reason": "Private test channel event routed deterministically from message content keyword.",
+            "senior_review_required": agent in {"marin", "kasumi"},
+            "approval_relevant": False,
+        }
+    )
+    audit_record["agent_route_candidate"] = agent
+    return updated
 
 
 def get_visibility_log_path(root: str | Path | None = None, created_at: str | None = None) -> Path:
@@ -275,10 +311,10 @@ def process_live_event_audit_only(
     written_log_path = str(write_visibility_log(visibility, root=root, log_path=log_path)) if write_log else ""
     audit_record = build_live_event_audit_record(visibility, content=event.get("content", ""))
     audit_record_path = str(append_live_event_audit_record(audit_record, root=root)) if write_log else ""
-    routing_report = build_live_event_routing_report(audit_record)
+    routing_report = _apply_private_test_route(audit_record, build_live_event_routing_report(audit_record), event.get("content", ""))
     placeholder = build_agent_placeholder_response(audit_record, routing_report, event.get("content", ""))
     preview = build_would_send_preview(audit_record, routing_report, placeholder)
-    if visibility["decision"] != "accepted_mapped_channel":
+    if visibility["decision"] not in {"accepted_mapped_channel", "accepted_private_test_channel"}:
         review_packet = build_live_event_review_packet(audit_record, routing_report, preview, placeholder)
         return {
             "pipeline_mode": "audit_only",
@@ -365,8 +401,8 @@ def build_live_event_pipeline_report(root: str | Path | None = None) -> dict[str
         "id": "123456789012345678",
         "guild_id": "234567890123456789",
         "channel_id": "345678901234567890",
-        "channel_name": "marin-초안",
-        "content": "SNS 초안 후보를 검토해 주세요.",
+        "channel_name": "marin-珥덉븞",
+        "content": "SNS 珥덉븞 ?꾨낫瑜?寃?좏빐 二쇱꽭??",
         "author": {"id": "456789012345678901", "display_name": "local_user", "bot": False, "roles": ["Decision Maker"]},
         "attachments": [],
         "mentions": [],

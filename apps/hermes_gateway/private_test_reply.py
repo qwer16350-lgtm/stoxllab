@@ -95,6 +95,7 @@ def build_private_test_reply_policy(env: dict[str, Any] | None = None) -> dict[s
 
 
 def _block(reason: str, event: Any, policy: dict[str, Any]) -> dict[str, Any]:
+    channel_id = str(_event_value(event, "channel_id", "") or "")
     return {
         "decision_type": "private_test_reply_decision",
         "version": VERSION,
@@ -103,7 +104,7 @@ def _block(reason: str, event: Any, policy: dict[str, Any]) -> dict[str, Any]:
         "reason": reason,
         "event_id": redact_id(_event_value(event, "id", _event_value(event, "event_id", ""))),
         "channel_name": str(_event_value(event, "channel_name", "")),
-        "channel_is_private_test": False,
+        "channel_is_private_test": bool(policy.get("_private_test_channel_id") and channel_id == policy.get("_private_test_channel_id")),
         "will_send": False,
         "message_sent": False,
         "message_source": "agent_placeholder_response",

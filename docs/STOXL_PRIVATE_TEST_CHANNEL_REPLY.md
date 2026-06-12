@@ -20,6 +20,29 @@ All gates must be true before a reply can be attempted:
 
 If any gate fails, the runtime records a blocked private test reply audit decision and sends nothing.
 
+## Unmapped Private Test Channel
+
+The private test channel is not added to the normal work channel mapping.
+
+Instead, the live event pipeline checks the raw channel ID against `HERMES_DISCORD_PRIVATE_TEST_CHANNEL_ID`. If the ID matches, an otherwise unmapped private test channel can be recorded as:
+
+- `decision=accepted_private_test_channel`
+- `channel_is_private_test=true`
+- `channel_mapped=false`
+
+The channel name alone is never enough. A channel named `hermes-private-test` is still blocked when the channel ID does not match.
+
+Private test routing is deterministic and local only:
+
+- `마린` or `marin` routes to `marin`
+- `루시` or `lucy` routes to `lucy`
+- `카스미` or `kasumi` routes to `kasumi`
+- `메이코` or `meiko` routes to `meiko`
+- `레제` or `reze` routes to `reze`
+- no keyword routes to `marin`
+
+No LLM or RAG is used for this routing.
+
 ## Still Blocked
 
 - regular `message_create`
@@ -66,6 +89,27 @@ After the guarded runtime send function completes in the private test channel, a
 - `external_execution=false`
 
 Blocked cases use `event_type=private_test_reply_blocked`.
+
+## Console Visibility
+
+When private test replies are enabled, ready visibility separates general send from the private test exception:
+
+```text
+[READONLY_READY] runtime_mode=readonly ... general_send_disabled=true private_test_reply_enabled=true private_test_channel_configured=true ...
+```
+
+Allowed private test reply:
+
+```text
+[PRIVATE_TEST_REPLY] private_test_reply_allowed channel=hermes-private-test source=agent_placeholder_response will_send=true
+[PRIVATE_TEST_REPLY_SENT] message_sent=true channel=hermes-private-test
+```
+
+Blocked private test reply:
+
+```text
+[PRIVATE_TEST_REPLY] blocked reason=channel_not_private_test
+```
 
 ## Report Command
 

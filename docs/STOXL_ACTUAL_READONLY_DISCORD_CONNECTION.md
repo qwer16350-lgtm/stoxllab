@@ -42,17 +42,32 @@ The exception requires:
 
 All mapped work channels and public/team channels remain no-reply zones. The exception does not allow LLM, RAG, external execution, reactions, slash commands, server modification, channel modification, or role modification.
 
+The private test channel is identified by channel ID, not by name and not by normal work channel mapping. If the configured ID matches, the live event can be recorded as `accepted_private_test_channel` even when `channel_mapped=false`.
+
 ## Live Visibility
 
 When the read-only runtime is actually started by a human, it prints a redaction-safe ready line:
 
 ```text
-[READONLY_READY] runtime_mode=readonly bot_user=name:discord_id_redacted:1234 guilds=1 target_guild_configured=true send_disabled=true external_disabled=true llm_disabled=true rag_disabled=true
+[READONLY_READY] runtime_mode=readonly bot_user=name:discord_id_redacted:1234 guilds=1 target_guild_configured=true general_send_disabled=true private_test_reply_enabled=true private_test_channel_configured=true external_disabled=true llm_disabled=true rag_disabled=true
 ```
 
 Each observed message also prints one redaction-safe event line and appends a JSONL record under `logs/hermes_gateway/live_events/`.
 
 No message content, token value, full user ID, or full channel ID is printed.
+
+Private test reply visibility is also redaction-safe:
+
+```text
+[PRIVATE_TEST_REPLY] private_test_reply_allowed channel=hermes-private-test source=agent_placeholder_response will_send=true
+[PRIVATE_TEST_REPLY_SENT] message_sent=true channel=hermes-private-test
+```
+
+Blocked cases print only the reason, for example:
+
+```text
+[PRIVATE_TEST_REPLY] blocked reason=channel_not_private_test
+```
 
 ## Phase 23 vs Phase 29 Readiness
 

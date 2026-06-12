@@ -49,6 +49,12 @@ def visibility_context() -> dict:
     }
 
 
+def private_test_visibility_context() -> dict:
+    context = visibility_context()
+    context["private_test_channel_id"] = "777777777777777777"
+    return context
+
+
 def test_normalize_redacts_discord_ids() -> None:
     event = normalize_live_discord_message_event(sample_event())
     text = json.dumps(event, ensure_ascii=False)
@@ -88,6 +94,28 @@ def test_unmapped_channel_is_ignored() -> None:
     assert_true(result["visibility_event"]["channel_mapped"] is False, "Unmapped channel should have channel_mapped=false")
     assert_true(result["visibility_event"]["workflow_role"] == "", "Unmapped channel should not include workflow role")
     assert_true(result["message_sent"] is False, "Unmapped channel should not send")
+
+
+def test_unmapped_private_test_channel_id_match_is_accepted() -> None:
+    event = sample_event()
+    event["channel_name"] = "hermes-private-test"
+    event["channel_id"] = "777777777777777777"
+    event["content"] = "lucy private test reply please"
+    result = process_live_event_audit_only(event, root=ROOT, visibility_context=private_test_visibility_context())
+    assert_true(result["decision"] == "accepted_private_test_channel", "Private test channel ID match should be accepted")
+    assert_true(result["visibility_event"]["channel_is_private_test"] is True, "Private test channel marker should be true")
+    assert_true(result["visibility_event"]["channel_mapped"] is False, "Private test channel should not require work channel mapping")
+    assert_true(result["routing_report"]["agent_route_candidate"] == "lucy", "Private test route should use deterministic keyword routing")
+    assert_true(result["agent_placeholder_response"]["response_type"] == "agent_placeholder_response", "Private test event should build placeholder response")
+
+
+def test_private_test_channel_name_only_stays_unmapped() -> None:
+    event = sample_event()
+    event["channel_name"] = "hermes-private-test"
+    event["channel_id"] = "888888888888888888"
+    result = process_live_event_audit_only(event, root=ROOT, visibility_context=private_test_visibility_context())
+    assert_true(result["decision"] == "ignored_unmapped_channel", "Private test channel name alone should not be accepted")
+    assert_true(result["visibility_event"]["channel_is_private_test"] is False, "ID mismatch should not be marked private test")
 
 
 def test_guild_mismatch_is_ignored() -> None:
@@ -154,6 +182,8 @@ def main() -> int:
         test_process_live_event_is_audit_only,
         test_bot_message_is_ignored,
         test_unmapped_channel_is_ignored,
+        test_unmapped_private_test_channel_id_match_is_accepted,
+        test_private_test_channel_name_only_stays_unmapped,
         test_guild_mismatch_is_ignored,
         test_empty_content_is_visible,
         test_would_send_payload_is_disabled,

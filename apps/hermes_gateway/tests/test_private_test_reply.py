@@ -17,6 +17,7 @@ if str(APP_DIR) not in sys.path:
     sys.path.insert(0, str(APP_DIR))
 
 from agent_placeholder_response import build_agent_placeholder_response
+from discord_readonly_runtime import build_ready_visibility
 from discord_safety_wrapper import is_outgoing_action_allowed
 from live_event_audit_persistence import build_live_event_audit_record, build_sample_visibility_event
 from live_event_routing_report import build_live_event_routing_report
@@ -60,6 +61,14 @@ def private_event(channel_id: str = "private_test_channel") -> dict[str, object]
         "event_id": "event_redacted_0000",
         "channel_id": channel_id,
         "channel_name": "private-test",
+    }
+
+
+def public_mapped_event() -> dict[str, object]:
+    return {
+        "event_id": "event_redacted_0000",
+        "channel_id": "marketing_channel",
+        "channel_name": "marketing-brief",
     }
 
 
@@ -112,6 +121,13 @@ def test_channel_mismatch_blocked() -> None:
     assert_true(decision_reason(allowed_env(), channel_id="other_channel") == "channel_not_private_test", "channel mismatch should block")
 
 
+def test_private_test_channel_name_match_but_id_mismatch_blocked() -> None:
+    event = {"event_id": "event_redacted_0000", "channel_id": "other_channel", "channel_name": "hermes-private-test"}
+    payload = build_private_test_reply_payload(event, placeholder_response(), build_private_test_reply_policy(allowed_env()))
+    assert_true(payload["decision"]["reason"] == "channel_not_private_test", "Channel name must not override ID mismatch")
+    assert_true(payload["decision"]["channel_is_private_test"] is False, "ID mismatch should not be private test")
+
+
 def test_llm_rag_external_true_blocked() -> None:
     assert_true(decision_reason(allowed_env(HERMES_DISCORD_LLM_ENABLED="true")) == "llm_enabled_blocked", "LLM true should block")
     assert_true(decision_reason(allowed_env(HERMES_DISCORD_RAG_ENABLED="true")) == "rag_enabled_blocked", "RAG true should block")
@@ -133,6 +149,35 @@ def test_all_conditions_true_allowed() -> None:
     payload = build_private_test_reply_payload(private_event(), placeholder_response(), build_private_test_reply_policy(allowed_env()))
     assert_true(payload["will_send"] is True, "All private test reply gates should allow would-send")
     assert_true(payload["decision"]["reason"] == "private_test_reply_allowed", "Allowed reason should be explicit")
+
+
+def test_public_mapped_channel_reply_blocked() -> None:
+    payload = build_private_test_reply_payload(public_mapped_event(), placeholder_response(), build_private_test_reply_policy(allowed_env()))
+    assert_true(payload["will_send"] is False, "Mapped public work channel must not allow private test reply")
+    assert_true(payload["decision"]["reason"] == "channel_not_private_test", "Public mapped channel should fail private channel ID gate")
+
+
+def test_runtime_ready_visibility_marks_private_test_flags() -> None:
+    class Client:
+        user = None
+        guilds: list[object] = []
+
+    visibility = build_ready_visibility(
+        Client(),
+        {
+            "runtime_mode": "readonly",
+            "send_messages": True,
+            "private_test_reply_enabled": True,
+            "reply_mode": "private_test_only",
+            "_private_test_channel_id": "private_test_channel",
+            "external_execution": False,
+            "llm_enabled": False,
+            "rag_enabled": False,
+        },
+    )
+    assert_true(visibility["general_send_disabled"] is True, "General send should still be disabled")
+    assert_true(visibility["private_test_reply_enabled"] is True, "Ready visibility should mark private test reply enabled")
+    assert_true(visibility["private_test_channel_configured"] is True, "Ready visibility should mark private channel configured")
 
 
 def test_allowed_decision_message_sent_false_until_runtime_send() -> None:
@@ -234,9 +279,12 @@ def main() -> int:
         test_reply_mode_not_private_test_only_blocked,
         test_no_channel_id_blocked,
         test_channel_mismatch_blocked,
+        test_private_test_channel_name_match_but_id_mismatch_blocked,
         test_llm_rag_external_true_blocked,
         test_non_placeholder_source_blocked,
         test_all_conditions_true_allowed,
+        test_public_mapped_channel_reply_blocked,
+        test_runtime_ready_visibility_marks_private_test_flags,
         test_allowed_decision_message_sent_false_until_runtime_send,
         test_rendered_message_includes_llm_disabled,
         test_rendered_message_has_no_raw_token_or_id,
