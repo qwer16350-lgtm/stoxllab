@@ -10,6 +10,7 @@ from typing import Any
 
 from audit_log import build_audit_payload
 from config import load_config
+from connection_preflight import build_connection_preflight_report
 from discord_readiness import build_readiness_report
 from discord_adapter_stub import load_raw_events, run_discord_adapter_stub
 from discord_replay import load_discord_raw_events, run_discord_raw_event_replay
@@ -101,6 +102,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--validate-mapping", help="Run Phase 20 local Discord runtime mapping validation.")
     parser.add_argument("--init-local-mapping", action="store_true", help="Copy runtime mapping template to local ignored mapping path.")
     parser.add_argument("--validate-local-mapping", action="store_true", help="Validate local ignored Discord runtime mapping.")
+    parser.add_argument("--connection-preflight", action="store_true", help="Run Phase 23 local read-only Discord connection preflight.")
     parser.add_argument("--force", action="store_true", help="Allow overwriting local mapping with --init-local-mapping.")
     parser.add_argument("--strict", action="store_true", help="Treat TODO placeholders as validation failures for --validate-mapping.")
     parser.add_argument("--mapping", help="Discord runtime mapping template for --discord-readiness.")
@@ -155,6 +157,20 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- local_mapping_exists: {output.get('local_mapping_exists')}")
             print(f"- created: {output.get('created')}")
             print(f"- blocked_reasons: {len(output.get('blocked_reasons', []))}")
+        return 0
+
+    if args.connection_preflight:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_connection_preflight_report(cfg.repo_root)
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL read-only Discord connection preflight")
+            print(f"- ready_for_phase24_readonly_connection: {output.get('ready_for_phase24_readonly_connection')}")
+            print(f"- blocked_reasons: {len(output.get('blocked_reasons', []))}")
+            print(f"- warnings: {len(output.get('warnings', []))}")
+            print(f"- recommended_library: {output.get('dependency_plan', {}).get('recommended_library')}")
+            print(f"- install_now: {output.get('dependency_plan', {}).get('install_now')}")
         return 0
 
     if args.validate_local_mapping:
@@ -266,6 +282,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.validate_mapping
         or args.init_local_mapping
         or args.validate_local_mapping
+        or args.connection_preflight
         or args.force
         or args.strict
         or args.export_log

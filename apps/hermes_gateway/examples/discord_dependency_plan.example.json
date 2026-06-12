@@ -1,0 +1,32 @@
+{
+  "recommended_runtime": "python",
+  "recommended_library": "discord.py",
+  "alternatives": [
+    "nextcord",
+    "py-cord"
+  ],
+  "install_now": false,
+  "reason": "Phase 23 is planning-only. Install a Discord library only in a later approved read-only runtime phase.",
+  "minimum_future_permissions": [
+    "private test server only",
+    "read-only channel access",
+    "no send messages permission",
+    "no manage channels permission",
+    "no manage roles permission"
+  ],
+  "required_intents": {
+    "guilds": true,
+    "guild_messages": true,
+    "message_content": "manual_review_required",
+    "reactions": "later",
+    "members": "later",
+    "slash_commands": "later"
+  },
+  "phase24_rule": {
+    "connect_gateway": true,
+    "send_messages": false,
+    "external_execution": false,
+    "read_env_token": "only_in_phase24_runtime_entrypoint",
+    "log_token": false
+  }
+}

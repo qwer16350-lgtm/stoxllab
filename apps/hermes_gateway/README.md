@@ -22,6 +22,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - Replay local Discord-shaped raw events with would-send payloads, approval queue, audit trail, and optional review packets.
 - Validate local Discord runtime mapping JSON before any future read-only connection.
 - Protect and validate ignored local runtime mapping files.
+- Build a no-connection preflight report for a future read-only Discord phase.
 
 ## Explicit Non-Goals
 
@@ -44,6 +45,9 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - `apps/hermes_gateway/examples/private_server_readonly_checklist.example.json`
 - `apps/hermes_gateway/examples/manual_mapping_fill_guide.example.md`
 - `docs/STOXL_LOCAL_MAPPING_PROTECTION.md`
+- `docs/STOXL_DISCORD_DEPENDENCY_PLAN.md`
+- `docs/STOXL_READONLY_CONNECTION_PREFLIGHT.md`
+- `docs/STOXL_DISCORD_TOKEN_HANDLING_RULES.md`
 
 These documents prepare for a later private server read-only connection review. They do not authorize or perform a Discord connection.
 
@@ -71,6 +75,7 @@ python apps\hermes_gateway\cli.py --validate-mapping apps\hermes_gateway\example
 python apps\hermes_gateway\cli.py --init-local-mapping --json
 python apps\hermes_gateway\cli.py --validate-local-mapping --json
 python apps\hermes_gateway\cli.py --validate-local-mapping --strict --json
+python apps\hermes_gateway\cli.py --connection-preflight --json
 python apps\hermes_gateway\tests\test_local_pipeline.py
 python apps\hermes_gateway\tests\test_replay_approval.py
 python apps\hermes_gateway\tests\test_persistent_audit_export.py
@@ -80,6 +85,7 @@ python apps\hermes_gateway\tests\test_discord_adapter_stub.py
 python apps\hermes_gateway\tests\test_discord_replay.py
 python apps\hermes_gateway\tests\test_mapping_validator.py
 python apps\hermes_gateway\tests\test_local_mapping_manager.py
+python apps\hermes_gateway\tests\test_connection_preflight.py
 ```
 
 If the registry file is missing, generate it from the repo root:

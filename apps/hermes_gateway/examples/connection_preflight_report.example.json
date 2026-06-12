@@ -1,0 +1,145 @@
+﻿{
+  "report_type": "readonly_discord_connection_preflight",
+  "version": "phase23_no_connection",
+  "created_at": "2026-06-12T10:49:32+00:00",
+  "root": "C:\\tmp\\STOXL_LAB",
+  "strict": true,
+  "ready_for_phase24_readonly_connection": true,
+  "checks": [
+    {
+      "check_id": "local_mapping_strict_validation",
+      "status": "pass",
+      "message": "Local mapping strict validation is ready for read-only connection.",
+      "details": {
+        "missing": [],
+        "ready_for_readonly_connection": true,
+        "local_mapping_exists": true,
+        "validated": true,
+        "overall_valid": true,
+        "manual_required_count": 0,
+        "missing_mapping_count": 0,
+        "todo_placeholders": 0,
+        "secret_like_values": 0,
+        "blocked_reasons": [],
+        "warnings": []
+      }
+    },
+    {
+      "check_id": "required_env_key_names_documented",
+      "status": "pass",
+      "message": "Required env key names are documented in .env.example.",
+      "details": {
+        "required_env_keys": [
+          "DISCORD_BOT_TOKEN",
+          "DISCORD_GUILD_ID",
+          "OWNER_KIM_DISCORD_ID",
+          "OWNER_LEE_DISCORD_ID",
+          "HERMES_CONFIG_PATH"
+        ],
+        "missing_keys": [],
+        "env_file_read": false,
+        "os_env_values_read": false
+      }
+    },
+    {
+      "check_id": "gitignore_runtime_artifact_protection",
+      "status": "pass",
+      "message": "Local mapping, logs, and exports are protected by .gitignore.",
+      "details": {
+        "local_mapping_gitignored": true,
+        "logs_gitignored": true,
+        "exports_gitignored": true,
+        "missing_patterns": []
+      }
+    },
+    {
+      "check_id": "readonly_safety_flags",
+      "status": "pass",
+      "message": "Read-only safety flags are preserved.",
+      "details": {
+        "failed": [],
+        "dependency_mentions": [],
+        "message_send_disabled": true,
+        "external_execution_disabled": true,
+        "human_only_execution_preserved": true,
+        "discord_dependency_declared_now": false
+      }
+    }
+  ],
+  "manual_checks": [
+    {
+      "check_id": "all_local_tests_passed",
+      "status": "manual_required",
+      "message": "Confirm the full local test suite passed immediately before Phase 24.",
+      "details": {}
+    },
+    {
+      "check_id": "private_server_scope_confirmed",
+      "status": "manual_required",
+      "message": "Confirm the target Discord server is a private test server.",
+      "details": {}
+    },
+    {
+      "check_id": "bot_role_readonly_confirmed",
+      "status": "manual_required",
+      "message": "Confirm the future bot role cannot send messages or manage server resources.",
+      "details": {}
+    },
+    {
+      "check_id": "rollback_plan_reviewed",
+      "status": "manual_required",
+      "message": "Confirm rollback and token rotation procedures have been reviewed.",
+      "details": {}
+    }
+  ],
+  "blocked_reasons": [],
+  "warnings": [],
+  "dependency_plan": {
+    "recommended_runtime": "python",
+    "recommended_library": "discord.py",
+    "alternatives": [
+      "nextcord",
+      "py-cord"
+    ],
+    "install_now": false,
+    "reason": "Phase 23 is planning-only. Install a Discord library only in a later approved read-only runtime phase.",
+    "minimum_future_permissions": [
+      "private test server only",
+      "read-only channel access",
+      "no send messages permission",
+      "no manage channels permission",
+      "no manage roles permission"
+    ],
+    "required_intents": {
+      "guilds": true,
+      "guild_messages": true,
+      "message_content": "manual_review_required",
+      "reactions": "later",
+      "members": "later",
+      "slash_commands": "later"
+    },
+    "phase24_rule": {
+      "connect_gateway": true,
+      "send_messages": false,
+      "external_execution": false,
+      "read_env_token": "only_in_phase24_runtime_entrypoint",
+      "log_token": false
+    }
+  },
+  "required_env_keys": [
+    "DISCORD_BOT_TOKEN",
+    "DISCORD_GUILD_ID",
+    "OWNER_KIM_DISCORD_ID",
+    "OWNER_LEE_DISCORD_ID",
+    "HERMES_CONFIG_PATH"
+  ],
+  "safety_assertions": {
+    "discord_api_called": false,
+    "gateway_connected": false,
+    "bot_token_value_read": false,
+    "env_file_read": false,
+    "message_sent": false,
+    "external_execution_enabled": false,
+    "human_only_execution_preserved": true
+  }
+}
