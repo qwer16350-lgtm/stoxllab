@@ -1,0 +1,124 @@
+{
+  "boundary_version": "phase12_boundary_spec",
+  "inbound_event_examples": [
+    {
+      "event_type": "discord_message_event",
+      "raw_event": {
+        "guild_id": "TODO_DISCORD_GUILD_ID",
+        "channel_id": "TODO_CHANNEL_ID",
+        "channel_name": "marin-초안",
+        "author_user_id": "TODO_USER_ID",
+        "author_display_name": "김태호_STOXL",
+        "author_role": "Decision Maker",
+        "content": "인스타 업로드 문구 초안 만들어줘",
+        "mentions": [],
+        "attachments": [],
+        "timestamp": "2026-01-01T09:00:00+09:00"
+      }
+    },
+    {
+      "event_type": "scheduled_deadline_event",
+      "raw_event": {
+        "schedule_id": "deadline_followup_7d",
+        "target_channel": "일정-마감관리",
+        "candidate_title": "TODO_CANDIDATE",
+        "due_date": "2026-01-08",
+        "triggered_at": "2026-01-01T09:00:00+09:00",
+        "responsible_agent": "meiko"
+      }
+    },
+    {
+      "event_type": "manual_cli_event",
+      "raw_event": {
+        "text": "이 지원사업 제출해줘",
+        "actor_role": "Decision Maker",
+        "actor_agent": null,
+        "source_channel": "공모전-지원사업",
+        "timestamp": "2026-01-01T09:00:00+09:00"
+      }
+    }
+  ],
+  "normalized_request_schema": {
+    "text": "string",
+    "actor_role": "string",
+    "actor_agent": "string|null",
+    "author_display_name": "string",
+    "source_channel": "string",
+    "source_category": "string",
+    "mentioned_agents": "array<string>",
+    "requested_action": "string|null",
+    "requested_source": "string|null",
+    "current_status": "string|null",
+    "requested_next_status": "string|null",
+    "attachments": "array<object>",
+    "timestamp": "string"
+  },
+  "evaluator_result_schema": {
+    "blocked": "boolean",
+    "block_reasons": "array<string>",
+    "classification": "object",
+    "routing": "object",
+    "approval_gate": "object",
+    "permission_check": "object",
+    "handoff": "object",
+    "rag_access": "object",
+    "status_transition": "object",
+    "guardrails": "array<string>",
+    "recommended_next_action": "string"
+  },
+  "dispatch_plan_schema": {
+    "should_dispatch": "boolean",
+    "dispatch_to_agent": "string|null",
+    "reviewer_agent": "string|null",
+    "dispatch_channel": "string|null",
+    "final_report_channel": "string|null",
+    "approval_required": "boolean|string|null",
+    "human_only_execution": "boolean",
+    "message_kind": "string|null",
+    "required_handoff": "string|null",
+    "forbidden_shortcuts": "array<string>"
+  },
+  "approval_gate_schema": {
+    "approval_required": "boolean",
+    "approver_roles": "array<string>",
+    "approver_display_names": "array<string>",
+    "env_user_id_keys": "array<string>",
+    "blocked_until_approved": "boolean",
+    "external_execution_allowed_after_approval": false,
+    "human_only_execution": true
+  },
+  "audit_log_schema": {
+    "audit_id": "string",
+    "timestamp": "string",
+    "event_type": "string",
+    "source_channel": "string",
+    "actor_role": "string",
+    "actor_agent": "string|null",
+    "normalized_request": "object",
+    "evaluator_result": "object",
+    "dispatch_plan": "object",
+    "blocked": "boolean",
+    "block_reasons": "array<string>",
+    "human_review_required": "boolean"
+  },
+  "safety_rules": [
+    "no_discord_api_call_in_phase12",
+    "no_external_execution",
+    "human_only_execution",
+    "no_secret_output",
+    "no_rag_source_copy",
+    "no_unknown_agent_dispatch",
+    "no_junior_direct_approval",
+    "no_reze_direct_order"
+  ],
+  "runtime_todos": [
+    "DISCORD_GUILD_ID",
+    "OWNER_KIM_DISCORD_ID",
+    "OWNER_LEE_DISCORD_ID",
+    "HERMES_CONFIG_PATH",
+    "CHANNEL_ID_MAPPING",
+    "ROLE_ID_MAPPING",
+    "AUDIT_LOG_CHANNEL",
+    "RAG_UNC_PATHS"
+  ]
+}
