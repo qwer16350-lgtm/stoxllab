@@ -45,6 +45,12 @@ def test_install_now_false() -> None:
     assert_true(build_dependency_plan()["install_now"] is False, "Dependency should not be installed in Phase 23")
 
 
+def test_phase23_dependency_declared_still_fails() -> None:
+    check = [item for item in report()["checks"] if item["check_id"] == "readonly_safety_flags"][0]
+    assert_true(check["details"]["discord_dependency_declared_now"] is True, "Test fixture should include declared Discord dependency")
+    assert_true(check["status"] == "fail", "Phase 23 no-connection preflight should still fail when Discord dependency is declared")
+
+
 def test_local_mapping_validation_reflected() -> None:
     check = [item for item in report()["checks"] if item["check_id"] == "local_mapping_strict_validation"][0]
     assert_true(check["status"] == "pass", "Local mapping strict validation should be reflected as pass")
@@ -106,6 +112,7 @@ def main() -> int:
         test_dependency_plan_created,
         test_recommended_library_discord_py,
         test_install_now_false,
+        test_phase23_dependency_declared_still_fails,
         test_local_mapping_validation_reflected,
         test_token_value_not_read,
         test_env_file_not_read,

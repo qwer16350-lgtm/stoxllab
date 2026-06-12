@@ -22,6 +22,21 @@ This phase does not run the Gateway, does not call the Discord API during tests,
 
 The read-only runtime may only be started by a human with explicit approval. The normal validation and report commands do not connect to Discord.
 
+## Phase 23 vs Phase 29 Readiness
+
+Phase 23 no-connection preflight still treats a declared Discord runtime dependency as a failure, because that phase is planning-only.
+
+Phase 29 read-only runtime readiness uses a separate check. In this phase, `discord.py` in `requirements.txt` is allowed, while these runtime conditions remain mandatory:
+
+- local mapping strict validation is ready
+- `token_present=true` is available to runtime startup
+- send messages flag is false
+- external execution flag is false
+- LLM flag is false
+- RAG flag is false
+- send blocking guard is active
+- token value is not logged
+
 ## Token Handling
 
 - `DISCORD_BOT_TOKEN` is referenced only by key name in `.env.example`.

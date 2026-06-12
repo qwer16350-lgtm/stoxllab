@@ -174,6 +174,20 @@ def check_readonly_safety_flags(root: str | Path) -> dict[str, Any]:
     )
 
 
+def check_phase29_runtime_dependency(root: str | Path) -> dict[str, Any]:
+    dependency_mentions = _project_dependency_mentions(root)
+    return _check(
+        "phase29_discord_dependency_allowed",
+        "pass",
+        "Discord runtime dependency declarations are allowed in Phase 29 read-only runtime readiness.",
+        {
+            "dependency_mentions": dependency_mentions,
+            "discord_dependency_declared_now": bool(dependency_mentions),
+            "discord_dependency_allowed": True,
+        },
+    )
+
+
 def _local_mapping_check(root: str | Path) -> dict[str, Any]:
     validation = load_local_mapping_validation(root)
     missing = []
@@ -188,6 +202,44 @@ def _local_mapping_check(root: str | Path) -> dict[str, Any]:
         "pass" if not missing else "fail",
         "Local mapping strict validation is ready for read-only connection." if not missing else "Local mapping strict validation is not ready.",
         {"missing": missing, **validation},
+    )
+
+
+def _runtime_token_check(runtime_env: dict[str, Any]) -> dict[str, Any]:
+    return _check(
+        "phase29_token_presence",
+        "pass" if runtime_env.get("token_present") is True else "fail",
+        "Discord token is present for runtime startup." if runtime_env.get("token_present") is True else "Discord token is missing for runtime startup.",
+        {"token_present": bool(runtime_env.get("token_present")), "token_value_logged": False},
+    )
+
+
+def _runtime_flag_check(runtime_env: dict[str, Any], key: str) -> dict[str, Any]:
+    enabled = bool(runtime_env.get(key))
+    return _check(
+        f"phase29_{key}_disabled",
+        "pass" if not enabled else "fail",
+        f"{key} is disabled." if not enabled else f"{key} must be disabled for Phase 29 read-only runtime.",
+        {key: enabled},
+    )
+
+
+def _send_block_guard_check() -> dict[str, Any]:
+    from discord_safety_wrapper import build_send_block_report
+
+    report = build_send_block_report()
+    blocked_actions = report.get("blocked_actions", [])
+    guard_active = report.get("default_allowed") is False and all(item.get("allowed") is False for item in blocked_actions)
+    return _check(
+        "phase29_send_blocking_guard_active",
+        "pass" if guard_active else "fail",
+        "Send blocking guard is active." if guard_active else "Send blocking guard is not active.",
+        {
+            "guard_active": guard_active,
+            "blocked_action_count": len(blocked_actions),
+            "message_sent": False,
+            "external_execution": False,
+        },
     )
 
 
@@ -232,6 +284,52 @@ def build_connection_preflight_report(root: str | Path, strict: bool = True) -> 
             "env_file_read": False,
             "message_sent": False,
             "external_execution_enabled": False,
+            "human_only_execution_preserved": True,
+        },
+    }
+
+
+def build_phase29_runtime_readiness_report(
+    root: str | Path,
+    runtime_env: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    repo_root = Path(root).resolve()
+    if runtime_env is None:
+        from discord_token_loader import load_discord_runtime_env
+
+        runtime_env = load_discord_runtime_env(repo_root, load_dotenv_file=False, include_token_value=False)
+    checks = [
+        _local_mapping_check(repo_root),
+        _runtime_token_check(runtime_env),
+        _runtime_flag_check(runtime_env, "send_messages"),
+        _runtime_flag_check(runtime_env, "external_execution"),
+        _runtime_flag_check(runtime_env, "llm_enabled"),
+        _runtime_flag_check(runtime_env, "rag_enabled"),
+        _send_block_guard_check(),
+        check_phase29_runtime_dependency(repo_root),
+    ]
+    blocked_reasons = [check["message"] for check in checks if check["status"] == "fail"]
+    return {
+        "report_type": "phase29_readonly_runtime_readiness",
+        "version": "phase29_readonly",
+        "created_at": utc_now(),
+        "root": str(repo_root),
+        "ready_for_phase29_readonly_runtime": not blocked_reasons,
+        "checks": checks,
+        "blocked_reasons": blocked_reasons,
+        "token_present": bool(runtime_env.get("token_present")),
+        "token_value_logged": False,
+        "dependency_policy": {
+            "discord_dependency_declared_now_allowed": True,
+            "phase23_dependency_policy_unchanged": True,
+        },
+        "safety_assertions": {
+            "discord_api_called": False,
+            "gateway_connected_by_report": False,
+            "message_sent": False,
+            "external_execution_enabled": False,
+            "llm_called": False,
+            "rag_called": False,
             "human_only_execution_preserved": True,
         },
     }
