@@ -43,6 +43,16 @@ Markdown is printed to stdout only. It is not posted to Discord.
 - date
 - limit
 
+## Placeholder Response Summary
+
+When a review packet contains a Phase 31C deterministic placeholder response, the viewer shows:
+
+- `agent_placeholder_response_available`
+- `agent_placeholder_title`
+- `agent_placeholder_summary`
+
+Markdown output adds an `Agent Placeholder Response` section. It is local stdout only and is not posted to Discord.
+
 ## Safety Boundaries
 
 The viewer does not:

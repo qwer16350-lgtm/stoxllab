@@ -9,6 +9,10 @@ from pathlib import Path
 from typing import Any
 
 from agent_response_interface import build_agent_response_interface_report
+from agent_placeholder_response import (
+    build_agent_placeholder_response,
+    render_agent_placeholder_response_markdown,
+)
 from approval_interaction_spec import build_approval_interaction_spec
 from audit_log import build_audit_payload
 from config import load_config
@@ -140,8 +144,9 @@ def build_phase30_sample_bundle(root: str | Path | None = None) -> dict[str, Any
     visibility = build_sample_visibility_event()
     audit_record = build_live_event_audit_record(visibility, content="Sample live message content for Phase 30 audit preview.")
     routing_report = build_live_event_routing_report(audit_record)
-    preview = build_would_send_preview(audit_record, routing_report)
-    packet = build_live_event_review_packet(audit_record, routing_report, preview)
+    placeholder = build_agent_placeholder_response(audit_record, routing_report)
+    preview = build_would_send_preview(audit_record, routing_report, placeholder)
+    packet = build_live_event_review_packet(audit_record, routing_report, preview, placeholder)
     manifest = build_daily_live_event_manifest(root=root, date=audit_record["created_at"]) if root else {
         "manifest_type": "live_event_daily_manifest",
         "version": "phase30_audit_persistence",
@@ -157,6 +162,7 @@ def build_phase30_sample_bundle(root: str | Path | None = None) -> dict[str, Any
         "routing_report": routing_report,
         "would_send_preview": preview,
         "review_packet": packet,
+        "agent_placeholder_response": placeholder,
         "daily_manifest": manifest,
         "safety_assertions": {
             "discord_api_write_called": False,
@@ -200,6 +206,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--phase30-audit-ops-report", action="store_true", help="Print Phase 30 audit operations bundle report.")
     parser.add_argument("--operations-viewer", action="store_true", help="Print Phase 31A operations packet viewer report.")
     parser.add_argument("--operations-packet", action="store_true", help="Print Phase 31A operations packet detail.")
+    parser.add_argument("--agent-placeholder-response-report", action="store_true", help="Print Phase 31C deterministic agent placeholder response report.")
     parser.add_argument("--markdown", action="store_true", help="Print supported reports as Markdown.")
     parser.add_argument("--limit", type=int, default=20, help="Limit rows for viewer reports.")
     parser.add_argument("--date", help="Date filter in YYYYMMDD or YYYY-MM-DD format.")
@@ -498,6 +505,20 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- event_id: {output.get('event_id', '') if output else ''}")
         return 0
 
+    if args.agent_placeholder_response_report:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_phase30_sample_bundle(cfg.repo_root)["agent_placeholder_response"]
+        if args.markdown:
+            print(render_agent_placeholder_response_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL agent placeholder response")
+            print(f"- agent: {output.get('agent_route_candidate')}")
+            print(f"- will_send: {output.get('will_send')}")
+            print(f"- llm_enabled: {output.get('llm_enabled')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -625,6 +646,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.phase30_audit_ops_report
         or args.operations_viewer
         or args.operations_packet
+        or args.agent_placeholder_response_report
         or args.force
         or args.strict
         or args.export_log

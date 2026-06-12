@@ -24,6 +24,7 @@ def build_live_event_review_packet(
     audit_record: dict[str, Any],
     routing_report: dict[str, Any],
     would_send_preview: dict[str, Any],
+    agent_placeholder_response: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     packet = {
         "packet_type": "live_event_review_packet",
@@ -41,6 +42,7 @@ def build_live_event_review_packet(
         "audit_record": audit_record,
         "routing_report": routing_report,
         "would_send_preview": would_send_preview,
+        "agent_placeholder_response": _placeholder_summary(agent_placeholder_response),
         "human_review": {
             "required": True,
             "reason": "Discord replies are disabled in Phase 30.",
@@ -56,6 +58,25 @@ def build_live_event_review_packet(
     }
     assert_live_event_review_packet_safe(packet)
     return packet
+
+
+def _placeholder_summary(response: dict[str, Any] | None = None) -> dict[str, Any]:
+    if not response:
+        return {
+            "available": False,
+            "agent_route_candidate": "",
+            "title": "",
+            "summary": "",
+            "response_path": "",
+        }
+    placeholder = response.get("placeholder", {})
+    return {
+        "available": True,
+        "agent_route_candidate": response.get("agent_route_candidate", ""),
+        "title": placeholder.get("title", ""),
+        "summary": placeholder.get("summary", ""),
+        "response_path": response.get("response_path", ""),
+    }
 
 
 def assert_live_event_review_packet_safe(packet: dict[str, Any]) -> None:
@@ -80,6 +101,7 @@ def render_live_event_review_packet_markdown(packet: dict[str, Any]) -> str:
             f"- agent_route_candidate: {summary.get('agent_route_candidate', '')}",
             f"- content_present: {summary.get('content_present')}",
             f"- content_length: {summary.get('content_length')}",
+            f"- agent_placeholder_response: {str(packet.get('agent_placeholder_response', {}).get('available', False)).lower()}",
             "- message_sent: false",
             "- external_execution: false",
             "- llm_called: false",

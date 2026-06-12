@@ -32,7 +32,11 @@ def _kind(audit_record: dict[str, Any], routing_report: dict[str, Any]) -> str:
     return "route_to_agent"
 
 
-def build_would_send_preview(audit_record: dict[str, Any], routing_report: dict[str, Any]) -> dict[str, Any]:
+def build_would_send_preview(
+    audit_record: dict[str, Any],
+    routing_report: dict[str, Any],
+    agent_placeholder_response: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     agent = routing_report.get("agent_route_candidate", "unrouted")
     channel = audit_record.get("channel_name", "")
     kind = _kind(audit_record, routing_report)
@@ -52,6 +56,7 @@ def build_would_send_preview(audit_record: dict[str, Any], routing_report: dict[
         "llm_called": False,
         "rag_called": False,
         "external_execution": False,
+        "agent_placeholder_response": _placeholder_summary(agent_placeholder_response),
         "safety_assertions": {
             "discord_api_write_called": False,
             "message_sent": False,
@@ -62,6 +67,18 @@ def build_would_send_preview(audit_record: dict[str, Any], routing_report: dict[
     }
     assert_would_send_preview_safe(preview)
     return preview
+
+
+def _placeholder_summary(response: dict[str, Any] | None = None) -> dict[str, Any]:
+    if not response:
+        return {"available": False, "response_path": "", "title": "", "summary": ""}
+    placeholder = response.get("placeholder", {})
+    return {
+        "available": True,
+        "response_path": response.get("response_path", ""),
+        "title": placeholder.get("title", ""),
+        "summary": placeholder.get("summary", ""),
+    }
 
 
 def assert_would_send_preview_safe(preview: dict[str, Any]) -> None:

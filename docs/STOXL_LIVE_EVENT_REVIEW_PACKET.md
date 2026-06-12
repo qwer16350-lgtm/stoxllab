@@ -12,6 +12,7 @@ The packet lets a human review live event handling without enabling Discord repl
 - audit record
 - routing report
 - would-send preview
+- optional deterministic agent placeholder response
 - human review policy
 - safety assertions
 
@@ -36,3 +37,7 @@ exports/hermes_gateway/live_event_packets/YYYYMMDD/
 ```
 
 The export path is local and ignored by git.
+
+## Phase 31C Placeholder
+
+Review packets may include `agent_placeholder_response` with title and summary fields. The field is optional and backward compatible; missing placeholders are represented as `available=false`.

@@ -25,3 +25,7 @@ Any real reply behavior requires a later approved phase. Phase 30 keeps:
 - `llm_called=false`
 - `rag_called=false`
 - `external_execution=false`
+
+## Phase 31C Placeholder
+
+Phase 31C may attach a deterministic `agent_placeholder_response` summary to the would-send preview. This summary is still local-only and keeps `will_send=false`.

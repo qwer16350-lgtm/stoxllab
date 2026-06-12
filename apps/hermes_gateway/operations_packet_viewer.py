@@ -83,6 +83,7 @@ def list_recent_live_events(root: str | Path | None = None, limit: int = 20, dat
 
 def _packet_summary(path: Path, packet: dict[str, Any]) -> dict[str, Any]:
     summary = packet.get("summary", {})
+    placeholder = packet.get("agent_placeholder_response", {})
     item = {
         "event_id": packet.get("event_id", ""),
         "created_at": packet.get("created_at", ""),
@@ -92,6 +93,9 @@ def _packet_summary(path: Path, packet: dict[str, Any]) -> dict[str, Any]:
         "agent_route_candidate": summary.get("agent_route_candidate", ""),
         "decision": summary.get("decision", ""),
         "human_review_required": bool(packet.get("human_review", {}).get("required")),
+        "agent_placeholder_response_available": bool(placeholder.get("available")),
+        "agent_placeholder_title": placeholder.get("title", ""),
+        "agent_placeholder_summary": placeholder.get("summary", ""),
         "message_sent": False,
         "llm_called": False,
         "rag_called": False,
@@ -269,6 +273,19 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
     lines.extend(["", "## Recent Review Packets", "| Time | Event ID | Channel | Route | Human Review |", "|---|---|---|---|---|"])
     for item in report.get("recent_review_packets", []):
         lines.append(f"| {item.get('created_at', '')} | {item.get('event_id', '')} | {item.get('channel_name', '')} | {item.get('agent_route_candidate', '')} | {str(item.get('human_review_required')).lower()} |")
+    placeholders = [item for item in report.get("recent_review_packets", []) if item.get("agent_placeholder_response_available")]
+    if placeholders:
+        first = placeholders[0]
+        lines.extend(
+            [
+                "",
+                "## Agent Placeholder Response",
+                f"- Agent: {first.get('agent_route_candidate', '')}",
+                f"- Title: {first.get('agent_placeholder_title', '')}",
+                f"- Summary: {first.get('agent_placeholder_summary', '')}",
+                "- Will Send: false",
+            ]
+        )
     safety = report.get("safety_assertions", {})
     lines.extend(
         [
