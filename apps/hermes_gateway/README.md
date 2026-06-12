@@ -2,7 +2,7 @@
 
 This folder is a fresh local runtime skeleton for the STOXL Hermes Discord Agent Organization.
 
-It does not replace any NAS or production Hermes Gateway project. It exists so the Phase 0-12 STOXL registry, prompts, dry-run Discord structure, and mock evaluators can be connected through a small local boundary before any real Discord work is considered.
+It does not replace any NAS or production Hermes Gateway project. It exists so the Phase 0-12 STOXL registry, prompts, dry-run Discord structure, mock evaluators, and Phase 14 replay/approval mock can be connected through a safe local boundary before any real Discord work is considered.
 
 ## Current Capabilities
 
@@ -12,6 +12,9 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - Call the Phase 10 mock evaluator in-process when available.
 - Build a local dispatch plan.
 - Build an audit payload without writing it to disk by default.
+- Replay multiple local mock events in order.
+- Create in-memory approval queue items.
+- Apply mock approve/reject decisions without external execution.
 
 ## Explicit Non-Goals
 
@@ -22,6 +25,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - No LLM, OpenAI, or OpenRouter calls.
 - No external DB/RAG reads or copies.
 - No external posting, submission, email, contract, or payment actions.
+- No approval-to-external-execution conversion.
 
 ## Local Usage
 
@@ -29,7 +33,10 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 python apps\hermes_gateway\main.py
 python apps\hermes_gateway\cli.py --text "인스타 업로드 문구 초안 만들어줘" --channel "marin-초안" --author-role "Decision Maker"
 python apps\hermes_gateway\cli.py --event apps\hermes_gateway\examples\local_message_event.json --json
+python apps\hermes_gateway\cli.py --replay apps\hermes_gateway\examples\replay_events.example.json --json
+python apps\hermes_gateway\cli.py --replay apps\hermes_gateway\examples\replay_events.example.json --approval-actions apps\hermes_gateway\examples\approval_actions.example.json --json
 python apps\hermes_gateway\tests\test_local_pipeline.py
+python apps\hermes_gateway\tests\test_replay_approval.py
 ```
 
 If the registry file is missing, generate it from the repo root:

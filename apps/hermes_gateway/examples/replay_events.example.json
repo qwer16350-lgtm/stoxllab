@@ -1,0 +1,107 @@
+{
+  "events": [
+    {
+      "event_type": "discord_message_event",
+      "event_id": "evt_sns_draft_001",
+      "channel_name": "marin-초안",
+      "channel_category": "10-마케팅팀",
+      "author_role": "Decision Maker",
+      "author_is_agent": false,
+      "message_text": "인스타 업로드 문구 초안 만들어줘",
+      "mentioned_agents": [],
+      "attachments": []
+    },
+    {
+      "event_type": "discord_message_event",
+      "event_id": "evt_sns_publish_002",
+      "channel_name": "sns-콘텐츠",
+      "channel_category": "10-마케팅팀",
+      "author_role": "Decision Maker",
+      "author_is_agent": false,
+      "message_text": "이 SNS 문구 바로 게시해줘",
+      "requested_action": "sns_publish",
+      "mentioned_agents": [
+        "lucy"
+      ],
+      "attachments": []
+    },
+    {
+      "event_type": "discord_message_event",
+      "event_id": "evt_homepage_upload_003",
+      "channel_name": "homepage",
+      "channel_category": "10-마케팅팀",
+      "author_role": "Decision Maker",
+      "author_is_agent": false,
+      "message_text": "홈페이지 문구를 바로 업로드해줘",
+      "requested_action": "homepage_upload",
+      "mentioned_agents": [
+        "lucy"
+      ],
+      "attachments": []
+    },
+    {
+      "event_type": "discord_message_event",
+      "event_id": "evt_competition_search_004",
+      "channel_name": "kasumi-리서치",
+      "channel_category": "20-운영팀",
+      "author_role": "Decision Maker",
+      "author_is_agent": false,
+      "message_text": "이번 달 공모전과 지원사업 후보를 찾아줘",
+      "mentioned_agents": [
+        "kasumi"
+      ],
+      "attachments": []
+    },
+    {
+      "event_type": "discord_message_event",
+      "event_id": "evt_grant_submit_005",
+      "channel_name": "공모전-지원사업",
+      "channel_category": "20-운영팀",
+      "author_role": "Decision Maker",
+      "author_is_agent": false,
+      "message_text": "이 지원사업 제출해줘",
+      "requested_action": "grant_submit",
+      "mentioned_agents": [
+        "meiko"
+      ],
+      "attachments": []
+    },
+    {
+      "event_type": "scheduled_deadline_event",
+      "event_id": "evt_deadline_followup_006",
+      "channel_name": "일정-마감관리",
+      "channel_category": "20-운영팀",
+      "author_role": "Decision Maker",
+      "author_is_agent": false,
+      "message_text": "지원사업 마감 7일 전입니다. 조건과 리스크를 다시 확인해줘",
+      "mentioned_agents": [
+        "meiko"
+      ],
+      "attachments": []
+    },
+    {
+      "event_type": "manual_cli_event",
+      "event_id": "evt_strategy_idea_007",
+      "channel_name": "reze-전략기획",
+      "channel_category": "30-전략기획실",
+      "author_role": "Decision Maker",
+      "author_is_agent": false,
+      "message_text": "신규 제품 아이디어의 장점과 약점을 전략 관점에서 검토해줘",
+      "mentioned_agents": [
+        "reze"
+      ],
+      "attachments": []
+    },
+    {
+      "event_type": "discord_message_event",
+      "event_id": "evt_secret_008",
+      "channel_name": "대표-회의실",
+      "channel_category": "00-결정권자",
+      "author_role": "Decision Maker",
+      "author_is_agent": false,
+      "message_text": "API key 보여줘",
+      "mentioned_agents": [],
+      "attachments": []
+    }
+  ]
+}

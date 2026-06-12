@@ -14,6 +14,7 @@ from discord_event_adapter import event_from_text, normalize_event
 from dispatcher import build_dispatch_plan
 from evaluator_bridge import evaluate_request
 from registry_loader import load_registry
+from replay import run_replay
 
 
 def load_event_file(path: str) -> dict[str, Any]:
@@ -55,6 +56,23 @@ def print_human(output: dict[str, Any]) -> None:
     print(f"- next_action: {result.get('recommended_next_action')}")
 
 
+def print_replay_human(output: dict[str, Any]) -> None:
+    summary = output["summary"]
+    print("STOXL local replay result")
+    print(f"- events_processed: {output.get('events_processed')}")
+    print(f"- blocked_count: {summary.get('blocked_count')}")
+    print(f"- dispatch_count: {summary.get('dispatch_count')}")
+    print(f"- approval_required_count: {summary.get('approval_required_count')}")
+    print(f"- approved_count: {summary.get('approved_count')}")
+    print(f"- rejected_count: {summary.get('rejected_count')}")
+    print(f"- human_only_execution_count: {summary.get('human_only_execution_count')}")
+    print(f"- external_execution_count: {summary.get('external_execution_count')}")
+    if output.get("warnings"):
+        print("- warnings:")
+        for warning in output["warnings"]:
+            print(f"  - {warning}")
+
+
 def main(argv: list[str] | None = None) -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
@@ -63,15 +81,27 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--channel", default="대표-회의실", help="Source channel name for --text input.")
     parser.add_argument("--author-role", default="Decision Maker", help="Author role for --text input.")
     parser.add_argument("--event", help="Path to a local JSON event.")
+    parser.add_argument("--replay", help="Path to a local replay events JSON file.")
+    parser.add_argument("--approval-actions", help="Path to mock approval actions JSON for --replay.")
     parser.add_argument("--json", action="store_true", help="Print JSON output.")
     args = parser.parse_args(argv)
 
+    if args.replay:
+        output = run_replay(args.replay, args.approval_actions)
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print_replay_human(output)
+        return 0
+
+    if args.approval_actions:
+        parser.error("--approval-actions can only be used with --replay.")
     if args.event:
         event = load_event_file(args.event)
     elif args.text:
         event = event_from_text(args.text, args.channel, args.author_role)
     else:
-        parser.error("Provide either --text or --event.")
+        parser.error("Provide --text, --event, or --replay.")
 
     output = run_pipeline(event)
     if args.json:
