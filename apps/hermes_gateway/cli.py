@@ -16,9 +16,13 @@ from connection_preflight import build_connection_preflight_report
 from discord_readiness import build_readiness_report
 from discord_adapter_stub import load_raw_events, run_discord_adapter_stub
 from discord_replay import load_discord_raw_events, run_discord_raw_event_replay
+from discord_readonly_runtime import build_readonly_runtime_report, run_readonly_discord_bot
+from discord_safety_wrapper import build_send_block_report
+from discord_token_loader import build_token_loader_report
 from discord_event_adapter import event_from_text, normalize_event
 from dispatcher import build_dispatch_plan
 from evaluator_bridge import evaluate_request
+from live_event_pipeline import build_live_event_pipeline_report
 from log_exporter import export_replay_result
 from local_mapping_manager import build_local_mapping_manager_report, copy_template_to_local
 from mapping_validator import build_mapping_validation_report
@@ -140,6 +144,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--approval-interaction-spec", action="store_true", help="Print Phase 27 approval interaction spec.")
     parser.add_argument("--agent-response-interface", action="store_true", help="Print Phase 28 agent response interface report.")
     parser.add_argument("--safety-scaffold-report", action="store_true", help="Print consolidated Phase 23-28 safety scaffold report.")
+    parser.add_argument("--discord-token-report", action="store_true", help="Print Phase 29 Discord token presence report without token values.")
+    parser.add_argument("--send-block-report", action="store_true", help="Print Phase 29 outbound action blocking report.")
+    parser.add_argument("--live-event-pipeline-report", action="store_true", help="Print Phase 29 audit-only live event pipeline report.")
+    parser.add_argument("--discord-readonly-runtime-report", action="store_true", help="Print Phase 29 read-only runtime report.")
+    parser.add_argument("--run-discord-readonly", action="store_true", help="Run the Phase 29 read-only Discord Gateway runtime.")
     parser.add_argument("--force", action="store_true", help="Allow overwriting local mapping with --init-local-mapping.")
     parser.add_argument("--strict", action="store_true", help="Treat TODO placeholders as validation failures for --validate-mapping.")
     parser.add_argument("--mapping", help="Discord runtime mapping template for --discord-readiness.")
@@ -277,6 +286,63 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- discord_api_called: {output.get('safety_assertions', {}).get('discord_api_called')}")
         return 0
 
+    if args.discord_token_report:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_token_loader_report(cfg.repo_root)
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Discord token report")
+            print(f"- token_present: {output.get('token_present')}")
+            print(f"- token_value_logged: {output.get('token_value_logged')}")
+        return 0
+
+    if args.send_block_report:
+        output = build_send_block_report()
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Discord send block report")
+            print(f"- default_allowed: {output.get('default_allowed')}")
+            print(f"- blocked_actions: {len(output.get('blocked_actions', []))}")
+        return 0
+
+    if args.live_event_pipeline_report:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_live_event_pipeline_report(cfg.repo_root)
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL live event pipeline report")
+            print(f"- pipeline_mode: {output.get('pipeline_mode')}")
+            print(f"- message_sent: {output.get('safety_assertions', {}).get('message_sent')}")
+        return 0
+
+    if args.discord_readonly_runtime_report:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_readonly_runtime_report(cfg.repo_root)
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Discord read-only runtime report")
+            print(f"- runtime_mode: {output.get('runtime_mode')}")
+            print(f"- can_connect_gateway: {output.get('can_connect_gateway')}")
+            print(f"- can_send_messages: {output.get('can_send_messages')}")
+            print(f"- token_value_logged: {output.get('token_value_logged')}")
+        return 0
+
+    if args.run_discord_readonly:
+        cfg = load_config(Path(__file__).resolve())
+        output = run_readonly_discord_bot(cfg.repo_root)
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Discord read-only runtime")
+            print(f"- started: {output.get('started')}")
+            print(f"- blocked: {output.get('blocked')}")
+            print(f"- token_value_logged: {output.get('token_value_logged')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -393,6 +459,11 @@ def main(argv: list[str] | None = None) -> int:
         or args.approval_interaction_spec
         or args.agent_response_interface
         or args.safety_scaffold_report
+        or args.discord_token_report
+        or args.send_block_report
+        or args.live_event_pipeline_report
+        or args.discord_readonly_runtime_report
+        or args.run_discord_readonly
         or args.force
         or args.strict
         or args.export_log

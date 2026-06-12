@@ -1,0 +1,161 @@
+﻿{
+  "report_type": "live_event_pipeline_report",
+  "version": "phase29_readonly",
+  "pipeline_mode": "audit_only",
+  "sample_result": {
+    "pipeline_mode": "audit_only",
+    "status": "processed_audit_only",
+    "raw_event_summary": {
+      "event_type": "live_discord_message_create",
+      "channel_name": "marin-초안",
+      "author_is_bot": false,
+      "event_id": "discord_id_redacted:5678"
+    },
+    "normalized_request": {
+      "text": "SNS 초안 후보를 검토해 주세요.",
+      "actor_role": "Decision Maker",
+      "actor_agent": "marin",
+      "author_display_name": "local_user",
+      "source_channel": "marin-초안",
+      "source_category": "",
+      "mentioned_agents": [],
+      "requested_action": null,
+      "requested_source": null,
+      "current_status": null,
+      "requested_next_status": null,
+      "attachments": [],
+      "timestamp": ""
+    },
+    "dispatch_plan": {
+      "should_dispatch": true,
+      "dispatch_to_agent": "marin",
+      "reviewer_agent": "lucy",
+      "dispatch_channel": "lucy-검토",
+      "final_report_channel": "최종-승인요청",
+      "approval_required": true,
+      "human_only_execution": true,
+      "required_handoff": "marin_to_lucy_for_review",
+      "blocked": false,
+      "block_reasons": []
+    },
+    "would_send_payload": {
+      "would_send": true,
+      "message_kind": "agent_dispatch",
+      "target_channel": "lucy-검토",
+      "content": "이 요청은 marin에게 배정되고, lucy 검토 흐름으로 이어집니다. 실제 외부 실행은 하지 않습니다.",
+      "metadata": {
+        "dispatch_to_agent": "marin",
+        "reviewer_agent": "lucy",
+        "approval_required": true,
+        "blocked": false
+      },
+      "safety": {
+        "discord_api_called": false,
+        "message_sent": false,
+        "external_execution": false,
+        "human_only_execution": true
+      },
+      "will_send": false,
+      "message_sent": false
+    },
+    "reply_plan": {
+      "reply_plan_type": "disabled_by_default",
+      "reply_enabled": false,
+      "mode": "would_send_only",
+      "target_channel": "lucy-검토",
+      "message_kind": "agent_dispatch",
+      "content_preview": "이 요청은 marin에게 배정되고, lucy 검토 흐름으로 이어집니다. 실제 외부 실행은 하지 않습니다.",
+      "will_send": false,
+      "requires_manual_enable": true,
+      "safety": {
+        "discord_api_called": false,
+        "message_sent": false,
+        "external_execution": false,
+        "human_only_execution": true
+      }
+    },
+    "audit_log_payload": {
+      "audit_id": "audit_3943d6c97ff0a446",
+      "event_id": "discord_id_redacted:5678",
+      "timestamp": "2026-06-12T15:02:45+00:00",
+      "event_type": "live_discord_message_create",
+      "source_channel": "marin-초안",
+      "author_role": "Decision Maker",
+      "actor_agent": "marin",
+      "classification": {
+        "request_type": "sns_post_draft",
+        "action_type": null
+      },
+      "primary_agent": "marin",
+      "reviewer_agent": "lucy",
+      "blocked": false,
+      "block_reasons": [],
+      "approval_required": true,
+      "human_only_execution": true,
+      "external_execution_allowed": false,
+      "normalized_request": {
+        "text": "SNS 초안 후보를 검토해 주세요.",
+        "actor_role": "Decision Maker",
+        "actor_agent": "marin",
+        "author_display_name": "local_user",
+        "source_channel": "marin-초안",
+        "source_category": "",
+        "mentioned_agents": [],
+        "requested_action": null,
+        "requested_source": null,
+        "current_status": null,
+        "requested_next_status": null,
+        "attachments": [],
+        "timestamp": ""
+      },
+      "dispatch_plan": {
+        "should_dispatch": true,
+        "dispatch_to_agent": "marin",
+        "reviewer_agent": "lucy",
+        "dispatch_channel": "lucy-검토",
+        "final_report_channel": "최종-승인요청",
+        "approval_required": true,
+        "human_only_execution": true,
+        "required_handoff": "marin_to_lucy_for_review",
+        "blocked": false,
+        "block_reasons": []
+      },
+      "human_review_required": true,
+      "redaction_notes": [
+        "attachment originals are not stored in the audit payload",
+        "sensitive values are redacted during export"
+      ]
+    },
+    "outgoing_action_guard": {
+      "action_type": "message_create",
+      "allowed": false,
+      "blocked": true,
+      "reason": "Live event pipeline is audit-only in Phase 29.",
+      "message_sent": false,
+      "discord_write_api_called": false,
+      "external_execution": false,
+      "llm_called": false,
+      "rag_called": false,
+      "created_at": "2026-06-12T15:02:45+00:00"
+    },
+    "safety": {
+      "gateway_connected_by_pipeline": false,
+      "discord_api_called_by_pipeline": false,
+      "message_sent": false,
+      "write_action_blocked": true,
+      "external_execution": false,
+      "llm_called": false,
+      "rag_called": false,
+      "human_only_execution_preserved": true
+    }
+  },
+  "safety_assertions": {
+    "gateway_connected_by_report": false,
+    "discord_api_called_by_report": false,
+    "message_sent": false,
+    "external_execution": false,
+    "llm_called": false,
+    "rag_called": false,
+    "raw_long_discord_ids_logged": false
+  }
+}

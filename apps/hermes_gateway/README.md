@@ -24,13 +24,15 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - Protect and validate ignored local runtime mapping files.
 - Build a no-connection preflight report for a future read-only Discord phase.
 - Build Phase 23-28 safety scaffold reports without Discord, LLM, RAG, replies, or external execution.
+- Build Phase 29 read-only Discord runtime reports.
+- Provide an explicitly gated read-only Gateway runtime path for a later manual run.
 
 ## Explicit Non-Goals
 
 - No Discord API calls.
-- No Discord Gateway connection.
-- No bot token loading.
-- No `.env` reading.
+- No Discord Gateway connection unless a human explicitly runs the Phase 29 read-only mode.
+- No bot token values are printed or returned in reports.
+- No `.env` content is printed.
 - No LLM, OpenAI, or OpenRouter calls.
 - No external DB/RAG reads or copies.
 - No external posting, submission, email, contract, or payment actions.
@@ -55,6 +57,9 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - `docs/STOXL_APPROVAL_INTERACTION_SPEC.md`
 - `docs/STOXL_AGENT_RESPONSE_INTERFACE.md`
 - `docs/STOXL_PHASE23_28_SAFETY_SCAFFOLD.md`
+- `docs/STOXL_ACTUAL_READONLY_DISCORD_CONNECTION.md`
+- `docs/STOXL_DISCORD_SEND_BLOCKING_GUARD.md`
+- `docs/STOXL_LIVE_EVENT_PIPELINE.md`
 
 These documents prepare for a later private server read-only connection review. They do not authorize or perform a Discord connection.
 
@@ -89,6 +94,10 @@ python apps\hermes_gateway\cli.py --reply-planner-report --json
 python apps\hermes_gateway\cli.py --approval-interaction-spec --json
 python apps\hermes_gateway\cli.py --agent-response-interface --json
 python apps\hermes_gateway\cli.py --safety-scaffold-report --json
+python apps\hermes_gateway\cli.py --discord-token-report --json
+python apps\hermes_gateway\cli.py --send-block-report --json
+python apps\hermes_gateway\cli.py --live-event-pipeline-report --json
+python apps\hermes_gateway\cli.py --discord-readonly-runtime-report --json
 python apps\hermes_gateway\tests\test_local_pipeline.py
 python apps\hermes_gateway\tests\test_replay_approval.py
 python apps\hermes_gateway\tests\test_persistent_audit_export.py
@@ -100,7 +109,14 @@ python apps\hermes_gateway\tests\test_mapping_validator.py
 python apps\hermes_gateway\tests\test_local_mapping_manager.py
 python apps\hermes_gateway\tests\test_connection_preflight.py
 python apps\hermes_gateway\tests\test_safety_scaffold.py
+python apps\hermes_gateway\tests\test_discord_readonly_runtime.py
+python apps\hermes_gateway\tests\test_live_event_pipeline.py
 ```
+
+The `--run-discord-readonly` option is intentionally not part of normal local
+test usage. It is reserved for a separately approved private server read-only
+connection run, and it still blocks message sending, LLM, RAG, and external
+execution.
 
 If the registry file is missing, generate it from the repo root:
 
