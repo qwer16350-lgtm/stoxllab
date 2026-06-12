@@ -17,6 +17,7 @@ from discord_event_adapter import event_from_text, normalize_event
 from dispatcher import build_dispatch_plan
 from evaluator_bridge import evaluate_request
 from log_exporter import export_replay_result
+from mapping_validator import build_mapping_validation_report
 from persistence import get_default_log_root
 from registry_loader import load_registry
 from replay import run_replay
@@ -96,6 +97,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--discord-readiness", action="store_true", help="Run Phase 17 read-only Discord readiness checks.")
     parser.add_argument("--discord-raw-event", help="Run Phase 18 local Discord raw event adapter stub.")
     parser.add_argument("--discord-replay", help="Run Phase 19 local Discord raw event replay.")
+    parser.add_argument("--validate-mapping", help="Run Phase 20 local Discord runtime mapping validation.")
+    parser.add_argument("--strict", action="store_true", help="Treat TODO placeholders as validation failures for --validate-mapping.")
     parser.add_argument("--mapping", help="Discord runtime mapping template for --discord-readiness.")
     parser.add_argument("--replay", help="Path to a local replay events JSON file.")
     parser.add_argument("--approval-actions", help="Path to mock approval actions JSON for --replay.")
@@ -120,6 +123,22 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- blocked_reasons: {len(output.get('blocked_reasons', []))}")
             print(f"- discord_api_called: {output.get('safety_assertions', {}).get('discord_api_called')}")
             print(f"- gateway_connected: {output.get('safety_assertions', {}).get('gateway_connected')}")
+        return 0
+
+    if args.validate_mapping:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_mapping_validation_report(args.validate_mapping, root=cfg.repo_root, strict=args.strict)
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Discord mapping validation result")
+            print(f"- overall_valid: {output.get('overall_valid')}")
+            print(f"- ready_for_readonly_connection: {output.get('ready_for_readonly_connection')}")
+            print(f"- missing_mappings: {len(output.get('missing_mappings', []))}")
+            print(f"- manual_required: {len(output.get('manual_required', []))}")
+            print(f"- warnings: {len(output.get('warnings', []))}")
+            print(f"- blocked_reasons: {len(output.get('blocked_reasons', []))}")
+            print(f"- secret_like_values: {output.get('summary', {}).get('secret_like_values')}")
         return 0
 
     if args.discord_raw_event:
@@ -215,6 +234,8 @@ def main(argv: list[str] | None = None) -> int:
         or args.mapping
         or args.discord_raw_event
         or args.discord_replay
+        or args.validate_mapping
+        or args.strict
         or args.export_log
         or args.log_root
         or args.review_packet

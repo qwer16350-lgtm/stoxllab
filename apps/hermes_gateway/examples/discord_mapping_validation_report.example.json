@@ -1,0 +1,237 @@
+﻿{
+  "report_type": "discord_mapping_validation",
+  "version": "phase20_local_only",
+  "created_at": "2026-06-12T09:23:44+00:00",
+  "root": "C:\\tmp\\STOXL_LAB",
+  "mapping_path": "C:\\tmp\\STOXL_LAB\\apps\\hermes_gateway\\examples\\discord_runtime_mapping.template.json",
+  "strict": false,
+  "overall_valid": true,
+  "ready_for_readonly_connection": false,
+  "checks": [
+    {
+      "check_id": "mapping_type_version",
+      "status": "pass",
+      "message": "Mapping type and version are present.",
+      "details": {
+        "mapping_type": "discord_runtime_mapping_template",
+        "version": "phase17_template"
+      }
+    },
+    {
+      "check_id": "guild_mapping",
+      "status": "manual_required",
+      "message": "Guild mapping contains placeholders that require manual completion.",
+      "details": {
+        "placeholders": [
+          "guild.guild_id_placeholder"
+        ]
+      }
+    },
+    {
+      "check_id": "owner_mapping",
+      "status": "manual_required",
+      "message": "Owner mapping contains placeholders that require manual completion.",
+      "details": {
+        "owner_keys": [
+          "OWNER_KIM_DISCORD_ID",
+          "OWNER_LEE_DISCORD_ID"
+        ],
+        "placeholders": [
+          "owners.OWNER_KIM_DISCORD_ID",
+          "owners.OWNER_LEE_DISCORD_ID"
+        ]
+      }
+    },
+    {
+      "check_id": "role_mapping",
+      "status": "manual_required",
+      "message": "Role mapping contains placeholders that require manual completion.",
+      "details": {
+        "mapped_roles": [
+          "Decision Maker",
+          "Human Operator",
+          "Kasumi",
+          "Lucy",
+          "Marin",
+          "Meiko",
+          "Read Only Bot",
+          "Reze"
+        ],
+        "placeholders": [
+          "roles.Decision Maker",
+          "roles.Lucy",
+          "roles.Marin",
+          "roles.Meiko",
+          "roles.Kasumi",
+          "roles.Reze",
+          "roles.Human Operator",
+          "roles.Read Only Bot"
+        ]
+      }
+    },
+    {
+      "check_id": "channel_mapping",
+      "status": "manual_required",
+      "message": "Channel mapping requires review.",
+      "details": {
+        "required_channels": [
+          "brand-rag",
+          "homepage",
+          "kasumi-리서치",
+          "lucy-검토",
+          "marin-초안",
+          "marketing-brief",
+          "meiko-검토",
+          "new-business",
+          "operation-brief",
+          "product-ideas",
+          "reze-전략기획",
+          "sns-콘텐츠",
+          "공모전-지원사업",
+          "공지-결정사항",
+          "대표-회의실",
+          "보류된-안건",
+          "완료된-안건",
+          "일정-마감관리",
+          "최종-승인요청",
+          "폐기된-안건"
+        ],
+        "missing_channels": [],
+        "unknown_channels": [],
+        "placeholders": [
+          "channels.공지-결정사항",
+          "channels.대표-회의실",
+          "channels.최종-승인요청",
+          "channels.marketing-brief",
+          "channels.lucy-검토",
+          "channels.marin-초안",
+          "channels.sns-콘텐츠",
+          "channels.homepage",
+          "channels.operation-brief",
+          "channels.meiko-검토",
+          "channels.kasumi-리서치",
+          "channels.공모전-지원사업",
+          "channels.일정-마감관리",
+          "channels.reze-전략기획",
+          "channels.brand-rag",
+          "channels.new-business",
+          "channels.product-ideas",
+          "channels.완료된-안건",
+          "channels.보류된-안건",
+          "channels.폐기된-안건"
+        ]
+      }
+    },
+    {
+      "check_id": "approval_mapping",
+      "status": "pass",
+      "message": "Approval mapping preserves human-only review.",
+      "details": {
+        "approval_channels": [
+          "최종-승인요청"
+        ],
+        "missing_or_invalid": []
+      }
+    },
+    {
+      "check_id": "audit_mapping",
+      "status": "manual_required",
+      "message": "Audit mapping contains placeholders that require manual completion.",
+      "details": {
+        "placeholders": [
+          "audit.audit_log_channel"
+        ]
+      }
+    },
+    {
+      "check_id": "intent_mapping",
+      "status": "pass",
+      "message": "Intent checklist is documented.",
+      "details": {
+        "missing_intents": [],
+        "documented_intents": [
+          "approval_buttons_required_later",
+          "guild_messages_required",
+          "guilds_required",
+          "members_required_later",
+          "message_content_required",
+          "note",
+          "reactions_required_later",
+          "slash_commands_required_later"
+        ]
+      }
+    },
+    {
+      "check_id": "safety_mapping",
+      "status": "pass",
+      "message": "Safety mapping preserves local-only execution.",
+      "details": {
+        "missing_or_false": []
+      }
+    },
+    {
+      "check_id": "secret_like_values",
+      "status": "pass",
+      "message": "No secret-like values found.",
+      "details": {
+        "findings": []
+      }
+    }
+  ],
+  "missing_mappings": [],
+  "manual_required": [
+    "audit.audit_log_channel",
+    "channels.brand-rag",
+    "channels.homepage",
+    "channels.kasumi-리서치",
+    "channels.lucy-검토",
+    "channels.marin-초안",
+    "channels.marketing-brief",
+    "channels.meiko-검토",
+    "channels.new-business",
+    "channels.operation-brief",
+    "channels.product-ideas",
+    "channels.reze-전략기획",
+    "channels.sns-콘텐츠",
+    "channels.공모전-지원사업",
+    "channels.공지-결정사항",
+    "channels.대표-회의실",
+    "channels.보류된-안건",
+    "channels.완료된-안건",
+    "channels.일정-마감관리",
+    "channels.최종-승인요청",
+    "channels.폐기된-안건",
+    "guild.guild_id_placeholder",
+    "owners.OWNER_KIM_DISCORD_ID",
+    "owners.OWNER_LEE_DISCORD_ID",
+    "roles.Decision Maker",
+    "roles.Human Operator",
+    "roles.Kasumi",
+    "roles.Lucy",
+    "roles.Marin",
+    "roles.Meiko",
+    "roles.Read Only Bot",
+    "roles.Reze"
+  ],
+  "warnings": [
+    "TODO placeholders remain; manual runtime mapping is required before read-only connection."
+  ],
+  "blocked_reasons": [],
+  "summary": {
+    "required_channels": 20,
+    "mapped_channels": 20,
+    "missing_channels": 0,
+    "required_roles": 8,
+    "mapped_roles": 8,
+    "missing_roles": 0,
+    "todo_placeholders": 37,
+    "secret_like_values": 0
+  },
+  "safety_assertions": {
+    "discord_api_called": false,
+    "gateway_connected": false,
+    "message_sent": false,
+    "external_execution_enabled": false,
+    "human_only_execution_preserved": true
+  }
+}

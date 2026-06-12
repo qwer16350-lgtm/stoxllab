@@ -1,0 +1,84 @@
+{
+  "mapping_type": "discord_runtime_mapping_template",
+  "version": "phase20_partial_example",
+  "guild": {
+    "guild_id_env_key": "DISCORD_GUILD_ID",
+    "guild_id_placeholder": "TODO_DISCORD_GUILD_ID"
+  },
+  "owners": [
+    {
+      "display_name": "김태호_STOXL",
+      "env_user_id_key": "OWNER_KIM_DISCORD_ID",
+      "user_id_placeholder": "TODO_OWNER_KIM_DISCORD_ID"
+    }
+  ],
+  "roles": {
+    "Decision Maker": {"role_id_placeholder": "TODO_ROLE_ID_DECISION_MAKER"},
+    "Lucy": {"role_id_placeholder": "TODO_ROLE_ID_LUCY"},
+    "Marin": {"role_id_placeholder": "TODO_ROLE_ID_MARIN"},
+    "Meiko": {"role_id_placeholder": "TODO_ROLE_ID_MEIKO"},
+    "Kasumi": {"role_id_placeholder": "TODO_ROLE_ID_KASUMI"},
+    "Reze": {"role_id_placeholder": "TODO_ROLE_ID_REZE"},
+    "Read Only Bot": {"role_id_placeholder": "TODO_ROLE_ID_READ_ONLY_BOT"}
+  },
+  "categories": {
+    "00-결정권자": {"category_id_placeholder": "TODO_CATEGORY_ID_00_DECISION"},
+    "10-마케팅팀": {"category_id_placeholder": "TODO_CATEGORY_ID_10_MARKETING"},
+    "20-운영팀": {"category_id_placeholder": "TODO_CATEGORY_ID_20_OPERATION"},
+    "30-전략기획실": {"category_id_placeholder": "TODO_CATEGORY_ID_30_STRATEGY"},
+    "90-archive": {"category_id_placeholder": "TODO_CATEGORY_ID_90_ARCHIVE"}
+  },
+  "channels": {
+    "공지-결정사항": {"channel_name": "공지-결정사항", "category_name": "00-결정권자", "channel_id_placeholder": "TODO_CHANNEL_ID_NOTICE_DECISIONS", "workflow_role": "decision_notice", "read_allowed_roles": ["Decision Maker", "Read Only Bot"], "write_allowed_roles": ["Decision Maker"], "agent_dispatch_allowed": false, "approval_relevant": false, "audit_relevant": true},
+    "대표-회의실": {"channel_name": "대표-회의실", "category_name": "00-결정권자", "channel_id_placeholder": "TODO_CHANNEL_ID_OWNER_MEETING", "workflow_role": "owner_meeting", "read_allowed_roles": ["Decision Maker", "Reze", "Read Only Bot"], "write_allowed_roles": ["Decision Maker", "Reze"], "agent_dispatch_allowed": true, "approval_relevant": true, "audit_relevant": true},
+    "최종-승인요청": {"channel_name": "최종-승인요청", "category_name": "00-결정권자", "channel_id_placeholder": "TODO_CHANNEL_ID_FINAL_APPROVAL", "workflow_role": "final_approval", "read_allowed_roles": ["Decision Maker", "Lucy", "Meiko", "Reze", "Read Only Bot"], "write_allowed_roles": ["Decision Maker", "Lucy", "Meiko", "Reze"], "agent_dispatch_allowed": true, "approval_relevant": true, "audit_relevant": true},
+    "marketing-brief": {"channel_name": "marketing-brief", "category_name": "10-마케팅팀", "channel_id_placeholder": "TODO_CHANNEL_ID_MARKETING_BRIEF", "workflow_role": "marketing_intake", "read_allowed_roles": ["Decision Maker", "Lucy", "Marin", "Read Only Bot"], "write_allowed_roles": ["Decision Maker", "Lucy", "Marin"], "agent_dispatch_allowed": true, "approval_relevant": false, "audit_relevant": true},
+    "lucy-검토": {"channel_name": "lucy-검토", "category_name": "10-마케팅팀", "channel_id_placeholder": "TODO_CHANNEL_ID_LUCY_REVIEW", "workflow_role": "senior_review", "read_allowed_roles": ["Decision Maker", "Lucy", "Marin", "Read Only Bot"], "write_allowed_roles": ["Decision Maker", "Lucy", "Marin"], "agent_dispatch_allowed": true, "approval_relevant": true, "audit_relevant": true},
+    "marin-초안": {"channel_name": "marin-초안", "category_name": "10-마케팅팀", "channel_id_placeholder": "TODO_CHANNEL_ID_MARIN_DRAFT", "workflow_role": "junior_draft", "read_allowed_roles": ["Decision Maker", "Lucy", "Marin", "Read Only Bot"], "write_allowed_roles": ["Decision Maker", "Marin"], "agent_dispatch_allowed": true, "approval_relevant": false, "audit_relevant": true},
+    "sns-콘텐츠": {"channel_name": "sns-콘텐츠", "category_name": "10-마케팅팀", "channel_id_placeholder": "TODO_CHANNEL_ID_SNS_CONTENT", "workflow_role": "sns_content", "read_allowed_roles": ["Decision Maker", "Lucy", "Marin", "Read Only Bot"], "write_allowed_roles": ["Decision Maker", "Lucy", "Marin"], "agent_dispatch_allowed": true, "approval_relevant": true, "audit_relevant": true},
+    "homepage": {"channel_name": "homepage", "category_name": "10-마케팅팀", "channel_id_placeholder": "TODO_CHANNEL_ID_HOMEPAGE", "workflow_role": "homepage_copy", "read_allowed_roles": ["Decision Maker", "Lucy", "Marin", "Read Only Bot"], "write_allowed_roles": ["Decision Maker", "Lucy", "Marin"], "agent_dispatch_allowed": true, "approval_relevant": true, "audit_relevant": true},
+    "operation-brief": {"channel_name": "operation-brief", "category_name": "20-운영팀", "channel_id_placeholder": "TODO_CHANNEL_ID_OPERATION_BRIEF", "workflow_role": "operation_intake", "read_allowed_roles": ["Decision Maker", "Meiko", "Kasumi", "Read Only Bot"], "write_allowed_roles": ["Decision Maker", "Meiko", "Kasumi"], "agent_dispatch_allowed": true, "approval_relevant": false, "audit_relevant": true},
+    "meiko-검토": {"channel_name": "meiko-검토", "category_name": "20-운영팀", "channel_id_placeholder": "TODO_CHANNEL_ID_MEIKO_REVIEW", "workflow_role": "senior_operation_review", "read_allowed_roles": ["Decision Maker", "Meiko", "Kasumi", "Read Only Bot"], "write_allowed_roles": ["Decision Maker", "Meiko", "Kasumi"], "agent_dispatch_allowed": true, "approval_relevant": true, "audit_relevant": true},
+    "kasumi-리서치": {"channel_name": "kasumi-리서치", "category_name": "20-운영팀", "channel_id_placeholder": "TODO_CHANNEL_ID_KASUMI_RESEARCH", "workflow_role": "junior_research", "read_allowed_roles": ["Decision Maker", "Meiko", "Kasumi", "Read Only Bot"], "write_allowed_roles": ["Decision Maker", "Kasumi"], "agent_dispatch_allowed": true, "approval_relevant": false, "audit_relevant": true},
+    "공모전-지원사업": {"channel_name": "공모전-지원사업", "category_name": "20-운영팀", "channel_id_placeholder": "TODO_CHANNEL_ID_GRANTS_COMPETITIONS", "workflow_role": "grant_competition", "read_allowed_roles": ["Decision Maker", "Meiko", "Kasumi", "Read Only Bot"], "write_allowed_roles": ["Decision Maker", "Meiko", "Kasumi"], "agent_dispatch_allowed": true, "approval_relevant": true, "audit_relevant": true},
+    "일정-마감관리": {"channel_name": "일정-마감관리", "category_name": "20-운영팀", "channel_id_placeholder": "TODO_CHANNEL_ID_DEADLINE_MANAGEMENT", "workflow_role": "deadline_management", "read_allowed_roles": ["Decision Maker", "Meiko", "Kasumi", "Read Only Bot"], "write_allowed_roles": ["Decision Maker", "Meiko", "Kasumi"], "agent_dispatch_allowed": true, "approval_relevant": false, "audit_relevant": true},
+    "reze-전략기획": {"channel_name": "reze-전략기획", "category_name": "30-전략기획실", "channel_id_placeholder": "TODO_CHANNEL_ID_REZE_STRATEGY", "workflow_role": "strategy_planning", "read_allowed_roles": ["Decision Maker", "Reze", "Read Only Bot"], "write_allowed_roles": ["Decision Maker", "Reze"], "agent_dispatch_allowed": true, "approval_relevant": true, "audit_relevant": true},
+    "brand-rag": {"channel_name": "brand-rag", "category_name": "30-전략기획실", "channel_id_placeholder": "TODO_CHANNEL_ID_BRAND_RAG", "workflow_role": "rag_summary", "read_allowed_roles": ["Decision Maker", "Reze", "Read Only Bot"], "write_allowed_roles": ["Decision Maker", "Reze"], "agent_dispatch_allowed": true, "approval_relevant": false, "audit_relevant": true},
+    "new-business": {"channel_name": "new-business", "category_name": "30-전략기획실", "channel_id_placeholder": "TODO_CHANNEL_ID_NEW_BUSINESS", "workflow_role": "new_business", "read_allowed_roles": ["Decision Maker", "Reze", "Read Only Bot"], "write_allowed_roles": ["Decision Maker", "Reze"], "agent_dispatch_allowed": true, "approval_relevant": true, "audit_relevant": true},
+    "product-ideas": {"channel_name": "product-ideas", "category_name": "30-전략기획실", "channel_id_placeholder": "TODO_CHANNEL_ID_PRODUCT_IDEAS", "workflow_role": "product_ideas", "read_allowed_roles": ["Decision Maker", "Reze", "Read Only Bot"], "write_allowed_roles": ["Decision Maker", "Reze"], "agent_dispatch_allowed": true, "approval_relevant": true, "audit_relevant": true},
+    "완료된-안건": {"channel_name": "완료된-안건", "category_name": "90-archive", "channel_id_placeholder": "TODO_CHANNEL_ID_ARCHIVE_DONE", "workflow_role": "archive_done", "read_allowed_roles": ["Decision Maker", "Lucy", "Meiko", "Reze", "Read Only Bot"], "write_allowed_roles": ["Decision Maker", "Lucy", "Meiko"], "agent_dispatch_allowed": false, "approval_relevant": false, "audit_relevant": true}
+  },
+  "intents": {
+    "guilds_required": true,
+    "guild_messages_required": true,
+    "message_content_required": true,
+    "reactions_required_later": true,
+    "members_required_later": true,
+    "slash_commands_required_later": true,
+    "approval_buttons_required_later": true,
+    "note": "Phase 20 validates this only. No intent is enabled here."
+  },
+  "approval_interactions": {
+    "current": "mock_only",
+    "future_options": ["reaction", "button", "slash command", "manual CLI"],
+    "external_execution_after_approval": false,
+    "human_only_execution": true
+  },
+  "audit": {
+    "audit_log_channel_placeholder": "",
+    "local_log_root": "logs/hermes_gateway/",
+    "export_root": "exports/hermes_gateway/"
+  },
+  "safety": {
+    "no_discord_api_call_in_phase17": true,
+    "no_gateway_connection": true,
+    "no_bot_token_value_required": true,
+    "no_external_execution": true,
+    "human_only_execution": true,
+    "no_secret_output": true,
+    "no_rag_source_copy": true,
+    "no_unknown_agent_dispatch": true,
+    "no_junior_direct_approval": true,
+    "no_reze_direct_order": true
+  }
+}
