@@ -1,0 +1,91 @@
+{
+  "version": 1,
+  "dry_run_only": true,
+  "notes": [
+    "Roles are review-only dry-run definitions.",
+    "Only Decision Maker can approve.",
+    "All agent roles have can_approve=false and can_execute_external_actions=false."
+  ],
+  "roles": [
+    {
+      "role_id": "role_decision_maker",
+      "role_name": "Decision Maker",
+      "assigned_humans": ["김태호_STOXL", "이주호_STOXL"],
+      "assigned_agents": [],
+      "purpose": "최종 승인, 공식 결정, 운영 원칙 확정",
+      "permission_summary": "모든 주요 채널 read/write, 최종-승인요청 승인 가능",
+      "can_approve": true,
+      "can_execute_external_actions": true
+    },
+    {
+      "role_id": "role_marketing_senior",
+      "role_name": "Marketing Senior",
+      "assigned_humans": [],
+      "assigned_agents": ["lucy"],
+      "purpose": "마케팅 검토, 브랜드 톤 관리, 승인 요청 보고",
+      "permission_summary": "마케팅팀 채널 read/write, 최종-승인요청 보고 가능",
+      "can_approve": false,
+      "can_execute_external_actions": false
+    },
+    {
+      "role_id": "role_marketing_junior",
+      "role_name": "Marketing Junior",
+      "assigned_humans": [],
+      "assigned_agents": ["marin"],
+      "purpose": "마케팅 초안, 콘텐츠 후보, 레퍼런스 리서치",
+      "permission_summary": "마케팅 초안/콘텐츠 채널 read/write, 최종 승인 요청 직접 확정 불가",
+      "can_approve": false,
+      "can_execute_external_actions": false
+    },
+    {
+      "role_id": "role_operation_senior",
+      "role_name": "Operation Senior",
+      "assigned_humans": [],
+      "assigned_agents": ["meiko"],
+      "purpose": "지원사업 판단, 일정/리스크 관리, 승인 요청 보고",
+      "permission_summary": "운영팀 채널 read/write, 최종-승인요청 보고 가능",
+      "can_approve": false,
+      "can_execute_external_actions": false
+    },
+    {
+      "role_id": "role_operation_junior",
+      "role_name": "Operation Junior",
+      "assigned_humans": [],
+      "assigned_agents": ["kasumi"],
+      "purpose": "외부 기회 검색, 조건 정리, 마감 추적",
+      "permission_summary": "운영 리서치/공모전/일정 채널 read/write, 최종 추천 확정 불가",
+      "can_approve": false,
+      "can_execute_external_actions": false
+    },
+    {
+      "role_id": "role_strategy_office",
+      "role_name": "Strategy Office",
+      "assigned_humans": [],
+      "assigned_agents": ["reze"],
+      "purpose": "브랜드/제품/사업 전략 의견과 비평",
+      "permission_summary": "전략기획실 채널 read/write, 대표-회의실 전략 보고 가능, 실무 명령권 없음",
+      "can_approve": false,
+      "can_execute_external_actions": false
+    },
+    {
+      "role_id": "role_agent",
+      "role_name": "Agent",
+      "assigned_humans": [],
+      "assigned_agents": ["lucy", "marin", "meiko", "kasumi", "reze"],
+      "purpose": "공통 에이전트 기본 역할",
+      "permission_summary": "업무 채널 읽기 기본권. 외부 실행과 승인은 불가",
+      "can_approve": false,
+      "can_execute_external_actions": false
+    },
+    {
+      "role_id": "role_archive_viewer",
+      "role_name": "Archive Viewer",
+      "assigned_humans": [],
+      "assigned_agents": ["lucy", "marin", "meiko", "kasumi", "reze"],
+      "purpose": "완료/보류/폐기 안건 조회",
+      "permission_summary": "archive 채널 읽기 중심. 관련 선임과 결정권자만 쓰기",
+      "can_approve": false,
+      "can_execute_external_actions": false
+    }
+  ]
+}
