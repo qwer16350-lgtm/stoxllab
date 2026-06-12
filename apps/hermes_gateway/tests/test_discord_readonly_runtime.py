@@ -16,7 +16,7 @@ if str(APP_DIR) not in sys.path:
     sys.path.insert(0, str(APP_DIR))
 
 from connection_preflight import build_phase29_runtime_readiness_report
-from discord_readonly_runtime import build_discord_intents, build_readonly_runtime_report, run_readonly_discord_bot
+from discord_readonly_runtime import build_discord_intents, build_readonly_runtime_report, format_readonly_event_line, handle_readonly_message_event, run_readonly_discord_bot
 from discord_safety_wrapper import OUTGOING_ACTION_TYPES, build_send_block_report
 from discord_token_loader import build_token_loader_report, get_required_env_keys
 
@@ -124,6 +124,37 @@ def test_runtime_run_stops_when_rag_flag_enabled() -> None:
     assert_true(report["blocked"] is True, "Runtime should be blocked when RAG is enabled")
 
 
+def test_handle_message_records_visibility_for_self_message() -> None:
+    event = {
+        "id": "123456789012345678",
+        "guild_id": "234567890123456789",
+        "channel_id": "345678901234567890",
+        "channel_name": "marin-珥덉븞",
+        "content": "hello",
+        "author": {"id": "456789012345678901", "bot": True},
+    }
+    context = {"guild_configured": False, "mapped_channel_names": {"marin-珥덉븞": "junior_draft"}, "mapped_channel_ids": {}}
+    result = handle_readonly_message_event(event, root=ROOT, visibility_context=context)
+    assert_true(result["decision"] == "ignored_self_message", "Self message should be logged as ignored")
+    assert_true(result["message_sent"] is False, "Self message visibility must not send")
+
+
+def test_event_line_redacts_author_and_omits_content() -> None:
+    result = {
+        "visibility_event": {
+            "decision": "accepted_mapped_channel",
+            "channel_name": "marketing-brief",
+            "author_id": "discord_id_redacted:8901",
+            "content_present": True,
+            "content_length": 12,
+        }
+    }
+    line = format_readonly_event_line(result)
+    assert_true("accepted_mapped_channel" in line, "Event line should include decision")
+    assert_true("discord_id_redacted:8901" in line, "Event line should include redacted author id")
+    assert_true("hello" not in line.lower(), "Event line should not include message content")
+
+
 def test_runtime_source_has_no_direct_write_calls() -> None:
     source = (APP_DIR / "discord_readonly_runtime.py").read_text(encoding="utf-8")
     for snippet in FORBIDDEN_SOURCE_SNIPPETS:
@@ -143,6 +174,8 @@ def main() -> int:
         test_runtime_run_stops_when_external_flag_enabled,
         test_runtime_run_stops_when_llm_flag_enabled,
         test_runtime_run_stops_when_rag_flag_enabled,
+        test_handle_message_records_visibility_for_self_message,
+        test_event_line_redacts_author_and_omits_content,
         test_runtime_source_has_no_direct_write_calls,
     ]
     for test in tests:

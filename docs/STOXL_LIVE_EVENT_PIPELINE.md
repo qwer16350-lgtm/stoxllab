@@ -17,6 +17,38 @@ The pipeline normalizes a Discord-shaped message, runs the existing local evalua
 7. Build an audit payload.
 8. Block outbound action through the send blocking guard.
 
+## Visibility Decisions
+
+Every live `on_message` event should produce an audit-only visibility event:
+
+- `ignored_self_message`: the author is the bot or a bot account.
+- `ignored_guild_not_allowed`: a target guild is configured and the event is from another guild.
+- `ignored_unmapped_channel`: the channel is not in the runtime mapping or known STOXL channel list.
+- `content_unavailable_or_empty`: the message content is unavailable or empty.
+- `accepted_mapped_channel`: the event is from a mapped channel and can continue through audit-only evaluation.
+
+These decisions are for observation only. They do not authorize any Discord reply or external action.
+
+## Console Output
+
+The runtime prints one redaction-safe line per observed message:
+
+```text
+[READONLY_EVENT] accepted_mapped_channel channel=marketing-brief author=discord_id_redacted:1234 content_present=true content_length=24
+```
+
+Message content, raw token values, full user IDs, and full channel IDs are not printed.
+
+## JSONL Visibility Log
+
+Observed events are appended to:
+
+```text
+logs/hermes_gateway/live_events/readonly_events_YYYYMMDD.jsonl
+```
+
+The `logs/hermes_gateway/` folder is ignored by git. Each JSONL line records the decision, reason, channel name, workflow role, content presence/length, and safety assertions.
+
 ## Safety Rules
 
 - No Discord write API call.

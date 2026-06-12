@@ -12,7 +12,7 @@ from typing import Any
 from connection_preflight import build_phase29_runtime_readiness_report
 from discord_safety_wrapper import assert_send_disabled, block_outgoing_action
 from discord_token_loader import build_token_loader_report, load_discord_runtime_env
-from live_event_pipeline import process_live_event_audit_only
+from live_event_pipeline import load_visibility_context, process_live_event_audit_only, redact_discord_id
 
 
 def build_discord_intents() -> dict[str, Any]:
@@ -26,8 +26,65 @@ def build_discord_intents() -> dict[str, Any]:
     }
 
 
-def handle_readonly_message_event(message: Any, root: str | Path | None = None) -> dict[str, Any]:
-    return process_live_event_audit_only(message, root=root)
+def build_ready_visibility(client: Any, runtime_env: dict[str, Any] | None = None) -> dict[str, Any]:
+    env = runtime_env or {}
+    user = getattr(client, "user", None)
+    guilds = getattr(client, "guilds", []) or []
+    return {
+        "runtime_mode": env.get("runtime_mode", "readonly"),
+        "bot_user_name": getattr(user, "name", "") if user else "",
+        "bot_user_id": redact_discord_id(getattr(user, "id", "")) if user else "",
+        "connected_guild_count": len(guilds),
+        "target_guild_configured": bool(env.get("guild_id_present") or env.get("target_guild_configured")),
+        "send_disabled": not bool(env.get("send_messages")),
+        "external_disabled": not bool(env.get("external_execution")),
+        "llm_disabled": not bool(env.get("llm_enabled")),
+        "rag_disabled": not bool(env.get("rag_enabled")),
+        "token_value_logged": False,
+    }
+
+
+def print_ready_visibility(client: Any, runtime_env: dict[str, Any] | None = None) -> dict[str, Any]:
+    visibility = build_ready_visibility(client, runtime_env)
+    print(
+        "[READONLY_READY] "
+        f"runtime_mode={visibility['runtime_mode']} "
+        f"bot_user={visibility['bot_user_name']}:{visibility['bot_user_id']} "
+        f"guilds={visibility['connected_guild_count']} "
+        f"target_guild_configured={str(visibility['target_guild_configured']).lower()} "
+        f"send_disabled={str(visibility['send_disabled']).lower()} "
+        f"external_disabled={str(visibility['external_disabled']).lower()} "
+        f"llm_disabled={str(visibility['llm_disabled']).lower()} "
+        f"rag_disabled={str(visibility['rag_disabled']).lower()}",
+        flush=True,
+    )
+    return visibility
+
+
+def format_readonly_event_line(result: dict[str, Any]) -> str:
+    event = result.get("visibility_event", {})
+    return (
+        "[READONLY_EVENT] "
+        f"{event.get('decision', 'unknown')} "
+        f"channel={event.get('channel_name', '')} "
+        f"author={event.get('author_id', '')} "
+        f"content_present={str(event.get('content_present', False)).lower()} "
+        f"content_length={event.get('content_length', 0)}"
+    )
+
+
+def handle_readonly_message_event(
+    message: Any,
+    root: str | Path | None = None,
+    write_log: bool = False,
+    visibility_context: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    return process_live_event_audit_only(
+        message,
+        root=root,
+        visibility_context=visibility_context,
+        write_log=write_log,
+    )
 
 
 def build_readonly_client(root: str | Path | None = None) -> dict[str, Any]:
@@ -114,12 +171,21 @@ def run_readonly_discord_bot(root: str | Path | None = None, runtime_env: dict[s
     intents.message_content = True
     client = discord.Client(intents=intents)
 
+    visibility_context = load_visibility_context(repo_root)
+
+    @client.event
+    async def on_ready() -> None:
+        print_ready_visibility(client, env)
+
     @client.event
     async def on_message(message: Any) -> None:
-        await maybe_handle_message(message, repo_root)
-
-    async def maybe_handle_message(message: Any, event_root: Path) -> None:
-        handle_readonly_message_event(message, root=event_root)
+        result = handle_readonly_message_event(
+            message,
+            root=repo_root,
+            write_log=True,
+            visibility_context=visibility_context,
+        )
+        print(format_readonly_event_line(result), flush=True)
 
     client.run(env["_token_value"])
     return {

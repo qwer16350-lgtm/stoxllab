@@ -1,0 +1,26 @@
+{
+  "created_at": "2026-06-13T00:00:00+00:00",
+  "event_type": "live_discord_message_create",
+  "decision": "accepted_mapped_channel",
+  "reason": "accepted_mapped_channel",
+  "guild_configured": true,
+  "channel_mapped": true,
+  "channel_name": "marketing-brief",
+  "workflow_role": "marketing_intake",
+  "author_is_bot": false,
+  "author_id": "discord_id_redacted:1234",
+  "content_present": true,
+  "content_length": 24,
+  "message_sent": false,
+  "external_execution": false,
+  "llm_called": false,
+  "rag_called": false,
+  "safety_assertions": {
+    "message_sent": false,
+    "external_execution": false,
+    "llm_called": false,
+    "rag_called": false,
+    "raw_token_logged": false,
+    "raw_discord_ids_logged": false
+  }
+}

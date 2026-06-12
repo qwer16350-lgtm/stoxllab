@@ -22,6 +22,18 @@ This phase does not run the Gateway, does not call the Discord API during tests,
 
 The read-only runtime may only be started by a human with explicit approval. The normal validation and report commands do not connect to Discord.
 
+## Live Visibility
+
+When the read-only runtime is actually started by a human, it prints a redaction-safe ready line:
+
+```text
+[READONLY_READY] runtime_mode=readonly bot_user=name:discord_id_redacted:1234 guilds=1 target_guild_configured=true send_disabled=true external_disabled=true llm_disabled=true rag_disabled=true
+```
+
+Each observed message also prints one redaction-safe event line and appends a JSONL record under `logs/hermes_gateway/live_events/`.
+
+No message content, token value, full user ID, or full channel ID is printed.
+
 ## Phase 23 vs Phase 29 Readiness
 
 Phase 23 no-connection preflight still treats a declared Discord runtime dependency as a failure, because that phase is planning-only.
