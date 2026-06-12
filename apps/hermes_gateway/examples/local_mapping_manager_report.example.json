@@ -1,0 +1,30 @@
+﻿{
+  "report_type": "local_mapping_manager",
+  "version": "phase22_local_only",
+  "created_at": "2026-06-12T09:47:25+00:00",
+  "root": "C:\\tmp\\STOXL_LAB",
+  "local_dir": "C:\\tmp\\STOXL_LAB\\apps\\hermes_gateway\\local",
+  "template_path": "C:\\tmp\\STOXL_LAB\\apps\\hermes_gateway\\examples\\discord_runtime_mapping.template.json",
+  "local_mapping_path": "C:\\tmp\\STOXL_LAB\\apps\\hermes_gateway\\local\\discord_runtime_mapping.local.json",
+  "local_mapping_exists": false,
+  "created": false,
+  "validated": false,
+  "strict": false,
+  "ready_for_readonly_connection": false,
+  "warnings": [
+    "Local runtime mapping file does not exist yet."
+  ],
+  "blocked_reasons": [],
+  "next_actions": [
+    "Run python apps\\hermes_gateway\\cli.py --init-local-mapping --json."
+  ],
+  "safety_assertions": {
+    "discord_api_called": false,
+    "gateway_connected": false,
+    "bot_token_required": false,
+    "env_file_read": false,
+    "message_sent": false,
+    "external_execution_enabled": false,
+    "human_only_execution_preserved": true
+  }
+}

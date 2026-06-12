@@ -17,6 +17,7 @@ from discord_event_adapter import event_from_text, normalize_event
 from dispatcher import build_dispatch_plan
 from evaluator_bridge import evaluate_request
 from log_exporter import export_replay_result
+from local_mapping_manager import build_local_mapping_manager_report, copy_template_to_local
 from mapping_validator import build_mapping_validation_report
 from persistence import get_default_log_root
 from registry_loader import load_registry
@@ -98,6 +99,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--discord-raw-event", help="Run Phase 18 local Discord raw event adapter stub.")
     parser.add_argument("--discord-replay", help="Run Phase 19 local Discord raw event replay.")
     parser.add_argument("--validate-mapping", help="Run Phase 20 local Discord runtime mapping validation.")
+    parser.add_argument("--init-local-mapping", action="store_true", help="Copy runtime mapping template to local ignored mapping path.")
+    parser.add_argument("--validate-local-mapping", action="store_true", help="Validate local ignored Discord runtime mapping.")
+    parser.add_argument("--force", action="store_true", help="Allow overwriting local mapping with --init-local-mapping.")
     parser.add_argument("--strict", action="store_true", help="Treat TODO placeholders as validation failures for --validate-mapping.")
     parser.add_argument("--mapping", help="Discord runtime mapping template for --discord-readiness.")
     parser.add_argument("--replay", help="Path to a local replay events JSON file.")
@@ -139,6 +143,31 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- warnings: {len(output.get('warnings', []))}")
             print(f"- blocked_reasons: {len(output.get('blocked_reasons', []))}")
             print(f"- secret_like_values: {output.get('summary', {}).get('secret_like_values')}")
+        return 0
+
+    if args.init_local_mapping:
+        cfg = load_config(Path(__file__).resolve())
+        output = copy_template_to_local(cfg.repo_root, force=args.force)
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL local mapping init result")
+            print(f"- local_mapping_exists: {output.get('local_mapping_exists')}")
+            print(f"- created: {output.get('created')}")
+            print(f"- blocked_reasons: {len(output.get('blocked_reasons', []))}")
+        return 0
+
+    if args.validate_local_mapping:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL local mapping validation result")
+            print(f"- local_mapping_exists: {output.get('local_mapping_exists')}")
+            print(f"- validated: {output.get('validated')}")
+            print(f"- ready_for_readonly_connection: {output.get('ready_for_readonly_connection')}")
+            print(f"- blocked_reasons: {len(output.get('blocked_reasons', []))}")
         return 0
 
     if args.discord_raw_event:
@@ -235,6 +264,9 @@ def main(argv: list[str] | None = None) -> int:
         or args.discord_raw_event
         or args.discord_replay
         or args.validate_mapping
+        or args.init_local_mapping
+        or args.validate_local_mapping
+        or args.force
         or args.strict
         or args.export_log
         or args.log_root

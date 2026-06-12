@@ -14,3 +14,8 @@ logs/hermes_gateway_test/
 
 # Hermes Gateway local export artifacts
 exports/hermes_gateway/
+
+# Hermes Gateway local runtime mapping and private runtime files
+apps/hermes_gateway/local/*
+!apps/hermes_gateway/local/.gitkeep
+!apps/hermes_gateway/local/README.md

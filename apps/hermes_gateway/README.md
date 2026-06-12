@@ -21,6 +21,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - Normalize local Discord-shaped raw events and render would-send payloads without calling Discord.
 - Replay local Discord-shaped raw events with would-send payloads, approval queue, audit trail, and optional review packets.
 - Validate local Discord runtime mapping JSON before any future read-only connection.
+- Protect and validate ignored local runtime mapping files.
 
 ## Explicit Non-Goals
 
@@ -42,6 +43,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - `docs/STOXL_DISCORD_ROLLBACK_AND_SAFETY.md`
 - `apps/hermes_gateway/examples/private_server_readonly_checklist.example.json`
 - `apps/hermes_gateway/examples/manual_mapping_fill_guide.example.md`
+- `docs/STOXL_LOCAL_MAPPING_PROTECTION.md`
 
 These documents prepare for a later private server read-only connection review. They do not authorize or perform a Discord connection.
 
@@ -66,6 +68,9 @@ python apps\hermes_gateway\cli.py --discord-replay apps\hermes_gateway\examples\
 python apps\hermes_gateway\cli.py --validate-mapping apps\hermes_gateway\examples\discord_runtime_mapping.template.json --json
 python apps\hermes_gateway\cli.py --validate-mapping apps\hermes_gateway\examples\discord_runtime_mapping.template.json --strict --json
 python apps\hermes_gateway\cli.py --validate-mapping apps\hermes_gateway\examples\discord_runtime_mapping.partial.example.json --json
+python apps\hermes_gateway\cli.py --init-local-mapping --json
+python apps\hermes_gateway\cli.py --validate-local-mapping --json
+python apps\hermes_gateway\cli.py --validate-local-mapping --strict --json
 python apps\hermes_gateway\tests\test_local_pipeline.py
 python apps\hermes_gateway\tests\test_replay_approval.py
 python apps\hermes_gateway\tests\test_persistent_audit_export.py
@@ -74,6 +79,7 @@ python apps\hermes_gateway\tests\test_discord_readiness.py
 python apps\hermes_gateway\tests\test_discord_adapter_stub.py
 python apps\hermes_gateway\tests\test_discord_replay.py
 python apps\hermes_gateway\tests\test_mapping_validator.py
+python apps\hermes_gateway\tests\test_local_mapping_manager.py
 ```
 
 If the registry file is missing, generate it from the repo root:
