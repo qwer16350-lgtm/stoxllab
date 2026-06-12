@@ -1,0 +1,79 @@
+version: 1
+agent_ids:
+  - lucy
+  - marin
+  - meiko
+  - kasumi
+  - reze
+
+department_ids:
+  - decision_makers
+  - marketing_team
+  - operation_team
+  - strategy_office
+
+permission_levels:
+  - L1_Research
+  - L2_Draft
+  - L3_Review
+  - L4_Report
+  - L5_External_Execute
+  - L6_Final_Approval
+
+status_tags:
+  - 발견됨
+  - 초안
+  - 검토중
+  - 수정필요
+  - 추천
+  - 비추천
+  - 보류
+  - 승인대기
+  - 승인됨
+  - 진행중
+  - 완료
+  - 폐기
+  - 아카이브
+
+approval_conditions:
+  - NO_APPROVAL_REQUIRED
+  - ONE_OWNER_ALLOWED
+  - BOTH_OWNERS_REQUIRED
+
+channel_ids:
+  - 공지-결정사항
+  - 대표-회의실
+  - 최종-승인요청
+  - marketing-brief
+  - lucy-검토
+  - marin-초안
+  - sns-콘텐츠
+  - homepage
+  - operation-brief
+  - meiko-검토
+  - kasumi-리서치
+  - 공모전-지원사업
+  - 일정-마감관리
+  - reze-전략기획
+  - brand-rag
+  - new-business
+  - product-ideas
+  - 완료된-안건
+  - 보류된-안건
+  - 폐기된-안건
+
+rag_source_groups:
+  - brand
+  - marketing
+  - operation
+  - strategy
+  - shared
+
+workflow_ids:
+  - marketing_content_workflow
+  - homepage_copy_workflow
+  - competition_research_workflow
+  - grant_decision_workflow
+  - strategy_idea_workflow
+  - approval_workflow
+  - archive_workflow

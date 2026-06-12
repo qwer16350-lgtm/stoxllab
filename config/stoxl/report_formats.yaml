@@ -1,0 +1,59 @@
+version: 1
+required_fields:
+  - summary
+  - recommendation_level
+  - reasons
+  - risks
+  - next_actions
+  - approval_required
+  - source_links
+  - uncertainty_notes
+
+formats:
+  marketing_report:
+    used_by: [lucy, marin]
+    purpose: SNS, 홈페이지, 공개 문구, 마케팅 전략 보고
+    fields:
+      summary: 작업 또는 검토 대상 요약
+      recommendation_level: 발행 가능, 수정 필요, 보류 또는 초안 추천도
+      reasons: 브랜드 톤, 문장 구조, 공개 적합성 근거
+      risks: 과장, 오해 가능성, 승인 필요 지점
+      next_actions: 루시 검토, 수정, 승인 요청 등
+      approval_required: 공식 게시 또는 홈페이지 업로드 전 true
+      source_links: 외부 레퍼런스 URL 또는 내부 source_file
+      uncertainty_notes: 확인되지 않은 표현과 추가 입력 필요 항목
+    validation:
+      - 마린 결과물은 확정안이라는 표현을 쓰지 않는다.
+      - 루시 검토는 발행 가능, 수정 필요, 보류 중 하나를 포함한다.
+
+  operation_report:
+    used_by: [meiko, kasumi]
+    purpose: 공모전/지원사업, 외부 기회, 마감, 리스크 보고
+    fields:
+      summary: 후보 또는 판단 대상 요약
+      recommendation_level: 추천, 보류, 비추천 또는 확인 필요
+      reasons: 지원 조건, 마감, 제출물, 실익 근거
+      risks: 일정, 자격, 제출물 부담, 불확실성
+      next_actions: 추가 확인, 승인 요청, 보류, 폐기 등
+      approval_required: 제출 또는 외부 연락 전 true
+      source_links: source_url 필수
+      uncertainty_notes: needs_check 또는 unknown 항목
+    validation:
+      - 카스미 리서치는 source_url과 확인 상태를 포함한다.
+      - 메이코 판단은 리스크 필드를 포함한다.
+
+  strategy_report:
+    used_by: [reze]
+    purpose: 브랜드 해석, 제품/사업 방향 제안, 전략 비평
+    fields:
+      summary: 전략 질문 또는 아이디어 요약
+      recommendation_level: 메인 라인, 실험 라인, 보류, 폐기
+      reasons: RAG 근거, 브랜드 적합성, 장기 방향성
+      risks: 약점, 실행 전제, 브랜드 훼손 가능성
+      next_actions: 결정권자 논의 질문 또는 검토 요청
+      approval_required: 공식 방향 확정 전 true
+      source_links: source_file, RAG_chunk_id 또는 source_note
+      uncertainty_notes: 가설, 추가 근거 필요, 결정권자 확인 필요
+    validation:
+      - 레제 의견은 실무 명령으로 표현하지 않는다.
+      - RAG 근거가 없으면 공식 원칙이 아니라 가설로 표시한다.

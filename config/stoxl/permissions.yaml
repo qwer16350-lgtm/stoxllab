@@ -1,0 +1,67 @@
+version: 1
+permission_levels:
+  L1_Research:
+    description: 자료 조사와 검색을 수행할 수 있다.
+  L2_Draft:
+    description: 초안, 후보, 정리안을 작성할 수 있다.
+  L3_Review:
+    description: 다른 에이전트의 결과물을 검토할 수 있다.
+  L4_Report:
+    description: 결정권자에게 판단 보고를 올릴 수 있다.
+  L5_External_Execute:
+    description: 외부 게시, 제출, 이메일 발송, 업로드를 실행할 수 있다.
+  L6_Final_Approval:
+    description: 공식 승인과 최종 확정을 할 수 있다.
+
+agent_permissions:
+  lucy:
+    L1_Research: true
+    L2_Draft: true
+    L3_Review: true
+    L4_Report: true
+    L5_External_Execute: false
+    L6_Final_Approval: false
+  marin:
+    L1_Research: true
+    L2_Draft: true
+    L3_Review: false
+    L4_Report: false
+    L5_External_Execute: false
+    L6_Final_Approval: false
+  meiko:
+    L1_Research: true
+    L2_Draft: true
+    L3_Review: true
+    L4_Report: true
+    L5_External_Execute: false
+    L6_Final_Approval: false
+  kasumi:
+    L1_Research: true
+    L2_Draft: true
+    L3_Review: false
+    L4_Report: false
+    L5_External_Execute: false
+    L6_Final_Approval: false
+  reze:
+    L1_Research: true
+    L2_Draft: true
+    L3_Review: true
+    L4_Report: true
+    L5_External_Execute: false
+    L6_Final_Approval: false
+
+decision_maker_permissions:
+  김태호_STOXL:
+    L1_Research: true
+    L2_Draft: true
+    L3_Review: true
+    L4_Report: true
+    L5_External_Execute: true
+    L6_Final_Approval: true
+  이주호_STOXL:
+    L1_Research: true
+    L2_Draft: true
+    L3_Review: true
+    L4_Report: true
+    L5_External_Execute: true
+    L6_Final_Approval: true

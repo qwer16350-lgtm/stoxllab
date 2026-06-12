@@ -1,0 +1,177 @@
+version: 1
+source: docs/planning/STOXL_Hermes_Discord_Agent_Implementation_Guide.xlsx
+categories:
+  - category: 00-결정권자
+    channels:
+      - channel_name: 공지-결정사항
+        purpose: 최종 결정, 승인 결과, 운영 원칙 공지
+        allowed_agents: []
+        allowed_humans: [김태호_STOXL, 이주호_STOXL]
+        read_permission: all_agents
+        write_permission: decision_makers_only
+        workflow_role: decision_notice
+        archive_rule: keep_as_source_of_truth
+      - channel_name: 대표-회의실
+        purpose: 결정권자와 선임/전략 에이전트 논의
+        allowed_agents: [lucy, meiko, reze]
+        allowed_humans: [김태호_STOXL, 이주호_STOXL]
+        read_permission: all_agents
+        write_permission: owners_senior_strategy
+        workflow_role: executive_discussion
+        archive_rule: archive_when_decision_closed
+      - channel_name: 최종-승인요청
+        purpose: 외부 실행, 공식 발행, 지원 제출 전 승인 요청
+        allowed_agents: [lucy, meiko, reze]
+        allowed_humans: [김태호_STOXL, 이주호_STOXL]
+        read_permission: all_agents
+        write_permission: owners_senior_strategy
+        workflow_role: approval_gate
+        archive_rule: approval_log_required
+
+  - category: 10-마케팅팀
+    channels:
+      - channel_name: marketing-brief
+        purpose: 마케팅 전체 브리프와 작업 지시
+        allowed_agents: [lucy, marin]
+        allowed_humans: [김태호_STOXL, 이주호_STOXL]
+        read_permission: [lucy, marin, reze]
+        write_permission: [lucy, marin, 김태호_STOXL, 이주호_STOXL]
+        workflow_role: marketing_intake
+        archive_rule: archive_after_related_workflow
+      - channel_name: lucy-검토
+        purpose: 루시의 마케팅 검토 및 수정 지시
+        allowed_agents: [lucy, marin]
+        allowed_humans: [김태호_STOXL, 이주호_STOXL]
+        read_permission: [lucy, marin, reze]
+        write_permission: [lucy, marin, 김태호_STOXL, 이주호_STOXL]
+        workflow_role: marketing_review
+        archive_rule: archive_after_approval_or_discard
+      - channel_name: marin-초안
+        purpose: 마린의 초안, 레퍼런스, 콘텐츠 후보
+        allowed_agents: [marin, lucy]
+        allowed_humans: [김태호_STOXL, 이주호_STOXL]
+        read_permission: [lucy, marin, reze]
+        write_permission: [marin, lucy, 김태호_STOXL, 이주호_STOXL]
+        workflow_role: marketing_draft
+        archive_rule: draft_only_until_review
+      - channel_name: sns-콘텐츠
+        purpose: SNS 콘텐츠 캘린더, 게시 후보, 해시태그
+        allowed_agents: [lucy, marin]
+        allowed_humans: [김태호_STOXL, 이주호_STOXL]
+        read_permission: [lucy, marin, reze]
+        write_permission: [lucy, marin, 김태호_STOXL, 이주호_STOXL]
+        workflow_role: sns_content_tracking
+        archive_rule: no_publish_execution
+      - channel_name: homepage
+        purpose: 홈페이지 구성, 섹션 문구, 제품 상세페이지 초안
+        allowed_agents: [lucy, marin]
+        allowed_humans: [김태호_STOXL, 이주호_STOXL]
+        read_permission: [lucy, marin, reze]
+        write_permission: [lucy, marin, 김태호_STOXL, 이주호_STOXL]
+        workflow_role: homepage_copy
+        archive_rule: no_deploy_execution
+
+  - category: 20-운영팀
+    channels:
+      - channel_name: operation-brief
+        purpose: 운영팀 전체 브리프와 작업 지시
+        allowed_agents: [meiko, kasumi]
+        allowed_humans: [김태호_STOXL, 이주호_STOXL]
+        read_permission: [meiko, kasumi, reze]
+        write_permission: [meiko, kasumi, 김태호_STOXL, 이주호_STOXL]
+        workflow_role: operation_intake
+        archive_rule: archive_after_related_workflow
+      - channel_name: meiko-검토
+        purpose: 메이코의 지원사업/일정 검토와 판단
+        allowed_agents: [meiko, kasumi]
+        allowed_humans: [김태호_STOXL, 이주호_STOXL]
+        read_permission: [meiko, kasumi, reze]
+        write_permission: [meiko, kasumi, 김태호_STOXL, 이주호_STOXL]
+        workflow_role: operation_review
+        archive_rule: archive_after_approval_or_discard
+      - channel_name: kasumi-리서치
+        purpose: 카스미의 외부 기회 검색 결과
+        allowed_agents: [kasumi, meiko]
+        allowed_humans: [김태호_STOXL, 이주호_STOXL]
+        read_permission: [kasumi, meiko]
+        write_permission: [kasumi, meiko, 김태호_STOXL, 이주호_STOXL]
+        workflow_role: opportunity_research
+        archive_rule: source_url_required
+      - channel_name: 공모전-지원사업
+        purpose: 공모전/지원사업 후보 DB형 채널
+        allowed_agents: [kasumi, meiko]
+        allowed_humans: [김태호_STOXL, 이주호_STOXL]
+        read_permission: [kasumi, meiko, reze]
+        write_permission: [kasumi, meiko, 김태호_STOXL, 이주호_STOXL]
+        workflow_role: opportunity_database
+        archive_rule: status_tag_required
+      - channel_name: 일정-마감관리
+        purpose: 마감 알림, 준비 일정, 내부 일정 추적
+        allowed_agents: [meiko, kasumi]
+        allowed_humans: [김태호_STOXL, 이주호_STOXL]
+        read_permission: [kasumi, meiko]
+        write_permission: [meiko, kasumi, 김태호_STOXL, 이주호_STOXL]
+        workflow_role: deadline_tracking
+        archive_rule: notification_rules_apply
+
+  - category: 30-전략기획실
+    channels:
+      - channel_name: reze-전략기획
+        purpose: 레제의 브랜드/전략 분석
+        allowed_agents: [reze]
+        allowed_humans: [김태호_STOXL, 이주호_STOXL]
+        read_permission: [reze, lucy, meiko]
+        write_permission: [reze, 김태호_STOXL, 이주호_STOXL]
+        workflow_role: strategy_analysis
+        archive_rule: archive_after_owner_review
+      - channel_name: brand-rag
+        purpose: 브랜드 RAG 요약, 폴더 변경, 자료 인덱스
+        allowed_agents: [reze]
+        allowed_humans: [김태호_STOXL, 이주호_STOXL]
+        read_permission: [reze, lucy, marin, meiko, kasumi]
+        write_permission: [reze, 김태호_STOXL, 이주호_STOXL]
+        workflow_role: rag_summary
+        archive_rule: path_and_summary_only_no_source_upload
+      - channel_name: new-business
+        purpose: 신규 사업 방향, 협업 가능성, 팝업 방향
+        allowed_agents: [reze]
+        allowed_humans: [김태호_STOXL, 이주호_STOXL]
+        read_permission: [reze, lucy, meiko]
+        write_permission: [reze, 김태호_STOXL, 이주호_STOXL]
+        workflow_role: business_strategy
+        archive_rule: opinion_only_until_owner_decision
+      - channel_name: product-ideas
+        purpose: 신규 제품군, 아이템, 실험 라인 후보
+        allowed_agents: [reze]
+        allowed_humans: [김태호_STOXL, 이주호_STOXL]
+        read_permission: [reze, lucy, marin]
+        write_permission: [reze, 김태호_STOXL, 이주호_STOXL]
+        workflow_role: product_strategy
+        archive_rule: classify_main_experiment_hold
+
+  - category: 90-archive
+    channels:
+      - channel_name: 완료된-안건
+        purpose: 완료된 업무 아카이브
+        allowed_agents: [lucy, meiko, reze]
+        allowed_humans: [김태호_STOXL, 이주호_STOXL]
+        read_permission: all_agents
+        write_permission: [lucy, meiko, reze, 김태호_STOXL, 이주호_STOXL]
+        workflow_role: completed_archive
+        archive_rule: terminal_status_only
+      - channel_name: 보류된-안건
+        purpose: 보류된 업무 아카이브
+        allowed_agents: [lucy, meiko, reze]
+        allowed_humans: [김태호_STOXL, 이주호_STOXL]
+        read_permission: all_agents
+        write_permission: [lucy, meiko, reze, 김태호_STOXL, 이주호_STOXL]
+        workflow_role: held_archive
+        archive_rule: reason_required
+      - channel_name: 폐기된-안건
+        purpose: 폐기된 업무 아카이브
+        allowed_agents: [lucy, meiko, reze]
+        allowed_humans: [김태호_STOXL, 이주호_STOXL]
+        read_permission: all_agents
+        write_permission: [lucy, meiko, reze, 김태호_STOXL, 이주호_STOXL]
+        workflow_role: discarded_archive
+        archive_rule: reason_required

@@ -1,0 +1,59 @@
+version: 1
+common_forbidden_actions:
+  - action_id: no_unapproved_sns_publish
+    description: 승인 없는 SNS 게시 금지
+    severity: critical
+    block_message: 승인 전에는 외부 게시를 진행할 수 없습니다.
+  - action_id: no_unapproved_homepage_upload
+    description: 승인 없는 홈페이지 업로드 금지
+    severity: critical
+    block_message: 승인 전에는 홈페이지 업로드를 진행할 수 없습니다.
+  - action_id: no_unapproved_competition_or_grant_submit
+    description: 승인 없는 공모전/지원사업 제출 금지
+    severity: critical
+    block_message: 승인 전에는 제출을 진행할 수 없습니다.
+  - action_id: no_unapproved_external_email
+    description: 승인 없는 외부 이메일 발송 금지
+    severity: critical
+    block_message: 승인 전에는 외부 이메일을 보낼 수 없습니다.
+  - action_id: no_price_contract_delivery_confirmation
+    description: 가격, 계약, 납기 확정 금지
+    severity: critical
+    block_message: 계약성 조건은 결정권자 승인 후 확정 가능합니다.
+  - action_id: no_official_brand_direction_confirmation
+    description: 브랜드 공식 방향 단독 확정 금지
+    severity: critical
+    block_message: 브랜드 공식 방향은 결정권자 승인 전 확정할 수 없습니다.
+  - action_id: no_unsourced_research_as_fact
+    description: 출처 없는 리서치 결과를 확정 정보처럼 보고 금지
+    severity: high
+    block_message: 외부 정보에는 출처 URL 또는 source_file이 필요합니다.
+  - action_id: no_agent_override
+    description: 다른 봇의 최종 판단 덮어쓰기 금지
+    severity: medium
+    block_message: 다른 에이전트 판단은 의견으로만 보완할 수 있습니다.
+  - action_id: no_copy_external_db_or_rag_into_repo
+    description: DB/RAG 원본 파일 repo로 복사 금지
+    severity: critical
+    block_message: 원본 DB/RAG 파일은 외부 경로에서만 참조해야 합니다.
+  - action_id: no_secret_exposure
+    description: 토큰, 비밀번호, API key, 개인 민감정보 노출 금지
+    severity: critical
+    block_message: 비밀값 또는 민감정보는 응답과 로그에 노출할 수 없습니다.
+
+agent_specific_forbidden_actions:
+  lucy:
+    - action_id: lucy_no_unapproved_publish_or_homepage_apply
+      description: 루시는 승인 없이 발행하거나 홈페이지에 반영할 수 없다.
+  marin:
+    - action_id: marin_no_final_publish_copy
+      description: 마린은 최종 발행 문구를 확정할 수 없다.
+  meiko:
+    - action_id: meiko_no_unapproved_submit_or_external_contact
+      description: 메이코는 승인 없이 제출하거나 외부 기관에 연락할 수 없다.
+  kasumi:
+    - action_id: kasumi_no_final_recommendation
+      description: 카스미는 지원 추천을 최종 확정할 수 없다.
+  reze:
+    - action_id: reze_no_direct_operational_command
+      description: 레제는 실무팀에 직접 명령할 수 없다.

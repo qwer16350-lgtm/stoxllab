@@ -1,0 +1,75 @@
+version: 1
+external_data_sources:
+  policy:
+    source_files_must_remain_external: true
+    copy_originals_into_repo: false
+    git_tracking_for_originals: false
+    preferred_runtime_path: UNC
+    mapped_drive_note: Z 드라이브는 사용자 세션에 의존하므로 런타임에서는 UNC fallback을 우선 권장한다.
+    repo_operation_folder_canonical: rag\operation
+    plural_operations_normalization: operation
+  roots:
+    database:
+      mapped_drive_env_key: STOXL_DB_ROOT
+      unc_env_key: STOXL_DB_ROOT_UNC
+    rag_source:
+      mapped_drive_env_key: STOXL_RAG_SOURCE_ROOT
+      unc_env_key: STOXL_RAG_SOURCE_ROOT_UNC
+    brand:
+      env_key: STOXL_BRAND_SOURCE_ROOT
+      canonical_group: brand
+    marketing:
+      env_key: STOXL_MARKETING_SOURCE_ROOT
+      canonical_group: marketing
+    operation:
+      env_key: STOXL_OPERATION_SOURCE_ROOT
+      canonical_group: operation
+    strategy:
+      env_key: STOXL_STRATEGY_SOURCE_ROOT
+      canonical_group: strategy
+    shared:
+      env_key: STOXL_SHARED_SOURCE_ROOT
+      canonical_group: shared
+
+canonical_source_groups:
+  - brand
+  - marketing
+  - operation
+  - strategy
+  - shared
+
+agent_access:
+  lucy:
+    allowed_sources: [brand, marketing, shared]
+    denied_sources: [operation_raw_sensitive, strategy_private, secrets]
+    evidence_required: [source_file, source_note]
+  marin:
+    allowed_sources: [brand, marketing, shared]
+    denied_sources: [strategy_private, operation_raw_sensitive, secrets]
+    evidence_required: [source_url, source_file]
+  meiko:
+    allowed_sources: [operation, shared]
+    denied_sources: [marketing_unpublished_drafts, strategy_private, secrets]
+    evidence_required: [source_url, source_file]
+  kasumi:
+    allowed_sources: [operation, shared]
+    denied_sources: [brand_strategy_private, secrets]
+    evidence_required: [source_url]
+  reze:
+    allowed_sources: [brand, marketing, operation, strategy, shared]
+    denied_sources: [secrets, personal_sensitive_information]
+    evidence_required: [source_file, RAG_chunk_id]
+
+sensitive_data_exclusion:
+  exclude_patterns:
+    - token
+    - password
+    - api_key
+    - secret
+    - private_key
+    - personal_sensitive_information
+  exposure_policy:
+    tokens_passwords_api_keys: forbidden
+    discord_ids: environment_variable_reference_only
+    personal_sensitive_information: forbidden
+    response_rule: 민감정보는 어떤 에이전트도 RAG 응답에 노출하지 않는다.

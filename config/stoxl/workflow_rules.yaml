@@ -1,0 +1,110 @@
+version: 1
+workflows:
+  - workflow_id: marketing_content_workflow
+    steps:
+      - order: 1
+        agent: marin
+        action: 콘텐츠 후보 조사 및 초안 작성
+        output: 초안 2~5개와 각 안의 의도
+      - order: 2
+        agent: lucy
+        action: 브랜드 톤 검토 및 수정
+        output: 발행 가능, 수정 필요, 보류 중 하나
+      - order: 3
+        agent: lucy
+        action: 결정권자 승인 요청
+        output: 최종-승인요청 메시지
+    required_status_transitions: [초안, 검토중, 승인대기]
+    responsible_agents: [marin, lucy]
+    approval_gate: sns_publish
+    forbidden_actions: [no_unapproved_sns_publish, marin_no_final_publish_copy]
+
+  - workflow_id: homepage_copy_workflow
+    steps:
+      - order: 1
+        agent: marin
+        action: 홈페이지 구조 및 문구 초안
+        output: 섹션안과 문구 초안
+      - order: 2
+        agent: lucy
+        action: 외부 공개 문구 검토
+        output: 최종 검토안과 승인 필요 여부
+    required_status_transitions: [초안, 검토중, 승인대기]
+    responsible_agents: [marin, lucy]
+    approval_gate: homepage_upload
+    forbidden_actions: [no_unapproved_homepage_upload]
+
+  - workflow_id: competition_research_workflow
+    steps:
+      - order: 1
+        agent: kasumi
+        action: 공모전/지원사업 검색
+        output: 후보 목록, source_url, 확인 상태
+      - order: 2
+        agent: meiko
+        action: 실행 가능성 판단
+        output: 추천, 보류, 비추천 중 하나
+    required_status_transitions: [발견됨, 검토중, 추천]
+    responsible_agents: [kasumi, meiko]
+    approval_gate: none
+    forbidden_actions: [no_unsourced_research_as_fact, kasumi_no_final_recommendation]
+
+  - workflow_id: grant_decision_workflow
+    steps:
+      - order: 1
+        agent: meiko
+        action: 지원 추천 보고
+        output: 조건, 마감, 제출물, 리스크, 승인 요청
+      - order: 2
+        agent: kasumi
+        action: 세부 조건 재확인
+        output: 최종 조건표
+    required_status_transitions: [검토중, 추천, 승인대기]
+    responsible_agents: [meiko, kasumi]
+    approval_gate: grant_submit
+    forbidden_actions: [no_unapproved_competition_or_grant_submit, meiko_no_unapproved_submit_or_external_contact]
+
+  - workflow_id: strategy_idea_workflow
+    steps:
+      - order: 1
+        agent: reze
+        action: RAG 및 작업 폴더 분석
+        output: 전략 가설
+      - order: 2
+        agent: reze
+        action: 아이디어 비평 및 방향 제안
+        output: 메인 라인, 실험 라인, 보류, 폐기 판단
+    required_status_transitions: [발견됨, 검토중, 보류]
+    responsible_agents: [reze]
+    approval_gate: official_brand_direction_confirm
+    forbidden_actions: [reze_no_direct_operational_command, no_official_brand_direction_confirmation]
+
+  - workflow_id: approval_workflow
+    steps:
+      - order: 1
+        agent: lucy_or_meiko_or_reze
+        action: 승인 요청 보고 작성
+        output: 안건명, 결론, 근거, 리스크, 승인 요청 내용
+      - order: 2
+        agent: decision_makers
+        action: 김태호_STOXL 및 이주호_STOXL 승인 판단
+        output: 승인됨, 보류, 폐기 중 하나
+    required_status_transitions: [승인대기, 승인됨]
+    responsible_agents: [lucy, meiko, reze, 김태호_STOXL, 이주호_STOXL]
+    approval_gate: BOTH_OWNERS_REQUIRED
+    forbidden_actions: [no_secret_exposure, no_agent_override]
+
+  - workflow_id: archive_workflow
+    steps:
+      - order: 1
+        agent: lucy_or_meiko_or_reze
+        action: 종료 상태 확인
+        output: 완료, 보류, 폐기 중 하나
+      - order: 2
+        agent: system_or_owner
+        action: 아카이브 채널로 기록 분류
+        output: 아카이브 상태
+    required_status_transitions: [완료, 아카이브]
+    responsible_agents: [lucy, meiko, reze, 김태호_STOXL, 이주호_STOXL]
+    approval_gate: none
+    forbidden_actions: [no_copy_external_db_or_rag_into_repo]

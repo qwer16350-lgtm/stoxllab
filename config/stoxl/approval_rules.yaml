@@ -1,0 +1,71 @@
+version: 1
+approvers:
+  - display_name: 김태호_STOXL
+    discord_user_id_env: OWNER_KIM_DISCORD_ID
+  - display_name: 이주호_STOXL
+    discord_user_id_env: OWNER_LEE_DISCORD_ID
+
+default_policy:
+  approval_condition: BOTH_OWNERS_REQUIRED
+  approval_channel: 최종-승인요청
+  execution_before_approval: blocked
+
+approval_rules:
+  - action_type: sns_publish
+    approval_required: true
+    approval_condition: BOTH_OWNERS_REQUIRED
+    approvers: [김태호_STOXL, 이주호_STOXL]
+    evidence_required: [approval_message_link]
+  - action_type: homepage_upload
+    approval_required: true
+    approval_condition: BOTH_OWNERS_REQUIRED
+    approvers: [김태호_STOXL, 이주호_STOXL]
+    evidence_required: [approval_message_link]
+  - action_type: competition_submit
+    approval_required: true
+    approval_condition: BOTH_OWNERS_REQUIRED
+    approvers: [김태호_STOXL, 이주호_STOXL]
+    evidence_required: [approval_message_link, deliverables_list]
+  - action_type: grant_submit
+    approval_required: true
+    approval_condition: BOTH_OWNERS_REQUIRED
+    approvers: [김태호_STOXL, 이주호_STOXL]
+    evidence_required: [approval_message_link, deliverables_list]
+  - action_type: external_email_send
+    approval_required: true
+    approval_condition: BOTH_OWNERS_REQUIRED
+    approvers: [김태호_STOXL, 이주호_STOXL]
+    evidence_required: [approval_message_link, email_draft]
+  - action_type: price_confirm
+    approval_required: true
+    approval_condition: BOTH_OWNERS_REQUIRED
+    approvers: [김태호_STOXL, 이주호_STOXL]
+    evidence_required: [approval_message_link, condition_document]
+  - action_type: contract_confirm
+    approval_required: true
+    approval_condition: BOTH_OWNERS_REQUIRED
+    approvers: [김태호_STOXL, 이주호_STOXL]
+    evidence_required: [approval_message_link, condition_document]
+  - action_type: delivery_schedule_confirm
+    approval_required: true
+    approval_condition: BOTH_OWNERS_REQUIRED
+    approvers: [김태호_STOXL, 이주호_STOXL]
+    evidence_required: [approval_message_link, schedule_document]
+  - action_type: official_brand_direction_confirm
+    approval_required: true
+    approval_condition: BOTH_OWNERS_REQUIRED
+    approvers: [김태호_STOXL, 이주호_STOXL]
+    evidence_required: [approval_message_link, rationale]
+  - action_type: external_collaboration_condition_confirm
+    approval_required: true
+    approval_condition: BOTH_OWNERS_REQUIRED
+    approvers: [김태호_STOXL, 이주호_STOXL]
+    evidence_required: [approval_message_link, condition_document]
+
+allowed_without_approval:
+  - action_type: internal_draft
+    approval_required: false
+  - action_type: research
+    approval_required: false
+  - action_type: internal_review
+    approval_required: false

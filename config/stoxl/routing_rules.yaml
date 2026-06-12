@@ -1,0 +1,74 @@
+version: 1
+routing_rules:
+  - route_id: sns_draft
+    trigger_type: SNS 초안
+    primary_agent: marin
+    reviewer_agent: lucy
+    final_report_channel: 최종-승인요청
+    approval_required: true
+    forbidden_shortcuts:
+      - 마린이 최종 발행 문구를 확정할 수 없다.
+      - 승인 전 SNS 게시 금지.
+  - route_id: homepage_copy
+    trigger_type: 홈페이지 문구
+    primary_agent: marin
+    reviewer_agent: lucy
+    final_report_channel: 최종-승인요청
+    approval_required: true
+    forbidden_shortcuts:
+      - 홈페이지 업로드 실행 금지.
+      - 초안을 공식 확정 문구처럼 표시 금지.
+  - route_id: marketing_strategy
+    trigger_type: 마케팅 전략
+    primary_agent: marin
+    reviewer_agent: lucy
+    final_report_channel: 대표-회의실
+    approval_required: false
+    forbidden_shortcuts:
+      - 브랜드 공식 방향 단독 확정 금지.
+      - 레제 의견은 선택적 전략 의견으로만 표시.
+  - route_id: competition_grant_search
+    trigger_type: 공모전/지원사업 검색
+    primary_agent: kasumi
+    reviewer_agent: meiko
+    final_report_channel: meiko-검토
+    approval_required: false
+    forbidden_shortcuts:
+      - source_url 없는 후보 확정 금지.
+      - 카스미의 최종 추천 확정 금지.
+  - route_id: grant_decision
+    trigger_type: 지원 여부 판단
+    primary_agent: meiko
+    reviewer_agent: none
+    final_report_channel: 최종-승인요청
+    approval_required: true
+    forbidden_shortcuts:
+      - 승인 없는 지원사업/공모전 제출 금지.
+      - 리스크 없는 추천 금지.
+  - route_id: schedule_deadline_management
+    trigger_type: 일정/마감 관리
+    primary_agent: kasumi
+    reviewer_agent: meiko
+    final_report_channel: 일정-마감관리
+    approval_required: false
+    forbidden_shortcuts:
+      - due_date unknown 항목의 알림 생성 금지.
+      - 자동 제출 금지.
+  - route_id: strategy_product_business_idea
+    trigger_type: 전략/제품/사업 제안
+    primary_agent: reze
+    reviewer_agent: none
+    final_report_channel: 대표-회의실
+    approval_required: false
+    forbidden_shortcuts:
+      - 전략 의견을 실행 명령으로 작성 금지.
+      - 근거 없는 공식 원칙 단정 금지.
+  - route_id: reze_marketing_operation_opinion
+    trigger_type: 레제의 마케팅/운영 의견
+    primary_agent: reze
+    reviewer_agent: none
+    final_report_channel: 대표-회의실
+    approval_required: false
+    forbidden_shortcuts:
+      - 루시 또는 메이코의 판단 덮어쓰기 금지.
+      - 실무팀 직접 명령 금지.
