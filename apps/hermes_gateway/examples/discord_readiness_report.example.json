@@ -1,0 +1,135 @@
+{
+  "report_type": "discord_readiness_check",
+  "version": "phase17_readonly_preflight",
+  "created_at": "2026-06-12T00:00:00+00:00",
+  "root": "C:\\tmp\\STOXL_LAB",
+  "mapping_path": "C:\\tmp\\STOXL_LAB\\apps\\hermes_gateway\\examples\\discord_runtime_mapping.template.json",
+  "overall_ready": false,
+  "checks": [
+    {
+      "check_id": "required_env_keys_documented",
+      "status": "pass",
+      "message": "Required Discord env key names are documented in .env.example.",
+      "details": {
+        "required_keys": [
+          "DISCORD_BOT_TOKEN",
+          "DISCORD_GUILD_ID",
+          "OWNER_KIM_DISCORD_ID",
+          "OWNER_LEE_DISCORD_ID",
+          "HERMES_CONFIG_PATH"
+        ],
+        "missing_keys": []
+      }
+    },
+    {
+      "check_id": "channel_mapping_template_complete",
+      "status": "pass",
+      "message": "Mapping template covers registry channels.",
+      "details": {
+        "registry_channel_count": 20,
+        "mapped_channel_count": 20,
+        "missing_channels": [],
+        "approval_channel_present": true,
+        "bad_placeholders": []
+      }
+    },
+    {
+      "check_id": "role_mapping_template_complete",
+      "status": "pass",
+      "message": "Required role mappings are present.",
+      "details": {
+        "missing_roles": [],
+        "bad_placeholders": []
+      }
+    },
+    {
+      "check_id": "owner_mapping_placeholders_present",
+      "status": "pass",
+      "message": "Owner user id placeholders are present.",
+      "details": {
+        "owner_env_keys": [
+          "OWNER_KIM_DISCORD_ID",
+          "OWNER_LEE_DISCORD_ID"
+        ],
+        "missing_owner_keys": [],
+        "placeholder_ok": true
+      }
+    },
+    {
+      "check_id": "discord_intents_documented",
+      "status": "manual_required",
+      "message": "Read-only intent checklist is documented; actual enabling is deferred.",
+      "details": {
+        "missing_fields": [],
+        "intents": {
+          "guilds_required": true,
+          "guild_messages_required": true,
+          "message_content_required": true,
+          "reactions_required_later": true,
+          "members_required_later": true,
+          "slash_commands_required_later": true,
+          "approval_buttons_required_later": true,
+          "note": "Phase 17 documents these only. No intent is enabled here."
+        }
+      }
+    },
+    {
+      "check_id": "safety_rules_preserved",
+      "status": "pass",
+      "message": "Phase 17 safety rules are preserved.",
+      "details": {
+        "missing_or_false": []
+      }
+    }
+  ],
+  "missing_required_values": [
+    "DISCORD_GUILD_ID",
+    "OWNER_KIM_DISCORD_ID",
+    "OWNER_LEE_DISCORD_ID",
+    "role:Decision Maker",
+    "role:Lucy",
+    "role:Marin",
+    "role:Meiko",
+    "role:Kasumi",
+    "role:Reze",
+    "role:Human Operator",
+    "role:Read Only Bot",
+    "channel:공지-결정사항",
+    "channel:대표-회의실",
+    "channel:최종-승인요청",
+    "channel:marketing-brief",
+    "channel:lucy-검토",
+    "channel:marin-초안",
+    "channel:sns-콘텐츠",
+    "channel:homepage",
+    "channel:operation-brief",
+    "channel:meiko-검토",
+    "channel:kasumi-리서치",
+    "channel:공모전-지원사업",
+    "channel:일정-마감관리",
+    "channel:reze-전략기획",
+    "channel:brand-rag",
+    "channel:new-business",
+    "channel:product-ideas",
+    "channel:완료된-안건",
+    "channel:보류된-안건",
+    "channel:폐기된-안건"
+  ],
+  "warnings": [
+    "Real Discord IDs are TODO placeholders; manual mapping is required before connection.",
+    "DISCORD_BOT_TOKEN is only documented as a key name; no token value is required or read."
+  ],
+  "blocked_reasons": [],
+  "next_actions": [
+    "Fill TODO guild, owner, role, channel, and audit channel IDs in a private runtime mapping file.",
+    "Keep the mapping file out of source control if it contains real Discord IDs.",
+    "Do not add a real bot token until an explicitly approved later phase."
+  ],
+  "safety_assertions": {
+    "discord_api_called": false,
+    "gateway_connected": false,
+    "bot_token_required": false,
+    "external_execution_enabled": false,
+    "human_only_execution_preserved": true
+  }
+}

@@ -17,6 +17,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - Apply mock approve/reject decisions without external execution.
 - Export replay results to local JSON/JSONL logs.
 - Build local approval review packets in JSON/Markdown.
+- Run read-only Discord readiness checks without calling Discord.
 
 ## Explicit Non-Goals
 
@@ -29,6 +30,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - No external posting, submission, email, contract, or payment actions.
 - No approval-to-external-execution conversion.
 - No real Discord approval buttons or messages.
+- No real Discord readiness check connects to Discord.
 
 ## Local Usage
 
@@ -42,10 +44,13 @@ python apps\hermes_gateway\cli.py --replay apps\hermes_gateway\examples\replay_e
 python apps\hermes_gateway\cli.py --replay apps\hermes_gateway\examples\review_packet_events.example.json --review-packet --json
 python apps\hermes_gateway\cli.py --replay apps\hermes_gateway\examples\review_packet_events.example.json --approval-actions apps\hermes_gateway\examples\review_packet_actions.example.json --review-packet --json
 python apps\hermes_gateway\cli.py --replay apps\hermes_gateway\examples\review_packet_events.example.json --review-packet --export-review-packet --dry-run-export --json
+python apps\hermes_gateway\cli.py --discord-readiness --json
+python apps\hermes_gateway\cli.py --discord-readiness --mapping apps\hermes_gateway\examples\discord_runtime_mapping.template.json --json
 python apps\hermes_gateway\tests\test_local_pipeline.py
 python apps\hermes_gateway\tests\test_replay_approval.py
 python apps\hermes_gateway\tests\test_persistent_audit_export.py
 python apps\hermes_gateway\tests\test_review_packet.py
+python apps\hermes_gateway\tests\test_discord_readiness.py
 ```
 
 If the registry file is missing, generate it from the repo root:

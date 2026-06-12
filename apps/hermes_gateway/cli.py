@@ -10,6 +10,7 @@ from typing import Any
 
 from audit_log import build_audit_payload
 from config import load_config
+from discord_readiness import build_readiness_report
 from discord_event_adapter import event_from_text, normalize_event
 from dispatcher import build_dispatch_plan
 from evaluator_bridge import evaluate_request
@@ -90,6 +91,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--channel", default="대표-회의실", help="Source channel name for --text input.")
     parser.add_argument("--author-role", default="Decision Maker", help="Author role for --text input.")
     parser.add_argument("--event", help="Path to a local JSON event.")
+    parser.add_argument("--discord-readiness", action="store_true", help="Run Phase 17 read-only Discord readiness checks.")
+    parser.add_argument("--mapping", help="Discord runtime mapping template for --discord-readiness.")
     parser.add_argument("--replay", help="Path to a local replay events JSON file.")
     parser.add_argument("--approval-actions", help="Path to mock approval actions JSON for --replay.")
     parser.add_argument("--export-log", action="store_true", help="Export replay results to local JSON/JSONL logs.")
@@ -100,6 +103,20 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--dry-run-export", action="store_true", help="Build export plan without writing files.")
     parser.add_argument("--json", action="store_true", help="Print JSON output.")
     args = parser.parse_args(argv)
+
+    if args.discord_readiness:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_readiness_report(cfg.repo_root, args.mapping)
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Discord readiness result")
+            print(f"- overall_ready: {output.get('overall_ready')}")
+            print(f"- missing_required_values: {len(output.get('missing_required_values', []))}")
+            print(f"- blocked_reasons: {len(output.get('blocked_reasons', []))}")
+            print(f"- discord_api_called: {output.get('safety_assertions', {}).get('discord_api_called')}")
+            print(f"- gateway_connected: {output.get('safety_assertions', {}).get('gateway_connected')}")
+        return 0
 
     if args.replay:
         output = run_replay(args.replay, args.approval_actions)
@@ -131,6 +148,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if (
         args.approval_actions
+        or args.mapping
         or args.export_log
         or args.log_root
         or args.review_packet
@@ -138,7 +156,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.review_export_root
         or args.dry_run_export
     ):
-        parser.error("Replay/export options can only be used with --replay.")
+        parser.error("Replay/export/readiness options require the matching mode option.")
     if args.event:
         event = load_event_file(args.event)
     elif args.text:
