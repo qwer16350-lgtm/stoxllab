@@ -1,0 +1,20 @@
+﻿{
+  "report_type": "readonly_runtime_stub",
+  "version": "phase24_no_gateway",
+  "runtime_mode": "readonly_stub",
+  "local_mapping_path": "C:\\tmp\\STOXL_LAB\\apps\\hermes_gateway\\local\\discord_runtime_mapping.local.json",
+  "can_connect_gateway": false,
+  "can_send_messages": false,
+  "can_execute_external_actions": false,
+  "token_loaded": false,
+  "env_file_read": false,
+  "dependency_required_now": false,
+  "preflight_ready": true,
+  "safety_assertions": {
+    "discord_api_called": false,
+    "gateway_connected": false,
+    "message_sent": false,
+    "external_execution_enabled": false,
+    "human_only_execution_preserved": true
+  }
+}

@@ -23,10 +23,10 @@
     "slash_commands": "later"
   },
   "phase24_rule": {
-    "connect_gateway": true,
+    "connect_gateway": false,
     "send_messages": false,
     "external_execution": false,
-    "read_env_token": "only_in_phase24_runtime_entrypoint",
+    "read_env_token": false,
     "log_token": false
   }
 }

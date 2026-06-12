@@ -1,0 +1,17 @@
+﻿{
+  "report_type": "live_capture_audit_only_stub",
+  "version": "phase25_no_live_gateway",
+  "capture_mode": "audit_only_stub",
+  "live_event_received": false,
+  "audit_payload_built": false,
+  "message_sent": false,
+  "external_execution_count": 0,
+  "safety_assertions": {
+    "discord_api_called": false,
+    "gateway_connected": false,
+    "message_sent": false,
+    "llm_called": false,
+    "rag_called": false,
+    "external_execution_enabled": false
+  }
+}

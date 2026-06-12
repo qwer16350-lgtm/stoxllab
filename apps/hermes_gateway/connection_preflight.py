@@ -55,10 +55,10 @@ def build_dependency_plan() -> dict[str, Any]:
             "slash_commands": "later",
         },
         "phase24_rule": {
-            "connect_gateway": True,
+            "connect_gateway": False,
             "send_messages": False,
             "external_execution": False,
-            "read_env_token": "only_in_phase24_runtime_entrypoint",
+            "read_env_token": False,
             "log_token": False,
         },
     }

@@ -1,0 +1,31 @@
+﻿{
+  "report_type": "agent_response_interface",
+  "version": "phase28_interface_only",
+  "llm_enabled": false,
+  "rag_enabled": false,
+  "response_generation_enabled": false,
+  "placeholder_example": {
+    "response_type": "agent_response_placeholder",
+    "agent_id": "example_agent",
+    "llm_enabled": false,
+    "rag_enabled": false,
+    "response_generated": false,
+    "placeholder_content": "Agent response generation is disabled in this phase.",
+    "requires_future_llm_phase": true,
+    "requires_future_rag_phase": false,
+    "safety": {
+      "llm_called": false,
+      "rag_called": false,
+      "discord_api_called": false,
+      "message_sent": false,
+      "external_execution": false
+    }
+  },
+  "safety_assertions": {
+    "llm_called": false,
+    "rag_called": false,
+    "discord_api_called": false,
+    "message_sent": false,
+    "external_execution": false
+  }
+}

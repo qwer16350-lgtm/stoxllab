@@ -1,0 +1,22 @@
+﻿{
+  "interaction_type": "approval_interaction_spec",
+  "version": "phase27_spec_only",
+  "current_mode": "manual_cli_mock_only",
+  "enabled_in_runtime": false,
+  "supported_future_modes": [
+    "reaction",
+    "button",
+    "slash_command"
+  ],
+  "approval_after_effect": {
+    "external_execution_allowed": false,
+    "human_only_execution": true,
+    "message_send_allowed": false
+  },
+  "safety": {
+    "discord_api_called": false,
+    "interaction_registered": false,
+    "message_sent": false,
+    "external_execution": false
+  }
+}

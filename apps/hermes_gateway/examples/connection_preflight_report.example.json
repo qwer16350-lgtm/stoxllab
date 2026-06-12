@@ -1,7 +1,7 @@
 ﻿{
   "report_type": "readonly_discord_connection_preflight",
   "version": "phase23_no_connection",
-  "created_at": "2026-06-12T10:49:32+00:00",
+  "created_at": "2026-06-12T10:56:20+00:00",
   "root": "C:\\tmp\\STOXL_LAB",
   "strict": true,
   "ready_for_phase24_readonly_connection": true,
@@ -119,10 +119,10 @@
       "slash_commands": "later"
     },
     "phase24_rule": {
-      "connect_gateway": true,
+      "connect_gateway": false,
       "send_messages": false,
       "external_execution": false,
-      "read_env_token": "only_in_phase24_runtime_entrypoint",
+      "read_env_token": false,
       "log_token": false
     }
   },

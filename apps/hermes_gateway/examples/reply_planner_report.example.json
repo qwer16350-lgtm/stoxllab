@@ -1,0 +1,17 @@
+﻿{
+  "report_type": "reply_planner_report",
+  "version": "phase26_disabled_by_default",
+  "default_reply_enabled": false,
+  "allowed_modes": [
+    "disabled",
+    "would_send_only",
+    "private_test_later"
+  ],
+  "public_channel_reply_allowed": false,
+  "safety_assertions": {
+    "discord_api_called": false,
+    "message_sent": false,
+    "external_execution": false,
+    "human_only_execution": true
+  }
+}

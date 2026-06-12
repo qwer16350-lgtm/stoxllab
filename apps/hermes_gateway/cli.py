@@ -8,6 +8,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from agent_response_interface import build_agent_response_interface_report
+from approval_interaction_spec import build_approval_interaction_spec
 from audit_log import build_audit_payload
 from config import load_config
 from connection_preflight import build_connection_preflight_report
@@ -21,8 +23,11 @@ from log_exporter import export_replay_result
 from local_mapping_manager import build_local_mapping_manager_report, copy_template_to_local
 from mapping_validator import build_mapping_validation_report
 from persistence import get_default_log_root
+from readonly_runtime_stub import build_readonly_runtime_stub_report
+from live_capture_stub import build_live_capture_stub_report
 from registry_loader import load_registry
 from replay import run_replay
+from reply_planner import build_reply_planner_report
 from review_packet import build_review_packet, export_review_packet
 
 
@@ -88,6 +93,32 @@ def print_replay_human(output: dict[str, Any]) -> None:
             print(f"  - {warning}")
 
 
+def build_safety_scaffold_report(root: str | Path) -> dict[str, Any]:
+    root_path = Path(root)
+    reports = {
+        "phase23_connection_preflight": build_connection_preflight_report(root_path),
+        "phase24_readonly_runtime_stub": build_readonly_runtime_stub_report(root_path),
+        "phase25_live_capture_stub": build_live_capture_stub_report(root_path),
+        "phase26_reply_planner": build_reply_planner_report(root_path),
+        "phase27_approval_interaction_spec": build_approval_interaction_spec(),
+        "phase28_agent_response_interface": build_agent_response_interface_report(root_path),
+    }
+    return {
+        "report_type": "phase23_28_safety_scaffold",
+        "version": "consolidated_no_connection",
+        "reports": reports,
+        "safety_assertions": {
+            "discord_api_called": False,
+            "gateway_connected": False,
+            "message_sent": False,
+            "llm_called": False,
+            "rag_called": False,
+            "external_execution_enabled": False,
+            "human_only_execution_preserved": True,
+        },
+    }
+
+
 def main(argv: list[str] | None = None) -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
@@ -103,6 +134,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--init-local-mapping", action="store_true", help="Copy runtime mapping template to local ignored mapping path.")
     parser.add_argument("--validate-local-mapping", action="store_true", help="Validate local ignored Discord runtime mapping.")
     parser.add_argument("--connection-preflight", action="store_true", help="Run Phase 23 local read-only Discord connection preflight.")
+    parser.add_argument("--readonly-runtime-stub", action="store_true", help="Run Phase 24 no-Gateway readonly runtime stub report.")
+    parser.add_argument("--live-capture-stub", action="store_true", help="Run Phase 25 audit-only live capture stub report.")
+    parser.add_argument("--reply-planner-report", action="store_true", help="Run Phase 26 disabled reply planner report.")
+    parser.add_argument("--approval-interaction-spec", action="store_true", help="Print Phase 27 approval interaction spec.")
+    parser.add_argument("--agent-response-interface", action="store_true", help="Print Phase 28 agent response interface report.")
+    parser.add_argument("--safety-scaffold-report", action="store_true", help="Print consolidated Phase 23-28 safety scaffold report.")
     parser.add_argument("--force", action="store_true", help="Allow overwriting local mapping with --init-local-mapping.")
     parser.add_argument("--strict", action="store_true", help="Treat TODO placeholders as validation failures for --validate-mapping.")
     parser.add_argument("--mapping", help="Discord runtime mapping template for --discord-readiness.")
@@ -171,6 +208,73 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- warnings: {len(output.get('warnings', []))}")
             print(f"- recommended_library: {output.get('dependency_plan', {}).get('recommended_library')}")
             print(f"- install_now: {output.get('dependency_plan', {}).get('install_now')}")
+        return 0
+
+    if args.readonly_runtime_stub:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_readonly_runtime_stub_report(cfg.repo_root)
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL readonly runtime stub")
+            print(f"- runtime_mode: {output.get('runtime_mode')}")
+            print(f"- can_connect_gateway: {output.get('can_connect_gateway')}")
+            print(f"- can_send_messages: {output.get('can_send_messages')}")
+        return 0
+
+    if args.live_capture_stub:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_live_capture_stub_report(cfg.repo_root)
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL live capture audit-only stub")
+            print(f"- capture_mode: {output.get('capture_mode')}")
+            print(f"- live_event_received: {output.get('live_event_received')}")
+            print(f"- message_sent: {output.get('message_sent')}")
+        return 0
+
+    if args.reply_planner_report:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_reply_planner_report(cfg.repo_root)
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL reply planner report")
+            print(f"- default_reply_enabled: {output.get('default_reply_enabled')}")
+            print(f"- public_channel_reply_allowed: {output.get('public_channel_reply_allowed')}")
+        return 0
+
+    if args.approval_interaction_spec:
+        output = build_approval_interaction_spec()
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL approval interaction spec")
+            print(f"- current_mode: {output.get('current_mode')}")
+            print(f"- enabled_in_runtime: {output.get('enabled_in_runtime')}")
+        return 0
+
+    if args.agent_response_interface:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_agent_response_interface_report(cfg.repo_root)
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL agent response interface")
+            print(f"- llm_enabled: {output.get('llm_enabled')}")
+            print(f"- rag_enabled: {output.get('rag_enabled')}")
+        return 0
+
+    if args.safety_scaffold_report:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_safety_scaffold_report(cfg.repo_root)
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 23-28 safety scaffold")
+            print(f"- phases: {len(output.get('reports', {}))}")
+            print(f"- discord_api_called: {output.get('safety_assertions', {}).get('discord_api_called')}")
         return 0
 
     if args.validate_local_mapping:
@@ -283,6 +387,12 @@ def main(argv: list[str] | None = None) -> int:
         or args.init_local_mapping
         or args.validate_local_mapping
         or args.connection_preflight
+        or args.readonly_runtime_stub
+        or args.live_capture_stub
+        or args.reply_planner_report
+        or args.approval_interaction_spec
+        or args.agent_response_interface
+        or args.safety_scaffold_report
         or args.force
         or args.strict
         or args.export_log

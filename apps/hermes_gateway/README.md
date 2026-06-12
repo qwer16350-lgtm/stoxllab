@@ -23,6 +23,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - Validate local Discord runtime mapping JSON before any future read-only connection.
 - Protect and validate ignored local runtime mapping files.
 - Build a no-connection preflight report for a future read-only Discord phase.
+- Build Phase 23-28 safety scaffold reports without Discord, LLM, RAG, replies, or external execution.
 
 ## Explicit Non-Goals
 
@@ -48,6 +49,12 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - `docs/STOXL_DISCORD_DEPENDENCY_PLAN.md`
 - `docs/STOXL_READONLY_CONNECTION_PREFLIGHT.md`
 - `docs/STOXL_DISCORD_TOKEN_HANDLING_RULES.md`
+- `docs/STOXL_READONLY_RUNTIME_STUB.md`
+- `docs/STOXL_LIVE_CAPTURE_AUDIT_ONLY.md`
+- `docs/STOXL_REPLY_PLANNER_DISABLED_BY_DEFAULT.md`
+- `docs/STOXL_APPROVAL_INTERACTION_SPEC.md`
+- `docs/STOXL_AGENT_RESPONSE_INTERFACE.md`
+- `docs/STOXL_PHASE23_28_SAFETY_SCAFFOLD.md`
 
 These documents prepare for a later private server read-only connection review. They do not authorize or perform a Discord connection.
 
@@ -76,6 +83,12 @@ python apps\hermes_gateway\cli.py --init-local-mapping --json
 python apps\hermes_gateway\cli.py --validate-local-mapping --json
 python apps\hermes_gateway\cli.py --validate-local-mapping --strict --json
 python apps\hermes_gateway\cli.py --connection-preflight --json
+python apps\hermes_gateway\cli.py --readonly-runtime-stub --json
+python apps\hermes_gateway\cli.py --live-capture-stub --json
+python apps\hermes_gateway\cli.py --reply-planner-report --json
+python apps\hermes_gateway\cli.py --approval-interaction-spec --json
+python apps\hermes_gateway\cli.py --agent-response-interface --json
+python apps\hermes_gateway\cli.py --safety-scaffold-report --json
 python apps\hermes_gateway\tests\test_local_pipeline.py
 python apps\hermes_gateway\tests\test_replay_approval.py
 python apps\hermes_gateway\tests\test_persistent_audit_export.py
@@ -86,6 +99,7 @@ python apps\hermes_gateway\tests\test_discord_replay.py
 python apps\hermes_gateway\tests\test_mapping_validator.py
 python apps\hermes_gateway\tests\test_local_mapping_manager.py
 python apps\hermes_gateway\tests\test_connection_preflight.py
+python apps\hermes_gateway\tests\test_safety_scaffold.py
 ```
 
 If the registry file is missing, generate it from the repo root:
