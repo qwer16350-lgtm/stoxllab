@@ -58,9 +58,13 @@ def test_normalize_redacts_discord_ids() -> None:
 
 def test_process_live_event_is_audit_only() -> None:
     result = process_live_event_audit_only(sample_event(), root=ROOT, visibility_context=visibility_context())
+    event = result["visibility_event"]
     assert_true(result["pipeline_mode"] == "audit_only", "Pipeline should be audit-only")
     assert_true(result["status"] == "processed_audit_only", "Pipeline should process non-bot event")
     assert_true(result["decision"] == "accepted_mapped_channel", "Mapped channel should be accepted for audit-only processing")
+    assert_true(event["guild_configured"] is True, "Accepted mapped channel should have guild_configured=true")
+    assert_true(event["channel_mapped"] is True, "Accepted mapped channel should have channel_mapped=true")
+    assert_true(bool(event["workflow_role"]), "Accepted mapped channel should include workflow role")
     assert_true(result["safety"]["message_sent"] is False, "Pipeline must not send messages")
     assert_true(result["safety"]["write_action_blocked"] is True, "Outbound action should be blocked")
 
@@ -80,6 +84,9 @@ def test_unmapped_channel_is_ignored() -> None:
     event["channel_id"] = "999999999999999999"
     result = process_live_event_audit_only(event, root=ROOT, visibility_context=visibility_context())
     assert_true(result["decision"] == "ignored_unmapped_channel", "Unmapped channel should be ignored")
+    assert_true(result["visibility_event"]["guild_configured"] is True, "Unmapped channel in target guild should keep guild_configured=true")
+    assert_true(result["visibility_event"]["channel_mapped"] is False, "Unmapped channel should have channel_mapped=false")
+    assert_true(result["visibility_event"]["workflow_role"] == "", "Unmapped channel should not include workflow role")
     assert_true(result["message_sent"] is False, "Unmapped channel should not send")
 
 
@@ -88,6 +95,9 @@ def test_guild_mismatch_is_ignored() -> None:
     event["guild_id"] = "999999999999999999"
     result = process_live_event_audit_only(event, root=ROOT, visibility_context=visibility_context())
     assert_true(result["decision"] == "ignored_guild_not_allowed", "Guild mismatch should be ignored")
+    assert_true(result["visibility_event"]["guild_configured"] is False, "Guild mismatch should have guild_configured=false")
+    assert_true(result["visibility_event"]["channel_mapped"] is False, "Guild mismatch should not report channel as mapped")
+    assert_true(result["message_sent"] is False, "Guild mismatch should not send")
 
 
 def test_empty_content_is_visible() -> None:
@@ -95,6 +105,8 @@ def test_empty_content_is_visible() -> None:
     event["content"] = ""
     result = process_live_event_audit_only(event, root=ROOT, visibility_context=visibility_context())
     assert_true(result["decision"] == "content_unavailable_or_empty", "Empty content should be visible")
+    assert_true(result["visibility_event"]["guild_configured"] is True, "Empty content in target guild should keep guild_configured=true")
+    assert_true(result["visibility_event"]["channel_mapped"] is True, "Empty content in mapped channel should keep channel_mapped=true")
     assert_true(result["visibility_event"]["content_present"] is False, "Content presence should be false")
 
 
@@ -122,6 +134,9 @@ def test_visibility_log_writer_creates_jsonl_line() -> None:
     assert_true(len(lines) == 1, "Visibility log writer should append one line")
     data = json.loads(lines[0])
     assert_true(data["decision"] == result["decision"], "Visibility log should contain decision")
+    assert_true(data["guild_configured"] is True, "Visibility log should preserve guild_configured=true for accepted mapped channel")
+    assert_true(data["channel_mapped"] is True, "Visibility log should preserve channel_mapped=true")
+    assert_true(data["workflow_role"] == "junior_draft", "Visibility log should preserve workflow role")
     assert_true(data["message_sent"] is False, "Visibility log must show no message sent")
 
 

@@ -168,11 +168,18 @@ def _channel_mapping(event: dict[str, Any], context: dict[str, Any]) -> dict[str
 
 def build_visibility_event(event: dict[str, Any], context: dict[str, Any] | None = None) -> dict[str, Any]:
     visibility_context = context or load_visibility_context()
-    channel = _channel_mapping(event, visibility_context)
-    guild_configured = bool(visibility_context.get("guild_configured"))
+    initial_channel = _channel_mapping(event, visibility_context)
     raw_guild_id = _decode_internal_id(event.get("_raw_guild_id", ""))
     allowed_guild_id = visibility_context.get("allowed_guild_id", "")
-    guild_allowed = not guild_configured or not allowed_guild_id or raw_guild_id == allowed_guild_id
+    target_guild_configured = bool(visibility_context.get("guild_configured") and allowed_guild_id)
+    guild_matches_target = target_guild_configured and bool(raw_guild_id) and raw_guild_id == allowed_guild_id
+    guild_unknown = not bool(raw_guild_id)
+    guild_allowed = guild_matches_target or (not target_guild_configured and not guild_unknown)
+    channel = dict(initial_channel)
+    if not guild_allowed:
+        channel["mapped"] = False
+        channel["workflow_role"] = ""
+    guild_configured = bool(guild_matches_target or (guild_allowed and initial_channel["mapped"]))
     author_is_bot = bool(event.get("author", {}).get("bot") or event.get("author_is_bot"))
     content = str(event.get("content") or "")
     content_present = bool(content.strip())

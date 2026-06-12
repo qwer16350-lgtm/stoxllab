@@ -29,6 +29,23 @@ Every live `on_message` event should produce an audit-only visibility event:
 
 These decisions are for observation only. They do not authorize any Discord reply or external action.
 
+## Guild And Channel Consistency
+
+`guild_configured` means the event is inside an allowed guild context for read-only processing.
+
+- It is `true` when the target guild ID is configured and the event guild matches it.
+- It is also `true` when the event is a guild message and the channel is mapped by the local runtime mapping or known STOXL channel list.
+- It is `false` when the target guild is configured but the event guild does not match, or when the event has no guild context.
+
+Decision-specific consistency:
+
+- `accepted_mapped_channel`: `guild_configured=true`, `channel_mapped=true`, `workflow_role` is present.
+- `ignored_guild_not_allowed`: `guild_configured=false`, `channel_mapped=false`.
+- `ignored_unmapped_channel`: `guild_configured=true`, `channel_mapped=false`.
+- `content_unavailable_or_empty`: for a valid guild and mapped channel, `guild_configured=true`, `channel_mapped=true`.
+
+All cases keep `message_sent=false`, `external_execution=false`, `llm_called=false`, and `rag_called=false`.
+
 ## Console Output
 
 The runtime prints one redaction-safe line per observed message:
