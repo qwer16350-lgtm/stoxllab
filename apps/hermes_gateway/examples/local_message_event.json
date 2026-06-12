@@ -1,0 +1,13 @@
+{
+  "event_type": "discord_message_event",
+  "event_id": "local-message-001",
+  "channel_name": "marin-초안",
+  "channel_category": "10-마케팅팀",
+  "author_role": "Decision Maker",
+  "author_display_name": "TODO_DECISION_MAKER",
+  "author_is_agent": false,
+  "message_text": "인스타 업로드 문구 초안 만들어줘",
+  "mentioned_agents": [],
+  "attachments": [],
+  "timestamp": "2026-06-12T09:00:00+09:00"
+}

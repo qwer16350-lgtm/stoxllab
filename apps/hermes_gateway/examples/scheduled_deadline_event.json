@@ -1,0 +1,17 @@
+{
+  "event_type": "scheduled_deadline_event",
+  "event_id": "scheduled-deadline-001",
+  "channel_name": "일정-마감관리",
+  "channel_category": "20-운영팀",
+  "author_role": "Decision Maker",
+  "author_display_name": "LOCAL_SCHEDULER",
+  "author_is_agent": false,
+  "message_text": "지원사업 마감 7일 전입니다. 조건과 리스크를 다시 확인해줘",
+  "mentioned_agents": [
+    "meiko"
+  ],
+  "current_status": "검토중",
+  "requested_next_status": null,
+  "attachments": [],
+  "timestamp": "2026-06-12T09:00:00+09:00"
+}

@@ -1,0 +1,15 @@
+{
+  "event_type": "manual_cli_event",
+  "event_id": "manual-cli-001",
+  "channel_name": "reze-전략기획",
+  "channel_category": "30-전략기획실",
+  "author_role": "Decision Maker",
+  "author_display_name": "TODO_DECISION_MAKER",
+  "author_is_agent": false,
+  "message_text": "신규 제품 아이디어의 장점과 약점을 전략 관점에서 검토해줘",
+  "mentioned_agents": [
+    "reze"
+  ],
+  "attachments": [],
+  "timestamp": "2026-06-12T09:00:00+09:00"
+}
