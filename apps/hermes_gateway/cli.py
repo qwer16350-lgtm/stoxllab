@@ -35,6 +35,7 @@ from live_event_pipeline import build_live_event_pipeline_report
 from live_event_review_packet import build_live_event_review_packet
 from live_event_routing_report import build_live_event_routing_report
 from llm_preflight import build_llm_preflight_report, render_llm_preflight_markdown
+from llm_dry_call import build_llm_dry_call_request, render_llm_dry_call_markdown, run_llm_dry_call
 from llm_prompt_envelope import build_llm_prompt_envelope, render_llm_prompt_envelope_preview
 from llm_safety_policy import build_llm_safety_policy_report
 from log_exporter import export_replay_result
@@ -220,6 +221,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--llm-preflight-report", action="store_true", help="Print Phase 32A local-only LLM safety preflight report.")
     parser.add_argument("--llm-safety-policy-report", action="store_true", help="Print Phase 32A local-only LLM safety policy report.")
     parser.add_argument("--llm-prompt-envelope-report", action="store_true", help="Print Phase 32A local-only LLM prompt envelope preview.")
+    parser.add_argument("--llm-dry-call-report", action="store_true", help="Print Phase 32B private-test-only LLM dry call report.")
+    parser.add_argument("--allow-llm-api-call", action="store_true", help="Allow Phase 32B to attempt one gated provider call when env gates pass.")
     parser.add_argument("--markdown", action="store_true", help="Print supported reports as Markdown.")
     parser.add_argument("--limit", type=int, default=20, help="Limit rows for viewer reports.")
     parser.add_argument("--date", help="Date filter in YYYYMMDD or YYYY-MM-DD format.")
@@ -626,6 +629,22 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- llm_api_called: {output.get('safety_assertions', {}).get('llm_api_called')}")
         return 0
 
+    if args.llm_dry_call_report:
+        request = build_llm_dry_call_request(agent_route_candidate=args.agent or "marin", user_content_preview=args.text)
+        output = run_llm_dry_call(request, allow_api_call=args.allow_llm_api_call)
+        if args.markdown:
+            print(render_llm_dry_call_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            result = output.get("client_result", {})
+            print("STOXL LLM dry call report")
+            print(f"- api_call_attempted: {result.get('api_call_attempted')}")
+            print(f"- api_call_succeeded: {result.get('api_call_succeeded')}")
+            print(f"- output_allowed: {output.get('output_safety', {}).get('allowed')}")
+            print(f"- message_sent: {output.get('message_sent')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -761,6 +780,8 @@ def main(argv: list[str] | None = None) -> int:
         or args.llm_preflight_report
         or args.llm_safety_policy_report
         or args.llm_prompt_envelope_report
+        or args.llm_dry_call_report
+        or args.allow_llm_api_call
         or args.force
         or args.strict
         or args.export_log
