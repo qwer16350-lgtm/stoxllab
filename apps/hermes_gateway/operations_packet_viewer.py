@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from private_test_reply_replay import build_private_test_reply_replay_report
+from llm_response_packet import llm_response_packet_preview
 
 
 VERSION = "phase31a_local_viewer"
@@ -119,6 +120,42 @@ def _packet_files(root: str | Path | None = None, date: str | None = None) -> li
     return files
 
 
+def _llm_packet_files(root: str | Path | None = None, date: str | None = None) -> list[Path]:
+    base = _repo(root) / "exports" / "hermes_gateway" / "llm_response_packets"
+    if date:
+        dirs = [base / _date_stamp(date)]
+    else:
+        dirs = [path for path in base.glob("*") if path.is_dir()] if base.exists() else []
+    files: list[Path] = []
+    for directory in dirs:
+        if directory.exists():
+            files.extend(directory.glob("*.json"))
+    return files
+
+
+def list_recent_llm_response_packets(root: str | Path | None = None, limit: int = 20, date: str | None = None) -> list[dict[str, Any]]:
+    packets: list[dict[str, Any]] = []
+    for path in _llm_packet_files(root, date):
+        packet = _safe_json_load(path)
+        if packet:
+            preview = llm_response_packet_preview(packet, packet_path=str(path))
+            item = {
+                "packet_path": str(path),
+                "llm_response_available": bool(preview.get("available")),
+                "llm_provider": preview.get("provider", ""),
+                "llm_model": preview.get("model", ""),
+                "llm_output_safety_allowed": bool(preview.get("output_safety_allowed")),
+                "llm_cost": preview.get("cost"),
+                "llm_message_sent": False,
+                "summary": preview.get("summary", ""),
+                "created_at": packet.get("created_at", ""),
+            }
+            _assert_no_raw_values(item)
+            packets.append(item)
+    packets.sort(key=lambda item: item.get("created_at", ""), reverse=True)
+    return packets[: max(0, int(limit))]
+
+
 def list_recent_review_packets(root: str | Path | None = None, limit: int = 20, date: str | None = None) -> list[dict[str, Any]]:
     packets: list[dict[str, Any]] = []
     for path in _packet_files(root, date):
@@ -222,6 +259,7 @@ def build_operations_packet_viewer_report(
         decision=decision,
     )[: max(0, int(limit))]
     packets = list_recent_review_packets(root=root, limit=limit, date=date)
+    llm_packets = list_recent_llm_response_packets(root=root, limit=limit, date=date)
     replay_report = build_private_test_reply_replay_report(root=str(_repo(root)))
     replay_summary = replay_report.get("summary", {})
     report = {
@@ -232,6 +270,15 @@ def build_operations_packet_viewer_report(
         "date": _date_stamp(date),
         "recent_live_events": events,
         "recent_review_packets": packets,
+        "recent_llm_response_packets": llm_packets,
+        "llm_response_summary": llm_packets[0] if llm_packets else {
+            "llm_response_available": False,
+            "llm_provider": "",
+            "llm_model": "",
+            "llm_output_safety_allowed": False,
+            "llm_cost": None,
+            "llm_message_sent": False,
+        },
         "private_test_reply_summary": {
             "available": True,
             "sent_count": replay_summary.get("sent", 0),
@@ -300,8 +347,16 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
             ]
         )
     private_summary = report.get("private_test_reply_summary", {})
+    llm_summary = report.get("llm_response_summary", {})
     lines.extend(
         [
+            "",
+            "## LLM Response",
+            f"- Provider: {llm_summary.get('llm_provider', '')}",
+            f"- Model: {llm_summary.get('llm_model', '')}",
+            f"- Output safety: {str(llm_summary.get('llm_output_safety_allowed', False)).lower()}",
+            f"- Cost: {llm_summary.get('llm_cost')}",
+            "- Sent to Discord: false",
             "",
             "## Private Test Reply",
             f"- Historical sent: {private_summary.get('sent_count', 0)}",

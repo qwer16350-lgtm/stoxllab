@@ -13,6 +13,7 @@ logs/hermes_gateway/live_events/
 logs/hermes_gateway/live_events/manifests/
 exports/hermes_gateway/live_event_packets/
 exports/hermes_gateway/would_send_previews/
+exports/hermes_gateway/llm_response_packets/
 ```
 
 The viewer does not read `.env` or local mapping files.
@@ -53,6 +54,19 @@ When a review packet contains a Phase 31C deterministic placeholder response, th
 
 Markdown output adds an `Agent Placeholder Response` section. It is local stdout only and is not posted to Discord.
 
+## LLM Response Summary
+
+When Phase 32C LLM response packets exist, the viewer can show:
+
+- `llm_response_available`
+- `llm_provider`
+- `llm_model`
+- `llm_output_safety_allowed`
+- `llm_cost`
+- `llm_message_sent=false`
+
+Markdown output adds an `LLM Response` section. It is local stdout only and is not posted to Discord.
+
 ## Safety Boundaries
 
 The viewer does not:
@@ -61,6 +75,7 @@ The viewer does not:
 - call Discord write APIs
 - modify Discord server, channel, or role settings
 - call LLM or OpenAI/OpenRouter
+- make new LLM calls while viewing response packets
 - read RAG sources
 - execute external actions
 - read `.env`

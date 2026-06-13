@@ -29,3 +29,16 @@ Any real reply behavior requires a later approved phase. Phase 30 keeps:
 ## Phase 31C Placeholder
 
 Phase 31C may attach a deterministic `agent_placeholder_response` summary to the would-send preview. This summary is still local-only and keeps `will_send=false`.
+
+## Phase 32C LLM Response Summary
+
+Phase 32C may attach an optional `llm_response` summary to the would-send preview.
+
+The summary can show provider, model, output safety, cost, and response summary. It still keeps:
+
+- `will_send=false`
+- `message_sent=false`
+- `rag_called=false`
+- `external_execution=false`
+
+The LLM response summary is a local review aid only and is not posted to Discord.

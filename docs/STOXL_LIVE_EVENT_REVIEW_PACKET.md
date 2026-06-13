@@ -13,6 +13,7 @@ The packet lets a human review live event handling without enabling Discord repl
 - routing report
 - would-send preview
 - optional deterministic agent placeholder response
+- optional LLM response packet summary
 - human review policy
 - safety assertions
 
@@ -41,3 +42,11 @@ The export path is local and ignored by git.
 ## Phase 31C Placeholder
 
 Review packets may include `agent_placeholder_response` with title and summary fields. The field is optional and backward compatible; missing placeholders are represented as `available=false`.
+
+## Phase 32C LLM Response Packet
+
+Review packets may include `llm_response_packet` with provider, model, output safety, and response summary fields.
+
+The field is optional and backward compatible; missing LLM packets are represented as `available=false`.
+
+LLM response packet summaries never authorize auto reply, RAG, Discord send, or external execution.

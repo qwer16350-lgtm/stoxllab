@@ -8,6 +8,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from llm_response_packet import llm_response_packet_preview
+
 
 VERSION = "phase30_no_send"
 
@@ -36,6 +38,7 @@ def build_would_send_preview(
     audit_record: dict[str, Any],
     routing_report: dict[str, Any],
     agent_placeholder_response: dict[str, Any] | None = None,
+    llm_response_packet: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     agent = routing_report.get("agent_route_candidate", "unrouted")
     channel = audit_record.get("channel_name", "")
@@ -57,6 +60,7 @@ def build_would_send_preview(
         "rag_called": False,
         "external_execution": False,
         "agent_placeholder_response": _placeholder_summary(agent_placeholder_response),
+        "llm_response": llm_response_packet_preview(llm_response_packet),
         "safety_assertions": {
             "discord_api_write_called": False,
             "message_sent": False,

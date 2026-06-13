@@ -8,6 +8,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from llm_response_packet import llm_response_packet_preview
+
 
 VERSION = "phase30_review_packet"
 
@@ -25,6 +27,7 @@ def build_live_event_review_packet(
     routing_report: dict[str, Any],
     would_send_preview: dict[str, Any],
     agent_placeholder_response: dict[str, Any] | None = None,
+    llm_response_packet: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     packet = {
         "packet_type": "live_event_review_packet",
@@ -43,6 +46,7 @@ def build_live_event_review_packet(
         "routing_report": routing_report,
         "would_send_preview": would_send_preview,
         "agent_placeholder_response": _placeholder_summary(agent_placeholder_response),
+        "llm_response_packet": llm_response_packet_preview(llm_response_packet),
         "human_review": {
             "required": True,
             "reason": "Discord replies are disabled in Phase 30.",
@@ -102,6 +106,7 @@ def render_live_event_review_packet_markdown(packet: dict[str, Any]) -> str:
             f"- content_present: {summary.get('content_present')}",
             f"- content_length: {summary.get('content_length')}",
             f"- agent_placeholder_response: {str(packet.get('agent_placeholder_response', {}).get('available', False)).lower()}",
+            f"- llm_response_packet: {str(packet.get('llm_response_packet', {}).get('available', False)).lower()}",
             "- message_sent: false",
             "- external_execution: false",
             "- llm_called: false",

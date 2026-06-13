@@ -1,0 +1,21 @@
+{
+  "preview_type": "would_send_preview",
+  "version": "phase30_no_send",
+  "llm_response": {
+    "available": true,
+    "packet_path": "",
+    "provider": "openrouter",
+    "model": "openai/gpt-5.4-mini",
+    "summary": "Review-only draft. No final publishing or external delivery has been made.",
+    "output_safety_allowed": true,
+    "blocked": false,
+    "cost": 0.00043425,
+    "will_send": false,
+    "message_sent": false
+  },
+  "will_send": false,
+  "message_sent": false,
+  "llm_called": false,
+  "rag_called": false,
+  "external_execution": false
+}

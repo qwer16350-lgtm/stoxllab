@@ -66,6 +66,8 @@ Phase 32B never sends an LLM answer to Discord.
 
 The response can be stored as a local report or artifact only. A future would-send or review packet may reference the response, but this phase does not create a Discord reply.
 
+Phase 32C converts safe LLM dry call reports into local response packets that can be reviewed in would-send previews, live event review packets, and the operations viewer. This still does not create a Discord reply.
+
 ## Private Test Only
 
 The dry call request is scoped to:
