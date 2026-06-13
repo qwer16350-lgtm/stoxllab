@@ -1,0 +1,30 @@
+{
+  "report_type": "llm_private_test_reply_preflight",
+  "version": "phase32d_guarded_private_test_only",
+  "ready": false,
+  "blocked": true,
+  "blocked_reasons": [
+    "discord_send_disabled",
+    "llm_private_test_reply_disabled"
+  ],
+  "private_test_channel_configured": false,
+  "llm_provider": "openrouter",
+  "llm_model_configured": true,
+  "discord_send_enabled": false,
+  "llm_discord_send_enabled": false,
+  "rag_enabled": false,
+  "external_execution": false,
+  "reply_mode": "private_test_only",
+  "llm_reply_mode": "private_test_only",
+  "require_packet": true,
+  "max_replies_per_session": 3,
+  "cooldown_seconds": 15,
+  "safety_assertions": {
+    "api_key_value_logged": false,
+    "discord_message_sent": false,
+    "rag_called": false,
+    "external_execution": false,
+    "raw_discord_ids_logged": false,
+    "llm_called": false
+  }
+}

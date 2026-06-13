@@ -8,16 +8,60 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
+import os
 
 from connection_preflight import build_phase29_runtime_readiness_report
 from discord_safety_wrapper import assert_send_disabled, block_outgoing_action
 from discord_token_loader import build_token_loader_report, load_discord_runtime_env
 from live_event_pipeline import load_visibility_context, process_live_event_audit_only, redact_discord_id
+from llm_private_test_reply import (
+    build_llm_private_test_reply_attempt,
+    build_llm_private_test_reply_payload,
+    build_llm_private_test_reply_preflight,
+    send_llm_private_test_reply_only,
+    write_llm_private_test_reply_audit,
+)
 from private_test_reply import (
     build_private_test_reply_payload,
     build_private_test_reply_policy,
     send_private_test_reply_only,
 )
+
+
+PHASE32D_ENV_KEYS = [
+    "HERMES_LLM_ENABLED",
+    "HERMES_LLM_API_CALL_ENABLED",
+    "HERMES_LLM_PROVIDER",
+    "HERMES_LLM_MODEL",
+    "HERMES_LLM_API_KEY",
+    "HERMES_LLM_BASE_URL",
+    "HERMES_LLM_DRY_RUN_ONLY",
+    "HERMES_LLM_DRY_CALL_MODE",
+    "HERMES_LLM_DISCORD_SEND_ENABLED",
+    "HERMES_LLM_PRIVATE_TEST_ONLY",
+    "HERMES_LLM_COST_GUARD_ENABLED",
+    "HERMES_LLM_PRIVATE_TEST_REPLY_ENABLED",
+    "HERMES_LLM_PRIVATE_TEST_REPLY_MODE",
+    "HERMES_LLM_PRIVATE_TEST_REPLY_REQUIRE_PACKET",
+    "HERMES_LLM_PRIVATE_TEST_REPLY_MAX_PER_SESSION",
+    "HERMES_LLM_PRIVATE_TEST_REPLY_COOLDOWN_SECONDS",
+    "HERMES_LLM_RAG_ENABLED",
+    "HERMES_LLM_EXTERNAL_EXECUTION",
+]
+
+
+def _phase32d_env(runtime_env: dict[str, Any]) -> dict[str, Any]:
+    env = dict(runtime_env)
+    for key in PHASE32D_ENV_KEYS:
+        if key in os.environ:
+            env[key] = os.environ.get(key, "")
+    env["HERMES_DISCORD_SEND_MESSAGES"] = str(bool(env.get("send_messages"))).lower()
+    env["HERMES_DISCORD_PRIVATE_TEST_REPLY"] = str(bool(env.get("private_test_reply_enabled"))).lower()
+    env["HERMES_DISCORD_REPLY_MODE"] = str(env.get("reply_mode", "disabled"))
+    env["HERMES_DISCORD_PRIVATE_TEST_CHANNEL_ID"] = str(env.get("_private_test_channel_id", ""))
+    env["HERMES_DISCORD_EXTERNAL_EXECUTION"] = str(bool(env.get("external_execution"))).lower()
+    env["HERMES_DISCORD_RAG_ENABLED"] = str(bool(env.get("rag_enabled"))).lower()
+    return env
 from private_test_reply_safety import (
     build_private_test_reply_safety_policy,
     build_private_test_reply_safety_state,
@@ -94,6 +138,25 @@ def print_private_test_ready_visibility(client: Any, runtime_env: dict[str, Any]
         flush=True,
     )
     return visibility
+
+
+def print_private_test_llm_ready_visibility(client: Any, runtime_env: dict[str, Any] | None = None) -> dict[str, Any]:
+    env = _phase32d_env(runtime_env or {})
+    preflight = build_llm_private_test_reply_preflight(env)
+    print(
+        "[PRIVATE_TEST_LLM_READY] "
+        "runtime_mode=private_test_llm_reply "
+        f"private_test_channel_configured={str(preflight.get('private_test_channel_configured')).lower()} "
+        f"llm_enabled={str(env.get('HERMES_LLM_ENABLED', '').lower() == 'true').lower()} "
+        f"provider={preflight.get('llm_provider', '')} "
+        f"model_configured={str(preflight.get('llm_model_configured')).lower()} "
+        f"discord_send_enabled={str(preflight.get('discord_send_enabled')).lower()} "
+        "public_send_disabled=true "
+        f"rag_disabled={str(not preflight.get('rag_enabled')).lower()} "
+        f"external_disabled={str(not preflight.get('external_execution')).lower()}",
+        flush=True,
+    )
+    return preflight
 
 
 def format_readonly_event_line(result: dict[str, Any]) -> str:
@@ -248,6 +311,19 @@ def build_private_test_reply_runtime_preflight(root: str | Path | None = None, r
         "rag_called": False,
         "policy": {key: value for key, value in policy.items() if not key.startswith("_")},
     }
+
+
+def build_private_test_llm_reply_runtime_preflight(root: str | Path | None = None, runtime_env: dict[str, Any] | None = None) -> dict[str, Any]:
+    env = runtime_env or load_discord_runtime_env(root or Path.cwd(), load_dotenv_file=False, include_token_value=False)
+    report = build_llm_private_test_reply_preflight(_phase32d_env(env))
+    if not env.get("token_present"):
+        report["ready"] = False
+        report["blocked"] = True
+        if "token_missing" not in report["blocked_reasons"]:
+            report["blocked_reasons"].insert(0, "token_missing")
+    report["report_type"] = "llm_private_test_reply_runtime_preflight"
+    report["token_present"] = bool(env.get("token_present"))
+    return report
 
 
 def build_readonly_runtime_report(root: str | Path | None = None) -> dict[str, Any]:
@@ -499,3 +575,108 @@ def run_discord_private_test_reply_bot(root: str | Path | None = None, runtime_e
         "preflight": preflight,
         "safety_assertions": build_readonly_runtime_report(repo_root)["safety_assertions"],
     }
+
+
+def run_discord_private_test_llm_reply_bot(root: str | Path | None = None, runtime_env: dict[str, Any] | None = None) -> dict[str, Any]:
+    repo_root = Path(root or Path.cwd()).resolve()
+    env = runtime_env or load_discord_runtime_env(repo_root, load_dotenv_file=True, include_token_value=True)
+    phase_env = _phase32d_env(env)
+    preflight = build_private_test_llm_reply_runtime_preflight(repo_root, env)
+    if preflight.get("ready") is not True:
+        return {
+            "started": False,
+            "blocked": True,
+            "reason": "llm_private_test_reply_preflight_failed:" + str(preflight.get("blocked_reasons", ["unknown"])[0]),
+            "message_sent": False,
+            "token_value_logged": False,
+            "preflight": preflight,
+            "safety_assertions": {
+                "message_sent": False,
+                "discord_write_api_called": False,
+                "external_execution": False,
+                "llm_called": False,
+                "rag_called": False,
+            },
+        }
+    try:
+        import discord
+    except ImportError:
+        return {
+            "started": False,
+            "blocked": True,
+            "reason": "llm_private_test_reply_preflight_failed:discord_dependency_missing",
+            "message_sent": False,
+            "token_value_logged": False,
+            "preflight": preflight,
+            "safety_assertions": build_readonly_runtime_report(repo_root)["safety_assertions"],
+        }
+
+    intents = discord.Intents.default()
+    intents.guilds = True
+    intents.messages = True
+    intents.message_content = True
+    client = discord.Client(intents=intents)
+    visibility_context = load_visibility_context(repo_root)
+    visibility_context["private_test_channel_id"] = env.get("_private_test_channel_id", "")
+    processed_message_ids: set[str] = set()
+    safety_state = build_private_test_reply_safety_state()
+
+    @client.event
+    async def on_ready() -> None:
+        print_private_test_llm_ready_visibility(client, env)
+
+    @client.event
+    async def on_message(message: Any) -> None:
+        result = handle_readonly_message_event(message, root=repo_root, write_log=True, visibility_context=visibility_context)
+        print(format_readonly_event_line(result), flush=True)
+        skip_reason = should_skip_private_test_reply_event(
+            message,
+            result,
+            bot_user_id=getattr(client.user, "id", ""),
+            processed_message_ids=processed_message_ids,
+        )
+        if skip_reason:
+            print(f"[PRIVATE_TEST_LLM_REPLY] skipped reason={skip_reason}", flush=True)
+            return
+        message_id = get_message_identity(message)
+        if message_id:
+            processed_message_ids.add(message_id)
+        attempt = build_llm_private_test_reply_attempt(
+            message,
+            env=phase_env,
+            safety_state=safety_state,
+            agent_route_candidate=result.get("routing_report", {}).get("agent_route_candidate", "marin"),
+        )
+        if not attempt.get("allowed"):
+            write_llm_private_test_reply_audit(attempt, root=repo_root)
+            print(f"[PRIVATE_TEST_LLM_REPLY] blocked reason={attempt.get('reason', '')}", flush=True)
+            return
+        print("[PRIVATE_TEST_LLM_REPLY] llm_call_allowed", flush=True)
+        if not attempt.get("output_safety_allowed"):
+            print("[PRIVATE_TEST_LLM_REPLY] blocked reason=output_safety_blocked", flush=True)
+            return
+        print("[PRIVATE_TEST_LLM_REPLY] output_safety_allowed", flush=True)
+        payload = build_llm_private_test_reply_payload(attempt.get("packet", {})) if attempt.get("packet") else {}
+        if not payload:
+            print("[PRIVATE_TEST_LLM_REPLY] blocked reason=packet_safety_failed", flush=True)
+            return
+        try:
+            send_result = await send_llm_private_test_reply_only(message.channel, payload)
+        except Exception as exc:
+            record_private_test_reply_send_exception(message, safety_state, type(exc).__name__)
+            print("[PRIVATE_TEST_LLM_REPLY] blocked reason=send_exception", flush=True)
+            return
+        if send_result.get("message_sent"):
+            record_private_test_reply_sent(message, safety_state)
+            sent_record = dict(attempt)
+            sent_record["message_sent"] = True
+            sent_record["discord_send_attempted"] = True
+            write_llm_private_test_reply_audit(sent_record, root=repo_root)
+            print(
+                "[PRIVATE_TEST_LLM_REPLY_SENT] "
+                f"message_sent=true channel={result.get('visibility_event', {}).get('channel_name', '')}",
+                flush=True,
+            )
+
+    client.run(env["_token_value"])
+    return {"started": True, "blocked": False, "message_sent": False, "token_value_logged": False, "preflight": preflight}

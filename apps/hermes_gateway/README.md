@@ -36,6 +36,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - Build Phase 32B private-test-only LLM dry call reports with mock default behavior and no Discord send.
 - Build Phase 32C LLM response packets for local review workflows without Discord send.
 - Close out Phase 32C-LIVE by writing a gated LLM dry-call artifact, creating the latest local response packet, and exposing it to the operations viewer without Discord send.
+- Build Phase 32D guarded private-test-only LLM reply preflight and runtime boundaries.
 
 ## Explicit Non-Goals
 
@@ -55,6 +56,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - No Phase 32B dry call sends Discord messages, reads RAG, or performs external execution.
 - No Phase 32C response packet sends Discord messages, reads RAG, or performs external execution.
 - No Phase 32C-LIVE closeout sends Discord messages, reads RAG, or performs external execution.
+- No Phase 32D LLM reply is allowed outside the configured private test channel ID.
 
 ## Phase 21 Read-Only Planning Docs
 
@@ -89,6 +91,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - `docs/STOXL_LLM_DRY_CALL_PRIVATE_TEST.md`
 - `docs/STOXL_LLM_RESPONSE_PACKET_INTEGRATION.md`
 - `docs/STOXL_LLM_RESPONSE_PACKET_LIVE_CLOSEOUT.md`
+- `docs/STOXL_LLM_PRIVATE_TEST_REPLY.md`
 
 These documents prepare for a later private server read-only connection review. They do not authorize or perform a Discord connection.
 
@@ -155,6 +158,8 @@ python apps\hermes_gateway\cli.py --llm-response-packet-report --markdown
 python apps\hermes_gateway\cli.py --llm-response-packet-report --latest --json
 python apps\hermes_gateway\cli.py --llm-response-packet-report --latest --markdown
 python apps\hermes_gateway\cli.py --llm-response-packet-live-closeout --json
+python apps\hermes_gateway\cli.py --llm-private-test-reply-report --json
+python apps\hermes_gateway\cli.py --llm-private-test-reply-report --markdown
 python apps\hermes_gateway\cli.py --run-discord-private-test-reply --json
 python apps\hermes_gateway\tests\test_local_pipeline.py
 python apps\hermes_gateway\tests\test_replay_approval.py
@@ -183,6 +188,7 @@ python apps\hermes_gateway\tests\test_llm_client.py
 python apps\hermes_gateway\tests\test_llm_dry_call.py
 python apps\hermes_gateway\tests\test_llm_response_packet.py
 python apps\hermes_gateway\tests\test_llm_response_packet_live_closeout.py
+python apps\hermes_gateway\tests\test_llm_private_test_reply.py
 ```
 
 The `--run-discord-readonly` option is intentionally not part of normal local
@@ -220,6 +226,11 @@ Phase 32C-LIVE reads the latest local dry-call artifact, writes a local response
 packet, and reports whether the operations viewer can see the packet. It is a
 local closeout workflow only; Discord send, RAG, and external execution remain
 false.
+
+Phase 32D adds a separate guarded runtime for private-test-only LLM replies. It
+requires private channel ID match, LLM output safety, response packet safety,
+cooldown, reply budget, duplicate guard, and circuit breaker checks. It is not a
+general Discord reply mode.
 
 If the registry file is missing, generate it from the repo root:
 

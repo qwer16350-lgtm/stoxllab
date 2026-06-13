@@ -20,7 +20,7 @@ from connection_preflight import build_connection_preflight_report
 from discord_readiness import build_readiness_report
 from discord_adapter_stub import load_raw_events, run_discord_adapter_stub
 from discord_replay import load_discord_raw_events, run_discord_raw_event_replay
-from discord_readonly_runtime import build_readonly_runtime_report, run_discord_private_test_reply_bot, run_readonly_discord_bot
+from discord_readonly_runtime import build_readonly_runtime_report, run_discord_private_test_llm_reply_bot, run_discord_private_test_reply_bot, run_readonly_discord_bot
 from discord_safety_wrapper import build_send_block_report
 from discord_token_loader import build_token_loader_report
 from discord_event_adapter import event_from_text, normalize_event
@@ -36,6 +36,7 @@ from live_event_review_packet import build_live_event_review_packet
 from live_event_routing_report import build_live_event_routing_report
 from llm_preflight import build_llm_preflight_report, render_llm_preflight_markdown
 from llm_dry_call import build_llm_dry_call_request, render_llm_dry_call_markdown, run_llm_dry_call, write_llm_dry_call_artifact
+from llm_private_test_reply import build_llm_private_test_reply_preflight, render_llm_private_test_reply_report_markdown
 from llm_prompt_envelope import build_llm_prompt_envelope, render_llm_prompt_envelope_preview
 from llm_response_packet import (
     build_latest_llm_response_packet_report,
@@ -215,6 +216,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--discord-readonly-runtime-report", action="store_true", help="Print Phase 29 read-only runtime report.")
     parser.add_argument("--run-discord-readonly", action="store_true", help="Run the Phase 29 read-only Discord Gateway runtime.")
     parser.add_argument("--run-discord-private-test-reply", action="store_true", help="Run the Phase 31B private-test-only Discord reply runtime.")
+    parser.add_argument("--run-discord-private-test-llm-reply", action="store_true", help="Run the Phase 32D guarded private-test-only LLM reply runtime.")
     parser.add_argument("--live-event-audit-report", action="store_true", help="Print Phase 30 live event audit record report.")
     parser.add_argument("--would-send-preview-report", action="store_true", help="Print Phase 30 would-send preview report.")
     parser.add_argument("--live-event-review-packet-report", action="store_true", help="Print Phase 30 live event review packet report.")
@@ -231,6 +233,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--llm-dry-call-report", action="store_true", help="Print Phase 32B private-test-only LLM dry call report.")
     parser.add_argument("--llm-response-packet-report", action="store_true", help="Print Phase 32C local LLM response packet report.")
     parser.add_argument("--llm-response-packet-live-closeout", action="store_true", help="Print Phase 32C-LIVE closeout from latest LLM dry call artifact.")
+    parser.add_argument("--llm-private-test-reply-report", action="store_true", help="Print Phase 32D guarded private-test-only LLM reply preflight.")
     parser.add_argument("--allow-llm-api-call", action="store_true", help="Allow Phase 32B to attempt one gated provider call when env gates pass.")
     parser.add_argument("--write-artifact", action="store_true", help="Write supported local-only report artifacts.")
     parser.add_argument("--latest", action="store_true", help="Use latest local artifact for supported reports.")
@@ -442,6 +445,19 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(output, ensure_ascii=False, indent=2))
         else:
             print("STOXL Discord private test reply runtime")
+            print(f"- started: {output.get('started')}")
+            print(f"- blocked: {output.get('blocked')}")
+            print(f"- reason: {output.get('reason', '')}")
+            print(f"- token_value_logged: {output.get('token_value_logged')}")
+        return 0
+
+    if args.run_discord_private_test_llm_reply:
+        cfg = load_config(Path(__file__).resolve())
+        output = run_discord_private_test_llm_reply_bot(cfg.repo_root)
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Discord private test LLM reply runtime")
             print(f"- started: {output.get('started')}")
             print(f"- blocked: {output.get('blocked')}")
             print(f"- reason: {output.get('reason', '')}")
@@ -697,6 +713,19 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- message_sent: {output.get('message_sent')}")
         return 0
 
+    if args.llm_private_test_reply_report:
+        output = build_llm_private_test_reply_preflight()
+        if args.markdown:
+            print(render_llm_private_test_reply_report_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL LLM private test reply preflight")
+            print(f"- ready: {output.get('ready')}")
+            print(f"- blocked: {output.get('blocked')}")
+            print(f"- blocked_reasons: {len(output.get('blocked_reasons', []))}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -819,6 +848,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.discord_readonly_runtime_report
         or args.run_discord_readonly
         or args.run_discord_private_test_reply
+        or args.run_discord_private_test_llm_reply
         or args.live_event_audit_report
         or args.would_send_preview_report
         or args.live_event_review_packet_report
@@ -835,6 +865,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.llm_dry_call_report
         or args.llm_response_packet_report
         or args.llm_response_packet_live_closeout
+        or args.llm_private_test_reply_report
         or args.allow_llm_api_call
         or args.write_artifact
         or args.latest

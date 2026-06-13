@@ -13,6 +13,7 @@ from typing import Any
 OUTGOING_ACTION_TYPES = [
     "message_create",
     "private_test_reply_send",
+    "private_test_llm_reply_send",
     "message_update",
     "reaction_create",
     "channel_create",
@@ -70,6 +71,29 @@ def _private_test_reply_allowed(config: dict[str, Any] | None) -> bool:
     )
 
 
+def _private_test_llm_reply_allowed(config: dict[str, Any] | None) -> bool:
+    if not config:
+        return False
+    private_channel_configured = bool(
+        config.get("private_test_channel_id_present")
+        or config.get("private_test_channel_configured")
+        or config.get("_private_test_channel_id")
+    )
+    return (
+        _flag(config.get("send_messages"))
+        and _flag(config.get("private_test_reply_enabled", config.get("private_test_reply")))
+        and config.get("reply_mode") == "private_test_only"
+        and private_channel_configured
+        and _flag(config.get("llm_private_test_reply_enabled"))
+        and config.get("llm_private_test_reply_mode") == "private_test_only"
+        and _flag(config.get("llm_discord_send_enabled"))
+        and not _flag(config.get("rag_enabled"))
+        and not _flag(config.get("llm_rag_enabled"))
+        and not _flag(config.get("external_execution"))
+        and not _flag(config.get("llm_external_execution"))
+    )
+
+
 def block_outgoing_action(action_type: str, reason: str | None = None) -> dict[str, Any]:
     """Return a denial record without executing the requested action."""
 
@@ -92,6 +116,8 @@ def is_outgoing_action_allowed(action_type: str, config: dict[str, Any] | None =
 
     if action_type == "private_test_reply_send":
         return _private_test_reply_allowed(config)
+    if action_type == "private_test_llm_reply_send":
+        return _private_test_llm_reply_allowed(config)
     if action_type == "message_create":
         return False
     if config:

@@ -133,6 +133,19 @@ python apps\hermes_gateway\cli.py --llm-prompt-envelope-report --json
 - RAG reads
 - external posting, submission, email, contract, or payment actions
 
+## Phase 32D LLM Private Test Reply
+
+Phase 32D adds a separate LLM reply mode for the same private test channel boundary.
+
+It does not replace this deterministic placeholder mode:
+
+- deterministic mode command: `--run-discord-private-test-reply`
+- LLM mode command: `--run-discord-private-test-llm-reply`
+- deterministic mode source: `agent_placeholder_response`
+- LLM mode source: `llm_response_packet`
+
+The LLM mode requires its own env gates, output safety, packet safety, cooldown, budget, duplicate, and circuit breaker checks. Public/team channels and mapped work channels still cannot receive LLM replies.
+
 ## Message Source
 
 The only allowed source is the deterministic Phase 31C `agent_placeholder_response`.

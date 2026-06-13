@@ -74,6 +74,6 @@ Forbidden:
 - external posting, submission, email, contract, pricing, or delivery action
 - token/API key/raw Discord ID output
 
-## Next Phase Candidate
+## Next Phase
 
-Phase 32D may design a guarded private-test-only LLM reply path. That phase still needs a separate safety gate and must not inherit general Discord send permission.
+Phase 32D adds a guarded private-test-only LLM reply path. It uses the response packet safety boundary and must not inherit general Discord send permission.
