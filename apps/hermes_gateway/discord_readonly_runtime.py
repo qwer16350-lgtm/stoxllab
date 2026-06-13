@@ -72,6 +72,22 @@ def print_ready_visibility(client: Any, runtime_env: dict[str, Any] | None = Non
     return visibility
 
 
+def print_private_test_ready_visibility(client: Any, runtime_env: dict[str, Any] | None = None) -> dict[str, Any]:
+    visibility = build_ready_visibility(client, runtime_env)
+    print(
+        "[PRIVATE_TEST_READY] "
+        "runtime_mode=private_test_reply "
+        f"general_send_disabled={str(visibility['general_send_disabled']).lower()} "
+        f"private_test_reply_enabled={str(visibility['private_test_reply_enabled']).lower()} "
+        f"private_test_channel_configured={str(visibility['private_test_channel_configured']).lower()} "
+        f"external_disabled={str(visibility['external_disabled']).lower()} "
+        f"llm_disabled={str(visibility['llm_disabled']).lower()} "
+        f"rag_disabled={str(visibility['rag_disabled']).lower()}",
+        flush=True,
+    )
+    return visibility
+
+
 def format_readonly_event_line(result: dict[str, Any]) -> str:
     event = result.get("visibility_event", {})
     return (
@@ -148,6 +164,38 @@ def build_readonly_client(root: str | Path | None = None) -> dict[str, Any]:
     }
 
 
+def build_private_test_reply_runtime_preflight(root: str | Path | None = None, runtime_env: dict[str, Any] | None = None) -> dict[str, Any]:
+    env = runtime_env or load_discord_runtime_env(root or Path.cwd(), load_dotenv_file=False, include_token_value=False)
+    policy = build_private_test_reply_policy(env)
+    checks = [
+        ("token_present", bool(env.get("token_present"))),
+        ("send_messages_enabled", bool(policy.get("send_messages"))),
+        ("private_test_reply_enabled", bool(policy.get("private_test_reply_enabled"))),
+        ("reply_mode_private_test_only", policy.get("reply_mode") == "private_test_only"),
+        ("private_test_channel_id_present", bool(policy.get("private_test_channel_id_present"))),
+        ("external_execution_disabled", not bool(policy.get("external_execution"))),
+        ("llm_disabled", not bool(policy.get("llm_enabled"))),
+        ("rag_disabled", not bool(policy.get("rag_enabled"))),
+    ]
+    failed = [name for name, passed in checks if not passed]
+    return {
+        "report_type": "private_test_reply_runtime_preflight",
+        "version": "phase31b_private_test_only",
+        "ready": not failed,
+        "blocked": bool(failed),
+        "blocked_reasons": failed,
+        "reason": "" if not failed else "private_test_reply_preflight_failed:" + failed[0],
+        "token_present": bool(env.get("token_present")),
+        "private_test_reply_enabled": bool(policy.get("private_test_reply_enabled")),
+        "private_test_channel_configured": bool(policy.get("private_test_channel_id_present")),
+        "message_sent": False,
+        "external_execution": False,
+        "llm_called": False,
+        "rag_called": False,
+        "policy": {key: value for key, value in policy.items() if not key.startswith("_")},
+    }
+
+
 def build_readonly_runtime_report(root: str | Path | None = None) -> dict[str, Any]:
     token_report = build_token_loader_report(root=root)
     runtime_env = {
@@ -187,13 +235,9 @@ def run_readonly_discord_bot(root: str | Path | None = None, runtime_env: dict[s
     repo_root = Path(root or Path.cwd()).resolve()
     env = runtime_env or load_discord_runtime_env(repo_root, load_dotenv_file=True, include_token_value=True)
     private_reply_policy = build_private_test_reply_policy(env)
-    readiness_env = dict(env)
-    if private_reply_policy.get("send_messages") and private_reply_policy.get("private_test_reply_enabled"):
-        readiness_env["send_messages"] = False
-    readiness = build_phase29_runtime_readiness_report(repo_root, runtime_env=readiness_env)
+    readiness = build_phase29_runtime_readiness_report(repo_root, runtime_env=env)
     try:
-        if not (private_reply_policy.get("send_messages") and private_reply_policy.get("private_test_reply_enabled")):
-            assert_send_disabled(env)
+        assert_send_disabled(env)
     except ValueError as exc:
         return {
             "started": False,
@@ -288,5 +332,104 @@ def run_readonly_discord_bot(root: str | Path | None = None, runtime_env: dict[s
         "started": True,
         "blocked": False,
         "token_value_logged": False,
+        "safety_assertions": build_readonly_runtime_report(repo_root)["safety_assertions"],
+    }
+
+
+def run_discord_private_test_reply_bot(root: str | Path | None = None, runtime_env: dict[str, Any] | None = None) -> dict[str, Any]:
+    repo_root = Path(root or Path.cwd()).resolve()
+    env = runtime_env or load_discord_runtime_env(repo_root, load_dotenv_file=True, include_token_value=True)
+    preflight = build_private_test_reply_runtime_preflight(repo_root, env)
+    if preflight.get("ready") is not True:
+        return {
+            "started": False,
+            "blocked": True,
+            "reason": preflight.get("reason", "private_test_reply_preflight_failed:unknown"),
+            "message_sent": False,
+            "token_value_logged": False,
+            "preflight": preflight,
+            "safety_assertions": build_readonly_runtime_report(repo_root)["safety_assertions"],
+        }
+    private_reply_policy = build_private_test_reply_policy(env)
+    try:
+        import discord
+    except ImportError:
+        return {
+            "started": False,
+            "blocked": True,
+            "reason": "private_test_reply_preflight_failed:discord_dependency_missing",
+            "message_sent": False,
+            "token_value_logged": False,
+            "preflight": preflight,
+            "safety_assertions": build_readonly_runtime_report(repo_root)["safety_assertions"],
+        }
+
+    intents = discord.Intents.default()
+    intents.guilds = True
+    intents.messages = True
+    intents.message_content = True
+    client = discord.Client(intents=intents)
+
+    visibility_context = load_visibility_context(repo_root)
+    visibility_context["private_test_channel_id"] = private_reply_policy.get("_private_test_channel_id", "")
+    processed_private_reply_message_ids: set[str] = set()
+
+    @client.event
+    async def on_ready() -> None:
+        print_private_test_ready_visibility(client, env)
+
+    @client.event
+    async def on_message(message: Any) -> None:
+        result = handle_readonly_message_event(
+            message,
+            root=repo_root,
+            write_log=True,
+            visibility_context=visibility_context,
+        )
+        print(format_readonly_event_line(result), flush=True)
+        skip_reason = should_skip_private_test_reply_event(
+            message,
+            result,
+            bot_user_id=getattr(client.user, "id", ""),
+            processed_message_ids=processed_private_reply_message_ids,
+        )
+        if skip_reason:
+            if skip_reason in {"self_message", "skipped_duplicate_message"} or result.get("visibility_event", {}).get("channel_is_private_test"):
+                print(f"[PRIVATE_TEST_REPLY] skipped reason={skip_reason}", flush=True)
+            return
+        placeholder = result.get("agent_placeholder_response", {})
+        payload = build_private_test_reply_payload(message, placeholder, private_reply_policy)
+        if payload.get("will_send"):
+            message_id = get_message_identity(message)
+            if message_id:
+                processed_private_reply_message_ids.add(message_id)
+            print(
+                "[PRIVATE_TEST_REPLY] "
+                f"private_test_reply_allowed channel={payload.get('decision', {}).get('channel_name', '')} "
+                "source=agent_placeholder_response "
+                f"will_send={str(payload.get('will_send', False)).lower()}",
+                flush=True,
+            )
+            reply_audit = await send_private_test_reply_only(message.channel, payload, private_reply_policy)
+            print(
+                "[PRIVATE_TEST_REPLY_SENT] "
+                f"message_sent={str(reply_audit.get('message_sent', False)).lower()} "
+                f"channel={payload.get('decision', {}).get('channel_name', '')}",
+                flush=True,
+            )
+        elif result.get("visibility_event", {}).get("channel_is_private_test") or private_reply_policy.get("private_test_reply_enabled"):
+            print(
+                "[PRIVATE_TEST_REPLY] "
+                f"blocked reason={payload.get('decision', {}).get('reason', '')}",
+                flush=True,
+            )
+
+    client.run(env["_token_value"])
+    return {
+        "started": True,
+        "blocked": False,
+        "message_sent": False,
+        "token_value_logged": False,
+        "preflight": preflight,
         "safety_assertions": build_readonly_runtime_report(repo_root)["safety_assertions"],
     }

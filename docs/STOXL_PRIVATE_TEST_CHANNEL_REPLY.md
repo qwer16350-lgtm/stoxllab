@@ -1,4 +1,4 @@
-# STOXL Private Test Channel Reply
+﻿# STOXL Private Test Channel Reply
 
 Phase 31B adds the first narrowly guarded Discord reply path.
 
@@ -149,6 +149,33 @@ These commands are local reports only. They do not connect to Discord and do not
 ```powershell
 python apps\hermes_gateway\cli.py --private-test-reply-report --json
 python apps\hermes_gateway\cli.py --private-test-reply-report --markdown
+```
+
+## Runtime Command
+
+The strict read-only runtime remains separate:
+
+```powershell
+python apps\hermes_gateway\cli.py --run-discord-readonly --json
+```
+
+That command still blocks `HERMES_DISCORD_SEND_MESSAGES=true`.
+
+The private test reply runtime uses a separate Phase 31B preflight:
+
+```powershell
+python apps\hermes_gateway\cli.py --run-discord-private-test-reply --json
+```
+
+It can start only when all private-test gates pass. A failed preflight returns a blocked report such as:
+
+```json
+{
+  "started": false,
+  "blocked": true,
+  "reason": "private_test_reply_preflight_failed:reply_mode_private_test_only",
+  "message_sent": false
+}
 ```
 
 ## Manual Enablement Reminder

@@ -16,7 +16,7 @@ if str(APP_DIR) not in sys.path:
     sys.path.insert(0, str(APP_DIR))
 
 from connection_preflight import build_phase29_runtime_readiness_report
-from discord_readonly_runtime import build_discord_intents, build_readonly_runtime_report, format_readonly_event_line, handle_readonly_message_event, run_readonly_discord_bot
+from discord_readonly_runtime import build_discord_intents, build_private_test_reply_runtime_preflight, build_readonly_runtime_report, format_readonly_event_line, handle_readonly_message_event, run_readonly_discord_bot
 from discord_safety_wrapper import OUTGOING_ACTION_TYPES, build_send_block_report
 from discord_token_loader import build_token_loader_report, get_required_env_keys
 
@@ -106,6 +106,45 @@ def test_runtime_run_stops_when_send_flag_enabled() -> None:
     assert_true(report["blocked"] is True, "Runtime should be blocked when send flag is enabled")
 
 
+def test_readonly_strict_still_blocks_private_test_send_flag() -> None:
+    report = run_readonly_discord_bot(
+        ROOT,
+        runtime_env={
+            "token_present": True,
+            "send_messages": True,
+            "private_test_reply_enabled": True,
+            "reply_mode": "private_test_only",
+            "_private_test_channel_id": "private_test_channel",
+            "external_execution": False,
+            "llm_enabled": False,
+            "rag_enabled": False,
+        },
+    )
+    assert_true(report["started"] is False, "--run-discord-readonly should remain strict")
+    assert_true(report["blocked"] is True, "--run-discord-readonly should block send_messages=true")
+    assert_true("send_messages" in report["reason"], "Strict read-only block reason should mention send_messages")
+
+
+def test_private_test_preflight_is_distinct_from_readonly_report() -> None:
+    private_preflight = build_private_test_reply_runtime_preflight(
+        ROOT,
+        runtime_env={
+            "token_present": True,
+            "send_messages": True,
+            "private_test_reply_enabled": True,
+            "reply_mode": "private_test_only",
+            "_private_test_channel_id": "private_test_channel",
+            "external_execution": False,
+            "llm_enabled": False,
+            "rag_enabled": False,
+        },
+    )
+    readonly_report = build_readonly_runtime_report(ROOT)
+    assert_true(private_preflight["report_type"] == "private_test_reply_runtime_preflight", "Private preflight should have its own report type")
+    assert_true(readonly_report["report_type"] == "discord_readonly_runtime_report", "Read-only report should remain distinct")
+    assert_true(private_preflight["ready"] is True, "Private preflight can pass with private-test send gates")
+
+
 def test_runtime_run_stops_when_external_flag_enabled() -> None:
     report = run_readonly_discord_bot(ROOT, runtime_env={"token_present": True, "external_execution": True})
     assert_true(report["started"] is False, "Runtime should not start when external execution is enabled")
@@ -171,6 +210,8 @@ def main() -> int:
         test_phase29_runtime_readiness_allows_declared_dependency,
         test_runtime_run_stops_without_token,
         test_runtime_run_stops_when_send_flag_enabled,
+        test_readonly_strict_still_blocks_private_test_send_flag,
+        test_private_test_preflight_is_distinct_from_readonly_report,
         test_runtime_run_stops_when_external_flag_enabled,
         test_runtime_run_stops_when_llm_flag_enabled,
         test_runtime_run_stops_when_rag_flag_enabled,

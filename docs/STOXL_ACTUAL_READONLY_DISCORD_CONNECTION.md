@@ -110,10 +110,20 @@ Even after a decision maker approves an action, the bot system does not perform 
 
 ## Manual Run Command
 
-Reserved for a later approved private server read-only run:
+Reserved for a later approved private server strict read-only run:
 
 ```powershell
 python apps\hermes_gateway\cli.py --run-discord-readonly --json
 ```
 
-This command is not part of the automated test flow and was not executed in Phase 29.
+This command still blocks `HERMES_DISCORD_SEND_MESSAGES=true`.
+
+Reserved for a later approved private test reply run:
+
+```powershell
+python apps\hermes_gateway\cli.py --run-discord-private-test-reply --json
+```
+
+This command uses the Phase 31B private test reply preflight. It requires send messages, private test reply, private-test-only mode, a configured private test channel ID, and disabled external execution, LLM, and RAG.
+
+Neither command is part of the automated test flow.

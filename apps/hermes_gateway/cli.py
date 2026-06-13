@@ -20,7 +20,7 @@ from connection_preflight import build_connection_preflight_report
 from discord_readiness import build_readiness_report
 from discord_adapter_stub import load_raw_events, run_discord_adapter_stub
 from discord_replay import load_discord_raw_events, run_discord_raw_event_replay
-from discord_readonly_runtime import build_readonly_runtime_report, run_readonly_discord_bot
+from discord_readonly_runtime import build_readonly_runtime_report, run_discord_private_test_reply_bot, run_readonly_discord_bot
 from discord_safety_wrapper import build_send_block_report
 from discord_token_loader import build_token_loader_report
 from discord_event_adapter import event_from_text, normalize_event
@@ -201,6 +201,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--live-event-pipeline-report", action="store_true", help="Print Phase 29 audit-only live event pipeline report.")
     parser.add_argument("--discord-readonly-runtime-report", action="store_true", help="Print Phase 29 read-only runtime report.")
     parser.add_argument("--run-discord-readonly", action="store_true", help="Run the Phase 29 read-only Discord Gateway runtime.")
+    parser.add_argument("--run-discord-private-test-reply", action="store_true", help="Run the Phase 31B private-test-only Discord reply runtime.")
     parser.add_argument("--live-event-audit-report", action="store_true", help="Print Phase 30 live event audit record report.")
     parser.add_argument("--would-send-preview-report", action="store_true", help="Print Phase 30 would-send preview report.")
     parser.add_argument("--live-event-review-packet-report", action="store_true", help="Print Phase 30 live event review packet report.")
@@ -407,6 +408,19 @@ def main(argv: list[str] | None = None) -> int:
             print("STOXL Discord read-only runtime")
             print(f"- started: {output.get('started')}")
             print(f"- blocked: {output.get('blocked')}")
+            print(f"- token_value_logged: {output.get('token_value_logged')}")
+        return 0
+
+    if args.run_discord_private_test_reply:
+        cfg = load_config(Path(__file__).resolve())
+        output = run_discord_private_test_reply_bot(cfg.repo_root)
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Discord private test reply runtime")
+            print(f"- started: {output.get('started')}")
+            print(f"- blocked: {output.get('blocked')}")
+            print(f"- reason: {output.get('reason', '')}")
             print(f"- token_value_logged: {output.get('token_value_logged')}")
         return 0
 
@@ -656,6 +670,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.live_event_pipeline_report
         or args.discord_readonly_runtime_report
         or args.run_discord_readonly
+        or args.run_discord_private_test_reply
         or args.live_event_audit_report
         or args.would_send_preview_report
         or args.live_event_review_packet_report

@@ -17,7 +17,7 @@ if str(APP_DIR) not in sys.path:
     sys.path.insert(0, str(APP_DIR))
 
 from agent_placeholder_response import build_agent_placeholder_response
-from discord_readonly_runtime import build_ready_visibility, should_skip_private_test_reply_event
+from discord_readonly_runtime import build_private_test_reply_runtime_preflight, build_ready_visibility, should_skip_private_test_reply_event
 from discord_safety_wrapper import is_outgoing_action_allowed
 from live_event_audit_persistence import build_live_event_audit_record, build_sample_visibility_event
 from live_event_routing_report import build_live_event_routing_report
@@ -162,6 +162,45 @@ def test_all_conditions_true_allowed() -> None:
     payload = build_private_test_reply_payload(private_event(), placeholder_response(), build_private_test_reply_policy(allowed_env()))
     assert_true(payload["will_send"] is True, "All private test reply gates should allow would-send")
     assert_true(payload["decision"]["reason"] == "private_test_reply_allowed", "Allowed reason should be explicit")
+
+
+def test_private_test_runtime_preflight_all_flags_true_passes() -> None:
+    env = allowed_env(token_present=True)
+    preflight = build_private_test_reply_runtime_preflight(ROOT, env)
+    assert_true(preflight["ready"] is True, "Private test runtime preflight should pass when all gates are true")
+    assert_true(preflight["blocked"] is False, "Private test runtime preflight should not be blocked")
+
+
+def test_private_test_runtime_preflight_requires_channel_id() -> None:
+    env = allowed_env(token_present=True, HERMES_DISCORD_PRIVATE_TEST_CHANNEL_ID="")
+    preflight = build_private_test_reply_runtime_preflight(ROOT, env)
+    assert_true(preflight["ready"] is False, "Missing private channel id should block")
+    assert_true(preflight["reason"] == "private_test_reply_preflight_failed:private_test_channel_id_present", "Missing channel reason should be explicit")
+
+
+def test_private_test_runtime_preflight_requires_reply_mode() -> None:
+    env = allowed_env(token_present=True, HERMES_DISCORD_REPLY_MODE="disabled")
+    preflight = build_private_test_reply_runtime_preflight(ROOT, env)
+    assert_true(preflight["ready"] is False, "Wrong reply mode should block")
+    assert_true(preflight["reason"] == "private_test_reply_preflight_failed:reply_mode_private_test_only", "Reply mode reason should be explicit")
+
+
+def test_private_test_runtime_preflight_blocks_llm_rag_external() -> None:
+    assert_true(
+        build_private_test_reply_runtime_preflight(ROOT, allowed_env(token_present=True, HERMES_DISCORD_LLM_ENABLED="true"))["reason"]
+        == "private_test_reply_preflight_failed:llm_disabled",
+        "LLM true should block private runtime preflight",
+    )
+    assert_true(
+        build_private_test_reply_runtime_preflight(ROOT, allowed_env(token_present=True, HERMES_DISCORD_RAG_ENABLED="true"))["reason"]
+        == "private_test_reply_preflight_failed:rag_disabled",
+        "RAG true should block private runtime preflight",
+    )
+    assert_true(
+        build_private_test_reply_runtime_preflight(ROOT, allowed_env(token_present=True, HERMES_DISCORD_EXTERNAL_EXECUTION="true"))["reason"]
+        == "private_test_reply_preflight_failed:external_execution_disabled",
+        "External execution true should block private runtime preflight",
+    )
 
 
 def test_runtime_skip_self_message_before_private_reply_decision() -> None:
@@ -334,6 +373,10 @@ def main() -> int:
         test_llm_rag_external_true_blocked,
         test_non_placeholder_source_blocked,
         test_all_conditions_true_allowed,
+        test_private_test_runtime_preflight_all_flags_true_passes,
+        test_private_test_runtime_preflight_requires_channel_id,
+        test_private_test_runtime_preflight_requires_reply_mode,
+        test_private_test_runtime_preflight_blocks_llm_rag_external,
         test_runtime_skip_self_message_before_private_reply_decision,
         test_runtime_skip_author_id_matching_bot_user,
         test_runtime_allows_human_private_test_message_to_reach_payload,

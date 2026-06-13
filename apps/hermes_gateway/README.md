@@ -122,6 +122,7 @@ python apps\hermes_gateway\cli.py --agent-placeholder-response-report --json
 python apps\hermes_gateway\cli.py --agent-placeholder-response-report --markdown
 python apps\hermes_gateway\cli.py --private-test-reply-report --json
 python apps\hermes_gateway\cli.py --private-test-reply-report --markdown
+python apps\hermes_gateway\cli.py --run-discord-private-test-reply --json
 python apps\hermes_gateway\tests\test_local_pipeline.py
 python apps\hermes_gateway\tests\test_replay_approval.py
 python apps\hermes_gateway\tests\test_persistent_audit_export.py
@@ -145,12 +146,15 @@ python apps\hermes_gateway\tests\test_private_test_reply.py
 
 The `--run-discord-readonly` option is intentionally not part of normal local
 test usage. It is reserved for a separately approved private server read-only
-connection run. Message sending remains blocked by default. The only Phase 31B
-exception is a private-test-only reply when `HERMES_DISCORD_SEND_MESSAGES=true`,
-`HERMES_DISCORD_PRIVATE_TEST_REPLY=true`,
-`HERMES_DISCORD_REPLY_MODE=private_test_only`, and the event channel exactly
+connection run. Message sending remains blocked in that strict mode.
+
+The `--run-discord-private-test-reply` option is a separate Phase 31B runtime
+path for the private-test-only reply exception. It requires
+`HERMES_DISCORD_SEND_MESSAGES=true`, `HERMES_DISCORD_PRIVATE_TEST_REPLY=true`,
+`HERMES_DISCORD_REPLY_MODE=private_test_only`, and an event channel that exactly
 matches `HERMES_DISCORD_PRIVATE_TEST_CHANNEL_ID`. LLM, RAG, external execution,
-public replies, and team channel replies remain blocked.
+self-message replies, duplicate message replies, public replies, and team
+channel replies remain blocked.
 
 If the registry file is missing, generate it from the repo root:
 
