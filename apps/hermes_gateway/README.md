@@ -31,6 +31,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - Build Phase 31C deterministic agent placeholder responses without LLM, RAG, or Discord replies.
 - Build Phase 31B private test channel reply reports and a guarded private-test-only reply path.
 - Build Phase 31D private test reply safety reports for cooldown, budget, duplicate, and circuit breaker controls.
+- Build Phase 31E private test reply replay reports and operations viewer summaries without Discord sends.
 
 ## Explicit Non-Goals
 
@@ -75,6 +76,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - `docs/STOXL_AGENT_PLACEHOLDER_RESPONSE.md`
 - `docs/STOXL_PRIVATE_TEST_CHANNEL_REPLY.md`
 - `docs/STOXL_PRIVATE_TEST_REPLY_SAFETY_CLOSEOUT.md`
+- `docs/STOXL_PRIVATE_TEST_REPLY_REPLAY_CLOSEOUT.md`
 
 These documents prepare for a later private server read-only connection review. They do not authorize or perform a Discord connection.
 
@@ -126,6 +128,8 @@ python apps\hermes_gateway\cli.py --private-test-reply-report --json
 python apps\hermes_gateway\cli.py --private-test-reply-report --markdown
 python apps\hermes_gateway\cli.py --private-test-reply-safety-report --json
 python apps\hermes_gateway\cli.py --private-test-reply-safety-report --markdown
+python apps\hermes_gateway\cli.py --private-test-reply-replay-report --json
+python apps\hermes_gateway\cli.py --private-test-reply-replay-report --markdown
 python apps\hermes_gateway\cli.py --run-discord-private-test-reply --json
 python apps\hermes_gateway\tests\test_local_pipeline.py
 python apps\hermes_gateway\tests\test_replay_approval.py
@@ -147,6 +151,7 @@ python apps\hermes_gateway\tests\test_operations_packet_viewer.py
 python apps\hermes_gateway\tests\test_agent_placeholder_response.py
 python apps\hermes_gateway\tests\test_private_test_reply.py
 python apps\hermes_gateway\tests\test_private_test_reply_safety.py
+python apps\hermes_gateway\tests\test_private_test_reply_replay.py
 ```
 
 The `--run-discord-readonly` option is intentionally not part of normal local
@@ -163,6 +168,9 @@ channel replies remain blocked.
 
 Phase 31D adds a session-local cooldown, maximum reply budget, duplicate guard,
 and circuit breaker around that private-test-only runtime path.
+
+Phase 31E adds local replay and operations viewer summaries for private test
+reply states. Replay reports do not connect to Discord and do not send messages.
 
 If the registry file is missing, generate it from the repo root:
 

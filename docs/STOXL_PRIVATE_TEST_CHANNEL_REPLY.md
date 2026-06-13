@@ -67,6 +67,17 @@ python apps\hermes_gateway\cli.py --private-test-reply-safety-report --json
 python apps\hermes_gateway\cli.py --private-test-reply-safety-report --markdown
 ```
 
+## Phase 31E Replay Closeout
+
+Phase 31E adds local replay and operations viewer summaries for private test reply states:
+
+```powershell
+python apps\hermes_gateway\cli.py --private-test-reply-replay-report --json
+python apps\hermes_gateway\cli.py --private-test-reply-replay-report --markdown
+```
+
+Replay reports use historical/example metadata only. They do not connect to Discord and do not send messages.
+
 ## Unmapped Private Test Channel
 
 The private test channel is not added to the normal work channel mapping.

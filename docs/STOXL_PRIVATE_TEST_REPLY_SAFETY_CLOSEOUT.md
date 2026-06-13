@@ -79,3 +79,13 @@ python apps\hermes_gateway\cli.py --private-test-reply-safety-report --markdown
 ```
 
 These reports do not connect to Discord and do not send messages.
+
+## Replay Closeout
+
+Phase 31E adds local replay summaries for sent, blocked, skipped, cooldown, budget, and circuit breaker states:
+
+```powershell
+python apps\hermes_gateway\cli.py --private-test-reply-replay-report --json
+```
+
+Replay does not call Discord and does not send messages.

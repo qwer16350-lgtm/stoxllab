@@ -8,6 +8,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from private_test_reply_replay import build_private_test_reply_replay_report
+
 
 VERSION = "phase31a_local_viewer"
 LONG_ID_RE = re.compile(r"\b\d{15,25}\b")
@@ -220,6 +222,8 @@ def build_operations_packet_viewer_report(
         decision=decision,
     )[: max(0, int(limit))]
     packets = list_recent_review_packets(root=root, limit=limit, date=date)
+    replay_report = build_private_test_reply_replay_report(root=str(_repo(root)))
+    replay_summary = replay_report.get("summary", {})
     report = {
         "report_type": "operations_packet_viewer",
         "version": VERSION,
@@ -228,6 +232,15 @@ def build_operations_packet_viewer_report(
         "date": _date_stamp(date),
         "recent_live_events": events,
         "recent_review_packets": packets,
+        "private_test_reply_summary": {
+            "available": True,
+            "sent_count": replay_summary.get("sent", 0),
+            "blocked_count": replay_summary.get("blocked", 0),
+            "self_message_skipped_count": replay_summary.get("self_message_skipped", 0),
+            "cooldown_blocked_count": replay_summary.get("cooldown_blocked", 0),
+            "budget_exhausted_count": replay_summary.get("budget_exhausted_blocked", 0),
+            "circuit_breaker_count": replay_summary.get("circuit_breaker_opened", 0),
+        },
         "daily_manifest_summary": load_daily_manifest(root=root, date=date),
         "filters": {
             "channel_name": channel_name,
@@ -286,6 +299,19 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
                 "- Will Send: false",
             ]
         )
+    private_summary = report.get("private_test_reply_summary", {})
+    lines.extend(
+        [
+            "",
+            "## Private Test Reply",
+            f"- Historical sent: {private_summary.get('sent_count', 0)}",
+            f"- Blocked: {private_summary.get('blocked_count', 0)}",
+            f"- Self-message skipped: {private_summary.get('self_message_skipped_count', 0)}",
+            f"- Cooldown blocked: {private_summary.get('cooldown_blocked_count', 0)}",
+            f"- Budget exhausted: {private_summary.get('budget_exhausted_count', 0)}",
+            f"- Circuit breaker: {private_summary.get('circuit_breaker_count', 0)}",
+        ]
+    )
     safety = report.get("safety_assertions", {})
     lines.extend(
         [
