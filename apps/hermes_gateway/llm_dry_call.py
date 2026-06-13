@@ -79,6 +79,8 @@ def run_llm_dry_call(
     env: dict[str, Any] | None = None,
     allow_api_call: bool = False,
 ) -> dict[str, Any]:
+    selected_request = dict(request)
+    selected_request["allow_api_call"] = bool(allow_api_call)
     config = build_llm_client_config(env)
     safety_policy = build_llm_safety_policy(env)
     safety_policy["max_output_chars"] = int(config.get("max_output_chars", 1200))
@@ -89,13 +91,13 @@ def run_llm_dry_call(
     )
     validation = validate_llm_client_config(config)
     block_reasons: list[str] = []
-    if request.get("channel_scope") != "private_test_only":
+    if selected_request.get("channel_scope") != "private_test_only":
         block_reasons.append("not_private_test_context")
-    if request.get("discord_send_enabled") or config.get("discord_send_enabled") or config.get("discord_runtime_send_messages"):
+    if selected_request.get("discord_send_enabled") or config.get("discord_send_enabled") or config.get("discord_runtime_send_messages"):
         block_reasons.append("discord_send_enabled")
-    if request.get("rag_enabled") or config.get("rag_enabled"):
+    if selected_request.get("rag_enabled") or config.get("rag_enabled"):
         block_reasons.append("rag_enabled")
-    if request.get("external_execution") or config.get("external_execution"):
+    if selected_request.get("external_execution") or config.get("external_execution"):
         block_reasons.append("external_execution_enabled")
 
     if allow_api_call:
@@ -106,7 +108,7 @@ def run_llm_dry_call(
         result = build_mock_llm_response(envelope, config)
 
     output_check = check_llm_output_allowed(result.get("response_text", ""), safety_policy)
-    return build_llm_dry_call_report(request, result, output_check, envelope=envelope, preflight=build_llm_preflight_report(env), config=config)
+    return build_llm_dry_call_report(selected_request, result, output_check, envelope=envelope, preflight=build_llm_preflight_report(env), config=config)
 
 
 def build_llm_dry_call_report(

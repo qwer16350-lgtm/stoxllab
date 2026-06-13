@@ -50,6 +50,16 @@ Required conditions:
 
 If any condition fails, no API call is attempted and the report records a blocked dry call.
 
+When `--allow-llm-api-call` is used, the report request mirrors that flag:
+
+```json
+{
+  "request": {
+    "allow_api_call": true
+  }
+}
+```
+
 ## Discord Send Is Still Forbidden
 
 Phase 32B never sends an LLM answer to Discord.
@@ -90,6 +100,49 @@ exports/hermes_gateway/llm_dry_calls/YYYYMMDD/
 ```
 
 Artifacts are local reports. They must not contain API keys, raw Discord IDs, `.env` values, or tokens.
+
+## OpenRouter Error Visibility
+
+OpenRouter uses an OpenAI-compatible chat completions request:
+
+```text
+POST {HERMES_LLM_BASE_URL}/chat/completions
+Authorization: Bearer <HERMES_LLM_API_KEY>
+Content-Type: application/json
+```
+
+The request body includes `model`, `messages`, `temperature`, and a bounded `max_tokens` value.
+
+Non-2xx provider responses are stored only as sanitized diagnostics:
+
+```json
+{
+  "error_type": "provider_error",
+  "provider_status_code": 400,
+  "provider_error_code": "model_not_found",
+  "provider_error_message": "redacted/truncated safe message",
+  "provider_response_redacted": true
+}
+```
+
+The Authorization header, API key, raw token-like values, full provider response body, and raw Discord-like IDs are never stored in the report.
+
+Successful responses are parsed from:
+
+```json
+{
+  "choices": [
+    {
+      "message": {
+        "content": "..."
+      }
+    }
+  ],
+  "usage": {}
+}
+```
+
+If `content` is empty, output safety blocks the result as `empty_output`.
 
 ## Rollback
 

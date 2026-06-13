@@ -7,6 +7,8 @@ Run without pytest:
 from __future__ import annotations
 
 import json
+import contextlib
+import io
 import sys
 import tempfile
 from pathlib import Path
@@ -15,6 +17,8 @@ APP_DIR = Path(__file__).resolve().parents[1]
 if str(APP_DIR) not in sys.path:
     sys.path.insert(0, str(APP_DIR))
 
+import cli
+import llm_dry_call
 from llm_dry_call import (
     assert_llm_dry_call_report_safe,
     build_llm_dry_call_request,
@@ -146,6 +150,103 @@ def test_raw_discord_id_not_logged() -> None:
     assert_llm_dry_call_report_safe(report)
 
 
+def complete_env() -> dict[str, str]:
+    return {
+        "HERMES_LLM_ENABLED": "true",
+        "HERMES_LLM_API_CALL_ENABLED": "true",
+        "HERMES_LLM_PROVIDER": "openrouter",
+        "HERMES_LLM_MODEL": "openai/gpt-5.4-mini",
+        "HERMES_LLM_API_KEY": "present",
+        "HERMES_LLM_DRY_CALL_MODE": "private_test_only",
+        "HERMES_LLM_DISCORD_SEND_ENABLED": "false",
+        "HERMES_DISCORD_SEND_MESSAGES": "false",
+        "HERMES_LLM_PRIVATE_TEST_ONLY": "true",
+        "HERMES_LLM_COST_GUARD_ENABLED": "true",
+        "HERMES_DISCORD_RAG_ENABLED": "false",
+        "HERMES_DISCORD_EXTERNAL_EXECUTION": "false",
+    }
+
+
+def provider_error_result() -> dict:
+    return {
+        "result_type": "llm_client_result",
+        "version": "phase32b_private_test_dry_call",
+        "provider": "openrouter",
+        "model": "openai/gpt-5.4-mini",
+        "api_call_attempted": True,
+        "api_call_succeeded": False,
+        "api_call_failed": True,
+        "error_type": "provider_error",
+        "provider_status_code": 400,
+        "provider_error_code": "model_not_found",
+        "provider_error_message": "model not found",
+        "provider_response_redacted": True,
+        "response_text": "",
+        "usage": {"input_chars": 0, "output_chars": 0, "estimated_cost_krw": None, "provider_usage": {}},
+        "safety_assertions": {
+            "api_key_value_logged": False,
+            "discord_message_sent": False,
+            "rag_called": False,
+            "external_execution": False,
+            "raw_discord_ids_logged": False,
+        },
+    }
+
+
+def test_run_allow_api_call_true_updates_request_field() -> None:
+    original = llm_dry_call.call_llm_once
+    try:
+        llm_dry_call.call_llm_once = lambda envelope, config: provider_error_result()
+        report = llm_dry_call.run_llm_dry_call(build_llm_dry_call_request(), env=complete_env(), allow_api_call=True)
+    finally:
+        llm_dry_call.call_llm_once = original
+    assert_true(report["request"]["allow_api_call"] is True, "Report request should reflect allow_api_call=true")
+
+
+def test_cli_allow_flag_updates_request_field() -> None:
+    original = llm_dry_call.call_llm_once
+    buffer = io.StringIO()
+    try:
+        llm_dry_call.call_llm_once = lambda envelope, config: provider_error_result()
+        with contextlib.redirect_stdout(buffer):
+            code = cli.main(["--llm-dry-call-report", "--json", "--allow-llm-api-call"])
+    finally:
+        llm_dry_call.call_llm_once = original
+    output = json.loads(buffer.getvalue())
+    assert_true(code == 0, "CLI should complete")
+    assert_true(output["request"]["allow_api_call"] is True, "CLI flag should be reflected in report request")
+
+
+def test_allow_api_call_false_still_not_attempted() -> None:
+    report = run_llm_dry_call(build_llm_dry_call_request(), env=complete_env(), allow_api_call=False)
+    assert_true(report["request"]["allow_api_call"] is False, "False flag should remain false")
+    assert_true(report["client_result"]["api_call_attempted"] is False, "False flag should use mock path")
+
+
+def test_allow_api_call_true_provider_error_attempted_failed() -> None:
+    original = llm_dry_call.call_llm_once
+    try:
+        llm_dry_call.call_llm_once = lambda envelope, config: provider_error_result()
+        report = llm_dry_call.run_llm_dry_call(build_llm_dry_call_request(), env=complete_env(), allow_api_call=True)
+    finally:
+        llm_dry_call.call_llm_once = original
+    assert_true(report["client_result"]["api_call_attempted"] is True, "Provider error should show attempted")
+    assert_true(report["client_result"]["api_call_failed"] is True, "Provider error should show failed")
+
+
+def test_provider_error_keeps_all_execution_flags_false() -> None:
+    original = llm_dry_call.call_llm_once
+    try:
+        llm_dry_call.call_llm_once = lambda envelope, config: provider_error_result()
+        report = llm_dry_call.run_llm_dry_call(build_llm_dry_call_request(), env=complete_env(), allow_api_call=True)
+    finally:
+        llm_dry_call.call_llm_once = original
+    assert_true(report["message_sent"] is False, "Provider error should not send messages")
+    assert_true(report["discord_send_attempted"] is False, "Provider error should not attempt Discord send")
+    assert_true(report["rag_called"] is False, "Provider error should not call RAG")
+    assert_true(report["external_execution"] is False, "Provider error should not execute externally")
+
+
 def main() -> int:
     tests = [
         test_default_dry_call_uses_mock_response,
@@ -168,6 +269,11 @@ def main() -> int:
         test_report_has_discord_send_attempted_false,
         test_api_key_value_not_logged,
         test_raw_discord_id_not_logged,
+        test_run_allow_api_call_true_updates_request_field,
+        test_cli_allow_flag_updates_request_field,
+        test_allow_api_call_false_still_not_attempted,
+        test_allow_api_call_true_provider_error_attempted_failed,
+        test_provider_error_keeps_all_execution_flags_false,
     ]
     for test in tests:
         test()

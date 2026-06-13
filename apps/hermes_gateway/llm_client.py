@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import socket
 import urllib.error
 import urllib.request
 from typing import Any
@@ -54,6 +55,21 @@ def redact_text(text: str | None, max_chars: int = 1200) -> str:
     redacted = SECRET_RE.sub("[REDACTED_SECRET]", str(text))
     redacted = LONG_ID_RE.sub("[REDACTED_DISCORD_ID]", redacted)
     return redacted[:max(max_chars, 0)]
+
+
+def classify_provider_error(status_code: int | None = None, message: str | None = None) -> str:
+    text = str(message or "").lower()
+    if status_code == 401 or "invalid api key" in text or "unauthorized" in text or "auth" in text:
+        return "invalid_api_key"
+    if status_code == 402 or "credit" in text or "quota" in text or "insufficient" in text:
+        return "insufficient_credits"
+    if status_code == 404 or "model not found" in text or "no endpoints found" in text or "not found" in text:
+        return "model_not_found"
+    if status_code == 429 or "rate limit" in text or "too many requests" in text:
+        return "rate_limited"
+    if status_code in {500, 502, 503, 504}:
+        return "provider_unavailable"
+    return "unknown"
 
 
 def build_llm_client_config(env: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -142,8 +158,15 @@ def _result(
     error_type: str | None = None,
     response_text: str = "",
     input_chars: int = 0,
+    usage: dict[str, Any] | None = None,
+    provider_status_code: int | None = None,
+    provider_error_code: str | None = None,
+    provider_error_message: str | None = None,
+    provider_response_redacted: bool = False,
 ) -> dict[str, Any]:
     safe_response = redact_text(response_text, int(config.get("max_output_chars", 1200)))
+    safe_error_message = redact_text(provider_error_message, 300) if provider_error_message else None
+    selected_usage = usage or {}
     result = {
         "result_type": "llm_client_result",
         "version": VERSION,
@@ -153,11 +176,16 @@ def _result(
         "api_call_succeeded": succeeded,
         "api_call_failed": failed,
         "error_type": error_type,
+        "provider_status_code": provider_status_code,
+        "provider_error_code": provider_error_code,
+        "provider_error_message": safe_error_message,
+        "provider_response_redacted": bool(provider_response_redacted),
         "response_text": safe_response,
         "usage": {
-            "input_chars": input_chars,
+            "input_chars": int(selected_usage.get("prompt_tokens", input_chars) or input_chars),
             "output_chars": len(safe_response),
             "estimated_cost_krw": None,
+            "provider_usage": selected_usage,
         },
         "safety_assertions": {
             "api_key_value_logged": False,
@@ -184,13 +212,29 @@ def build_mock_llm_response(prompt_envelope: dict[str, Any], config: dict[str, A
 
 def _provider_url(config: dict[str, Any]) -> str:
     if config.get("_base_url"):
-        return str(config["_base_url"]).rstrip("/")
+        base_url = str(config["_base_url"]).rstrip("/")
+        if base_url.endswith("/chat/completions"):
+            return base_url
+        return base_url + "/chat/completions"
     if config.get("provider") == "openrouter":
         return "https://openrouter.ai/api/v1/chat/completions"
     return "https://api.openai.com/v1/chat/completions"
 
 
-def call_llm_once(prompt_envelope: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
+def _extract_provider_error_message(body: str) -> str:
+    try:
+        parsed = json.loads(body)
+    except json.JSONDecodeError:
+        return body
+    error = parsed.get("error", parsed)
+    if isinstance(error, dict):
+        for key in ("message", "code", "type"):
+            if error.get(key):
+                return str(error.get(key))
+    return str(error)
+
+
+def call_llm_once(prompt_envelope: dict[str, Any], config: dict[str, Any], opener: Any | None = None) -> dict[str, Any]:
     validation = validate_llm_client_config(config)
     if validation["blocked"]:
         return _result(config, failed=True, error_type="client_config_blocked")
@@ -199,6 +243,7 @@ def call_llm_once(prompt_envelope: dict[str, Any], config: dict[str, Any]) -> di
         "model": config.get("model", ""),
         "messages": prompt_envelope.get("messages_preview", []),
         "temperature": config.get("temperature", 0.2),
+        "max_tokens": max(1, int(config.get("max_output_chars", 1200)) // 4),
     }
     request = urllib.request.Request(
         _provider_url(config),
@@ -210,24 +255,71 @@ def call_llm_once(prompt_envelope: dict[str, Any], config: dict[str, Any]) -> di
         method="POST",
     )
     try:
-        with urllib.request.urlopen(request, timeout=int(config.get("timeout_seconds", 30))) as response:
+        open_func = opener or urllib.request.urlopen
+        with open_func(request, timeout=int(config.get("timeout_seconds", 30))) as response:
             body = json.loads(response.read().decode("utf-8"))
     except urllib.error.HTTPError as exc:
-        return _result(config, attempted=True, failed=True, error_type=f"http_error_{exc.code}")
-    except urllib.error.URLError:
-        return _result(config, attempted=True, failed=True, error_type="url_error")
-    except TimeoutError:
-        return _result(config, attempted=True, failed=True, error_type="timeout")
-    except Exception:
-        return _result(config, attempted=True, failed=True, error_type="provider_error")
+        raw_body = ""
+        try:
+            raw_body = exc.read().decode("utf-8", errors="replace")
+        except Exception:
+            raw_body = ""
+        message = _extract_provider_error_message(raw_body)
+        return _result(
+            config,
+            attempted=True,
+            failed=True,
+            error_type="provider_error",
+            provider_status_code=exc.code,
+            provider_error_code=classify_provider_error(exc.code, message),
+            provider_error_message=message,
+            provider_response_redacted=True,
+        )
+    except (TimeoutError, socket.timeout):
+        return _result(
+            config,
+            attempted=True,
+            failed=True,
+            error_type="timeout",
+            provider_error_code="timeout",
+            provider_error_message="provider request timed out",
+            provider_response_redacted=True,
+        )
+    except urllib.error.URLError as exc:
+        message = str(getattr(exc, "reason", "") or exc)
+        code = "timeout" if "timed out" in message.lower() else classify_provider_error(None, message)
+        error_type = "timeout" if code == "timeout" else "provider_error"
+        return _result(
+            config,
+            attempted=True,
+            failed=True,
+            error_type=error_type,
+            provider_error_code=code,
+            provider_error_message=message,
+            provider_response_redacted=True,
+        )
+    except Exception as exc:
+        message = str(exc.__class__.__name__)
+        return _result(
+            config,
+            attempted=True,
+            failed=True,
+            error_type="provider_error",
+            provider_error_code=classify_provider_error(None, message),
+            provider_error_message=message,
+            provider_response_redacted=True,
+        )
 
     text = ""
+    usage = body.get("usage", {}) if isinstance(body, dict) else {}
     try:
-        text = str(body.get("choices", [{}])[0].get("message", {}).get("content", "") or "")
+        choices = body.get("choices", [])
+        message = choices[0].get("message", {}) if choices else {}
+        text = str(message.get("content", "") or "")
     except (AttributeError, IndexError):
         text = ""
     input_chars = len(json.dumps(prompt_envelope, ensure_ascii=False))
-    return _result(config, attempted=True, succeeded=True, response_text=text, input_chars=input_chars)
+    return _result(config, attempted=True, succeeded=True, response_text=text, input_chars=input_chars, usage=usage)
 
 
 def assert_llm_client_result_safe(result: dict[str, Any]) -> None:
