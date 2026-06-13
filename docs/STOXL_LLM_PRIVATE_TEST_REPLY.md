@@ -140,3 +140,14 @@ The audit includes redacted IDs only and keeps:
 - `reply_budget_exhausted`: restart only after intentionally resetting session state.
 - `rate_limit_seen` or `send_exception_seen`: circuit breaker opened; stop the runtime and inspect audit.
 - `self_message`: bot echo was skipped before any LLM call.
+
+## Closeout Replay
+
+Phase 32D closeout provides a no-live-send replay/audit report:
+
+```powershell
+python apps\hermes_gateway\cli.py --llm-private-test-reply-replay-report --json
+python apps\hermes_gateway\cli.py --llm-private-test-reply-replay-report --markdown
+```
+
+The replay validates the redacted live success fixture and blocked scenarios without connecting to Discord or calling OpenRouter.

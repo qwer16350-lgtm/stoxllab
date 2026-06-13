@@ -37,6 +37,7 @@ from live_event_routing_report import build_live_event_routing_report
 from llm_preflight import build_llm_preflight_report, render_llm_preflight_markdown
 from llm_dry_call import build_llm_dry_call_request, render_llm_dry_call_markdown, run_llm_dry_call, write_llm_dry_call_artifact
 from llm_private_test_reply import build_llm_private_test_reply_preflight, render_llm_private_test_reply_report_markdown
+from llm_private_test_reply_replay import build_llm_private_test_reply_replay_report, render_llm_private_test_reply_replay_markdown
 from llm_prompt_envelope import build_llm_prompt_envelope, render_llm_prompt_envelope_preview
 from llm_response_packet import (
     build_latest_llm_response_packet_report,
@@ -234,6 +235,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--llm-response-packet-report", action="store_true", help="Print Phase 32C local LLM response packet report.")
     parser.add_argument("--llm-response-packet-live-closeout", action="store_true", help="Print Phase 32C-LIVE closeout from latest LLM dry call artifact.")
     parser.add_argument("--llm-private-test-reply-report", action="store_true", help="Print Phase 32D guarded private-test-only LLM reply preflight.")
+    parser.add_argument("--llm-private-test-reply-replay-report", action="store_true", help="Print Phase 32D closeout replay/audit report without live send.")
     parser.add_argument("--allow-llm-api-call", action="store_true", help="Allow Phase 32B to attempt one gated provider call when env gates pass.")
     parser.add_argument("--write-artifact", action="store_true", help="Write supported local-only report artifacts.")
     parser.add_argument("--latest", action="store_true", help="Use latest local artifact for supported reports.")
@@ -726,6 +728,20 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- blocked_reasons: {len(output.get('blocked_reasons', []))}")
         return 0
 
+    if args.llm_private_test_reply_replay_report:
+        output = build_llm_private_test_reply_replay_report()
+        if args.markdown:
+            print(render_llm_private_test_reply_replay_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL LLM private test reply replay closeout")
+            print(f"- live_success_fixture_verified: {output.get('live_success_fixture_verified')}")
+            print(f"- events_replayed: {output.get('summary', {}).get('events_replayed')}")
+            print(f"- sent_in_fixture: {output.get('summary', {}).get('sent')}")
+            print(f"- message_sent: {output.get('message_sent')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -866,6 +882,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.llm_response_packet_report
         or args.llm_response_packet_live_closeout
         or args.llm_private_test_reply_report
+        or args.llm_private_test_reply_replay_report
         or args.allow_llm_api_call
         or args.write_artifact
         or args.latest

@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from private_test_reply_replay import build_private_test_reply_replay_report
+from llm_private_test_reply_replay import build_llm_private_test_reply_replay_report
 from llm_response_packet import llm_response_packet_preview
 
 
@@ -313,6 +314,8 @@ def build_operations_packet_viewer_report(
     latest_llm = latest_llm_response_packet_summary(root=root, date=date)
     replay_report = build_private_test_reply_replay_report(root=str(_repo(root)))
     replay_summary = replay_report.get("summary", {})
+    llm_reply_closeout = build_llm_private_test_reply_replay_report()
+    llm_reply_summary = llm_reply_closeout.get("summary", {})
     report = {
         "report_type": "operations_packet_viewer",
         "version": VERSION,
@@ -339,6 +342,16 @@ def build_operations_packet_viewer_report(
             "cooldown_blocked_count": replay_summary.get("cooldown_blocked", 0),
             "budget_exhausted_count": replay_summary.get("budget_exhausted_blocked", 0),
             "circuit_breaker_count": replay_summary.get("circuit_breaker_opened", 0),
+        },
+        "llm_private_test_reply_closeout": {
+            "available": True,
+            "live_success_fixture_verified": bool(llm_reply_closeout.get("live_success_fixture_verified")),
+            "sent_in_fixture": llm_reply_summary.get("sent", 0),
+            "self_messages_skipped": llm_reply_summary.get("self_messages_skipped", 0),
+            "public_channel_blocked": llm_reply_summary.get("public_channel_blocked", 0),
+            "llm_api_called_by_replay": False,
+            "discord_send_by_replay": False,
+            "ready_for_phase33a_rag_preflight": bool(llm_reply_closeout.get("ready_for_phase33a_rag_preflight")),
         },
         "daily_manifest_summary": load_daily_manifest(root=root, date=date),
         "filters": {
@@ -399,6 +412,7 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
             ]
         )
     private_summary = report.get("private_test_reply_summary", {})
+    llm_reply_closeout = report.get("llm_private_test_reply_closeout", {})
     llm_summary = report.get("latest_llm_response_packet", {})
     lines.extend(
         [
@@ -418,6 +432,14 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
             f"- Cooldown blocked: {private_summary.get('cooldown_blocked_count', 0)}",
             f"- Budget exhausted: {private_summary.get('budget_exhausted_count', 0)}",
             f"- Circuit breaker: {private_summary.get('circuit_breaker_count', 0)}",
+            "",
+            "## LLM Private Test Reply Closeout",
+            f"- Live success fixture verified: {str(llm_reply_closeout.get('live_success_fixture_verified', False)).lower()}",
+            f"- Sent in fixture: {llm_reply_closeout.get('sent_in_fixture', 0)}",
+            f"- Self-message skipped: {llm_reply_closeout.get('self_messages_skipped', 0)}",
+            f"- Public channel blocked: {llm_reply_closeout.get('public_channel_blocked', 0)}",
+            "- Replay Discord send: false",
+            "- Replay LLM API call: false",
         ]
     )
     safety = report.get("safety_assertions", {})

@@ -37,6 +37,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - Build Phase 32C LLM response packets for local review workflows without Discord send.
 - Close out Phase 32C-LIVE by writing a gated LLM dry-call artifact, creating the latest local response packet, and exposing it to the operations viewer without Discord send.
 - Build Phase 32D guarded private-test-only LLM reply preflight and runtime boundaries.
+- Build Phase 32D closeout replay/audit reports without live Discord send or LLM API calls.
 
 ## Explicit Non-Goals
 
@@ -92,6 +93,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - `docs/STOXL_LLM_RESPONSE_PACKET_INTEGRATION.md`
 - `docs/STOXL_LLM_RESPONSE_PACKET_LIVE_CLOSEOUT.md`
 - `docs/STOXL_LLM_PRIVATE_TEST_REPLY.md`
+- `docs/STOXL_LLM_PRIVATE_TEST_REPLY_CLOSEOUT.md`
 
 These documents prepare for a later private server read-only connection review. They do not authorize or perform a Discord connection.
 
@@ -160,6 +162,8 @@ python apps\hermes_gateway\cli.py --llm-response-packet-report --latest --markdo
 python apps\hermes_gateway\cli.py --llm-response-packet-live-closeout --json
 python apps\hermes_gateway\cli.py --llm-private-test-reply-report --json
 python apps\hermes_gateway\cli.py --llm-private-test-reply-report --markdown
+python apps\hermes_gateway\cli.py --llm-private-test-reply-replay-report --json
+python apps\hermes_gateway\cli.py --llm-private-test-reply-replay-report --markdown
 python apps\hermes_gateway\cli.py --run-discord-private-test-reply --json
 python apps\hermes_gateway\tests\test_local_pipeline.py
 python apps\hermes_gateway\tests\test_replay_approval.py
@@ -189,6 +193,7 @@ python apps\hermes_gateway\tests\test_llm_dry_call.py
 python apps\hermes_gateway\tests\test_llm_response_packet.py
 python apps\hermes_gateway\tests\test_llm_response_packet_live_closeout.py
 python apps\hermes_gateway\tests\test_llm_private_test_reply.py
+python apps\hermes_gateway\tests\test_llm_private_test_reply_replay.py
 ```
 
 The `--run-discord-readonly` option is intentionally not part of normal local
@@ -231,6 +236,10 @@ Phase 32D adds a separate guarded runtime for private-test-only LLM replies. It
 requires private channel ID match, LLM output safety, response packet safety,
 cooldown, reply budget, duplicate guard, and circuit breaker checks. It is not a
 general Discord reply mode.
+
+Phase 32D closeout validates the redacted live success fixture and blocked
+scenario replay without starting Discord, calling OpenRouter, reading RAG, or
+executing external actions.
 
 If the registry file is missing, generate it from the repo root:
 

@@ -146,6 +146,12 @@ It does not replace this deterministic placeholder mode:
 
 The LLM mode requires its own env gates, output safety, packet safety, cooldown, budget, duplicate, and circuit breaker checks. Public/team channels and mapped work channels still cannot receive LLM replies.
 
+Phase 32D closeout adds a no-live-send replay/audit report for the observed LLM private test success:
+
+```powershell
+python apps\hermes_gateway\cli.py --llm-private-test-reply-replay-report --json
+```
+
 ## Message Source
 
 The only allowed source is the deterministic Phase 31C `agent_placeholder_response`.

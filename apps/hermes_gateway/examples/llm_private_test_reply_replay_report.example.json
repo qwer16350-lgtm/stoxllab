@@ -1,0 +1,39 @@
+{
+  "report_type": "llm_private_test_reply_replay_closeout",
+  "version": "phase32d_closeout_no_live_send",
+  "created_at": "2026-06-13T00:00:00+00:00",
+  "live_success_fixture_verified": true,
+  "summary": {
+    "events_replayed": 13,
+    "sent": 1,
+    "blocked": 9,
+    "skipped": 2,
+    "llm_calls": 1,
+    "discord_send_attempts": 1,
+    "self_messages_skipped": 1,
+    "bot_messages_skipped": 1,
+    "public_channel_blocked": 1,
+    "private_channel_id_mismatch_blocked": 1,
+    "duplicates_blocked": 1,
+    "cooldown_blocked": 1,
+    "budget_exhausted_blocked": 1,
+    "provider_error_blocked": 1,
+    "output_safety_blocked": 1,
+    "packet_safety_blocked": 1,
+    "circuit_breakers": 2
+  },
+  "events": [],
+  "ready_for_phase33a_rag_preflight": true,
+  "message_sent": false,
+  "live_discord_send_executed": false,
+  "llm_api_called": false,
+  "rag_called": false,
+  "external_execution": false,
+  "safety_assertions": {
+    "api_key_value_logged": false,
+    "discord_message_sent": false,
+    "raw_discord_ids_logged": false,
+    "rag_called": false,
+    "external_execution": false
+  }
+}
