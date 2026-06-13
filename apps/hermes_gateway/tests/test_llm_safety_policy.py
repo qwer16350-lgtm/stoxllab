@@ -166,6 +166,53 @@ def test_negated_external_delivery_disclaimer_allowed() -> None:
     assert_true("negated_external_delivery" in decision["safe_disclaimer_reasons"], "External delivery disclaimer should be recorded")
 
 
+def test_negated_external_action_disclaimer_allowed() -> None:
+    decision = check_llm_output_allowed("No external action has been taken.", policy())
+    assert_true(decision["allowed"] is True, "Negated external action disclaimer should be allowed")
+    assert_true(decision["blocked"] is False, "Negated external action disclaimer should not block")
+    assert_true("negated_external_action" in decision["safe_disclaimer_reasons"], "External action disclaimer should be recorded")
+
+
+def test_negated_external_actions_plural_disclaimer_allowed() -> None:
+    decision = check_llm_output_allowed("No external actions have been taken.", policy())
+    assert_true(decision["allowed"] is True, "Plural negated external actions disclaimer should be allowed")
+    assert_true("negated_external_action" in decision["safe_disclaimer_reasons"], "Plural external action disclaimer should be recorded")
+
+
+def test_not_taken_any_external_action_allowed() -> None:
+    decision = check_llm_output_allowed("I have not taken any external action.", policy())
+    assert_true(decision["allowed"] is True, "Not-taken external action disclaimer should be allowed")
+    assert_true("negated_external_action" in decision["safe_disclaimer_reasons"], "Not-taken external action disclaimer should be recorded")
+
+
+def test_no_action_taken_allowed() -> None:
+    decision = check_llm_output_allowed("No action has been taken.", policy())
+    assert_true(decision["allowed"] is True, "No action taken disclaimer should be allowed")
+    assert_true("negated_external_action" in decision["safe_disclaimer_reasons"], "No action taken disclaimer should be recorded")
+
+
+def test_no_external_execution_occurred_allowed() -> None:
+    decision = check_llm_output_allowed("No external execution occurred.", policy())
+    assert_true(decision["allowed"] is True, "No external execution occurred disclaimer should be allowed")
+    assert_true("negated_external_action" in decision["safe_disclaimer_reasons"], "No external execution disclaimer should be recorded")
+
+
+def test_nothing_has_been_externally_done_allowed() -> None:
+    decision = check_llm_output_allowed("Nothing has been published, submitted, sent, uploaded, approved, confirmed, or externally delivered.", policy())
+    assert_true(decision["allowed"] is True, "Broad negated external action disclaimer should be allowed")
+    assert_true("negated_external_action" in decision["safe_disclaimer_reasons"], "Broad negated external action disclaimer should be recorded")
+
+
+def test_external_action_has_been_taken_blocks() -> None:
+    decision = check_llm_output_allowed("External action has been taken.", policy())
+    assert_true("external_action_claim" in decision["blocked_reasons"], "Positive external action claim should block")
+
+
+def test_i_took_external_action_blocks() -> None:
+    decision = check_llm_output_allowed("I took external action.", policy())
+    assert_true("external_action_claim" in decision["blocked_reasons"], "First-person external action claim should block")
+
+
 def test_negated_email_sent_disclaimer_allowed() -> None:
     decision = check_llm_output_allowed("No email has been sent.", policy())
     assert_true(decision["allowed"] is True, "Negated email sent disclaimer should be allowed")
@@ -208,6 +255,14 @@ def main() -> int:
         test_actual_price_contract_delivery_confirmation_claims_block,
         test_negated_publishing_disclaimer_allowed,
         test_negated_external_delivery_disclaimer_allowed,
+        test_negated_external_action_disclaimer_allowed,
+        test_negated_external_actions_plural_disclaimer_allowed,
+        test_not_taken_any_external_action_allowed,
+        test_no_action_taken_allowed,
+        test_no_external_execution_occurred_allowed,
+        test_nothing_has_been_externally_done_allowed,
+        test_external_action_has_been_taken_blocks,
+        test_i_took_external_action_blocks,
         test_negated_email_sent_disclaimer_allowed,
         test_review_only_disclaimer_allowed,
         test_no_approval_granted_disclaimer_allowed,

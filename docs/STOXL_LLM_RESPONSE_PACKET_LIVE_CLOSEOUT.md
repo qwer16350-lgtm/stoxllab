@@ -51,6 +51,14 @@ The closeout report records:
 
 Phase 32C-LIVE is not a Discord reply phase.
 
+The preferred LLM safety wording is allowed by output safety:
+
+```text
+This is a review-only draft. No external action has been taken.
+```
+
+That sentence is treated as a negated safety disclaimer, not as a claim that an external action occurred.
+
 Allowed:
 
 - read the latest local dry-call artifact

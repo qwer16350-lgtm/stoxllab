@@ -21,6 +21,15 @@ PUBLIC_PUBLISH_RE = re.compile(r"(?i)(published publicly|posted publicly|sns pub
 NEGATED_ACTION_MADE_RE = re.compile(r"(?i)\bno\b.{0,100}\b(publishing|published|posted|posting|uploaded|upload|external delivery|delivery|delivered)\b.{0,60}\b(has|have)\s+been\s+made\b")
 NEGATED_PUBLICATION_RE = re.compile(r"(?i)\b(no|not|never|has not|have not|was not|were not)\b.{0,40}\b(publishing|published|posted|posting|uploaded|upload)\b|\b(publishing|published|posted|uploaded)\b.{0,40}\b(not|no|never)\b")
 NEGATED_DELIVERY_RE = re.compile(r"(?i)\b(no|not|never|has not|have not|was not|were not)\b.{0,50}\b(external delivery|delivery|delivered)\b|\b(external delivery|delivery|delivered)\b.{0,50}\b(not|no|never)\b")
+NEGATED_EXTERNAL_ACTION_RE = re.compile(
+    r"(?i)\b("
+    r"no\s+external\s+actions?\s+(has|have)\s+been\s+taken|"
+    r"i\s+have\s+not\s+taken\s+any\s+external\s+action|"
+    r"no\s+action\s+has\s+been\s+taken|"
+    r"no\s+external\s+execution\s+(occurred|has\s+occurred)|"
+    r"nothing\s+has\s+been\s+.{0,120}\b(externally\s+delivered|published|submitted|sent|uploaded|approved|confirmed)\b"
+    r")\b"
+)
 NEGATED_SUBMISSION_RE = re.compile(r"(?i)\b(not|no|never|has not|have not)\b.{0,40}\b(submitted|submission|submit)\b|\b(submitted|submission)\b.{0,40}\b(not|no|never)\b")
 NEGATED_EMAIL_RE = re.compile(r"(?i)\b(no|not|never|has not|have not)\b.{0,40}\b(email|sent|send)\b|\b(email|sent)\b.{0,40}\b(not|no|never)\b")
 NEGATED_APPROVAL_RE = re.compile(r"(?i)\b(no|not|never|has not|have not)\b.{0,40}\b(approval|approved|granted)\b|\b(approval|approved|granted)\b.{0,40}\b(not|no|never)\b")
@@ -171,6 +180,7 @@ def _safe_disclaimer_reasons(text: str) -> list[str]:
         ("negated_action_made", NEGATED_ACTION_MADE_RE),
         ("negated_publication", NEGATED_PUBLICATION_RE),
         ("negated_external_delivery", NEGATED_DELIVERY_RE),
+        ("negated_external_action", NEGATED_EXTERNAL_ACTION_RE),
         ("negated_submission", NEGATED_SUBMISSION_RE),
         ("negated_email_send", NEGATED_EMAIL_RE),
         ("negated_approval", NEGATED_APPROVAL_RE),
@@ -190,6 +200,7 @@ def _has_non_negated_claim(text: str) -> bool:
         NEGATED_ACTION_MADE_RE,
         NEGATED_PUBLICATION_RE,
         NEGATED_DELIVERY_RE,
+        NEGATED_EXTERNAL_ACTION_RE,
         NEGATED_SUBMISSION_RE,
         NEGATED_EMAIL_RE,
         NEGATED_APPROVAL_RE,

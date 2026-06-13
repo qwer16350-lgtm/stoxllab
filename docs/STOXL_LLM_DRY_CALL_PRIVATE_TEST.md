@@ -98,6 +98,10 @@ Normal review-only draft text can pass as a local preview, but it is not approva
 
 Negated safety disclaimers are allowed when they clearly say that no external action happened, for example:
 
+- this is a review-only draft; no external action has been taken
+- no external actions have been taken
+- no action has been taken
+- no external execution occurred
 - no final publishing has been made
 - no external delivery has been made
 - not submitted
@@ -111,7 +115,7 @@ Reports may include:
 ```json
 {
   "safe_disclaimer_detected": true,
-  "safe_disclaimer_reasons": ["negated_external_delivery", "review_only"]
+  "safe_disclaimer_reasons": ["review_only", "negated_external_action"]
 }
 ```
 

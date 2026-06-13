@@ -219,6 +219,13 @@ def provider_success_with_disclaimer() -> dict:
     }
 
 
+def provider_success_with_external_action_disclaimer() -> dict:
+    result = provider_success_with_disclaimer()
+    result["response_text"] = "This is a review-only draft. No external action has been taken."
+    result["usage"]["output_chars"] = len(result["response_text"])
+    return result
+
+
 def test_run_allow_api_call_true_updates_request_field() -> None:
     original = llm_dry_call.call_llm_once
     try:
@@ -314,6 +321,24 @@ def test_openrouter_success_disclaimer_has_no_secret_or_raw_id() -> None:
     assert_true("123456789012345678" not in text, "Raw Discord-like ID should not be logged")
 
 
+def test_openrouter_success_negated_external_action_disclaimer_passes_output_safety() -> None:
+    original = llm_dry_call.call_llm_once
+    try:
+        llm_dry_call.call_llm_once = lambda envelope, config: provider_success_with_external_action_disclaimer()
+        report = llm_dry_call.run_llm_dry_call(build_llm_dry_call_request(), env=complete_env(), allow_api_call=True)
+    finally:
+        llm_dry_call.call_llm_once = original
+    assert_true(report["client_result"]["api_call_succeeded"] is True, "Provider success should be represented")
+    assert_true(report["output_safety"]["allowed"] is True, "Negated external action disclaimer should pass output safety")
+    assert_true(report["output_safety"]["blocked"] is False, "Negated external action disclaimer should not block")
+    assert_true("negated_external_action" in report["output_safety"]["safe_disclaimer_reasons"], "Negated external action should be recorded")
+    assert_true(report["ready_for_phase32c_private_test_reply"] is True, "Safe response should be ready for Phase 32C packet use")
+    assert_true(report["message_sent"] is False, "Successful LLM response should not send Discord message")
+    assert_true(report["discord_send_attempted"] is False, "Successful LLM response should not attempt Discord send")
+    assert_true(report["rag_called"] is False, "Successful LLM response should not call RAG")
+    assert_true(report["external_execution"] is False, "Successful LLM response should not execute externally")
+
+
 def main() -> int:
     tests = [
         test_default_dry_call_uses_mock_response,
@@ -344,6 +369,7 @@ def main() -> int:
         test_openrouter_success_review_only_disclaimer_passes_output_safety,
         test_openrouter_success_disclaimer_keeps_execution_flags_false,
         test_openrouter_success_disclaimer_has_no_secret_or_raw_id,
+        test_openrouter_success_negated_external_action_disclaimer_passes_output_safety,
     ]
     for test in tests:
         test()

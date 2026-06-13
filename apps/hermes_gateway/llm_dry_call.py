@@ -136,7 +136,8 @@ def _apply_phase32b_prompt_safety_instruction(envelope: dict[str, Any]) -> None:
     instruction = (
         " Use review-only wording. Do not say that anything was published, submitted, sent, "
         "uploaded, approved, confirmed, or externally delivered. You may say that no such "
-        "action has been taken."
+        "action has been taken. Preferred safety wording: \"This is a review-only draft. "
+        "No external action has been taken.\""
     )
     messages[0]["content"] = str(messages[0].get("content", "")) + instruction
 
