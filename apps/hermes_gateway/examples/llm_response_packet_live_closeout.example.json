@@ -1,0 +1,36 @@
+{
+  "report_type": "llm_response_packet_live_closeout",
+  "version": "phase32c_live_closeout",
+  "created_at": "2026-06-13T00:00:00+00:00",
+  "latest_dry_call_found": true,
+  "source_dry_call_path": "exports/hermes_gateway/llm_dry_calls/20260613/llm_dry_call_20260613_000000_openrouter_openai-gpt-5.4-mini.json",
+  "llm_response_packet_created": true,
+  "packet_paths": {
+    "json_path": "exports/hermes_gateway/llm_response_packets/20260613/marin_llm_response_packet.json",
+    "markdown_path": "exports/hermes_gateway/llm_response_packets/20260613/marin_llm_response_packet.md"
+  },
+  "operations_viewer_summary_available": true,
+  "provider": "openrouter",
+  "model": "openai/gpt-5.4-mini",
+  "output_safety_allowed": true,
+  "response_available": true,
+  "usage": {
+    "prompt_tokens": 20,
+    "completion_tokens": 15,
+    "total_tokens": 35,
+    "cost": 0.001
+  },
+  "message_sent": false,
+  "discord_send_attempted": false,
+  "rag_called": false,
+  "external_execution": false,
+  "ready_for_phase32d_guarded_private_test_llm_reply": true,
+  "safety_assertions": {
+    "api_key_value_logged": false,
+    "discord_message_sent": false,
+    "discord_send_attempted": false,
+    "rag_called": false,
+    "external_execution": false,
+    "raw_discord_ids_logged": false
+  }
+}

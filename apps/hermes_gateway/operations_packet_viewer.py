@@ -156,6 +156,56 @@ def list_recent_llm_response_packets(root: str | Path | None = None, limit: int 
     return packets[: max(0, int(limit))]
 
 
+def _empty_latest_llm_response_packet() -> dict[str, Any]:
+    return {
+        "available": False,
+        "packet_path": "",
+        "provider": "",
+        "model": "",
+        "summary": "",
+        "output_safety_allowed": False,
+        "blocked": False,
+        "cost": None,
+        "will_send": False,
+        "message_sent": False,
+        "discord_send_attempted": False,
+        "rag_called": False,
+        "external_execution": False,
+    }
+
+
+def latest_llm_response_packet_summary(root: str | Path | None = None, date: str | None = None) -> dict[str, Any]:
+    packets = _llm_packet_files(root, date)
+    best: tuple[str, Path, dict[str, Any]] | None = None
+    for path in packets:
+        packet = _safe_json_load(path)
+        if not packet:
+            continue
+        created_at = str(packet.get("created_at", ""))
+        if best is None or created_at > best[0]:
+            best = (created_at, path, packet)
+    if not best:
+        return _empty_latest_llm_response_packet()
+    preview = llm_response_packet_preview(best[2], packet_path=str(best[1]))
+    item = {
+        "available": bool(preview.get("available")),
+        "packet_path": preview.get("packet_path", ""),
+        "provider": preview.get("provider", ""),
+        "model": preview.get("model", ""),
+        "summary": preview.get("summary", ""),
+        "output_safety_allowed": bool(preview.get("output_safety_allowed")),
+        "blocked": bool(preview.get("blocked")),
+        "cost": preview.get("cost"),
+        "will_send": False,
+        "message_sent": False,
+        "discord_send_attempted": False,
+        "rag_called": False,
+        "external_execution": False,
+    }
+    _assert_no_raw_values(item)
+    return item
+
+
 def list_recent_review_packets(root: str | Path | None = None, limit: int = 20, date: str | None = None) -> list[dict[str, Any]]:
     packets: list[dict[str, Any]] = []
     for path in _packet_files(root, date):
@@ -260,6 +310,7 @@ def build_operations_packet_viewer_report(
     )[: max(0, int(limit))]
     packets = list_recent_review_packets(root=root, limit=limit, date=date)
     llm_packets = list_recent_llm_response_packets(root=root, limit=limit, date=date)
+    latest_llm = latest_llm_response_packet_summary(root=root, date=date)
     replay_report = build_private_test_reply_replay_report(root=str(_repo(root)))
     replay_summary = replay_report.get("summary", {})
     report = {
@@ -271,6 +322,7 @@ def build_operations_packet_viewer_report(
         "recent_live_events": events,
         "recent_review_packets": packets,
         "recent_llm_response_packets": llm_packets,
+        "latest_llm_response_packet": latest_llm,
         "llm_response_summary": llm_packets[0] if llm_packets else {
             "llm_response_available": False,
             "llm_provider": "",
@@ -347,15 +399,16 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
             ]
         )
     private_summary = report.get("private_test_reply_summary", {})
-    llm_summary = report.get("llm_response_summary", {})
+    llm_summary = report.get("latest_llm_response_packet", {})
     lines.extend(
         [
             "",
-            "## LLM Response",
-            f"- Provider: {llm_summary.get('llm_provider', '')}",
-            f"- Model: {llm_summary.get('llm_model', '')}",
-            f"- Output safety: {str(llm_summary.get('llm_output_safety_allowed', False)).lower()}",
-            f"- Cost: {llm_summary.get('llm_cost')}",
+            "## Latest LLM Response Packet",
+            f"- Available: {str(llm_summary.get('available', False)).lower()}",
+            f"- Provider: {llm_summary.get('provider', '')}",
+            f"- Model: {llm_summary.get('model', '')}",
+            f"- Output safety: {str(llm_summary.get('output_safety_allowed', False)).lower()}",
+            f"- Cost: {llm_summary.get('cost')}",
             "- Sent to Discord: false",
             "",
             "## Private Test Reply",

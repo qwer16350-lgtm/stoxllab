@@ -24,6 +24,105 @@ def _date_stamp(value: str | None = None) -> str:
     return (value or utc_now())[:10].replace("-", "")
 
 
+def _safe_json_load(path: Path) -> dict[str, Any] | None:
+    try:
+        data = json.loads(path.read_text(encoding="utf-8-sig"))
+    except Exception:
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def _llm_dry_call_files(root: str | Path | None = None) -> list[Path]:
+    repo_root = Path(root or Path.cwd()).resolve()
+    base = repo_root / "exports" / "hermes_gateway" / "llm_dry_calls"
+    if not base.exists():
+        return []
+    return [path for path in base.glob("*/*.json") if path.is_file()]
+
+
+def _sort_artifact_files(files: list[Path]) -> list[Path]:
+    def key(path: Path) -> tuple[str, float]:
+        report = _safe_json_load(path) or {}
+        return (str(report.get("created_at", "")), path.stat().st_mtime)
+
+    return sorted(files, key=key, reverse=True)
+
+
+def find_latest_llm_dry_call_artifact(root: str | Path | None = None) -> dict[str, Any]:
+    for path in _sort_artifact_files(_llm_dry_call_files(root)):
+        report = _safe_json_load(path)
+        if report and report.get("report_type") == "llm_dry_call_report":
+            safe = {
+                "found": True,
+                "path": str(path),
+                "created_at": report.get("created_at", ""),
+                "provider": report.get("client_result", {}).get("provider", ""),
+                "model": report.get("client_result", {}).get("model", ""),
+                "api_call_succeeded": bool(report.get("client_result", {}).get("api_call_succeeded")),
+                "output_safety_allowed": bool(report.get("output_safety", {}).get("allowed")),
+                "message_sent": False,
+                "discord_send_attempted": False,
+                "rag_called": False,
+                "external_execution": False,
+                "report": report,
+            }
+            assert_llm_response_packet_safe({"message_sent": False, "discord_send_attempted": False, "rag_called": False, "external_execution": False, "safety_assertions": {}})
+            return safe
+    return {
+        "found": False,
+        "path": "",
+        "created_at": "",
+        "provider": "",
+        "model": "",
+        "api_call_succeeded": False,
+        "output_safety_allowed": False,
+        "message_sent": False,
+        "discord_send_attempted": False,
+        "rag_called": False,
+        "external_execution": False,
+        "report": {},
+    }
+
+
+def build_latest_llm_response_packet_report(root: str | Path | None = None, write_artifact: bool = True) -> dict[str, Any]:
+    latest = find_latest_llm_dry_call_artifact(root)
+    if not latest.get("found"):
+        return {
+            "report_type": "llm_response_packet_latest_report",
+            "version": VERSION,
+            "created_at": utc_now(),
+            "latest_dry_call_found": False,
+            "source_dry_call_path": "",
+            "packet_created": False,
+            "packet": {},
+            "packet_paths": {},
+            "message_sent": False,
+            "discord_send_attempted": False,
+            "rag_called": False,
+            "external_execution": False,
+            "safety_assertions": _safe_assertions(),
+        }
+    packet = build_llm_response_packet(latest["report"])
+    paths = write_llm_response_packet(packet, root=root) if write_artifact else {}
+    report = {
+        "report_type": "llm_response_packet_latest_report",
+        "version": VERSION,
+        "created_at": utc_now(),
+        "latest_dry_call_found": True,
+        "source_dry_call_path": latest.get("path", ""),
+        "packet_created": True,
+        "packet": packet,
+        "packet_paths": paths,
+        "message_sent": False,
+        "discord_send_attempted": False,
+        "rag_called": False,
+        "external_execution": False,
+        "safety_assertions": _safe_assertions(),
+    }
+    assert_llm_response_packet_safe(report)
+    return report
+
+
 def build_llm_response_summary(llm_dry_call_report: dict[str, Any]) -> dict[str, Any]:
     result = llm_dry_call_report.get("client_result", {})
     output = llm_dry_call_report.get("output_safety", {})
@@ -64,7 +163,7 @@ def build_llm_response_packet(llm_dry_call_report: dict[str, Any]) -> dict[str, 
         "agent_route_candidate": request.get("agent_route_candidate", ""),
         "provider": result.get("provider", ""),
         "model": result.get("model", ""),
-        "response_available": bool(response_text),
+        "response_available": bool(response_text) and bool(output.get("allowed")),
         "response_text": response_text,
         "response_summary": summary,
         "output_safety": {
@@ -100,6 +199,70 @@ def build_llm_response_packet(llm_dry_call_report: dict[str, Any]) -> dict[str, 
     }
     assert_llm_response_packet_safe(packet)
     return packet
+
+
+def _safe_assertions() -> dict[str, bool]:
+    return {
+        "api_key_value_logged": False,
+        "discord_message_sent": False,
+        "discord_send_attempted": False,
+        "rag_called": False,
+        "external_execution": False,
+        "raw_discord_ids_logged": False,
+    }
+
+
+def build_llm_response_packet_live_closeout(root: str | Path | None = None) -> dict[str, Any]:
+    latest_report = build_latest_llm_response_packet_report(root=root, write_artifact=True)
+    packet = latest_report.get("packet", {}) if isinstance(latest_report.get("packet"), dict) else {}
+    summary = llm_response_packet_preview(packet, packet_path=latest_report.get("packet_paths", {}).get("json_path", ""))
+    operations_viewer_available = bool(summary.get("available")) or bool(latest_report.get("packet_created"))
+    closeout = {
+        "report_type": "llm_response_packet_live_closeout",
+        "version": "phase32c_live_closeout",
+        "created_at": utc_now(),
+        "latest_dry_call_found": bool(latest_report.get("latest_dry_call_found")),
+        "source_dry_call_path": latest_report.get("source_dry_call_path", ""),
+        "llm_response_packet_created": bool(latest_report.get("packet_created")),
+        "packet_paths": latest_report.get("packet_paths", {}),
+        "operations_viewer_summary_available": operations_viewer_available,
+        "provider": packet.get("provider", ""),
+        "model": packet.get("model", ""),
+        "output_safety_allowed": bool(packet.get("output_safety", {}).get("allowed")),
+        "response_available": bool(packet.get("response_available")),
+        "usage": packet.get("usage", {}),
+        "message_sent": False,
+        "discord_send_attempted": False,
+        "rag_called": False,
+        "external_execution": False,
+        "ready_for_phase32d_guarded_private_test_llm_reply": (
+            bool(latest_report.get("latest_dry_call_found"))
+            and bool(packet.get("response_available"))
+            and bool(packet.get("output_safety", {}).get("allowed"))
+        ),
+        "safety_assertions": _safe_assertions(),
+    }
+    assert_llm_response_packet_safe(closeout)
+    return closeout
+
+
+def render_llm_response_packet_live_closeout_markdown(report: dict[str, Any]) -> str:
+    return "\n".join(
+        [
+            "# LLM Response Packet Live Closeout",
+            "",
+            f"- Latest dry call found: {str(report.get('latest_dry_call_found')).lower()}",
+            f"- Packet created: {str(report.get('llm_response_packet_created')).lower()}",
+            f"- Operations viewer summary available: {str(report.get('operations_viewer_summary_available')).lower()}",
+            f"- Provider: {report.get('provider', '')}",
+            f"- Model: {report.get('model', '')}",
+            f"- Output safety allowed: {str(report.get('output_safety_allowed')).lower()}",
+            f"- Ready for Phase 32D guarded private-test LLM reply: {str(report.get('ready_for_phase32d_guarded_private_test_llm_reply')).lower()}",
+            "- Sent to Discord: false",
+            "- RAG called: false",
+            "- External execution: false",
+        ]
+    ) + "\n"
 
 
 def llm_response_packet_preview(packet: dict[str, Any] | None = None, packet_path: str = "") -> dict[str, Any]:

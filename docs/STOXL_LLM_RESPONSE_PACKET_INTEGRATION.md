@@ -82,6 +82,45 @@ The operations viewer can summarize recent LLM response packets:
 - cost
 - sent to Discord: false
 
+Phase 32C-LIVE also exposes the latest local response packet as
+`latest_llm_response_packet` so operators can see the newest safe LLM response
+without opening the raw artifact directly.
+
+## Live Closeout Flow
+
+Phase 32C-LIVE closes the local workflow:
+
+```powershell
+python apps\hermes_gateway\cli.py --llm-dry-call-report --json --allow-llm-api-call --write-artifact
+python apps\hermes_gateway\cli.py --llm-response-packet-report --latest --json
+python apps\hermes_gateway\cli.py --llm-response-packet-live-closeout --json
+```
+
+The latest dry-call artifact is read from:
+
+```text
+exports/hermes_gateway/llm_dry_calls/YYYYMMDD/
+```
+
+The generated response packet is written under:
+
+```text
+exports/hermes_gateway/llm_response_packets/YYYYMMDD/
+```
+
+The closeout report records:
+
+- latest dry-call artifact found
+- response packet created
+- operations viewer summary available
+- provider/model
+- output safety status
+- ready-for-next-phase flag
+- message_sent=false
+- discord_send_attempted=false
+- rag_called=false
+- external_execution=false
+
 ## Why Discord Send Is Still Forbidden
 
 Phase 32C is a review integration step only. LLM text can be inspected locally, but no message is sent to Discord and no external action is performed.

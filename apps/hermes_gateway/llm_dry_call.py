@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -21,10 +22,26 @@ from llm_safety_policy import build_llm_safety_policy, check_llm_output_allowed
 
 
 VERSION = "phase32b_private_test_only_no_discord_send"
+SAFE_FILENAME_RE = re.compile(r"[^a-zA-Z0-9._-]+")
 
 
 def utc_now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def _safe_filename_part(value: Any, fallback: str = "unknown") -> str:
+    text = str(value or fallback).strip().replace("/", "-")
+    text = SAFE_FILENAME_RE.sub("-", text).strip("-._").lower()
+    return text or fallback
+
+
+def _artifact_stem(report: dict[str, Any]) -> str:
+    created = str(report.get("created_at", utc_now()))
+    stamp = created[:19].replace("-", "").replace(":", "").replace("T", "_")
+    result = report.get("client_result", {}) if isinstance(report.get("client_result"), dict) else {}
+    provider = _safe_filename_part(result.get("provider"), "provider")
+    model = _safe_filename_part(result.get("model"), "model")
+    return f"llm_dry_call_{stamp}_{provider}_{model}"
 
 
 def build_llm_dry_call_request(
@@ -181,8 +198,9 @@ def write_llm_dry_call_artifact(report: dict[str, Any], root: str | Path | None 
     day = str(report.get("created_at", utc_now()))[:10].replace("-", "")
     target_dir = base / "exports" / "hermes_gateway" / "llm_dry_calls" / day
     target_dir.mkdir(parents=True, exist_ok=True)
-    json_path = target_dir / "llm_dry_call_report.json"
-    markdown_path = target_dir / "llm_dry_call_report.md"
+    stem = _artifact_stem(report)
+    json_path = target_dir / f"{stem}.json"
+    markdown_path = target_dir / f"{stem}.md"
     report_with_paths = dict(report)
     report_with_paths["artifact_paths"] = [str(json_path), str(markdown_path)]
     json_path.write_text(json.dumps(report_with_paths, ensure_ascii=False, indent=2), encoding="utf-8")

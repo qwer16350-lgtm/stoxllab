@@ -31,6 +31,7 @@ A provider call can only be attempted when the CLI option and all env gates are 
 
 ```powershell
 python apps\hermes_gateway\cli.py --llm-dry-call-report --json --allow-llm-api-call
+python apps\hermes_gateway\cli.py --llm-dry-call-report --json --allow-llm-api-call --write-artifact
 ```
 
 Required conditions:
@@ -120,6 +121,13 @@ Artifacts are written under:
 
 ```text
 exports/hermes_gateway/llm_dry_calls/YYYYMMDD/
+```
+
+Phase 32C-LIVE artifact filenames include a timestamp, provider, and model:
+
+```text
+llm_dry_call_YYYYMMDD_HHMMSS_openrouter_openai-gpt-5.4-mini.json
+llm_dry_call_YYYYMMDD_HHMMSS_openrouter_openai-gpt-5.4-mini.md
 ```
 
 Artifacts are local reports. They must not contain API keys, raw Discord IDs, `.env` values, or tokens.

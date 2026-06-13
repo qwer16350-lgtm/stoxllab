@@ -35,9 +35,15 @@ from live_event_pipeline import build_live_event_pipeline_report
 from live_event_review_packet import build_live_event_review_packet
 from live_event_routing_report import build_live_event_routing_report
 from llm_preflight import build_llm_preflight_report, render_llm_preflight_markdown
-from llm_dry_call import build_llm_dry_call_request, render_llm_dry_call_markdown, run_llm_dry_call
+from llm_dry_call import build_llm_dry_call_request, render_llm_dry_call_markdown, run_llm_dry_call, write_llm_dry_call_artifact
 from llm_prompt_envelope import build_llm_prompt_envelope, render_llm_prompt_envelope_preview
-from llm_response_packet import build_llm_response_packet, render_llm_response_packet_markdown
+from llm_response_packet import (
+    build_latest_llm_response_packet_report,
+    build_llm_response_packet,
+    build_llm_response_packet_live_closeout,
+    render_llm_response_packet_live_closeout_markdown,
+    render_llm_response_packet_markdown,
+)
 from llm_safety_policy import build_llm_safety_policy_report
 from log_exporter import export_replay_result
 from local_mapping_manager import build_local_mapping_manager_report, copy_template_to_local
@@ -224,7 +230,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--llm-prompt-envelope-report", action="store_true", help="Print Phase 32A local-only LLM prompt envelope preview.")
     parser.add_argument("--llm-dry-call-report", action="store_true", help="Print Phase 32B private-test-only LLM dry call report.")
     parser.add_argument("--llm-response-packet-report", action="store_true", help="Print Phase 32C local LLM response packet report.")
+    parser.add_argument("--llm-response-packet-live-closeout", action="store_true", help="Print Phase 32C-LIVE closeout from latest LLM dry call artifact.")
     parser.add_argument("--allow-llm-api-call", action="store_true", help="Allow Phase 32B to attempt one gated provider call when env gates pass.")
+    parser.add_argument("--write-artifact", action="store_true", help="Write supported local-only report artifacts.")
+    parser.add_argument("--latest", action="store_true", help="Use latest local artifact for supported reports.")
     parser.add_argument("--markdown", action="store_true", help="Print supported reports as Markdown.")
     parser.add_argument("--limit", type=int, default=20, help="Limit rows for viewer reports.")
     parser.add_argument("--date", help="Date filter in YYYYMMDD or YYYY-MM-DD format.")
@@ -632,8 +641,12 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.llm_dry_call_report:
+        cfg = load_config(Path(__file__).resolve())
         request = build_llm_dry_call_request(agent_route_candidate=args.agent or "marin", user_content_preview=args.text)
         output = run_llm_dry_call(request, allow_api_call=args.allow_llm_api_call)
+        if args.write_artifact:
+            artifact = write_llm_dry_call_artifact(output, root=cfg.repo_root)
+            output["artifact_paths"] = artifact.get("artifact_paths", [])
         if args.markdown:
             print(render_llm_dry_call_markdown(output))
         elif args.json:
@@ -648,18 +661,39 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.llm_response_packet_report:
-        dry_request = build_llm_dry_call_request(agent_route_candidate=args.agent or "marin", user_content_preview=args.text)
-        dry_report = run_llm_dry_call(dry_request, allow_api_call=False)
-        output = build_llm_response_packet(dry_report)
+        cfg = load_config(Path(__file__).resolve())
+        if args.latest:
+            output = build_latest_llm_response_packet_report(cfg.repo_root, write_artifact=True)
+            packet = output.get("packet", {}) if isinstance(output.get("packet"), dict) else {}
+        else:
+            dry_request = build_llm_dry_call_request(agent_route_candidate=args.agent or "marin", user_content_preview=args.text)
+            dry_report = run_llm_dry_call(dry_request, allow_api_call=False)
+            packet = build_llm_response_packet(dry_report)
+            output = packet
         if args.markdown:
-            print(render_llm_response_packet_markdown(output))
+            print(render_llm_response_packet_markdown(packet) if packet else "# LLM Response Packet\n\nNo latest packet source found.\n")
         elif args.json:
             print(json.dumps(output, ensure_ascii=False, indent=2))
         else:
             print("STOXL LLM response packet")
-            print(f"- provider: {output.get('provider')}")
-            print(f"- model: {output.get('model')}")
-            print(f"- output_safety_allowed: {output.get('output_safety', {}).get('allowed')}")
+            print(f"- provider: {packet.get('provider')}")
+            print(f"- model: {packet.get('model')}")
+            print(f"- output_safety_allowed: {packet.get('output_safety', {}).get('allowed')}")
+            print(f"- message_sent: {packet.get('message_sent', False)}")
+        return 0
+
+    if args.llm_response_packet_live_closeout:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_llm_response_packet_live_closeout(cfg.repo_root)
+        if args.markdown:
+            print(render_llm_response_packet_live_closeout_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL LLM response packet live closeout")
+            print(f"- latest_dry_call_found: {output.get('latest_dry_call_found')}")
+            print(f"- llm_response_packet_created: {output.get('llm_response_packet_created')}")
+            print(f"- output_safety_allowed: {output.get('output_safety_allowed')}")
             print(f"- message_sent: {output.get('message_sent')}")
         return 0
 
@@ -800,7 +834,10 @@ def main(argv: list[str] | None = None) -> int:
         or args.llm_prompt_envelope_report
         or args.llm_dry_call_report
         or args.llm_response_packet_report
+        or args.llm_response_packet_live_closeout
         or args.allow_llm_api_call
+        or args.write_artifact
+        or args.latest
         or args.force
         or args.strict
         or args.export_log
