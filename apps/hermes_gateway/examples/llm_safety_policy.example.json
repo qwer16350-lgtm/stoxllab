@@ -1,0 +1,30 @@
+{
+  "policy_type": "llm_safety_policy",
+  "version": "phase32a_no_api_call",
+  "private_test_only": true,
+  "allow_public_channel": false,
+  "allow_external_execution": false,
+  "allow_rag": false,
+  "allow_discord_send": false,
+  "require_human_review_for_external_actions": true,
+  "blocked_output_intents": [
+    "sns_publish",
+    "homepage_upload",
+    "competition_submit",
+    "grant_submit",
+    "external_email_send",
+    "contract_confirm",
+    "price_confirm",
+    "delivery_schedule_confirm"
+  ],
+  "allowed_response_sources": [
+    "agent_placeholder_response",
+    "future_llm_private_test_response"
+  ],
+  "safety_assertions": {
+    "llm_api_called": false,
+    "discord_message_sent": false,
+    "rag_called": false,
+    "external_execution": false
+  }
+}

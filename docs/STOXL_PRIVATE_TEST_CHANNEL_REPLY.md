@@ -101,6 +101,25 @@ Private test routing is deterministic and local only:
 
 No LLM or RAG is used for this routing.
 
+## Phase 32A LLM Preflight Boundary
+
+Phase 32A adds local-only LLM safety reports for a later private test LLM dry call.
+It does not change the Phase 31B reply gates.
+
+- actual LLM provider calls remain blocked
+- RAG remains blocked
+- public and team channel replies remain blocked
+- Discord send and LLM call controls remain separate
+- `HERMES_LLM_ALLOW_DISCORD_SEND=false` is the default LLM-side send boundary
+
+LLM preflight commands:
+
+```powershell
+python apps\hermes_gateway\cli.py --llm-preflight-report --json
+python apps\hermes_gateway\cli.py --llm-safety-policy-report --json
+python apps\hermes_gateway\cli.py --llm-prompt-envelope-report --json
+```
+
 ## Still Blocked
 
 - regular `message_create`

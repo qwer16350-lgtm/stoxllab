@@ -34,6 +34,9 @@ from live_event_audit_persistence import (
 from live_event_pipeline import build_live_event_pipeline_report
 from live_event_review_packet import build_live_event_review_packet
 from live_event_routing_report import build_live_event_routing_report
+from llm_preflight import build_llm_preflight_report, render_llm_preflight_markdown
+from llm_prompt_envelope import build_llm_prompt_envelope, render_llm_prompt_envelope_preview
+from llm_safety_policy import build_llm_safety_policy_report
 from log_exporter import export_replay_result
 from local_mapping_manager import build_local_mapping_manager_report, copy_template_to_local
 from mapping_validator import build_mapping_validation_report
@@ -214,6 +217,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--private-test-reply-report", action="store_true", help="Print Phase 31B private test channel reply report.")
     parser.add_argument("--private-test-reply-safety-report", action="store_true", help="Print Phase 31D private test reply safety closeout report.")
     parser.add_argument("--private-test-reply-replay-report", action="store_true", help="Print Phase 31E private test reply replay closeout report.")
+    parser.add_argument("--llm-preflight-report", action="store_true", help="Print Phase 32A local-only LLM safety preflight report.")
+    parser.add_argument("--llm-safety-policy-report", action="store_true", help="Print Phase 32A local-only LLM safety policy report.")
+    parser.add_argument("--llm-prompt-envelope-report", action="store_true", help="Print Phase 32A local-only LLM prompt envelope preview.")
     parser.add_argument("--markdown", action="store_true", help="Print supported reports as Markdown.")
     parser.add_argument("--limit", type=int, default=20, help="Limit rows for viewer reports.")
     parser.add_argument("--date", help="Date filter in YYYYMMDD or YYYY-MM-DD format.")
@@ -580,6 +586,46 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- blocked: {output.get('summary', {}).get('blocked')}")
         return 0
 
+    if args.llm_preflight_report:
+        output = build_llm_preflight_report()
+        if args.markdown:
+            print(render_llm_preflight_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL LLM safety preflight")
+            print(f"- llm_enabled: {output.get('llm_enabled')}")
+            print(f"- provider: {output.get('provider')}")
+            print(f"- ready_for_llm_call: {output.get('ready_for_llm_call')}")
+            print(f"- blocked_reasons: {len(output.get('blocked_reasons', []))}")
+        return 0
+
+    if args.llm_safety_policy_report:
+        output = build_llm_safety_policy_report()
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            policy = output.get("policy", {})
+            print("STOXL LLM safety policy")
+            print(f"- private_test_only: {policy.get('private_test_only')}")
+            print(f"- allow_discord_send: {policy.get('allow_discord_send')}")
+            print(f"- blocked_output_intents: {len(policy.get('blocked_output_intents', []))}")
+            print(f"- llm_api_called: {output.get('llm_api_called')}")
+        return 0
+
+    if args.llm_prompt_envelope_report:
+        output = build_llm_prompt_envelope("marin", "Phase 32A private test LLM prompt envelope preview.")
+        if args.markdown:
+            print(render_llm_prompt_envelope_preview(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL LLM prompt envelope preview")
+            print(f"- agent_route_candidate: {output.get('agent_route_candidate')}")
+            print(f"- channel_scope: {output.get('channel_scope')}")
+            print(f"- llm_api_called: {output.get('safety_assertions', {}).get('llm_api_called')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -712,6 +758,9 @@ def main(argv: list[str] | None = None) -> int:
         or args.private_test_reply_report
         or args.private_test_reply_safety_report
         or args.private_test_reply_replay_report
+        or args.llm_preflight_report
+        or args.llm_safety_policy_report
+        or args.llm_prompt_envelope_report
         or args.force
         or args.strict
         or args.export_log

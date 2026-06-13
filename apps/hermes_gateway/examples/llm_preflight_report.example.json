@@ -1,0 +1,33 @@
+{
+  "report_type": "llm_preflight_report",
+  "version": "phase32a_no_api_call",
+  "created_at": "2026-06-13T00:00:00+00:00",
+  "llm_enabled": false,
+  "provider": "disabled",
+  "model_configured": false,
+  "api_key_present": false,
+  "dry_run_only": true,
+  "private_test_only": true,
+  "discord_send_allowed": false,
+  "max_input_chars": 4000,
+  "max_output_chars": 1200,
+  "max_calls_per_session": 3,
+  "cost_guard_enabled": true,
+  "ready_for_llm_call": false,
+  "blocked": true,
+  "blocked_reasons": [
+    "llm_disabled",
+    "provider_disabled",
+    "model_not_configured",
+    "api_key_missing",
+    "dry_run_only_enabled"
+  ],
+  "safety_assertions": {
+    "api_key_value_logged": false,
+    "llm_api_called": false,
+    "discord_message_sent": false,
+    "rag_called": false,
+    "external_execution": false,
+    "raw_discord_ids_logged": false
+  }
+}
