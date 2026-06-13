@@ -26,6 +26,13 @@ HERMES_LLM_PRIVATE_TEST_ONLY=true
 HERMES_LLM_ALLOW_DISCORD_SEND=false
 HERMES_LLM_DRY_RUN_ONLY=true
 HERMES_LLM_API_KEY=
+HERMES_LLM_BASE_URL=
+HERMES_LLM_API_CALL_ENABLED=false
+HERMES_LLM_DRY_CALL_MODE=private_test_only
+HERMES_LLM_DISCORD_SEND_ENABLED=false
+HERMES_LLM_RESPONSE_ARTIFACTS_ENABLED=true
+HERMES_LLM_TIMEOUT_SECONDS=30
+HERMES_LLM_TEMPERATURE=0.2
 ```
 
 `HERMES_LLM_API_KEY` is reported only as `api_key_present=true/false`. The value must never appear in reports, logs, docs, or commits.
@@ -70,6 +77,12 @@ The prompt envelope is a deterministic preview. It includes:
 
 It does not call an LLM.
 
+## Phase 32B Connection
+
+Phase 32B uses this preflight and prompt envelope to build a private-test-only LLM dry call report.
+
+By default, Phase 32B still uses a mock response and does not call an LLM provider. A real provider call can only be attempted with `--allow-llm-api-call` and all Phase 32B env gates enabled. Discord send, RAG, and external execution remain disabled.
+
 ## Output Safety Policy
 
 The policy blocks or sends to review when output appears to perform or finalize external actions.
@@ -102,6 +115,8 @@ python apps\hermes_gateway\cli.py --llm-preflight-report --markdown
 python apps\hermes_gateway\cli.py --llm-safety-policy-report --json
 python apps\hermes_gateway\cli.py --llm-prompt-envelope-report --json
 python apps\hermes_gateway\cli.py --llm-prompt-envelope-report --markdown
+python apps\hermes_gateway\cli.py --llm-dry-call-report --json
+python apps\hermes_gateway\cli.py --llm-dry-call-report --markdown
 ```
 
 ## Next Phases

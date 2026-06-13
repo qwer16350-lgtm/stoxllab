@@ -11,6 +11,13 @@ from typing import Any
 VERSION = "phase32a_no_api_call"
 LONG_ID_RE = re.compile(r"\b\d{15,25}\b")
 SECRET_RE = re.compile(r"(?i)(sk-[a-z0-9_-]+|xoxb-[a-z0-9_-]+|mfa\.[a-z0-9_-]+|bearer\s+\S+|api[_ -]?key\s*[:=]\s*\S+|token\s*[:=]\s*\S+)")
+EXECUTION_CLAIM_RE = re.compile(r"(?i)(posted|published|submitted|sent|uploaded|confirmed|approved|executed|completed|발행|게시|제출|발송|업로드|확정|실행|완료)")
+EXTERNAL_ACTION_RE = re.compile(r"(?i)(will post|will publish|will submit|will send|will upload|send the email|submit the application|external action|외부 실행|이메일 발송|지원사업 제출)")
+APPROVAL_CLAIM_RE = re.compile(r"(?i)(approved|final approval|approval complete|승인했습니다|최종 승인|승인 완료)")
+PRICE_CONFIRM_RE = re.compile(r"(?i)(price confirmed|confirmed price|가격 확정|견적 확정)")
+CONTRACT_CONFIRM_RE = re.compile(r"(?i)(contract confirmed|contract approved|계약 확정|계약 승인|계약 체결)")
+DELIVERY_CONFIRM_RE = re.compile(r"(?i)(delivery confirmed|delivery date confirmed|납기 확정|배송 확정)")
+PUBLIC_PUBLISH_RE = re.compile(r"(?i)(published publicly|posted publicly|sns published|homepage updated|공개 게시|SNS 발행|홈페이지 반영)")
 BLOCKED_OUTPUT_PATTERNS = {
     "sns_publish": re.compile(r"(?i)(sns|instagram|인스타|게시|발행).*(완료|진행|하겠습니다|확정)"),
     "homepage_upload": re.compile(r"(?i)(homepage|홈페이지|업로드|반영).*(완료|진행|하겠습니다|확정)"),
@@ -87,14 +94,39 @@ def check_llm_request_allowed(context: dict[str, Any], policy: dict[str, Any]) -
 
 
 def check_llm_output_allowed(output_text: str, policy: dict[str, Any]) -> dict[str, Any]:
-    matched = [intent for intent, pattern in BLOCKED_OUTPUT_PATTERNS.items() if pattern.search(output_text or "")]
+    text = output_text or ""
+    matched = [intent for intent, pattern in BLOCKED_OUTPUT_PATTERNS.items() if pattern.search(text)]
+    blocked_reasons: list[str] = []
+    max_output_chars = int(policy.get("max_output_chars", 1200) or 1200)
+    if not text.strip():
+        blocked_reasons.append("empty_output")
+    if len(text) > max_output_chars:
+        blocked_reasons.append("output_too_long")
+    if EXECUTION_CLAIM_RE.search(text) or EXTERNAL_ACTION_RE.search(text):
+        blocked_reasons.append("external_action_claim")
+    if APPROVAL_CLAIM_RE.search(text):
+        blocked_reasons.append("approval_claim")
+    if PRICE_CONFIRM_RE.search(text):
+        blocked_reasons.append("price_confirmation_claim")
+    if CONTRACT_CONFIRM_RE.search(text):
+        blocked_reasons.append("contract_confirmation_claim")
+    if DELIVERY_CONFIRM_RE.search(text):
+        blocked_reasons.append("delivery_confirmation_claim")
+    if PUBLIC_PUBLISH_RE.search(text):
+        blocked_reasons.append("public_publish_claim")
+    if policy.get("allow_discord_send"):
+        blocked_reasons.append("discord_send_not_allowed")
+    for intent in matched:
+        if intent not in blocked_reasons:
+            blocked_reasons.append(intent)
     return {
         "decision_type": "llm_output_safety_decision",
-        "allowed": not matched,
-        "blocked": bool(matched),
+        "allowed": not blocked_reasons,
+        "blocked": bool(blocked_reasons),
         "review_required": True,
         "matched_blocked_intents": matched,
-        "reason": "blocked_output_intent_detected" if matched else "review_only_output_allowed",
+        "blocked_reasons": blocked_reasons,
+        "reason": "blocked_output_intent_detected" if blocked_reasons else "review_only_output_allowed",
         "message_sent": False,
         "llm_api_called": False,
         "rag_called": False,

@@ -1,0 +1,23 @@
+{
+  "result_type": "llm_client_result",
+  "version": "phase32b_private_test_dry_call",
+  "provider": "disabled",
+  "model": "",
+  "api_call_attempted": false,
+  "api_call_succeeded": false,
+  "api_call_failed": false,
+  "error_type": null,
+  "response_text": "[Mock LLM dry call] Agent marin can prepare a private-test review draft. Discord delivery is disabled, and external execution stays disabled.",
+  "usage": {
+    "input_chars": 512,
+    "output_chars": 135,
+    "estimated_cost_krw": null
+  },
+  "safety_assertions": {
+    "api_key_value_logged": false,
+    "discord_message_sent": false,
+    "rag_called": false,
+    "external_execution": false,
+    "raw_discord_ids_logged": false
+  }
+}

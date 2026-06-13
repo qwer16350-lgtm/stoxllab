@@ -1,0 +1,81 @@
+{
+  "report_type": "llm_dry_call_report",
+  "version": "phase32b_private_test_only_no_discord_send",
+  "created_at": "2026-06-13T00:00:00+00:00",
+  "request": {
+    "request_type": "llm_dry_call_request",
+    "version": "phase32b_private_test_only_no_discord_send",
+    "agent_route_candidate": "marin",
+    "channel_scope": "private_test_only",
+    "user_content_preview": "Private test LLM dry call preview. Prepare a review-only draft.",
+    "allow_api_call": false,
+    "discord_send_enabled": false,
+    "rag_enabled": false,
+    "external_execution": false
+  },
+  "preflight": {
+    "llm_enabled": false,
+    "provider": "disabled",
+    "api_key_present": false,
+    "ready_for_llm_call": false
+  },
+  "client_config": {
+    "config_type": "llm_client_config",
+    "version": "phase32b_private_test_dry_call",
+    "provider": "disabled",
+    "model": "",
+    "api_key_present": false,
+    "api_key_value_logged": false,
+    "base_url_configured": false,
+    "timeout_seconds": 30,
+    "temperature": 0.2,
+    "api_call_enabled": false,
+    "dry_call_mode": "private_test_only",
+    "discord_send_enabled": false,
+    "rag_enabled": false,
+    "external_execution": false
+  },
+  "client_result": {
+    "result_type": "llm_client_result",
+    "version": "phase32b_private_test_dry_call",
+    "provider": "disabled",
+    "model": "",
+    "api_call_attempted": false,
+    "api_call_succeeded": false,
+    "api_call_failed": false,
+    "error_type": null,
+    "response_text": "[Mock LLM dry call] Agent marin can prepare a private-test review draft. Discord delivery is disabled, and external execution stays disabled.",
+    "usage": {
+      "input_chars": 512,
+      "output_chars": 135,
+      "estimated_cost_krw": null
+    },
+    "safety_assertions": {
+      "api_key_value_logged": false,
+      "discord_message_sent": false,
+      "rag_called": false,
+      "external_execution": false,
+      "raw_discord_ids_logged": false
+    }
+  },
+  "output_safety": {
+    "allowed": true,
+    "blocked": false,
+    "blocked_reasons": [],
+    "reason": "review_only_output_allowed"
+  },
+  "artifact_paths": [],
+  "ready_for_phase32c_private_test_reply": true,
+  "message_sent": false,
+  "discord_send_attempted": false,
+  "rag_called": false,
+  "external_execution": false,
+  "safety_assertions": {
+    "llm_api_called_only_when_explicitly_enabled": true,
+    "api_key_value_logged": false,
+    "discord_message_sent": false,
+    "rag_called": false,
+    "external_execution": false,
+    "raw_discord_ids_logged": false
+  }
+}
