@@ -89,6 +89,7 @@ def run_llm_dry_call(
         str(request.get("user_content_preview", "")),
         policy={"max_input_chars": 4000},
     )
+    _apply_phase32b_prompt_safety_instruction(envelope)
     validation = validate_llm_client_config(config)
     block_reasons: list[str] = []
     if selected_request.get("channel_scope") != "private_test_only":
@@ -109,6 +110,18 @@ def run_llm_dry_call(
 
     output_check = check_llm_output_allowed(result.get("response_text", ""), safety_policy)
     return build_llm_dry_call_report(selected_request, result, output_check, envelope=envelope, preflight=build_llm_preflight_report(env), config=config)
+
+
+def _apply_phase32b_prompt_safety_instruction(envelope: dict[str, Any]) -> None:
+    messages = envelope.get("messages_preview", [])
+    if not messages:
+        return
+    instruction = (
+        " Use review-only wording. Do not say that anything was published, submitted, sent, "
+        "uploaded, approved, confirmed, or externally delivered. You may say that no such "
+        "action has been taken."
+    )
+    messages[0]["content"] = str(messages[0].get("content", "")) + instruction
 
 
 def build_llm_dry_call_report(
@@ -140,6 +153,8 @@ def build_llm_dry_call_report(
             "allowed": bool(selected_output.get("allowed")),
             "blocked": bool(selected_output.get("blocked")),
             "blocked_reasons": selected_output.get("blocked_reasons", []),
+            "safe_disclaimer_detected": bool(selected_output.get("safe_disclaimer_detected")),
+            "safe_disclaimer_reasons": selected_output.get("safe_disclaimer_reasons", []),
             "reason": selected_output.get("reason", ""),
         },
         "artifact_paths": [],

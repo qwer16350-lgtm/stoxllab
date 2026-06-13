@@ -193,6 +193,32 @@ def provider_error_result() -> dict:
     }
 
 
+def provider_success_with_disclaimer() -> dict:
+    return {
+        "result_type": "llm_client_result",
+        "version": "phase32b_private_test_dry_call",
+        "provider": "openrouter",
+        "model": "openai/gpt-5.4-mini",
+        "api_call_attempted": True,
+        "api_call_succeeded": True,
+        "api_call_failed": False,
+        "error_type": None,
+        "provider_status_code": None,
+        "provider_error_code": None,
+        "provider_error_message": None,
+        "provider_response_redacted": False,
+        "response_text": "Review-only draft. No final publishing or external delivery has been made.",
+        "usage": {"input_chars": 10, "output_chars": 72, "estimated_cost_krw": None, "provider_usage": {"prompt_tokens": 10}},
+        "safety_assertions": {
+            "api_key_value_logged": False,
+            "discord_message_sent": False,
+            "rag_called": False,
+            "external_execution": False,
+            "raw_discord_ids_logged": False,
+        },
+    }
+
+
 def test_run_allow_api_call_true_updates_request_field() -> None:
     original = llm_dry_call.call_llm_once
     try:
@@ -247,6 +273,47 @@ def test_provider_error_keeps_all_execution_flags_false() -> None:
     assert_true(report["external_execution"] is False, "Provider error should not execute externally")
 
 
+def test_openrouter_success_review_only_disclaimer_passes_output_safety() -> None:
+    original = llm_dry_call.call_llm_once
+    try:
+        llm_dry_call.call_llm_once = lambda envelope, config: provider_success_with_disclaimer()
+        report = llm_dry_call.run_llm_dry_call(build_llm_dry_call_request(), env=complete_env(), allow_api_call=True)
+    finally:
+        llm_dry_call.call_llm_once = original
+    assert_true(report["client_result"]["api_call_succeeded"] is True, "Provider success should be represented")
+    assert_true(report["output_safety"]["allowed"] is True, "Review-only disclaimer should pass output safety")
+    assert_true(report["output_safety"]["blocked"] is False, "Review-only disclaimer should not be blocked")
+
+
+def test_openrouter_success_disclaimer_keeps_execution_flags_false() -> None:
+    original = llm_dry_call.call_llm_once
+    try:
+        llm_dry_call.call_llm_once = lambda envelope, config: provider_success_with_disclaimer()
+        report = llm_dry_call.run_llm_dry_call(build_llm_dry_call_request(), env=complete_env(), allow_api_call=True)
+    finally:
+        llm_dry_call.call_llm_once = original
+    assert_true(report["message_sent"] is False, "Successful LLM response should not send Discord message")
+    assert_true(report["discord_send_attempted"] is False, "Successful LLM response should not attempt Discord send")
+    assert_true(report["rag_called"] is False, "Successful LLM response should not call RAG")
+    assert_true(report["external_execution"] is False, "Successful LLM response should not execute externally")
+
+
+def test_openrouter_success_disclaimer_has_no_secret_or_raw_id() -> None:
+    original = llm_dry_call.call_llm_once
+    try:
+        llm_dry_call.call_llm_once = lambda envelope, config: provider_success_with_disclaimer()
+        report = llm_dry_call.run_llm_dry_call(
+            build_llm_dry_call_request(user_content_preview="token=abc 123456789012345678"),
+            env={**complete_env(), "HERMES_LLM_API_KEY": "sk-secret"},
+            allow_api_call=True,
+        )
+    finally:
+        llm_dry_call.call_llm_once = original
+    text = json.dumps(report, ensure_ascii=False).lower()
+    assert_true("sk-secret" not in text and "token=abc" not in text, "API key and token-like text should not be logged")
+    assert_true("123456789012345678" not in text, "Raw Discord-like ID should not be logged")
+
+
 def main() -> int:
     tests = [
         test_default_dry_call_uses_mock_response,
@@ -274,6 +341,9 @@ def main() -> int:
         test_allow_api_call_false_still_not_attempted,
         test_allow_api_call_true_provider_error_attempted_failed,
         test_provider_error_keeps_all_execution_flags_false,
+        test_openrouter_success_review_only_disclaimer_passes_output_safety,
+        test_openrouter_success_disclaimer_keeps_execution_flags_false,
+        test_openrouter_success_disclaimer_has_no_secret_or_raw_id,
     ]
     for test in tests:
         test()

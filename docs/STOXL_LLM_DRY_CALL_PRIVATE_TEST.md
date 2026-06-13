@@ -82,14 +82,35 @@ The output policy blocks:
 - empty output
 - output longer than the configured max
 - external action claims
+- public publish claims
+- submission claims
+- email send claims
 - approval claims
 - price confirmation claims
 - contract confirmation claims
 - delivery confirmation claims
-- public publish claims
 - Discord send claims
 
 Normal review-only draft text can pass as a local preview, but it is not approval and not execution.
+
+Negated safety disclaimers are allowed when they clearly say that no external action happened, for example:
+
+- no final publishing has been made
+- no external delivery has been made
+- not submitted
+- no email has been sent
+- no approval has been granted
+- no contract or delivery date has been confirmed
+- internal review only
+
+Reports may include:
+
+```json
+{
+  "safe_disclaimer_detected": true,
+  "safe_disclaimer_reasons": ["negated_external_delivery", "review_only"]
+}
+```
 
 ## Artifacts
 

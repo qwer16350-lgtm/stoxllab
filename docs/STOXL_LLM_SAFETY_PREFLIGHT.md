@@ -99,6 +99,8 @@ Blocked output intents:
 
 Normal draft or review-only language can be allowed as review-only, but still does not authorize external execution.
 
+Negated safety disclaimers are also allowed when they clearly state that no action happened, such as "No final publishing has been made" or "No external delivery has been made." Actual claims that something was published, submitted, sent, approved, confirmed, or externally delivered remain blocked.
+
 ## Still Not Done
 
 - actual LLM provider call

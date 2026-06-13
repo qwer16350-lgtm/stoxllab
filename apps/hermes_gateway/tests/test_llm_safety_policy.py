@@ -127,6 +127,63 @@ def test_no_rag_external() -> None:
     assert_true(envelope["safety_assertions"]["rag_called"] is False, "Envelope should not call RAG")
 
 
+def test_actual_publish_claim_blocks() -> None:
+    decision = check_llm_output_allowed("I published it.", policy())
+    assert_true("public_publish_claim" in decision["blocked_reasons"], "Actual publish claim should block")
+
+
+def test_actual_submit_claim_blocks() -> None:
+    decision = check_llm_output_allowed("I submitted the application.", policy())
+    assert_true("submission_claim" in decision["blocked_reasons"], "Actual submit claim should block")
+
+
+def test_actual_email_sent_claim_blocks() -> None:
+    decision = check_llm_output_allowed("I sent the email.", policy())
+    assert_true("email_send_claim" in decision["blocked_reasons"], "Actual email sent claim should block")
+
+
+def test_actual_approval_claim_blocks() -> None:
+    decision = check_llm_output_allowed("This is approved.", policy())
+    assert_true("approval_claim" in decision["blocked_reasons"], "Actual approval claim should block")
+
+
+def test_actual_price_contract_delivery_confirmation_claims_block() -> None:
+    selected = policy()
+    assert_true("price_confirmation_claim" in check_llm_output_allowed("The price is confirmed.", selected)["blocked_reasons"], "Price confirmation should block")
+    assert_true("contract_confirmation_claim" in check_llm_output_allowed("The contract is confirmed.", selected)["blocked_reasons"], "Contract confirmation should block")
+    assert_true("delivery_confirmation_claim" in check_llm_output_allowed("The delivery date is confirmed.", selected)["blocked_reasons"], "Delivery confirmation should block")
+
+
+def test_negated_publishing_disclaimer_allowed() -> None:
+    decision = check_llm_output_allowed("No final publishing has been made.", policy())
+    assert_true(decision["allowed"] is True, "Negated publishing disclaimer should be allowed")
+    assert_true("negated_publication" in decision["safe_disclaimer_reasons"], "Safe disclaimer reason should be recorded")
+
+
+def test_negated_external_delivery_disclaimer_allowed() -> None:
+    decision = check_llm_output_allowed("No external delivery has been made.", policy())
+    assert_true(decision["allowed"] is True, "Negated external delivery disclaimer should be allowed")
+    assert_true("negated_external_delivery" in decision["safe_disclaimer_reasons"], "External delivery disclaimer should be recorded")
+
+
+def test_negated_email_sent_disclaimer_allowed() -> None:
+    decision = check_llm_output_allowed("No email has been sent.", policy())
+    assert_true(decision["allowed"] is True, "Negated email sent disclaimer should be allowed")
+    assert_true("negated_email_send" in decision["safe_disclaimer_reasons"], "Email disclaimer should be recorded")
+
+
+def test_review_only_disclaimer_allowed() -> None:
+    decision = check_llm_output_allowed("This is for internal review only.", policy())
+    assert_true(decision["allowed"] is True, "Review-only disclaimer should be allowed")
+    assert_true("review_only" in decision["safe_disclaimer_reasons"], "Review-only reason should be recorded")
+
+
+def test_no_approval_granted_disclaimer_allowed() -> None:
+    decision = check_llm_output_allowed("No approval has been granted.", policy())
+    assert_true(decision["allowed"] is True, "Negated approval disclaimer should be allowed")
+    assert_true("negated_approval" in decision["safe_disclaimer_reasons"], "Approval disclaimer should be recorded")
+
+
 def main() -> int:
     tests = [
         test_private_test_only_true,
@@ -144,6 +201,16 @@ def main() -> int:
         test_no_api_call,
         test_no_discord_send,
         test_no_rag_external,
+        test_actual_publish_claim_blocks,
+        test_actual_submit_claim_blocks,
+        test_actual_email_sent_claim_blocks,
+        test_actual_approval_claim_blocks,
+        test_actual_price_contract_delivery_confirmation_claims_block,
+        test_negated_publishing_disclaimer_allowed,
+        test_negated_external_delivery_disclaimer_allowed,
+        test_negated_email_sent_disclaimer_allowed,
+        test_review_only_disclaimer_allowed,
+        test_no_approval_granted_disclaimer_allowed,
     ]
     for test in tests:
         test()
