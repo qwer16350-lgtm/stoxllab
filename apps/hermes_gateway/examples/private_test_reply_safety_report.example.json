@@ -1,0 +1,32 @@
+{
+  "report_type": "private_test_reply_safety_report",
+  "version": "phase31d_private_test_safety",
+  "policy": {
+    "policy_type": "private_test_reply_safety_policy",
+    "version": "phase31d_private_test_safety",
+    "cooldown_seconds": 10,
+    "max_replies_per_session": 3,
+    "rate_limit_circuit_breaker": true,
+    "disable_after_send_exception": true,
+    "llm_enabled": false,
+    "rag_enabled": false,
+    "external_execution": false
+  },
+  "state": {
+    "state_type": "private_test_reply_safety_state",
+    "version": "phase31d_private_test_safety",
+    "reply_count": 0,
+    "last_reply_at": null,
+    "processed_message_ids": [],
+    "circuit_breaker_open": false,
+    "circuit_breaker_reason": null,
+    "message_sent": false,
+    "llm_called": false,
+    "rag_called": false,
+    "external_execution": false
+  },
+  "message_sent": false,
+  "llm_called": false,
+  "rag_called": false,
+  "external_execution": false
+}

@@ -51,6 +51,22 @@ The runtime also keeps an in-memory processed message ID set. A repeated private
 [PRIVATE_TEST_REPLY] skipped reason=skipped_duplicate_message
 ```
 
+## Phase 31D Safety Closeout
+
+Phase 31D adds session-local safety limits around the private test reply path:
+
+- cooldown, default `10` seconds
+- maximum replies per session, default `3`
+- duplicate message blocking
+- circuit breaker after send exceptions or rate-limit-like failures
+
+Safety report commands:
+
+```powershell
+python apps\hermes_gateway\cli.py --private-test-reply-safety-report --json
+python apps\hermes_gateway\cli.py --private-test-reply-safety-report --markdown
+```
+
 ## Unmapped Private Test Channel
 
 The private test channel is not added to the normal work channel mapping.

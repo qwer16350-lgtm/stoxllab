@@ -43,6 +43,7 @@ from operations_packet_viewer import (
     render_operations_summary_markdown,
 )
 from private_test_reply import build_private_test_reply_report, render_private_test_reply_report_markdown
+from private_test_reply_safety import build_private_test_reply_safety_report, render_private_test_reply_safety_report_markdown
 from persistence import get_default_log_root
 from readonly_runtime_stub import build_readonly_runtime_stub_report
 from live_capture_stub import build_live_capture_stub_report
@@ -210,6 +211,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--operations-packet", action="store_true", help="Print Phase 31A operations packet detail.")
     parser.add_argument("--agent-placeholder-response-report", action="store_true", help="Print Phase 31C deterministic agent placeholder response report.")
     parser.add_argument("--private-test-reply-report", action="store_true", help="Print Phase 31B private test channel reply report.")
+    parser.add_argument("--private-test-reply-safety-report", action="store_true", help="Print Phase 31D private test reply safety closeout report.")
     parser.add_argument("--markdown", action="store_true", help="Print supported reports as Markdown.")
     parser.add_argument("--limit", type=int, default=20, help="Limit rows for viewer reports.")
     parser.add_argument("--date", help="Date filter in YYYYMMDD or YYYY-MM-DD format.")
@@ -549,6 +551,19 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- message_sent: {output.get('message_sent')}")
         return 0
 
+    if args.private_test_reply_safety_report:
+        output = build_private_test_reply_safety_report()
+        if args.markdown:
+            print(render_private_test_reply_safety_report_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL private test reply safety report")
+            print(f"- cooldown_seconds: {output.get('policy', {}).get('cooldown_seconds')}")
+            print(f"- max_replies_per_session: {output.get('policy', {}).get('max_replies_per_session')}")
+            print(f"- circuit_breaker_open: {output.get('state', {}).get('circuit_breaker_open')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -679,6 +694,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.operations_packet
         or args.agent_placeholder_response_report
         or args.private_test_reply_report
+        or args.private_test_reply_safety_report
         or args.force
         or args.strict
         or args.export_log

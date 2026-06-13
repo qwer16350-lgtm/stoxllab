@@ -18,6 +18,14 @@ from private_test_reply import (
     build_private_test_reply_policy,
     send_private_test_reply_only,
 )
+from private_test_reply_safety import (
+    build_private_test_reply_safety_policy,
+    build_private_test_reply_safety_state,
+    check_private_test_reply_safety,
+    record_private_test_reply_blocked,
+    record_private_test_reply_send_exception,
+    record_private_test_reply_sent,
+)
 
 
 def build_discord_intents() -> dict[str, Any]:
@@ -164,6 +172,52 @@ def build_readonly_client(root: str | Path | None = None) -> dict[str, Any]:
     }
 
 
+async def execute_private_test_reply_with_safety(
+    message: Any,
+    payload: dict[str, Any],
+    private_reply_policy: dict[str, Any],
+    safety_policy: dict[str, Any],
+    safety_state: dict[str, Any],
+) -> dict[str, Any]:
+    safety_decision = check_private_test_reply_safety(message, safety_policy, safety_state)
+    if not safety_decision.get("allowed"):
+        record_private_test_reply_blocked(message, safety_state, safety_decision.get("reason", "blocked"))
+        return {
+            "sent": False,
+            "safety_decision": safety_decision,
+            "reply_audit": {},
+            "log_line": f"[PRIVATE_TEST_REPLY_SAFETY] blocked reason={safety_decision.get('reason', '')}",
+        }
+    try:
+        reply_audit = await send_private_test_reply_only(message.channel, payload, private_reply_policy)
+    except Exception as exc:
+        record_private_test_reply_send_exception(message, safety_state, type(exc).__name__)
+        return {
+            "sent": False,
+            "safety_decision": safety_decision,
+            "reply_audit": {},
+            "log_line": "[PRIVATE_TEST_REPLY_SAFETY] circuit_breaker_open reason=send_exception",
+        }
+    if reply_audit.get("message_sent"):
+        record_private_test_reply_sent(message, safety_state)
+        return {
+            "sent": True,
+            "safety_decision": safety_decision,
+            "reply_audit": reply_audit,
+            "log_line": (
+                "[PRIVATE_TEST_REPLY_SAFETY] "
+                f"allowed reply_count={safety_state.get('reply_count')} max={safety_policy.get('max_replies_per_session')}"
+            ),
+        }
+    record_private_test_reply_blocked(message, safety_state, reply_audit.get("reason", "send_not_confirmed"))
+    return {
+        "sent": False,
+        "safety_decision": safety_decision,
+        "reply_audit": reply_audit,
+        "log_line": f"[PRIVATE_TEST_REPLY_SAFETY] blocked reason={reply_audit.get('reason', 'send_not_confirmed')}",
+    }
+
+
 def build_private_test_reply_runtime_preflight(root: str | Path | None = None, runtime_env: dict[str, Any] | None = None) -> dict[str, Any]:
     env = runtime_env or load_discord_runtime_env(root or Path.cwd(), load_dotenv_file=False, include_token_value=False)
     policy = build_private_test_reply_policy(env)
@@ -276,6 +330,8 @@ def run_readonly_discord_bot(root: str | Path | None = None, runtime_env: dict[s
     visibility_context = load_visibility_context(repo_root)
     visibility_context["private_test_channel_id"] = private_reply_policy.get("_private_test_channel_id", "")
     processed_private_reply_message_ids: set[str] = set()
+    safety_policy = build_private_test_reply_safety_policy(env)
+    safety_state = build_private_test_reply_safety_state()
 
     @client.event
     async def on_ready() -> None:
@@ -313,7 +369,11 @@ def run_readonly_discord_bot(root: str | Path | None = None, runtime_env: dict[s
                 f"will_send={str(payload.get('will_send', False)).lower()}",
                 flush=True,
             )
-            reply_audit = await send_private_test_reply_only(message.channel, payload, private_reply_policy)
+            safety_result = await execute_private_test_reply_with_safety(message, payload, private_reply_policy, safety_policy, safety_state)
+            print(safety_result["log_line"], flush=True)
+            if not safety_result.get("sent"):
+                return
+            reply_audit = safety_result["reply_audit"]
             print(
                 "[PRIVATE_TEST_REPLY_SENT] "
                 f"message_sent={str(reply_audit.get('message_sent', False)).lower()} "
@@ -373,6 +433,8 @@ def run_discord_private_test_reply_bot(root: str | Path | None = None, runtime_e
     visibility_context = load_visibility_context(repo_root)
     visibility_context["private_test_channel_id"] = private_reply_policy.get("_private_test_channel_id", "")
     processed_private_reply_message_ids: set[str] = set()
+    safety_policy = build_private_test_reply_safety_policy(env)
+    safety_state = build_private_test_reply_safety_state()
 
     @client.event
     async def on_ready() -> None:
@@ -410,7 +472,11 @@ def run_discord_private_test_reply_bot(root: str | Path | None = None, runtime_e
                 f"will_send={str(payload.get('will_send', False)).lower()}",
                 flush=True,
             )
-            reply_audit = await send_private_test_reply_only(message.channel, payload, private_reply_policy)
+            safety_result = await execute_private_test_reply_with_safety(message, payload, private_reply_policy, safety_policy, safety_state)
+            print(safety_result["log_line"], flush=True)
+            if not safety_result.get("sent"):
+                return
+            reply_audit = safety_result["reply_audit"]
             print(
                 "[PRIVATE_TEST_REPLY_SENT] "
                 f"message_sent={str(reply_audit.get('message_sent', False)).lower()} "

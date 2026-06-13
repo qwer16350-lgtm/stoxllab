@@ -82,6 +82,14 @@ Duplicate message IDs are skipped in memory to avoid repeat replies:
 [PRIVATE_TEST_REPLY] skipped reason=skipped_duplicate_message
 ```
 
+Phase 31D adds cooldown, maximum replies per session, and a circuit breaker:
+
+```text
+[PRIVATE_TEST_REPLY_SAFETY] allowed reply_count=1 max=3
+[PRIVATE_TEST_REPLY_SAFETY] blocked reason=cooldown_active
+[PRIVATE_TEST_REPLY_SAFETY] circuit_breaker_open reason=send_exception
+```
+
 ## Phase 23 vs Phase 29 Readiness
 
 Phase 23 no-connection preflight still treats a declared Discord runtime dependency as a failure, because that phase is planning-only.
@@ -125,5 +133,11 @@ python apps\hermes_gateway\cli.py --run-discord-private-test-reply --json
 ```
 
 This command uses the Phase 31B private test reply preflight. It requires send messages, private test reply, private-test-only mode, a configured private test channel ID, and disabled external execution, LLM, and RAG.
+
+The Phase 31D safety report is local-only:
+
+```powershell
+python apps\hermes_gateway\cli.py --private-test-reply-safety-report --json
+```
 
 Neither command is part of the automated test flow.
