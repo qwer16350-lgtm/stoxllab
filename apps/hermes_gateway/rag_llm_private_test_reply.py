@@ -13,6 +13,13 @@ from typing import Any
 
 from rag_response_packet import build_rag_response_packet_report
 from rag_source_registry import validate_rag_source_name
+from rag_llm_private_test_runtime import (
+    build_rag_llm_private_reply_preflight,
+    build_rag_llm_reply_pipeline_plan,
+    build_rag_llm_reply_send_payload,
+    record_rag_llm_reply_attempt,
+    should_allow_rag_llm_private_reply,
+)
 
 
 VERSION = "phase33d_safe_scaffold_no_live_send"

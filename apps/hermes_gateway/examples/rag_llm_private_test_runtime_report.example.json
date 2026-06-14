@@ -1,0 +1,26 @@
+{
+  "report_type": "rag_llm_private_test_runtime_report",
+  "version": "phase33d_guarded_private_test_only",
+  "ready": false,
+  "blocked": true,
+  "blocked_reasons": [
+    "rag_llm_reply_enabled",
+    "discord_send_enabled",
+    "llm_api_call_enabled"
+  ],
+  "runtime_option": "--run-discord-private-test-rag-llm-reply",
+  "runtime_option_added": true,
+  "runtime_executed_by_report": false,
+  "actual_discord_send": false,
+  "actual_llm_api_call": false,
+  "embedding_api_called": false,
+  "external_execution": false,
+  "safety_assertions": {
+    "api_key_value_logged": false,
+    "raw_discord_ids_logged": false,
+    "embedding_called": false,
+    "llm_called": false,
+    "discord_message_sent": false,
+    "external_execution": false
+  }
+}

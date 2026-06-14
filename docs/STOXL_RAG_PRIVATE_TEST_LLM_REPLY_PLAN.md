@@ -70,3 +70,14 @@ live runtime is not enabled by the review phase.
 
 The review may say the repo is ready for a separate manual implementation
 request, but it does not implement RAG+LLM live reply.
+
+## Phase 33D-1 Runtime Code
+
+Phase 33D-1 adds guarded runtime code for private-test-only RAG+LLM replies.
+The implementation keeps public/team channels blocked before retrieval, rejects
+`source=operations`, requires local read-only retrieval, context safety, RAG
+response packets, LLM output safety, cooldown, budget, duplicate guard, and
+circuit breaker checks.
+
+The runtime option exists, but live execution still requires separate manual
+approval.

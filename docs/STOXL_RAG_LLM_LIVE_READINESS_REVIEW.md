@@ -58,3 +58,8 @@ python apps\hermes_gateway\cli.py --rag-llm-live-readiness-review --markdown
 - embedding API called: false
 - external execution: false
 - RAG+LLM live reply: not implemented
+
+## Phase 33D-1 Follow-up
+
+Guarded runtime code has been added for a future private-test-only RAG+LLM
+reply. The runtime option must not be run without separate manual approval.

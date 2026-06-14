@@ -43,6 +43,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - Build Phase 33C RAG response packets for human review without LLM, embeddings, Discord send, or external execution.
 - Build Phase 33D-safe RAG+LLM private test scaffold reports for preflight, context safety, prompt envelope, would-send preview, and replay/audit without live send.
 - Build Phase 33D live readiness review reports with go/no-go checklist and rollback planning without live execution.
+- Build Phase 33D-1 guarded RAG+LLM private test runtime code with mockable LLM/send adapters and report-only CLI checks.
 
 ## Explicit Non-Goals
 
@@ -66,6 +67,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - No Phase 33A-C RAG flow reads external/NAS RAG roots, calls embedding APIs, calls LLM APIs, or sends Discord messages.
 - No Phase 33D live RAG+LLM private test reply is implemented here; the current Phase 33D-safe scaffold is review-only.
 - No Phase 33D live readiness review starts Discord, calls LLM APIs, calls embeddings, or enables live replies.
+- No Phase 33D-1 test runs start Discord, call OpenRouter/LLM APIs, call embeddings, or execute external actions.
 
 ## Phase 21 Read-Only Planning Docs
 
@@ -112,6 +114,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - `docs/STOXL_RAG_LLM_PRIVATE_TEST_REPLY_REPLAY.md`
 - `docs/STOXL_RAG_LLM_LIVE_READINESS_REVIEW.md`
 - `docs/STOXL_RAG_LLM_LIVE_ROLLBACK_CHECKLIST.md`
+- `docs/STOXL_RAG_LLM_PRIVATE_TEST_RUNTIME.md`
 
 These documents prepare for a later private server read-only connection review. They do not authorize or perform a Discord connection.
 
@@ -198,6 +201,8 @@ python apps\hermes_gateway\cli.py --rag-llm-private-test-replay-report --json
 python apps\hermes_gateway\cli.py --rag-llm-private-test-replay-report --markdown
 python apps\hermes_gateway\cli.py --rag-llm-live-readiness-review --json
 python apps\hermes_gateway\cli.py --rag-llm-live-readiness-review --markdown
+python apps\hermes_gateway\cli.py --rag-llm-private-test-runtime-report --json
+python apps\hermes_gateway\cli.py --rag-llm-private-test-runtime-report --markdown
 python apps\hermes_gateway\cli.py --run-discord-private-test-reply --json
 python apps\hermes_gateway\tests\test_local_pipeline.py
 python apps\hermes_gateway\tests\test_replay_approval.py
@@ -237,6 +242,7 @@ python apps\hermes_gateway\tests\test_rag_llm_prompt_envelope.py
 python apps\hermes_gateway\tests\test_rag_llm_would_send_preview.py
 python apps\hermes_gateway\tests\test_rag_llm_private_test_reply_replay.py
 python apps\hermes_gateway\tests\test_rag_llm_live_readiness_review.py
+python apps\hermes_gateway\tests\test_rag_llm_private_test_runtime.py
 ```
 
 The `--run-discord-readonly` option is intentionally not part of normal local
@@ -302,6 +308,10 @@ required before any live RAG+LLM private test implementation.
 Phase 33D live readiness review adds go/no-go reporting, manual enable
 checklists, and rollback planning. The review result is `go=false` by design;
 it only marks the repo ready for a separate manual implementation request.
+
+Phase 33D-1 adds guarded runtime code and the
+`--run-discord-private-test-rag-llm-reply` option. The runtime option is not
+part of normal local testing and requires separate manual approval before use.
 
 If the registry file is missing, generate it from the repo root:
 

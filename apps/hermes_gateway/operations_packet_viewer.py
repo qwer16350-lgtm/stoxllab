@@ -20,6 +20,7 @@ from rag_llm_prompt_envelope import build_rag_llm_prompt_envelope
 from rag_llm_would_send_preview import build_rag_llm_would_send_preview
 from rag_llm_private_test_reply_replay import build_rag_llm_private_test_reply_replay_report
 from rag_llm_live_readiness_review import build_rag_llm_live_readiness_review
+from rag_llm_private_test_runtime import build_rag_llm_private_test_runtime_report
 
 
 VERSION = "phase31a_local_viewer"
@@ -334,6 +335,7 @@ def build_operations_packet_viewer_report(
     rag_llm_preview = build_rag_llm_would_send_preview(root=str(_repo(root)))
     rag_llm_replay = build_rag_llm_private_test_reply_replay_report(root=str(_repo(root)))
     rag_llm_readiness = build_rag_llm_live_readiness_review(root=str(_repo(root)))
+    rag_llm_runtime = build_rag_llm_private_test_runtime_report(root=str(_repo(root)))
     report = {
         "report_type": "operations_packet_viewer",
         "version": VERSION,
@@ -406,6 +408,17 @@ def build_operations_packet_viewer_report(
             "embedding_api_called": False,
             "external_execution": False,
         },
+        "rag_llm_private_test_runtime": {
+            "available": True,
+            "ready": bool(rag_llm_runtime.get("ready")),
+            "blocked": bool(rag_llm_runtime.get("blocked")),
+            "runtime_option_added": bool(rag_llm_runtime.get("runtime_option_added")),
+            "runtime_executed_by_report": False,
+            "actual_discord_send": False,
+            "actual_llm_api_call": False,
+            "embedding_api_called": False,
+            "external_execution": False,
+        },
         "daily_manifest_summary": load_daily_manifest(root=root, date=date),
         "filters": {
             "channel_name": channel_name,
@@ -469,6 +482,7 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
     rag = report.get("rag", {})
     rag_llm_scaffold = report.get("rag_llm_private_test_scaffold", {})
     rag_llm_readiness = report.get("rag_llm_live_readiness_review", {})
+    rag_llm_runtime = report.get("rag_llm_private_test_runtime", {})
     llm_summary = report.get("latest_llm_response_packet", {})
     lines.extend(
         [
@@ -524,6 +538,17 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
             f"- Actual LLM API call: {str(rag_llm_readiness.get('actual_llm_api_call', False)).lower()}",
             f"- Embedding API: {str(rag_llm_readiness.get('embedding_api_called', False)).lower()}",
             f"- External execution: {str(rag_llm_readiness.get('external_execution', False)).lower()}",
+            "",
+            "## RAG+LLM Private Test Runtime",
+            f"- Available: {str(rag_llm_runtime.get('available', False)).lower()}",
+            f"- Ready: {str(rag_llm_runtime.get('ready', False)).lower()}",
+            f"- Blocked: {str(rag_llm_runtime.get('blocked', True)).lower()}",
+            f"- Runtime option added: {str(rag_llm_runtime.get('runtime_option_added', False)).lower()}",
+            "- Runtime executed by report: false",
+            f"- Actual Discord send: {str(rag_llm_runtime.get('actual_discord_send', False)).lower()}",
+            f"- Actual LLM API call: {str(rag_llm_runtime.get('actual_llm_api_call', False)).lower()}",
+            f"- Embedding API: {str(rag_llm_runtime.get('embedding_api_called', False)).lower()}",
+            f"- External execution: {str(rag_llm_runtime.get('external_execution', False)).lower()}",
         ]
     )
     safety = report.get("safety_assertions", {})

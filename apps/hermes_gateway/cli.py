@@ -66,6 +66,11 @@ from rag_llm_prompt_envelope import build_rag_llm_prompt_envelope, render_rag_ll
 from rag_llm_would_send_preview import build_rag_llm_would_send_preview, render_rag_llm_would_send_preview_markdown
 from rag_llm_private_test_reply_replay import build_rag_llm_private_test_reply_replay_report, render_rag_llm_private_test_reply_replay_markdown
 from rag_llm_live_readiness_review import build_rag_llm_live_readiness_review, render_rag_llm_live_readiness_markdown
+from rag_llm_private_test_runtime import (
+    build_rag_llm_private_test_runtime_report,
+    render_rag_llm_private_test_runtime_markdown,
+    run_discord_private_test_rag_llm_reply_bot,
+)
 from persistence import get_default_log_root
 from readonly_runtime_stub import build_readonly_runtime_stub_report
 from live_capture_stub import build_live_capture_stub_report
@@ -226,6 +231,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--run-discord-readonly", action="store_true", help="Run the Phase 29 read-only Discord Gateway runtime.")
     parser.add_argument("--run-discord-private-test-reply", action="store_true", help="Run the Phase 31B private-test-only Discord reply runtime.")
     parser.add_argument("--run-discord-private-test-llm-reply", action="store_true", help="Run the Phase 32D guarded private-test-only LLM reply runtime.")
+    parser.add_argument("--run-discord-private-test-rag-llm-reply", action="store_true", help="Run the Phase 33D-1 guarded private-test-only RAG+LLM reply runtime after separate manual approval.")
     parser.add_argument("--live-event-audit-report", action="store_true", help="Print Phase 30 live event audit record report.")
     parser.add_argument("--would-send-preview-report", action="store_true", help="Print Phase 30 would-send preview report.")
     parser.add_argument("--live-event-review-packet-report", action="store_true", help="Print Phase 30 live event review packet report.")
@@ -252,6 +258,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--rag-llm-would-send-preview", action="store_true", help="Print Phase 33D-safe RAG+LLM would-send preview.")
     parser.add_argument("--rag-llm-private-test-replay-report", action="store_true", help="Print Phase 33D-safe RAG+LLM private test replay/audit report.")
     parser.add_argument("--rag-llm-live-readiness-review", action="store_true", help="Print Phase 33D live readiness review without live execution.")
+    parser.add_argument("--rag-llm-private-test-runtime-report", action="store_true", help="Print Phase 33D-1 guarded RAG+LLM private test runtime preflight report.")
     parser.add_argument("--source", default="operation", help="RAG source for local retrieval reports.")
     parser.add_argument("--query", default="STOXL brand tone", help="RAG query preview for local retrieval reports.")
     parser.add_argument("--allow-llm-api-call", action="store_true", help="Allow Phase 32B to attempt one gated provider call when env gates pass.")
@@ -478,6 +485,19 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(output, ensure_ascii=False, indent=2))
         else:
             print("STOXL Discord private test LLM reply runtime")
+            print(f"- started: {output.get('started')}")
+            print(f"- blocked: {output.get('blocked')}")
+            print(f"- reason: {output.get('reason', '')}")
+            print(f"- token_value_logged: {output.get('token_value_logged')}")
+        return 0
+
+    if args.run_discord_private_test_rag_llm_reply:
+        cfg = load_config(Path(__file__).resolve())
+        output = run_discord_private_test_rag_llm_reply_bot(cfg.repo_root)
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Discord private test RAG+LLM reply runtime")
             print(f"- started: {output.get('started')}")
             print(f"- blocked: {output.get('blocked')}")
             print(f"- reason: {output.get('reason', '')}")
@@ -870,6 +890,20 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- actual_discord_send: {output.get('actual_discord_send')}")
         return 0
 
+    if args.rag_llm_private_test_runtime_report:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_rag_llm_private_test_runtime_report(root=str(cfg.repo_root))
+        if args.markdown:
+            print(render_rag_llm_private_test_runtime_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL RAG+LLM private test runtime report")
+            print(f"- ready: {output.get('ready')}")
+            print(f"- blocked: {output.get('blocked')}")
+            print(f"- runtime_executed_by_report: {output.get('runtime_executed_by_report')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -993,6 +1027,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.run_discord_readonly
         or args.run_discord_private_test_reply
         or args.run_discord_private_test_llm_reply
+        or args.run_discord_private_test_rag_llm_reply
         or args.live_event_audit_report
         or args.would_send_preview_report
         or args.live_event_review_packet_report
@@ -1019,6 +1054,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.rag_llm_would_send_preview
         or args.rag_llm_private_test_replay_report
         or args.rag_llm_live_readiness_review
+        or args.rag_llm_private_test_runtime_report
         or args.allow_llm_api_call
         or args.write_artifact
         or args.latest
