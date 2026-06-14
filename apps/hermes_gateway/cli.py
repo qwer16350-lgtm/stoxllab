@@ -65,6 +65,7 @@ from rag_llm_private_test_reply import build_rag_llm_private_test_reply_prefligh
 from rag_llm_prompt_envelope import build_rag_llm_prompt_envelope, render_rag_llm_prompt_envelope_markdown
 from rag_llm_would_send_preview import build_rag_llm_would_send_preview, render_rag_llm_would_send_preview_markdown
 from rag_llm_private_test_reply_replay import build_rag_llm_private_test_reply_replay_report, render_rag_llm_private_test_reply_replay_markdown
+from rag_llm_live_readiness_review import build_rag_llm_live_readiness_review, render_rag_llm_live_readiness_markdown
 from persistence import get_default_log_root
 from readonly_runtime_stub import build_readonly_runtime_stub_report
 from live_capture_stub import build_live_capture_stub_report
@@ -250,6 +251,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--rag-llm-prompt-envelope-report", action="store_true", help="Print Phase 33D-safe RAG+LLM prompt envelope preview.")
     parser.add_argument("--rag-llm-would-send-preview", action="store_true", help="Print Phase 33D-safe RAG+LLM would-send preview.")
     parser.add_argument("--rag-llm-private-test-replay-report", action="store_true", help="Print Phase 33D-safe RAG+LLM private test replay/audit report.")
+    parser.add_argument("--rag-llm-live-readiness-review", action="store_true", help="Print Phase 33D live readiness review without live execution.")
     parser.add_argument("--source", default="operation", help="RAG source for local retrieval reports.")
     parser.add_argument("--query", default="STOXL brand tone", help="RAG query preview for local retrieval reports.")
     parser.add_argument("--allow-llm-api-call", action="store_true", help="Allow Phase 32B to attempt one gated provider call when env gates pass.")
@@ -854,6 +856,20 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- ready_for_phase33d_live_review: {output.get('ready_for_phase33d_live_review')}")
         return 0
 
+    if args.rag_llm_live_readiness_review:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_rag_llm_live_readiness_review(root=str(cfg.repo_root))
+        if args.markdown:
+            print(render_rag_llm_live_readiness_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL RAG+LLM live readiness review")
+            print(f"- go: {output.get('go')}")
+            print(f"- ready_for_manual_phase33d_implementation_request: {output.get('ready_for_manual_phase33d_implementation_request')}")
+            print(f"- actual_discord_send: {output.get('actual_discord_send')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -1002,6 +1018,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.rag_llm_prompt_envelope_report
         or args.rag_llm_would_send_preview
         or args.rag_llm_private_test_replay_report
+        or args.rag_llm_live_readiness_review
         or args.allow_llm_api_call
         or args.write_artifact
         or args.latest

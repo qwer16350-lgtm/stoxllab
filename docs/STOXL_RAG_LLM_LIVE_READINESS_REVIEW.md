@@ -1,0 +1,60 @@
+# STOXL RAG+LLM Live Readiness Review
+
+This document records the Phase 33D live readiness review. It is not a live
+implementation and does not start Discord, call an LLM provider, call
+embeddings, or send messages.
+
+## Result
+
+- Go: false
+- Manual implementation request ready: true
+- No-go reasons:
+  - manual approval required
+  - live runtime not enabled by review phase
+
+## Ready Components
+
+- RAG preflight
+- local read-only retrieval
+- RAG response packet
+- RAG context safety
+- RAG+LLM prompt envelope
+- RAG+LLM would-send preview
+- RAG+LLM replay/audit
+
+## Required Live Gates
+
+- private test channel ID required
+- channel ID match required
+- source validation required
+- RAG context safety required
+- RAG response packet required
+- LLM output safety required
+- cooldown required
+- budget required
+- circuit breaker required
+- manual env enable required
+
+## Forbidden Live Scope
+
+- public/team channel reply
+- `source=operations`
+- channel-name-only allow
+- external execution
+- embedding API
+- unbounded context
+
+## CLI
+
+```powershell
+python apps\hermes_gateway\cli.py --rag-llm-live-readiness-review --json
+python apps\hermes_gateway\cli.py --rag-llm-live-readiness-review --markdown
+```
+
+## Safety
+
+- actual Discord send: false
+- actual LLM API call: false
+- embedding API called: false
+- external execution: false
+- RAG+LLM live reply: not implemented

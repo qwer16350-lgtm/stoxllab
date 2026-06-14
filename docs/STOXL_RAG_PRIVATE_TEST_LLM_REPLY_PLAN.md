@@ -61,3 +61,12 @@ would-send preview, and replay/audit reports. It still does not implement live
 RAG+LLM Discord reply.
 
 Live implementation requires a separate manual approval and review phase.
+
+## Live Readiness Review
+
+The live readiness review is now available as a deterministic report. Its
+default result is `go=false` because manual approval is still required and the
+live runtime is not enabled by the review phase.
+
+The review may say the repo is ready for a separate manual implementation
+request, but it does not implement RAG+LLM live reply.

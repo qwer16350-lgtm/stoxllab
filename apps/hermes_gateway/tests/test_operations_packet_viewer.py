@@ -176,6 +176,18 @@ def test_rag_llm_scaffold_summary() -> None:
     assert_true(scaffold["external_execution"] is False, "No external execution")
 
 
+def test_rag_llm_live_readiness_summary() -> None:
+    setup_artifacts()
+    readiness = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")["rag_llm_live_readiness_review"]
+    assert_true(readiness["available"] is True, "Readiness review should be available")
+    assert_true(readiness["go"] is False, "Live readiness should be no-go")
+    assert_true(readiness["ready_for_manual_phase33d_implementation_request"] is True, "Manual request should be ready")
+    assert_true(readiness["actual_discord_send"] is False, "No actual Discord send")
+    assert_true(readiness["actual_llm_api_call"] is False, "No actual LLM API call")
+    assert_true(readiness["embedding_api_called"] is False, "No embedding API call")
+    assert_true(readiness["external_execution"] is False, "No external execution")
+
+
 def main() -> int:
     tests = [
         test_recent_events_returned,
@@ -193,6 +205,7 @@ def main() -> int:
         test_no_env_or_local_mapping_read_flags,
         test_safety_flags_false,
         test_rag_llm_scaffold_summary,
+        test_rag_llm_live_readiness_summary,
     ]
     for test in tests:
         test()
