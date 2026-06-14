@@ -76,6 +76,12 @@ If either value is missing or wrong, the runtime returns:
 
 Reports expose only approval booleans. The approval phrase value is not logged.
 
+Phase 33D-3B wires the RAG+LLM private test start adapter. After approval and
+preflight pass, the live command resolves the Discord private-test RAG+LLM
+adapter instead of returning `rag_llm_private_test_runtime_start_adapter_missing`.
+The adapter still blocks before live start if token/private channel prerequisites
+are missing.
+
 ## Rollback
 
 ```powershell
@@ -101,3 +107,4 @@ $env:HERMES_RAG_LLM_SINGLE_LIVE_TEST_APPROVAL_PHRASE=""
 - Phase 33D-2 closeout ready for separately approved single live private test: true
 - Phase 33D-3 runbook live runtime executed by Codex/agent: false
 - Phase 33D-3A approval phrase value logged: false
+- Phase 33D-3B default start adapter wired: true

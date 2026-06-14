@@ -340,6 +340,10 @@ runtime start remains blocked unless
 `HERMES_RAG_LLM_SINGLE_LIVE_TEST_APPROVAL_PHRASE` exactly matches the documented
 approval phrase. Reports log only booleans, not the phrase value.
 
+Phase 33D-3B wires the RAG+LLM private-test runtime start adapter. Tests still
+use mock adapters or token-missing checks only; the actual live command remains
+manual user-run PowerShell only.
+
 If the registry file is missing, generate it from the repo root:
 
 ```powershell

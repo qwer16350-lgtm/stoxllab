@@ -108,6 +108,8 @@ The API key placeholder above must be replaced only in the user's local PowerShe
 
 The single live approval phrase is intentionally explicit. Keep it in the current PowerShell session only. Do not persist it in `.env`, do not commit it with local config, and turn it off immediately after the one-message test.
 
+The RAG+LLM private test runtime adapter is wired for the live command. It is still inert unless all env gates, the exact approval phrase, and the Discord token/private channel prerequisites are present.
+
 ## 5. Actual Live Command
 
 Manual-only command:
@@ -212,3 +214,4 @@ The closeout should verify the captured logs and replay/audit state. It should n
 - external execution in Phase 33D-3: false
 - single live test execution: user-run PowerShell only
 - single live approval phrase value logged by runtime reports: false
+- runtime start adapter missing after Phase 33D-3B: false

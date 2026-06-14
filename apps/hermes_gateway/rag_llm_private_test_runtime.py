@@ -334,6 +334,7 @@ def run_discord_private_test_rag_llm_reply_bot(
     root: str | Path | None = None,
     env: dict[str, Any] | None = None,
     start_adapter: Callable[[str | Path | None, dict[str, Any] | None, dict[str, Any]], dict[str, Any]] | None = None,
+    resolve_default_adapter: bool = True,
 ) -> dict[str, Any]:
     preflight = build_rag_llm_private_reply_preflight(env, source=DEFAULT_SOURCE)
     manual_approval = build_single_live_test_manual_approval(env)
@@ -359,7 +360,10 @@ def run_discord_private_test_rag_llm_reply_bot(
             "preflight": preflight,
             "safety_assertions": _safe_assertions(),
         }
-    if start_adapter is None:
+    selected_adapter = start_adapter
+    if selected_adapter is None and resolve_default_adapter:
+        selected_adapter = resolve_private_test_rag_llm_reply_start_adapter()
+    if selected_adapter is None:
         return {
             "started": False,
             "blocked": True,
@@ -370,7 +374,7 @@ def run_discord_private_test_rag_llm_reply_bot(
             "preflight": preflight,
             "safety_assertions": _safe_assertions(),
         }
-    result = start_adapter(root, env, preflight)
+    result = selected_adapter(root, env, preflight)
     result.setdefault("started", False)
     result.setdefault("blocked", False)
     result.setdefault("message_sent", False)
@@ -380,6 +384,14 @@ def run_discord_private_test_rag_llm_reply_bot(
     result["safety_assertions"] = _safe_assertions()
     assert_runtime_report_safe(result)
     return result
+
+
+def resolve_private_test_rag_llm_reply_start_adapter() -> Callable[[str | Path | None, dict[str, Any] | None, dict[str, Any]], dict[str, Any]] | None:
+    try:
+        from discord_readonly_runtime import start_private_test_rag_llm_reply_runtime
+    except ImportError:
+        return None
+    return start_private_test_rag_llm_reply_runtime
 
 
 def render_rag_llm_private_test_runtime_markdown(report: dict[str, Any]) -> str:

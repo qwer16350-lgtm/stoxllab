@@ -21,6 +21,7 @@ from rag_llm_private_test_runtime import (
     is_single_live_test_manually_approved,
     record_rag_llm_reply_attempt,
     render_rag_llm_private_test_runtime_markdown,
+    resolve_private_test_rag_llm_reply_start_adapter,
     run_discord_private_test_rag_llm_reply_bot,
     should_allow_rag_llm_private_reply,
 )
@@ -277,6 +278,44 @@ def test_manual_approval_exact_phrase_allows_mock_start_path() -> None:
     assert_true(result["single_live_test_manual_approval"]["approved"] is True, "Manual approval should be true")
 
 
+def test_approved_missing_adapter_can_still_block_when_default_resolution_disabled() -> None:
+    result = run_discord_private_test_rag_llm_reply_bot(env=approved_env(), resolve_default_adapter=False)
+    assert_true(result["started"] is False, "Missing adapter should not start")
+    assert_true(result["blocked"] is True, "Missing adapter should block")
+    assert_true(result["reason"] == "rag_llm_private_test_runtime_start_adapter_missing", "Missing adapter reason")
+    assert_true(result["message_sent"] is False, "No message sent")
+
+
+def test_default_adapter_resolves_and_token_missing_blocks_without_live_start() -> None:
+    adapter = resolve_private_test_rag_llm_reply_start_adapter()
+    assert_true(callable(adapter), "Default RAG+LLM adapter should resolve")
+    result = run_discord_private_test_rag_llm_reply_bot(env=approved_env(), start_adapter=None)
+    assert_true(result["started"] is False, "No token should prevent live start")
+    assert_true(result["blocked"] is True, "No token should block")
+    assert_true(result["reason"] == "rag_llm_private_test_runtime_preflight_failed:token_missing", "Token missing should be reported by adapter")
+    assert_true(result["message_sent"] is False, "No message sent")
+
+
+def test_mock_adapter_blocked_result_is_preserved() -> None:
+    def mock_blocked(root: str | Path | None, env: dict[str, object] | None, preflight: dict[str, object]) -> dict[str, object]:
+        return {
+            "started": False,
+            "blocked": True,
+            "reason": "mock_adapter_blocked",
+            "message_sent": False,
+            "actual_discord_send": False,
+            "actual_llm_api_call": False,
+            "embedding_api_called": False,
+            "external_execution": False,
+        }
+
+    result = run_discord_private_test_rag_llm_reply_bot(env=approved_env(), start_adapter=mock_blocked)
+    assert_true(result["started"] is False, "Mock blocked adapter should not start")
+    assert_true(result["blocked"] is True, "Mock blocked adapter should block")
+    assert_true(result["reason"] == "mock_adapter_blocked", "Mock reason preserved")
+    assert_true(result["message_sent"] is False, "No message sent")
+
+
 def test_approval_phrase_value_not_logged() -> None:
     report = build_rag_llm_private_test_runtime_report(env=approved_env())
     text = json.dumps(report, ensure_ascii=False)
@@ -304,6 +343,9 @@ def main() -> int:
         test_manual_approval_default_blocks_live_start,
         test_manual_approval_bad_combinations_block,
         test_manual_approval_exact_phrase_allows_mock_start_path,
+        test_approved_missing_adapter_can_still_block_when_default_resolution_disabled,
+        test_default_adapter_resolves_and_token_missing_blocks_without_live_start,
+        test_mock_adapter_blocked_result_is_preserved,
         test_approval_phrase_value_not_logged,
     ]
     for test in tests:

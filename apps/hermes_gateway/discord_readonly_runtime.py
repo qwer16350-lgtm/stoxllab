@@ -21,11 +21,24 @@ from llm_private_test_reply import (
     send_llm_private_test_reply_only,
     write_llm_private_test_reply_audit,
 )
+from llm_client import build_llm_client_config, call_llm_once
+from llm_safety_policy import build_llm_safety_policy, check_llm_output_allowed
 from private_test_reply import (
     build_private_test_reply_payload,
     build_private_test_reply_policy,
     send_private_test_reply_only,
 )
+from rag_context_safety import build_rag_context_safety_report
+from rag_llm_prompt_envelope import build_rag_llm_prompt_envelope
+from rag_llm_private_test_runtime import (
+    DEFAULT_QUERY,
+    DEFAULT_SOURCE,
+    build_rag_llm_private_reply_preflight,
+    build_rag_llm_reply_send_payload,
+    should_allow_rag_llm_private_reply,
+)
+from rag_local_retrieval import run_rag_local_retrieval
+from rag_response_packet import build_rag_response_packet
 
 
 PHASE32D_ENV_KEYS = [
@@ -49,6 +62,35 @@ PHASE32D_ENV_KEYS = [
     "HERMES_LLM_EXTERNAL_EXECUTION",
 ]
 
+PHASE33D_ENV_KEYS = [
+    "HERMES_RAG_ENABLED",
+    "HERMES_RAG_MODE",
+    "HERMES_RAG_PRIVATE_TEST_ONLY",
+    "HERMES_RAG_REQUIRE_RESPONSE_PACKET",
+    "HERMES_RAG_LLM_REPLY_ENABLED",
+    "HERMES_RAG_LLM_REPLY_MODE",
+    "HERMES_RAG_LLM_REQUIRE_RAG_PACKET",
+    "HERMES_RAG_LLM_REQUIRE_CONTEXT_SAFETY",
+    "HERMES_RAG_LLM_REQUIRE_OUTPUT_SAFETY",
+    "HERMES_RAG_LLM_MAX_CONTEXT_CHARS",
+    "HERMES_RAG_LLM_MAX_DOCUMENTS",
+    "HERMES_RAG_LLM_MAX_REPLIES_PER_SESSION",
+    "HERMES_RAG_LLM_COOLDOWN_SECONDS",
+    "HERMES_RAG_LLM_SINGLE_LIVE_TEST_APPROVED",
+    "HERMES_RAG_LLM_SINGLE_LIVE_TEST_APPROVAL_PHRASE",
+    "HERMES_LLM_ENABLED",
+    "HERMES_LLM_API_CALL_ENABLED",
+    "HERMES_LLM_PROVIDER",
+    "HERMES_LLM_MODEL",
+    "HERMES_LLM_API_KEY",
+    "HERMES_LLM_BASE_URL",
+    "HERMES_LLM_DRY_RUN_ONLY",
+    "HERMES_LLM_PRIVATE_TEST_ONLY",
+    "HERMES_LLM_DISCORD_SEND_ENABLED",
+    "HERMES_LLM_PRIVATE_TEST_REPLY_ENABLED",
+    "HERMES_LLM_EXTERNAL_EXECUTION",
+]
+
 
 def _phase32d_env(runtime_env: dict[str, Any]) -> dict[str, Any]:
     env = dict(runtime_env)
@@ -61,6 +103,19 @@ def _phase32d_env(runtime_env: dict[str, Any]) -> dict[str, Any]:
     env["HERMES_DISCORD_PRIVATE_TEST_CHANNEL_ID"] = str(env.get("_private_test_channel_id", ""))
     env["HERMES_DISCORD_EXTERNAL_EXECUTION"] = str(bool(env.get("external_execution"))).lower()
     env["HERMES_DISCORD_RAG_ENABLED"] = str(bool(env.get("rag_enabled"))).lower()
+    return env
+
+
+def _phase33d_env(runtime_env: dict[str, Any]) -> dict[str, Any]:
+    env = dict(runtime_env)
+    for key in PHASE33D_ENV_KEYS:
+        if key in os.environ:
+            env[key] = os.environ.get(key, "")
+    env.setdefault("HERMES_DISCORD_SEND_MESSAGES", str(bool(env.get("send_messages"))).lower())
+    env.setdefault("HERMES_DISCORD_PRIVATE_TEST_REPLY", str(bool(env.get("private_test_reply_enabled"))).lower())
+    env.setdefault("HERMES_DISCORD_REPLY_MODE", str(env.get("reply_mode", "disabled")))
+    env.setdefault("HERMES_DISCORD_PRIVATE_TEST_CHANNEL_ID", str(env.get("_private_test_channel_id", "")))
+    env.setdefault("HERMES_DISCORD_EXTERNAL_EXECUTION", str(bool(env.get("external_execution"))).lower())
     return env
 from private_test_reply_safety import (
     build_private_test_reply_safety_policy,
@@ -154,6 +209,25 @@ def print_private_test_llm_ready_visibility(client: Any, runtime_env: dict[str, 
         "public_send_disabled=true "
         f"rag_disabled={str(not preflight.get('rag_enabled')).lower()} "
         f"external_disabled={str(not preflight.get('external_execution')).lower()}",
+        flush=True,
+    )
+    return preflight
+
+
+def print_private_test_rag_llm_ready_visibility(client: Any, runtime_env: dict[str, Any] | None = None) -> dict[str, Any]:
+    env = _phase33d_env(runtime_env or {})
+    preflight = build_rag_llm_private_reply_preflight(env)
+    print(
+        "[PRIVATE_TEST_RAG_LLM_READY] "
+        "runtime_mode=private_test_rag_llm_reply "
+        f"private_test_channel_configured={str(preflight.get('private_test_channel_configured')).lower()} "
+        f"rag_mode={preflight.get('rag_mode', '')} "
+        f"llm_enabled={str(env.get('HERMES_LLM_ENABLED', '').lower() == 'true').lower()} "
+        f"provider={preflight.get('provider', '')} "
+        f"model_configured={str(preflight.get('model_configured')).lower()} "
+        f"discord_send_enabled={str(env.get('HERMES_DISCORD_SEND_MESSAGES', '').lower() == 'true').lower()} "
+        "public_send_disabled=true "
+        f"external_disabled={str(env.get('HERMES_DISCORD_EXTERNAL_EXECUTION', '').lower() != 'true').lower()}",
         flush=True,
     )
     return preflight
@@ -680,3 +754,163 @@ def run_discord_private_test_llm_reply_bot(root: str | Path | None = None, runti
 
     client.run(env["_token_value"])
     return {"started": True, "blocked": False, "message_sent": False, "token_value_logged": False, "preflight": preflight}
+
+
+def start_private_test_rag_llm_reply_runtime(
+    root: str | Path | None = None,
+    runtime_env: dict[str, Any] | None = None,
+    preflight: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    repo_root = Path(root or Path.cwd()).resolve()
+    env = runtime_env or load_discord_runtime_env(repo_root, load_dotenv_file=True, include_token_value=True)
+    phase_env = _phase33d_env(env)
+    selected_preflight = preflight or build_rag_llm_private_reply_preflight(phase_env)
+    if not env.get("token_present") and not env.get("_token_value"):
+        return {
+            "started": False,
+            "blocked": True,
+            "reason": "rag_llm_private_test_runtime_preflight_failed:token_missing",
+            "message_sent": False,
+            "token_value_logged": False,
+            "preflight": selected_preflight,
+            "safety_assertions": build_readonly_runtime_report(repo_root)["safety_assertions"],
+        }
+    if selected_preflight.get("ready") is not True:
+        return {
+            "started": False,
+            "blocked": True,
+            "reason": "rag_llm_private_test_runtime_preflight_failed:" + str(selected_preflight.get("blocked_reasons", ["unknown"])[0]),
+            "message_sent": False,
+            "token_value_logged": False,
+            "preflight": selected_preflight,
+            "safety_assertions": build_readonly_runtime_report(repo_root)["safety_assertions"],
+        }
+    try:
+        import discord
+    except ImportError:
+        return {
+            "started": False,
+            "blocked": True,
+            "reason": "rag_llm_private_test_runtime_preflight_failed:discord_dependency_missing",
+            "message_sent": False,
+            "token_value_logged": False,
+            "preflight": selected_preflight,
+            "safety_assertions": build_readonly_runtime_report(repo_root)["safety_assertions"],
+        }
+
+    intents = discord.Intents.default()
+    intents.guilds = True
+    intents.messages = True
+    intents.message_content = True
+    client = discord.Client(intents=intents)
+    visibility_context = load_visibility_context(repo_root)
+    visibility_context["private_test_channel_id"] = phase_env.get("HERMES_DISCORD_PRIVATE_TEST_CHANNEL_ID", "")
+    processed_message_ids: set[str] = set()
+    safety_state = build_private_test_reply_safety_state()
+
+    @client.event
+    async def on_ready() -> None:
+        print_private_test_rag_llm_ready_visibility(client, phase_env)
+
+    @client.event
+    async def on_message(message: Any) -> None:
+        result = handle_readonly_message_event(message, root=repo_root, write_log=True, visibility_context=visibility_context)
+        print(format_readonly_event_line(result), flush=True)
+        skip_reason = should_skip_private_test_reply_event(
+            message,
+            result,
+            bot_user_id=getattr(client.user, "id", ""),
+            processed_message_ids=processed_message_ids,
+        )
+        if skip_reason:
+            print(f"[PRIVATE_TEST_RAG_LLM_REPLY] skipped reason={skip_reason}", flush=True)
+            return
+        message_id = get_message_identity(message)
+        if message_id:
+            processed_message_ids.add(message_id)
+        decision = should_allow_rag_llm_private_reply(
+            message,
+            selected_preflight,
+            source=DEFAULT_SOURCE,
+            safety_state=safety_state,
+            env=phase_env,
+            bot_user_id=getattr(client.user, "id", ""),
+        )
+        if not decision.get("allowed"):
+            print(f"[PRIVATE_TEST_RAG_LLM_REPLY] blocked reason={decision.get('reason', '')}", flush=True)
+            return
+        print("[PRIVATE_TEST_RAG_LLM_REPLY] retrieval_allowed", flush=True)
+        max_docs = _int_env(phase_env, "HERMES_RAG_LLM_MAX_DOCUMENTS", 5)
+        max_chars = _int_env(phase_env, "HERMES_RAG_LLM_MAX_CONTEXT_CHARS", 3000)
+        retrieval = run_rag_local_retrieval(repo_root, source=DEFAULT_SOURCE, query=DEFAULT_QUERY, max_files=max_docs + 1, max_chars_per_file=max(max_chars, 4000))
+        context = build_rag_context_safety_report(retrieval, source=DEFAULT_SOURCE, max_documents=max_docs, max_context_chars=max_chars)
+        if not context.get("allowed_for_llm_prompt"):
+            print("[PRIVATE_TEST_RAG_LLM_REPLY] blocked reason=context_safety_blocked", flush=True)
+            return
+        print("[PRIVATE_TEST_RAG_LLM_REPLY] context_safety_allowed", flush=True)
+        rag_packet = build_rag_response_packet(retrieval)
+        if not rag_packet.get("response_available"):
+            print("[PRIVATE_TEST_RAG_LLM_REPLY] blocked reason=rag_packet_missing", flush=True)
+            return
+        print("[PRIVATE_TEST_RAG_LLM_REPLY] rag_packet_created", flush=True)
+        envelope = build_rag_llm_prompt_envelope(root=str(repo_root), source=DEFAULT_SOURCE, query=DEFAULT_QUERY)
+        config = build_llm_client_config(phase_env)
+        call_config = dict(config)
+        call_config["discord_send_enabled"] = False
+        call_config["discord_runtime_send_messages"] = False
+        call_config["rag_enabled"] = False
+        print("[PRIVATE_TEST_RAG_LLM_REPLY] llm_call_allowed", flush=True)
+        llm_result = call_llm_once(envelope, call_config)
+        if not llm_result.get("api_call_succeeded"):
+            print(f"[PRIVATE_TEST_RAG_LLM_REPLY] blocked reason={llm_result.get('error_type', 'llm_provider_error')}", flush=True)
+            return
+        output_safety = check_llm_output_allowed(str(llm_result.get("response_text", "")), build_llm_safety_policy(phase_env))
+        if not output_safety.get("allowed"):
+            print("[PRIVATE_TEST_RAG_LLM_REPLY] blocked reason=output_safety_blocked", flush=True)
+            return
+        print("[PRIVATE_TEST_RAG_LLM_REPLY] output_safety_allowed", flush=True)
+        payload = build_rag_llm_reply_send_payload(str(llm_result.get("response_text", "")), rag_packet)
+        if not payload.get("safe"):
+            print("[PRIVATE_TEST_RAG_LLM_REPLY] blocked reason=packet_safety_failed", flush=True)
+            return
+        private_payload = {
+            "payload_type": "llm_private_test_reply_payload",
+            "version": "phase33d_guarded_private_test_only",
+            "source": "rag_llm_response_packet",
+            "content": payload["content"],
+            "will_send": True,
+            "message_sent": False,
+            "discord_send_attempted": False,
+            "rag_called": False,
+            "external_execution": False,
+            "safety_assertions": {
+                "api_key_value_logged": False,
+                "discord_message_sent": False,
+                "rag_called": False,
+                "external_execution": False,
+                "raw_discord_ids_logged": False,
+            },
+        }
+        try:
+            send_result = await send_llm_private_test_reply_only(message.channel, private_payload)
+        except Exception as exc:
+            record_private_test_reply_send_exception(message, safety_state, type(exc).__name__)
+            print("[PRIVATE_TEST_RAG_LLM_REPLY] blocked reason=send_exception", flush=True)
+            return
+        if send_result.get("message_sent"):
+            record_private_test_reply_sent(message, safety_state)
+            print(
+                "[PRIVATE_TEST_RAG_LLM_REPLY_SENT] "
+                f"message_sent=true channel={result.get('visibility_event', {}).get('channel_name', '')}",
+                flush=True,
+            )
+
+    client.run(env["_token_value"])
+    return {"started": True, "blocked": False, "message_sent": False, "token_value_logged": False, "preflight": selected_preflight}
+
+
+def _int_env(env: dict[str, Any], key: str, default: int) -> int:
+    try:
+        return max(0, int(str(env.get(key, default)).strip()))
+    except ValueError:
+        return default

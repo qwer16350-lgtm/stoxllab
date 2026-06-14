@@ -78,6 +78,7 @@ def test_required_env_gates_present() -> None:
     assert_true("<PRIVATE_TEST_CHANNEL_ID>" in text, "Private test channel ID should be placeholder only")
     assert_true("<OPENROUTER_KEY_PLACEHOLDER>" in text, "OpenRouter key should be placeholder only")
     assert_true("Do not persist it in `.env`" in text, "Approval phrase should not be persisted")
+    assert_true("runtime adapter is wired for the live command" in text, "Runbook should mention adapter wiring")
 
 
 def test_expected_logs_exactly_one_sent() -> None:
@@ -130,6 +131,7 @@ def test_no_live_execution_claims() -> None:
         "external execution in Phase 33D-3: false",
         "single live test execution: user-run PowerShell only",
         "single live approval phrase value logged by runtime reports: false",
+        "runtime start adapter missing after Phase 33D-3B: false",
     ):
         assert_true(expected in text, f"Missing no-live safety statement: {expected}")
 
