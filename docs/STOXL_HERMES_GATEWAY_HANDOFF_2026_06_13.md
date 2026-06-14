@@ -10,6 +10,7 @@
 - Phase 33D live RAG+LLM reply is not implemented.
 - Phase 33D live readiness review is available and returns `go=false`.
 - Phase 33D-1 guarded runtime code is available but has not been live-run.
+- Phase 33D-2 live preflight closeout is available and does not execute the runtime.
 
 ## Completed Chain
 
@@ -21,6 +22,7 @@
 6. Phase 33D-safe scaffold added review-only gates before any future RAG+LLM live reply.
 7. Phase 33D live readiness review added go/no-go, manual enable, and rollback checklists.
 8. Phase 33D-1 added guarded RAG+LLM private test runtime code with mockable LLM/send adapters.
+9. Phase 33D-2 added a report-only closeout for default blocking, mock live-ready fixture checks, runtime option presence, and no live execution.
 
 ## Current Safety Posture
 
@@ -35,6 +37,7 @@
 - Phase 33D live implementation still requires separate manual approval.
 - Current readiness review does not implement or run live RAG+LLM reply.
 - Phase 33D-1 tests use mock LLM and mock send adapters only.
+- Phase 33D-2 closeout does not start Discord, send Discord messages, call OpenRouter/LLM APIs, call embedding APIs, or execute external actions.
 
 ## Important Commands
 
@@ -51,6 +54,7 @@ python apps\hermes_gateway\cli.py --rag-llm-would-send-preview --json
 python apps\hermes_gateway\cli.py --rag-llm-private-test-replay-report --json
 python apps\hermes_gateway\cli.py --rag-llm-live-readiness-review --json
 python apps\hermes_gateway\cli.py --rag-llm-private-test-runtime-report --json
+python apps\hermes_gateway\cli.py --rag-llm-live-preflight-closeout --json
 python apps\hermes_gateway\cli.py --operations-viewer --json
 ```
 
@@ -65,6 +69,7 @@ python apps\hermes_gateway\tests\test_rag_llm_would_send_preview.py
 python apps\hermes_gateway\tests\test_rag_llm_private_test_reply_replay.py
 python apps\hermes_gateway\tests\test_rag_llm_live_readiness_review.py
 python apps\hermes_gateway\tests\test_rag_llm_private_test_runtime.py
+python apps\hermes_gateway\tests\test_rag_llm_live_preflight_closeout.py
 python apps\hermes_gateway\tests\test_llm_private_test_reply_replay.py
 python apps\hermes_gateway\tests\test_llm_private_test_reply.py
 python apps\hermes_gateway\tests\test_private_test_reply.py
@@ -100,5 +105,7 @@ after human review of:
 
 Until then, RAG+LLM private test reply is not implemented.
 
-The next phase should explicitly request Phase 33D live implementation and must
-resolve all no-go reasons before any live runtime or send path is considered.
+The next phase should explicitly request one separately approved live private
+test. It must keep public/team channels, self/bot messages, duplicate messages,
+cooldown/budget failures, invalid sources, `source=operations`, external
+execution, and unbounded retrieval blocked before retrieval.

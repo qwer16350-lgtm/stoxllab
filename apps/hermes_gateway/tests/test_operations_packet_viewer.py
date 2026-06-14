@@ -188,6 +188,30 @@ def test_rag_llm_live_readiness_summary() -> None:
     assert_true(readiness["external_execution"] is False, "No external execution")
 
 
+def test_rag_llm_private_test_runtime_summary() -> None:
+    setup_artifacts()
+    runtime = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")["rag_llm_private_test_runtime"]
+    assert_true(runtime["available"] is True, "Runtime report should be available")
+    assert_true(runtime["runtime_option_added"] is True, "Runtime option should be represented")
+    assert_true(runtime["runtime_executed_by_report"] is False, "Viewer should not execute runtime")
+    assert_true(runtime["actual_discord_send"] is False, "No actual Discord send")
+    assert_true(runtime["actual_llm_api_call"] is False, "No actual LLM API call")
+    assert_true(runtime["embedding_api_called"] is False, "No embedding API call")
+    assert_true(runtime["external_execution"] is False, "No external execution")
+
+
+def test_rag_llm_live_preflight_closeout_summary() -> None:
+    setup_artifacts()
+    closeout = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")["rag_llm_live_preflight_closeout"]
+    assert_true(closeout["available"] is True, "Live preflight closeout should be available")
+    assert_true(closeout["runtime_executed"] is False, "Viewer should not execute runtime")
+    assert_true(closeout["ready_for_single_live_private_test"] is True, "Single live private test should be ready for separate approval")
+    assert_true(closeout["actual_discord_send"] is False, "No actual Discord send")
+    assert_true(closeout["actual_llm_api_call"] is False, "No actual LLM API call")
+    assert_true(closeout["embedding_api_called"] is False, "No embedding API call")
+    assert_true(closeout["external_execution"] is False, "No external execution")
+
+
 def main() -> int:
     tests = [
         test_recent_events_returned,
@@ -206,6 +230,8 @@ def main() -> int:
         test_safety_flags_false,
         test_rag_llm_scaffold_summary,
         test_rag_llm_live_readiness_summary,
+        test_rag_llm_private_test_runtime_summary,
+        test_rag_llm_live_preflight_closeout_summary,
     ]
     for test in tests:
         test()

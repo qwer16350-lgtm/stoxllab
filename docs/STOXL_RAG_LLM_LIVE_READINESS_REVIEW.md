@@ -63,3 +63,27 @@ python apps\hermes_gateway\cli.py --rag-llm-live-readiness-review --markdown
 
 Guarded runtime code has been added for a future private-test-only RAG+LLM
 reply. The runtime option must not be run without separate manual approval.
+
+## Phase 33D-2 Preflight Closeout
+
+Phase 33D-2 adds a report-only closeout:
+
+```powershell
+python apps\hermes_gateway\cli.py --rag-llm-live-preflight-closeout --json
+python apps\hermes_gateway\cli.py --rag-llm-live-preflight-closeout --markdown
+```
+
+The closeout confirms:
+
+- default preflight blocked: true
+- mock live-ready fixture passed: true
+- runtime option present: true
+- runtime executed: false
+- ready for single live private test: true
+- actual Discord send: false
+- actual LLM API call: false
+- embedding API called: false
+- external execution: false
+
+This readiness is not approval to run the live runtime. The single live private
+test still requires a separate manual approval.

@@ -27,6 +27,13 @@ python apps\hermes_gateway\cli.py --rag-llm-private-test-runtime-report --json
 python apps\hermes_gateway\cli.py --rag-llm-private-test-runtime-report --markdown
 ```
 
+Phase 33D-2 closeout report only:
+
+```powershell
+python apps\hermes_gateway\cli.py --rag-llm-live-preflight-closeout --json
+python apps\hermes_gateway\cli.py --rag-llm-live-preflight-closeout --markdown
+```
+
 Runtime option added for a separately approved future run:
 
 ```powershell
@@ -34,6 +41,10 @@ python apps\hermes_gateway\cli.py --run-discord-private-test-rag-llm-reply --jso
 ```
 
 Do not run the runtime option without separate manual approval.
+
+The Phase 33D-2 closeout confirms that this runtime option is present but not
+executed by the report. It also confirms that the default preflight remains
+blocked and that only a mock live-ready fixture passes the gate checks.
 
 ## Rollback
 
@@ -54,3 +65,5 @@ $env:HERMES_RAG_LLM_REPLY_ENABLED="false"
 - OpenRouter/LLM actual API call in tests: false
 - embedding API call: false
 - external execution: false
+- Phase 33D-2 closeout runtime executed: false
+- Phase 33D-2 closeout ready for separately approved single live private test: true

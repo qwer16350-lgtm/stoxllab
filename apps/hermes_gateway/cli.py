@@ -66,6 +66,7 @@ from rag_llm_prompt_envelope import build_rag_llm_prompt_envelope, render_rag_ll
 from rag_llm_would_send_preview import build_rag_llm_would_send_preview, render_rag_llm_would_send_preview_markdown
 from rag_llm_private_test_reply_replay import build_rag_llm_private_test_reply_replay_report, render_rag_llm_private_test_reply_replay_markdown
 from rag_llm_live_readiness_review import build_rag_llm_live_readiness_review, render_rag_llm_live_readiness_markdown
+from rag_llm_live_preflight_closeout import build_rag_llm_live_preflight_closeout, render_rag_llm_live_preflight_closeout_markdown
 from rag_llm_private_test_runtime import (
     build_rag_llm_private_test_runtime_report,
     render_rag_llm_private_test_runtime_markdown,
@@ -259,6 +260,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--rag-llm-private-test-replay-report", action="store_true", help="Print Phase 33D-safe RAG+LLM private test replay/audit report.")
     parser.add_argument("--rag-llm-live-readiness-review", action="store_true", help="Print Phase 33D live readiness review without live execution.")
     parser.add_argument("--rag-llm-private-test-runtime-report", action="store_true", help="Print Phase 33D-1 guarded RAG+LLM private test runtime preflight report.")
+    parser.add_argument("--rag-llm-live-preflight-closeout", action="store_true", help="Print Phase 33D-2 live preflight closeout without live execution.")
     parser.add_argument("--source", default="operation", help="RAG source for local retrieval reports.")
     parser.add_argument("--query", default="STOXL brand tone", help="RAG query preview for local retrieval reports.")
     parser.add_argument("--allow-llm-api-call", action="store_true", help="Allow Phase 32B to attempt one gated provider call when env gates pass.")
@@ -904,6 +906,21 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- runtime_executed_by_report: {output.get('runtime_executed_by_report')}")
         return 0
 
+    if args.rag_llm_live_preflight_closeout:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_rag_llm_live_preflight_closeout(root=str(cfg.repo_root))
+        if args.markdown:
+            print(render_rag_llm_live_preflight_closeout_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL RAG+LLM live preflight closeout")
+            print(f"- default_preflight_blocked: {output.get('default_preflight_blocked')}")
+            print(f"- mock_live_ready_fixture_passed: {output.get('mock_live_ready_fixture_passed')}")
+            print(f"- runtime_executed: {output.get('runtime_executed')}")
+            print(f"- ready_for_single_live_private_test: {output.get('ready_for_single_live_private_test')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -1055,6 +1072,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.rag_llm_private_test_replay_report
         or args.rag_llm_live_readiness_review
         or args.rag_llm_private_test_runtime_report
+        or args.rag_llm_live_preflight_closeout
         or args.allow_llm_api_call
         or args.write_artifact
         or args.latest
