@@ -11,6 +11,7 @@
 - Phase 33D live readiness review is available and returns `go=false`.
 - Phase 33D-1 guarded runtime code is available but has not been live-run.
 - Phase 33D-2 live preflight closeout is available and does not execute the runtime.
+- Phase 33D-3 single live private test runbook is available for user-run PowerShell execution only.
 
 ## Completed Chain
 
@@ -23,6 +24,7 @@
 7. Phase 33D live readiness review added go/no-go, manual enable, and rollback checklists.
 8. Phase 33D-1 added guarded RAG+LLM private test runtime code with mockable LLM/send adapters.
 9. Phase 33D-2 added a report-only closeout for default blocking, mock live-ready fixture checks, runtime option presence, and no live execution.
+10. Phase 33D-3 added the manual runbook for one single live private test and its rollback/abort checklist.
 
 ## Current Safety Posture
 
@@ -38,6 +40,7 @@
 - Current readiness review does not implement or run live RAG+LLM reply.
 - Phase 33D-1 tests use mock LLM and mock send adapters only.
 - Phase 33D-2 closeout does not start Discord, send Discord messages, call OpenRouter/LLM APIs, call embedding APIs, or execute external actions.
+- Phase 33D-3 does not authorize Codex/agent to run the live command; the user must run the single live private test directly in PowerShell.
 
 ## Important Commands
 
@@ -70,6 +73,7 @@ python apps\hermes_gateway\tests\test_rag_llm_private_test_reply_replay.py
 python apps\hermes_gateway\tests\test_rag_llm_live_readiness_review.py
 python apps\hermes_gateway\tests\test_rag_llm_private_test_runtime.py
 python apps\hermes_gateway\tests\test_rag_llm_live_preflight_closeout.py
+python apps\hermes_gateway\tests\test_rag_llm_single_live_test_runbook.py
 python apps\hermes_gateway\tests\test_llm_private_test_reply_replay.py
 python apps\hermes_gateway\tests\test_llm_private_test_reply.py
 python apps\hermes_gateway\tests\test_private_test_reply.py
@@ -93,8 +97,11 @@ $env:HERMES_LLM_RAG_ENABLED="false"
 
 ## Next Recommended Phase
 
-Phase 33D should remain a separate implementation phase. It should only begin
-after human review of:
+Before the next live attempt, read:
+
+- `docs/STOXL_RAG_LLM_SINGLE_LIVE_TEST_RUNBOOK.md`
+
+The user-run single live private test should only begin after human review of:
 
 - source allow-list behavior
 - private test channel ID gating
@@ -103,9 +110,6 @@ after human review of:
 - LLM output safety
 - one-message-per-human-message send limits
 
-Until then, RAG+LLM private test reply is not implemented.
-
-The next phase should explicitly request one separately approved live private
-test. It must keep public/team channels, self/bot messages, duplicate messages,
-cooldown/budget failures, invalid sources, `source=operations`, external
-execution, and unbounded retrieval blocked before retrieval.
+The next phase after the single live test should be Phase 33D-4 replay/audit
+closeout. It must keep `exports/`, `logs/`, and `apps/hermes_gateway/local/*`
+out of commits and must verify that only one private test reply was sent.

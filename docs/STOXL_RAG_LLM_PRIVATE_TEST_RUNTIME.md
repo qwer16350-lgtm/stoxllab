@@ -46,6 +46,15 @@ The Phase 33D-2 closeout confirms that this runtime option is present but not
 executed by the report. It also confirms that the default preflight remains
 blocked and that only a mock live-ready fixture passes the gate checks.
 
+Phase 33D-3 documents the single live private test procedure in:
+
+```text
+docs/STOXL_RAG_LLM_SINGLE_LIVE_TEST_RUNBOOK.md
+```
+
+That runbook is for user-run PowerShell execution only. Codex/agent must not
+start the live runtime automatically.
+
 ## Rollback
 
 ```powershell
@@ -67,3 +76,4 @@ $env:HERMES_RAG_LLM_REPLY_ENABLED="false"
 - external execution: false
 - Phase 33D-2 closeout runtime executed: false
 - Phase 33D-2 closeout ready for separately approved single live private test: true
+- Phase 33D-3 runbook live runtime executed by Codex/agent: false

@@ -98,3 +98,15 @@ The operations viewer exposes a summary section:
 ## Next Step
 
 The next step should be a separately approved single live private test only. That approval must explicitly allow running `--run-discord-private-test-rag-llm-reply`, and it should keep public/team channels, self/bot messages, `source=operations`, external execution, and unbounded retrieval blocked.
+
+## Phase 33D-3 Runbook
+
+The manual runbook is:
+
+```text
+docs/STOXL_RAG_LLM_SINGLE_LIVE_TEST_RUNBOOK.md
+```
+
+It defines before-run checks, required env gates, expected logs, immediate
+shutdown, abort conditions, and the Phase 33D-4 replay/audit closeout handoff.
+Codex/agent must not run the live runtime automatically.
