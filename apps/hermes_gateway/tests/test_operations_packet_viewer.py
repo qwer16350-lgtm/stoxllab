@@ -162,6 +162,20 @@ def test_safety_flags_false() -> None:
     assert_true(safety["rag_called"] is False, "RAG should not be called")
 
 
+def test_rag_llm_scaffold_summary() -> None:
+    setup_artifacts()
+    scaffold = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")["rag_llm_private_test_scaffold"]
+    assert_true(scaffold["preflight_available"] is True, "RAG+LLM preflight should be available")
+    assert_true(scaffold["context_safety_available"] is True, "Context safety should be available")
+    assert_true(scaffold["prompt_envelope_available"] is True, "Prompt envelope should be available")
+    assert_true(scaffold["would_send_preview_available"] is True, "Would-send should be available")
+    assert_true(scaffold["replay_available"] is True, "Replay should be available")
+    assert_true(scaffold["actual_discord_send"] is False, "No actual Discord send")
+    assert_true(scaffold["actual_llm_api_call"] is False, "No actual LLM API call")
+    assert_true(scaffold["embedding_api_call"] is False, "No embedding API call")
+    assert_true(scaffold["external_execution"] is False, "No external execution")
+
+
 def main() -> int:
     tests = [
         test_recent_events_returned,
@@ -178,6 +192,7 @@ def main() -> int:
         test_no_raw_token_or_id,
         test_no_env_or_local_mapping_read_flags,
         test_safety_flags_false,
+        test_rag_llm_scaffold_summary,
     ]
     for test in tests:
         test()
