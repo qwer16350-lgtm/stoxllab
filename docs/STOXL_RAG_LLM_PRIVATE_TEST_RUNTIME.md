@@ -82,6 +82,20 @@ adapter instead of returning `rag_llm_private_test_runtime_start_adapter_missing
 The adapter still blocks before live start if token/private channel prerequisites
 are missing.
 
+Phase 33D-4 closes out the observed single live private test success through a
+sanitized fixture and local parser:
+
+```powershell
+python apps\hermes_gateway\cli.py --rag-llm-live-success-closeout --json
+python apps\hermes_gateway\cli.py --rag-llm-live-success-closeout --markdown
+```
+
+The closeout verifies exactly one accepted private test event, one retrieval
+allowance, one context-safety allowance, one RAG packet, one LLM call allowance,
+one output-safety allowance, one Discord send, and one self-message skip. It
+does not run Discord again, call OpenRouter again, call embeddings, or execute
+external actions.
+
 ## Rollback
 
 ```powershell
@@ -108,3 +122,8 @@ $env:HERMES_RAG_LLM_SINGLE_LIVE_TEST_APPROVAL_PHRASE=""
 - Phase 33D-3 runbook live runtime executed by Codex/agent: false
 - Phase 33D-3A approval phrase value logged: false
 - Phase 33D-3B default start adapter wired: true
+- Phase 33D-4 closeout sends additional Discord messages: false
+- Phase 33D-4 closeout calls OpenRouter/LLM again: false
+- Phase 33D-4 closeout calls embeddings: false
+- Phase 33D-4 closeout external execution: false
+- Phase 33D-4 ready for Phase 34 knowledge ingestion: true

@@ -212,6 +212,21 @@ def test_rag_llm_live_preflight_closeout_summary() -> None:
     assert_true(closeout["external_execution"] is False, "No external execution")
 
 
+def test_rag_llm_single_live_test_closeout_summary() -> None:
+    setup_artifacts()
+    closeout = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")["rag_llm_single_live_test_closeout"]
+    assert_true(closeout["available"] is True, "Single live test closeout should be available")
+    assert_true(closeout["closeout_passed"] is True, "Single live test closeout should pass")
+    assert_true(closeout["sent_exactly_once"] is True, "Discord message should be sent exactly once in fixture")
+    assert_true(closeout["self_loop_prevented"] is True, "Self-loop should be prevented")
+    assert_true(closeout["private_test_channel_only"] is True, "Private test channel only")
+    assert_true(closeout["llm_api_called_once"] is True, "LLM API should be observed once")
+    assert_true(closeout["discord_message_sent_once"] is True, "Discord message should be observed once")
+    assert_true(closeout["embedding_api_called"] is False, "No embedding API call")
+    assert_true(closeout["external_execution"] is False, "No external execution")
+    assert_true(closeout["ready_for_phase34_knowledge_ingestion"] is True, "Phase 34 readiness should be true")
+
+
 def main() -> int:
     tests = [
         test_recent_events_returned,
@@ -232,6 +247,7 @@ def main() -> int:
         test_rag_llm_live_readiness_summary,
         test_rag_llm_private_test_runtime_summary,
         test_rag_llm_live_preflight_closeout_summary,
+        test_rag_llm_single_live_test_closeout_summary,
     ]
     for test in tests:
         test()

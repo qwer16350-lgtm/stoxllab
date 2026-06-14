@@ -205,6 +205,15 @@ Phase 33D-4: RAG+LLM single live reply replay/audit closeout
 
 The closeout should verify the captured logs and replay/audit state. It should not commit `exports/`, `logs/`, or `apps/hermes_gateway/local/*`.
 
+Phase 33D-4 has a report-only command for the sanitized success fixture:
+
+```powershell
+python apps\hermes_gateway\cli.py --rag-llm-live-success-closeout --json
+python apps\hermes_gateway\cli.py --rag-llm-live-success-closeout --markdown
+```
+
+That command must not start the runtime again, send another Discord message, call OpenRouter/LLM again, call embeddings, or execute external actions.
+
 ## 11. Safety Summary
 
 - Codex/agent live runtime execution in Phase 33D-3: false
@@ -215,3 +224,7 @@ The closeout should verify the captured logs and replay/audit state. It should n
 - single live test execution: user-run PowerShell only
 - single live approval phrase value logged by runtime reports: false
 - runtime start adapter missing after Phase 33D-3B: false
+- Phase 33D-4 closeout command sends additional Discord messages: false
+- Phase 33D-4 closeout command calls OpenRouter/LLM again: false
+- Phase 33D-4 closeout command calls embeddings: false
+- Phase 33D-4 closeout command external execution: false

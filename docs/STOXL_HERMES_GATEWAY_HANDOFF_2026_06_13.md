@@ -14,6 +14,7 @@
 - Phase 33D-3 single live private test runbook is available for user-run PowerShell execution only.
 - Phase 33D-3A explicit single live approval env gate is required before the runtime can pass manual approval.
 - Phase 33D-3B RAG+LLM private test runtime adapter is wired, while live execution remains user-run only.
+- Phase 33D-4 single live private test closeout is available and marks the observed success ready for Phase 34 knowledge ingestion.
 
 ## Completed Chain
 
@@ -29,6 +30,7 @@
 10. Phase 33D-3 added the manual runbook for one single live private test and its rollback/abort checklist.
 11. Phase 33D-3A added `HERMES_RAG_LLM_SINGLE_LIVE_TEST_APPROVED` plus exact approval phrase gating.
 12. Phase 33D-3B connected the live command to the RAG+LLM private-test adapter instead of the missing-adapter block.
+13. Phase 33D-4 added a sanitized success-log parser, CLI report, operations viewer summary, and docs for the successful single live private test closeout.
 
 ## Current Safety Posture
 
@@ -47,6 +49,8 @@
 - Phase 33D-3 does not authorize Codex/agent to run the live command; the user must run the single live private test directly in PowerShell.
 - Phase 33D-3A keeps the default runtime start blocked and logs only approval booleans, never the approval phrase value.
 - Phase 33D-3B tests use mock adapters and token-missing checks only; no Discord runtime, LLM API, or send is executed during tests.
+- Phase 33D-4 does not start Discord again, send another Discord message, call OpenRouter/LLM again, call embeddings, or execute external actions.
+- Phase 33D-4 verifies that the observed live test sent exactly one Discord private-test reply and skipped the self-message.
 
 ## Important Commands
 
@@ -64,6 +68,7 @@ python apps\hermes_gateway\cli.py --rag-llm-private-test-replay-report --json
 python apps\hermes_gateway\cli.py --rag-llm-live-readiness-review --json
 python apps\hermes_gateway\cli.py --rag-llm-private-test-runtime-report --json
 python apps\hermes_gateway\cli.py --rag-llm-live-preflight-closeout --json
+python apps\hermes_gateway\cli.py --rag-llm-live-success-closeout --json
 python apps\hermes_gateway\cli.py --operations-viewer --json
 ```
 
@@ -80,6 +85,7 @@ python apps\hermes_gateway\tests\test_rag_llm_live_readiness_review.py
 python apps\hermes_gateway\tests\test_rag_llm_private_test_runtime.py
 python apps\hermes_gateway\tests\test_rag_llm_live_preflight_closeout.py
 python apps\hermes_gateway\tests\test_rag_llm_single_live_test_runbook.py
+python apps\hermes_gateway\tests\test_rag_llm_live_success_closeout.py
 python apps\hermes_gateway\tests\test_llm_private_test_reply_replay.py
 python apps\hermes_gateway\tests\test_llm_private_test_reply.py
 python apps\hermes_gateway\tests\test_private_test_reply.py
@@ -118,6 +124,7 @@ The user-run single live private test should only begin after human review of:
 - LLM output safety
 - one-message-per-human-message send limits
 
-The next phase after the single live test should be Phase 33D-4 replay/audit
-closeout. It must keep `exports/`, `logs/`, and `apps/hermes_gateway/local/*`
-out of commits and must verify that only one private test reply was sent.
+The next recommended phase is Phase 34 knowledge ingestion boundary design.
+Phase 33D-4 sets `ready_for_phase34_knowledge_ingestion=true`, but Phase 34
+should still avoid external ingestion, embedding APIs, broad Discord replies,
+or public/team channel reply paths until separately approved.

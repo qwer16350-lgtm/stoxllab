@@ -46,6 +46,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - Build Phase 33D-1 guarded RAG+LLM private test runtime code with mockable LLM/send adapters and report-only CLI checks.
 - Build Phase 33D-2 live preflight closeout reports that confirm default blocking, mock live-ready fixture readiness, runtime option presence, and no live execution.
 - Maintain the Phase 33D-3 single live private test runbook for manual user-run execution only.
+- Build Phase 33D-4 single live private test closeout reports from an embedded sanitized success fixture without another live run.
 
 ## Explicit Non-Goals
 
@@ -72,6 +73,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - No Phase 33D-1 test runs start Discord, call OpenRouter/LLM APIs, call embeddings, or execute external actions.
 - No Phase 33D-2 closeout starts Discord, sends Discord messages, calls OpenRouter/LLM APIs, calls embeddings, or executes external actions.
 - No Phase 33D-3 runbook step starts Discord, sends Discord messages, calls OpenRouter/LLM APIs, calls embeddings, or executes external actions automatically.
+- No Phase 33D-4 closeout starts Discord, sends additional Discord messages, calls OpenRouter/LLM APIs, calls embeddings, or executes external actions.
 
 ## Phase 21 Read-Only Planning Docs
 
@@ -121,6 +123,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - `docs/STOXL_RAG_LLM_PRIVATE_TEST_RUNTIME.md`
 - `docs/STOXL_RAG_LLM_LIVE_PREFLIGHT_CLOSEOUT.md`
 - `docs/STOXL_RAG_LLM_SINGLE_LIVE_TEST_RUNBOOK.md`
+- `docs/STOXL_RAG_LLM_SINGLE_LIVE_TEST_CLOSEOUT.md`
 
 These documents prepare for a later private server read-only connection review. They do not authorize or perform a Discord connection.
 
@@ -211,6 +214,8 @@ python apps\hermes_gateway\cli.py --rag-llm-private-test-runtime-report --json
 python apps\hermes_gateway\cli.py --rag-llm-private-test-runtime-report --markdown
 python apps\hermes_gateway\cli.py --rag-llm-live-preflight-closeout --json
 python apps\hermes_gateway\cli.py --rag-llm-live-preflight-closeout --markdown
+python apps\hermes_gateway\cli.py --rag-llm-live-success-closeout --json
+python apps\hermes_gateway\cli.py --rag-llm-live-success-closeout --markdown
 python apps\hermes_gateway\cli.py --run-discord-private-test-reply --json
 python apps\hermes_gateway\tests\test_local_pipeline.py
 python apps\hermes_gateway\tests\test_replay_approval.py
@@ -253,6 +258,7 @@ python apps\hermes_gateway\tests\test_rag_llm_live_readiness_review.py
 python apps\hermes_gateway\tests\test_rag_llm_private_test_runtime.py
 python apps\hermes_gateway\tests\test_rag_llm_live_preflight_closeout.py
 python apps\hermes_gateway\tests\test_rag_llm_single_live_test_runbook.py
+python apps\hermes_gateway\tests\test_rag_llm_live_success_closeout.py
 ```
 
 The `--run-discord-readonly` option is intentionally not part of normal local
@@ -343,6 +349,13 @@ approval phrase. Reports log only booleans, not the phrase value.
 Phase 33D-3B wires the RAG+LLM private-test runtime start adapter. Tests still
 use mock adapters or token-missing checks only; the actual live command remains
 manual user-run PowerShell only.
+
+Phase 33D-4 closes out the successful single live private test from a sanitized
+fixture. It verifies one private-test-channel event, one retrieval path, one
+LLM-allowed path, one output-safety-allowed path, one Discord send, and one
+self-message skip. It does not start Discord again, send another message, call
+OpenRouter again, call embeddings, or execute external actions. The closeout
+sets `ready_for_phase34_knowledge_ingestion=true`.
 
 If the registry file is missing, generate it from the repo root:
 

@@ -22,6 +22,7 @@ from rag_llm_private_test_reply_replay import build_rag_llm_private_test_reply_r
 from rag_llm_live_readiness_review import build_rag_llm_live_readiness_review
 from rag_llm_private_test_runtime import build_rag_llm_private_test_runtime_report
 from rag_llm_live_preflight_closeout import build_rag_llm_live_preflight_closeout
+from rag_llm_live_success_closeout import build_rag_llm_live_success_closeout
 
 
 VERSION = "phase31a_local_viewer"
@@ -338,6 +339,7 @@ def build_operations_packet_viewer_report(
     rag_llm_readiness = build_rag_llm_live_readiness_review(root=str(_repo(root)))
     rag_llm_runtime = build_rag_llm_private_test_runtime_report(root=str(_repo(root)))
     rag_llm_closeout = build_rag_llm_live_preflight_closeout(root=str(_repo(root)))
+    rag_llm_success_closeout = build_rag_llm_live_success_closeout()
     report = {
         "report_type": "operations_packet_viewer",
         "version": VERSION,
@@ -430,6 +432,18 @@ def build_operations_packet_viewer_report(
             "embedding_api_called": False,
             "external_execution": False,
         },
+        "rag_llm_single_live_test_closeout": {
+            "available": True,
+            "closeout_passed": bool(rag_llm_success_closeout.get("closeout_passed")),
+            "sent_exactly_once": bool(rag_llm_success_closeout.get("sent_exactly_once")),
+            "self_loop_prevented": bool(rag_llm_success_closeout.get("safety_assertions", {}).get("self_loop_prevented")),
+            "private_test_channel_only": bool(rag_llm_success_closeout.get("private_test_channel_only")),
+            "llm_api_called_once": bool(rag_llm_success_closeout.get("safety_assertions", {}).get("llm_api_called_once")),
+            "discord_message_sent_once": bool(rag_llm_success_closeout.get("safety_assertions", {}).get("discord_message_sent_once")),
+            "embedding_api_called": bool(rag_llm_success_closeout.get("embedding_api_called")),
+            "external_execution": bool(rag_llm_success_closeout.get("external_execution")),
+            "ready_for_phase34_knowledge_ingestion": bool(rag_llm_success_closeout.get("ready_for_phase34_knowledge_ingestion")),
+        },
         "daily_manifest_summary": load_daily_manifest(root=root, date=date),
         "filters": {
             "channel_name": channel_name,
@@ -495,6 +509,7 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
     rag_llm_readiness = report.get("rag_llm_live_readiness_review", {})
     rag_llm_runtime = report.get("rag_llm_private_test_runtime", {})
     rag_llm_closeout = report.get("rag_llm_live_preflight_closeout", {})
+    rag_llm_success_closeout = report.get("rag_llm_single_live_test_closeout", {})
     llm_summary = report.get("latest_llm_response_packet", {})
     lines.extend(
         [
@@ -569,6 +584,18 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
             f"- Actual LLM API call: {str(rag_llm_closeout.get('actual_llm_api_call', False)).lower()}",
             f"- Embedding API: {str(rag_llm_closeout.get('embedding_api_called', False)).lower()}",
             f"- External execution: {str(rag_llm_closeout.get('external_execution', False)).lower()}",
+            "",
+            "## RAG+LLM Single Live Test Closeout",
+            f"- Available: {str(rag_llm_success_closeout.get('available', False)).lower()}",
+            f"- Closeout passed: {str(rag_llm_success_closeout.get('closeout_passed', False)).lower()}",
+            f"- Sent exactly once: {str(rag_llm_success_closeout.get('sent_exactly_once', False)).lower()}",
+            f"- Self-loop prevented: {str(rag_llm_success_closeout.get('self_loop_prevented', False)).lower()}",
+            f"- Private test channel only: {str(rag_llm_success_closeout.get('private_test_channel_only', False)).lower()}",
+            f"- LLM API called once: {str(rag_llm_success_closeout.get('llm_api_called_once', False)).lower()}",
+            f"- Discord message sent once: {str(rag_llm_success_closeout.get('discord_message_sent_once', False)).lower()}",
+            f"- Embedding API called: {str(rag_llm_success_closeout.get('embedding_api_called', False)).lower()}",
+            f"- External execution: {str(rag_llm_success_closeout.get('external_execution', False)).lower()}",
+            f"- Ready for Phase 34 knowledge ingestion: {str(rag_llm_success_closeout.get('ready_for_phase34_knowledge_ingestion', False)).lower()}",
         ]
     )
     safety = report.get("safety_assertions", {})
