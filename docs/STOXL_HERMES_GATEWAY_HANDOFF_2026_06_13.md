@@ -12,6 +12,7 @@
 - Phase 33D-1 guarded runtime code is available but has not been live-run.
 - Phase 33D-2 live preflight closeout is available and does not execute the runtime.
 - Phase 33D-3 single live private test runbook is available for user-run PowerShell execution only.
+- Phase 33D-3A explicit single live approval env gate is required before the runtime can pass manual approval.
 
 ## Completed Chain
 
@@ -25,6 +26,7 @@
 8. Phase 33D-1 added guarded RAG+LLM private test runtime code with mockable LLM/send adapters.
 9. Phase 33D-2 added a report-only closeout for default blocking, mock live-ready fixture checks, runtime option presence, and no live execution.
 10. Phase 33D-3 added the manual runbook for one single live private test and its rollback/abort checklist.
+11. Phase 33D-3A added `HERMES_RAG_LLM_SINGLE_LIVE_TEST_APPROVED` plus exact approval phrase gating.
 
 ## Current Safety Posture
 
@@ -41,6 +43,7 @@
 - Phase 33D-1 tests use mock LLM and mock send adapters only.
 - Phase 33D-2 closeout does not start Discord, send Discord messages, call OpenRouter/LLM APIs, call embedding APIs, or execute external actions.
 - Phase 33D-3 does not authorize Codex/agent to run the live command; the user must run the single live private test directly in PowerShell.
+- Phase 33D-3A keeps the default runtime start blocked and logs only approval booleans, never the approval phrase value.
 
 ## Important Commands
 
@@ -93,6 +96,8 @@ $env:HERMES_LLM_DISCORD_SEND_ENABLED="false"
 $env:HERMES_LLM_PRIVATE_TEST_REPLY_ENABLED="false"
 $env:HERMES_DISCORD_RAG_ENABLED="false"
 $env:HERMES_LLM_RAG_ENABLED="false"
+$env:HERMES_RAG_LLM_SINGLE_LIVE_TEST_APPROVED="false"
+$env:HERMES_RAG_LLM_SINGLE_LIVE_TEST_APPROVAL_PHRASE=""
 ```
 
 ## Next Recommended Phase

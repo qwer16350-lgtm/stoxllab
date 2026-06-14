@@ -15,6 +15,12 @@
   "actual_llm_api_call": false,
   "embedding_api_called": false,
   "external_execution": false,
+  "single_live_test_manual_approval": {
+    "required": true,
+    "approved": false,
+    "approval_phrase_present": false,
+    "approval_phrase_value_logged": false
+  },
   "safety_assertions": {
     "api_key_value_logged": false,
     "raw_discord_ids_logged": false,

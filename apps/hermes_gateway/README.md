@@ -334,6 +334,12 @@ before-run checks, env gates, manual-only live command, expected logs, abort
 conditions, rollback commands, and Phase 33D-4 replay/audit closeout handoff.
 The runbook itself executes no live runtime.
 
+Phase 33D-3A adds an explicit two-part single live approval env gate. The
+runtime start remains blocked unless
+`HERMES_RAG_LLM_SINGLE_LIVE_TEST_APPROVED=true` and
+`HERMES_RAG_LLM_SINGLE_LIVE_TEST_APPROVAL_PHRASE` exactly matches the documented
+approval phrase. Reports log only booleans, not the phrase value.
+
 If the registry file is missing, generate it from the repo root:
 
 ```powershell

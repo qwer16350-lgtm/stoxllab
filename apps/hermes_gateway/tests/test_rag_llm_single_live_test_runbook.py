@@ -65,6 +65,8 @@ def test_required_env_gates_present() -> None:
         'HERMES_DISCORD_REPLY_MODE="private_test_only"',
         'HERMES_RAG_MODE="local_readonly"',
         'HERMES_RAG_LLM_REPLY_ENABLED="true"',
+        'HERMES_RAG_LLM_SINGLE_LIVE_TEST_APPROVED="true"',
+        'HERMES_RAG_LLM_SINGLE_LIVE_TEST_APPROVAL_PHRASE="I_APPROVE_ONE_PRIVATE_TEST_RAG_LLM_REPLY"',
         'HERMES_LLM_API_CALL_ENABLED="true"',
         'HERMES_LLM_PROVIDER="openrouter"',
         'HERMES_LLM_MODEL="openai/gpt-5.4-mini"',
@@ -75,6 +77,7 @@ def test_required_env_gates_present() -> None:
         assert_true(gate in text, f"Missing env gate: {gate}")
     assert_true("<PRIVATE_TEST_CHANNEL_ID>" in text, "Private test channel ID should be placeholder only")
     assert_true("<OPENROUTER_KEY_PLACEHOLDER>" in text, "OpenRouter key should be placeholder only")
+    assert_true("Do not persist it in `.env`" in text, "Approval phrase should not be persisted")
 
 
 def test_expected_logs_exactly_one_sent() -> None:
@@ -94,6 +97,8 @@ def test_abort_and_rollback_present() -> None:
         'HERMES_LLM_DISCORD_SEND_ENABLED="false"',
         'HERMES_LLM_PRIVATE_TEST_REPLY_ENABLED="false"',
         'HERMES_RAG_LLM_REPLY_ENABLED="false"',
+        'HERMES_RAG_LLM_SINGLE_LIVE_TEST_APPROVED="false"',
+        'HERMES_RAG_LLM_SINGLE_LIVE_TEST_APPROVAL_PHRASE=""',
     ):
         assert_true(rollback in text, f"Missing rollback gate: {rollback}")
     for abort in (
@@ -124,6 +129,7 @@ def test_no_live_execution_claims() -> None:
         "embedding API call in Phase 33D-3: false",
         "external execution in Phase 33D-3: false",
         "single live test execution: user-run PowerShell only",
+        "single live approval phrase value logged by runtime reports: false",
     ):
         assert_true(expected in text, f"Missing no-live safety statement: {expected}")
 

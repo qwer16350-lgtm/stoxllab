@@ -55,6 +55,27 @@ docs/STOXL_RAG_LLM_SINGLE_LIVE_TEST_RUNBOOK.md
 That runbook is for user-run PowerShell execution only. Codex/agent must not
 start the live runtime automatically.
 
+Phase 33D-3A adds an explicit two-part approval env gate. The runtime remains
+blocked unless both values are set in the user's PowerShell session:
+
+```powershell
+$env:HERMES_RAG_LLM_SINGLE_LIVE_TEST_APPROVED="true"
+$env:HERMES_RAG_LLM_SINGLE_LIVE_TEST_APPROVAL_PHRASE="I_APPROVE_ONE_PRIVATE_TEST_RAG_LLM_REPLY"
+```
+
+If either value is missing or wrong, the runtime returns:
+
+```json
+{
+  "started": false,
+  "blocked": true,
+  "reason": "live_execution_requires_separate_manual_approval",
+  "message_sent": false
+}
+```
+
+Reports expose only approval booleans. The approval phrase value is not logged.
+
 ## Rollback
 
 ```powershell
@@ -65,6 +86,8 @@ $env:HERMES_LLM_PRIVATE_TEST_REPLY_ENABLED="false"
 $env:HERMES_DISCORD_RAG_ENABLED="false"
 $env:HERMES_LLM_RAG_ENABLED="false"
 $env:HERMES_RAG_LLM_REPLY_ENABLED="false"
+$env:HERMES_RAG_LLM_SINGLE_LIVE_TEST_APPROVED="false"
+$env:HERMES_RAG_LLM_SINGLE_LIVE_TEST_APPROVAL_PHRASE=""
 ```
 
 ## Safety
@@ -77,3 +100,4 @@ $env:HERMES_RAG_LLM_REPLY_ENABLED="false"
 - Phase 33D-2 closeout runtime executed: false
 - Phase 33D-2 closeout ready for separately approved single live private test: true
 - Phase 33D-3 runbook live runtime executed by Codex/agent: false
+- Phase 33D-3A approval phrase value logged: false

@@ -86,6 +86,8 @@ $env:HERMES_RAG_LLM_REPLY_MODE="private_test_only"
 $env:HERMES_RAG_LLM_REQUIRE_RAG_PACKET="true"
 $env:HERMES_RAG_LLM_REQUIRE_CONTEXT_SAFETY="true"
 $env:HERMES_RAG_LLM_REQUIRE_OUTPUT_SAFETY="true"
+$env:HERMES_RAG_LLM_SINGLE_LIVE_TEST_APPROVED="true"
+$env:HERMES_RAG_LLM_SINGLE_LIVE_TEST_APPROVAL_PHRASE="I_APPROVE_ONE_PRIVATE_TEST_RAG_LLM_REPLY"
 
 $env:HERMES_LLM_ENABLED="true"
 $env:HERMES_LLM_API_CALL_ENABLED="true"
@@ -103,6 +105,8 @@ $env:HERMES_LLM_EXTERNAL_EXECUTION="false"
 ```
 
 The API key placeholder above must be replaced only in the user's local PowerShell session. Never paste the real value into this repository.
+
+The single live approval phrase is intentionally explicit. Keep it in the current PowerShell session only. Do not persist it in `.env`, do not commit it with local config, and turn it off immediately after the one-message test.
 
 ## 5. Actual Live Command
 
@@ -169,6 +173,8 @@ $env:HERMES_LLM_PRIVATE_TEST_REPLY_ENABLED="false"
 $env:HERMES_DISCORD_RAG_ENABLED="false"
 $env:HERMES_LLM_RAG_ENABLED="false"
 $env:HERMES_RAG_LLM_REPLY_ENABLED="false"
+$env:HERMES_RAG_LLM_SINGLE_LIVE_TEST_APPROVED="false"
+$env:HERMES_RAG_LLM_SINGLE_LIVE_TEST_APPROVAL_PHRASE=""
 ```
 
 ## 9. Abort Conditions
@@ -205,3 +211,4 @@ The closeout should verify the captured logs and replay/audit state. It should n
 - embedding API call in Phase 33D-3: false
 - external execution in Phase 33D-3: false
 - single live test execution: user-run PowerShell only
+- single live approval phrase value logged by runtime reports: false

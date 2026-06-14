@@ -18,8 +18,10 @@ from rag_llm_private_test_runtime import (
     build_rag_llm_private_test_runtime_report,
     build_rag_llm_reply_pipeline_plan,
     build_rag_llm_reply_send_payload,
+    is_single_live_test_manually_approved,
     record_rag_llm_reply_attempt,
     render_rag_llm_private_test_runtime_markdown,
+    run_discord_private_test_rag_llm_reply_bot,
     should_allow_rag_llm_private_reply,
 )
 
@@ -116,6 +118,15 @@ def send_success(_: dict) -> dict:
 
 def send_429(_: dict) -> dict:
     return {"message_sent": False, "error_type": "429 rate limit"}
+
+
+def approved_env(**overrides: object) -> dict[str, object]:
+    env = ready_env(
+        HERMES_RAG_LLM_SINGLE_LIVE_TEST_APPROVED="true",
+        HERMES_RAG_LLM_SINGLE_LIVE_TEST_APPROVAL_PHRASE="I_APPROVE_ONE_PRIVATE_TEST_RAG_LLM_REPLY",
+    )
+    env.update(overrides)
+    return env
 
 
 def test_preflight_default_blocked() -> None:
@@ -215,6 +226,68 @@ def test_report_cli_safe_and_markdown() -> None:
     assert_true("RAG+LLM Private Test Runtime" in render_rag_llm_private_test_runtime_markdown(report), "Markdown")
 
 
+def test_manual_approval_default_blocks_live_start() -> None:
+    result = run_discord_private_test_rag_llm_reply_bot(env=ready_env())
+    assert_true(result["started"] is False, "Default approval should not start")
+    assert_true(result["blocked"] is True, "Default approval should block")
+    assert_true(result["reason"] == "live_execution_requires_separate_manual_approval", "Manual approval reason should remain")
+    approval = result["single_live_test_manual_approval"]
+    assert_true(approval["required"] is True, "Approval required")
+    assert_true(approval["approved"] is False, "Approval should be false")
+    assert_true(approval["approval_phrase_value_logged"] is False, "Approval phrase value should not be logged")
+
+
+def test_manual_approval_bad_combinations_block() -> None:
+    cases = [
+        ready_env(HERMES_RAG_LLM_SINGLE_LIVE_TEST_APPROVED="true"),
+        ready_env(HERMES_RAG_LLM_SINGLE_LIVE_TEST_APPROVED="true", HERMES_RAG_LLM_SINGLE_LIVE_TEST_APPROVAL_PHRASE="WRONG"),
+        ready_env(HERMES_RAG_LLM_SINGLE_LIVE_TEST_APPROVED="false", HERMES_RAG_LLM_SINGLE_LIVE_TEST_APPROVAL_PHRASE="I_APPROVE_ONE_PRIVATE_TEST_RAG_LLM_REPLY"),
+    ]
+    for env in cases:
+        assert_true(is_single_live_test_manually_approved(env) is False, "Bad approval combination should be false")
+        result = run_discord_private_test_rag_llm_reply_bot(env=env)
+        assert_true(result["reason"] == "live_execution_requires_separate_manual_approval", "Bad approval should block")
+        assert_true(result["message_sent"] is False, "No message sent")
+
+
+def test_manual_approval_exact_phrase_allows_mock_start_path() -> None:
+    called: dict[str, object] = {"value": False}
+
+    def mock_start(root: str | Path | None, env: dict[str, object] | None, preflight: dict[str, object]) -> dict[str, object]:
+        called["value"] = True
+        assert_true(preflight["ready"] is True, "Preflight must be ready before start boundary")
+        return {
+            "started": True,
+            "blocked": False,
+            "reason": "mock_runtime_start_path_reached",
+            "message_sent": False,
+            "actual_discord_send": False,
+            "actual_llm_api_call": False,
+            "embedding_api_called": False,
+            "external_execution": False,
+        }
+
+    result = run_discord_private_test_rag_llm_reply_bot(env=approved_env(), start_adapter=mock_start)
+    assert_true(called["value"] is True, "Approved path should reach mock start adapter")
+    assert_true(result["started"] is True, "Mock start path should report started")
+    assert_true(result["blocked"] is False, "Mock start path should not block")
+    assert_true(result["message_sent"] is False, "No actual message sent in test")
+    assert_true(result["actual_discord_send"] is False, "No actual Discord send in test")
+    assert_true(result["actual_llm_api_call"] is False, "No actual LLM API call in test")
+    assert_true(result["single_live_test_manual_approval"]["approved"] is True, "Manual approval should be true")
+
+
+def test_approval_phrase_value_not_logged() -> None:
+    report = build_rag_llm_private_test_runtime_report(env=approved_env())
+    text = json.dumps(report, ensure_ascii=False)
+    assert_true("I_APPROVE_ONE_PRIVATE_TEST_RAG_LLM_REPLY" not in text, "Approval phrase value should not be logged")
+    approval = report["single_live_test_manual_approval"]
+    assert_true(approval["required"] is True, "Approval required")
+    assert_true(approval["approved"] is True, "Approved boolean should be present")
+    assert_true(approval["approval_phrase_present"] is True, "Phrase presence boolean should be present")
+    assert_true(approval["approval_phrase_value_logged"] is False, "Phrase value should not be logged")
+
+
 def main() -> int:
     tests = [
         test_preflight_default_blocked,
@@ -228,6 +301,10 @@ def main() -> int:
         test_success_mock_path_sends_once_and_audit_temp,
         test_send_exception_opens_circuit_breaker,
         test_report_cli_safe_and_markdown,
+        test_manual_approval_default_blocks_live_start,
+        test_manual_approval_bad_combinations_block,
+        test_manual_approval_exact_phrase_allows_mock_start_path,
+        test_approval_phrase_value_not_logged,
     ]
     for test in tests:
         test()

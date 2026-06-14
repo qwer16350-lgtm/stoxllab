@@ -13,7 +13,7 @@ import os
 import re
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Mapping
 
 from llm_safety_policy import build_llm_safety_policy, check_llm_output_allowed
 from private_test_reply_safety import (
@@ -35,6 +35,7 @@ LONG_ID_RE = re.compile(r"\b\d{15,25}\b")
 SECRET_RE = re.compile(r"(?i)(sk-[a-z0-9_-]+|xoxb-[a-z0-9_-]+|mfa\.|bearer\s+\S+|api[_ -]?key\s*[:=]\s*\S+|token\s*[:=]\s*\S+|password\s*[:=]\s*\S+)")
 DEFAULT_SOURCE = "operation"
 DEFAULT_QUERY = "STOXL brand tone"
+SINGLE_LIVE_TEST_APPROVAL_PHRASE = "I_APPROVE_ONE_PRIVATE_TEST_RAG_LLM_REPLY"
 
 
 def utc_now() -> str:
@@ -106,6 +107,22 @@ def _base_decision(reason: str, source: str = DEFAULT_SOURCE, source_valid: bool
     }
 
 
+def build_single_live_test_manual_approval(env: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    source = env if env is not None else os.environ
+    approved_flag = str(source.get("HERMES_RAG_LLM_SINGLE_LIVE_TEST_APPROVED", "") or "").strip().lower()
+    approval_phrase = str(source.get("HERMES_RAG_LLM_SINGLE_LIVE_TEST_APPROVAL_PHRASE", "") or "").strip()
+    return {
+        "required": True,
+        "approved": approved_flag == "true" and approval_phrase == SINGLE_LIVE_TEST_APPROVAL_PHRASE,
+        "approval_phrase_present": bool(approval_phrase),
+        "approval_phrase_value_logged": False,
+    }
+
+
+def is_single_live_test_manually_approved(env: Mapping[str, Any] | None = None) -> bool:
+    return bool(build_single_live_test_manual_approval(env).get("approved"))
+
+
 def build_rag_llm_private_reply_preflight(env: dict[str, Any] | None = None, source: str = DEFAULT_SOURCE) -> dict[str, Any]:
     validation = validate_rag_source_name(source)
     checks = [
@@ -144,6 +161,7 @@ def build_rag_llm_private_reply_preflight(env: dict[str, Any] | None = None, sou
         "rag_mode": _value(env, "HERMES_RAG_MODE", "local_readonly"),
         "provider": _value(env, "HERMES_LLM_PROVIDER"),
         "model_configured": bool(_value(env, "HERMES_LLM_MODEL")),
+        "single_live_test_manual_approval": build_single_live_test_manual_approval(env),
         "actual_discord_send": False,
         "actual_llm_api_call": False,
         "embedding_api_called": False,
@@ -290,6 +308,7 @@ def record_rag_llm_reply_attempt(attempt: dict[str, Any], root: str | Path | Non
 
 def build_rag_llm_private_test_runtime_report(root: str | Path | None = None, env: dict[str, Any] | None = None) -> dict[str, Any]:
     preflight = build_rag_llm_private_reply_preflight(env, source=DEFAULT_SOURCE)
+    manual_approval = build_single_live_test_manual_approval(env)
     report = {
         "report_type": "rag_llm_private_test_runtime_report",
         "version": VERSION,
@@ -303,6 +322,7 @@ def build_rag_llm_private_test_runtime_report(root: str | Path | None = None, en
         "actual_llm_api_call": False,
         "embedding_api_called": False,
         "external_execution": False,
+        "single_live_test_manual_approval": manual_approval,
         "preflight": preflight,
         "safety_assertions": _safe_assertions(),
     }
@@ -310,8 +330,13 @@ def build_rag_llm_private_test_runtime_report(root: str | Path | None = None, en
     return report
 
 
-def run_discord_private_test_rag_llm_reply_bot(root: str | Path | None = None, env: dict[str, Any] | None = None) -> dict[str, Any]:
+def run_discord_private_test_rag_llm_reply_bot(
+    root: str | Path | None = None,
+    env: dict[str, Any] | None = None,
+    start_adapter: Callable[[str | Path | None, dict[str, Any] | None, dict[str, Any]], dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     preflight = build_rag_llm_private_reply_preflight(env, source=DEFAULT_SOURCE)
+    manual_approval = build_single_live_test_manual_approval(env)
     if not preflight.get("ready"):
         return {
             "started": False,
@@ -319,21 +344,46 @@ def run_discord_private_test_rag_llm_reply_bot(root: str | Path | None = None, e
             "reason": "rag_llm_private_test_runtime_preflight_failed:" + str(preflight.get("blocked_reasons", ["unknown"])[0]),
             "message_sent": False,
             "token_value_logged": False,
+            "single_live_test_manual_approval": manual_approval,
             "preflight": preflight,
             "safety_assertions": _safe_assertions(),
         }
-    return {
-        "started": False,
-        "blocked": True,
-        "reason": "live_execution_requires_separate_manual_approval",
-        "message_sent": False,
-        "token_value_logged": False,
-        "preflight": preflight,
-        "safety_assertions": _safe_assertions(),
-    }
+    if not manual_approval.get("approved"):
+        return {
+            "started": False,
+            "blocked": True,
+            "reason": "live_execution_requires_separate_manual_approval",
+            "message_sent": False,
+            "token_value_logged": False,
+            "single_live_test_manual_approval": manual_approval,
+            "preflight": preflight,
+            "safety_assertions": _safe_assertions(),
+        }
+    if start_adapter is None:
+        return {
+            "started": False,
+            "blocked": True,
+            "reason": "rag_llm_private_test_runtime_start_adapter_missing",
+            "message_sent": False,
+            "token_value_logged": False,
+            "single_live_test_manual_approval": manual_approval,
+            "preflight": preflight,
+            "safety_assertions": _safe_assertions(),
+        }
+    result = start_adapter(root, env, preflight)
+    result.setdefault("started", False)
+    result.setdefault("blocked", False)
+    result.setdefault("message_sent", False)
+    result.setdefault("token_value_logged", False)
+    result["single_live_test_manual_approval"] = manual_approval
+    result["preflight"] = preflight
+    result["safety_assertions"] = _safe_assertions()
+    assert_runtime_report_safe(result)
+    return result
 
 
 def render_rag_llm_private_test_runtime_markdown(report: dict[str, Any]) -> str:
+    approval = report.get("single_live_test_manual_approval", {})
     return "\n".join(
         [
             "# STOXL RAG+LLM Private Test Runtime",
@@ -346,6 +396,10 @@ def render_rag_llm_private_test_runtime_markdown(report: dict[str, Any]) -> str:
             "- Actual LLM API call: false",
             "- Embedding API called: false",
             "- External execution: false",
+            f"- Single live manual approval required: {str(approval.get('required', True)).lower()}",
+            f"- Single live manual approval approved: {str(approval.get('approved', False)).lower()}",
+            f"- Approval phrase present: {str(approval.get('approval_phrase_present', False)).lower()}",
+            "- Approval phrase value logged: false",
             f"- Blocked reasons: {', '.join(report.get('blocked_reasons', [])) or 'none'}",
         ]
     ) + "\n"
