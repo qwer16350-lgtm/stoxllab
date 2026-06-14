@@ -1,0 +1,39 @@
+{
+  "report_type": "rag_preflight_report",
+  "version": "phase33a_no_retrieval",
+  "ready_for_rag_retrieval": false,
+  "rag_enabled": false,
+  "retrieval_executed": false,
+  "embedding_api_called": false,
+  "llm_api_called": false,
+  "discord_message_sent": false,
+  "external_execution": false,
+  "canonical_sources": ["marketing", "operation", "strategy", "brand", "archive"],
+  "source_validation": {
+    "operation": {
+      "valid": true,
+      "source": "operation",
+      "canonical_source": "operation",
+      "warnings": []
+    },
+    "operations": {
+      "valid": false,
+      "source": "operations",
+      "canonical_source": null,
+      "warnings": ["use_operation_not_operations"],
+      "suggested_source": "operation"
+    }
+  },
+  "blocked_reasons": ["rag_disabled_by_phase33a"],
+  "ready_for_phase33b_local_readonly_retrieval": true,
+  "safety_assertions": {
+    "api_key_value_logged": false,
+    "raw_discord_ids_logged": false,
+    "rag_called": false,
+    "retrieval_executed": false,
+    "embedding_called": false,
+    "llm_called": false,
+    "discord_message_sent": false,
+    "external_execution": false
+  }
+}

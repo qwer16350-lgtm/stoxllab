@@ -1,0 +1,79 @@
+# STOXL Hermes Gateway Handoff - 2026-06-13
+
+## Current Milestone
+
+- Phase 32D closeout replay/audit is complete.
+- Phase 33A RAG preflight is available.
+- Phase 33B local read-only RAG retrieval is available.
+- Phase 33C RAG response packet generation is available.
+- Phase 33D is plan-only and is not implemented.
+
+## Completed Chain
+
+1. Discord read-only and private-test-only safety boundaries were separated.
+2. Private test placeholder replies were guarded against public channel use, self-message loops, duplicates, cooldown issues, and circuit breaker failures.
+3. LLM dry calls, LLM response packets, and guarded private-test-only LLM reply reports were added.
+4. Phase 32D closeout replay/audit confirmed local verification without live Discord send or LLM API calls.
+5. Phase 33A-C added local RAG readiness, local read-only retrieval, and RAG response packets.
+
+## Current Safety Posture
+
+- Discord live runtime was not started in Phase 33A-C.
+- Discord messages are not sent by RAG preflight, retrieval, or response packet flows.
+- OpenRouter/LLM API calls are not made by Phase 33A-C.
+- Embedding APIs are not called.
+- External DB/RAG source roots are not read.
+- RAG ingest, indexing, vector DB creation, and external vector service connections are not performed.
+- External posting, submission, email, contract, payment, or approval execution is not performed.
+- Raw token/API key values and raw Discord IDs must not be printed.
+
+## Important Commands
+
+```powershell
+python apps\hermes_gateway\cli.py --rag-preflight-report --json
+python apps\hermes_gateway\cli.py --rag-preflight-report --markdown
+python apps\hermes_gateway\cli.py --rag-local-retrieval-report --json
+python apps\hermes_gateway\cli.py --rag-local-retrieval-report --markdown
+python apps\hermes_gateway\cli.py --rag-response-packet-report --json
+python apps\hermes_gateway\cli.py --rag-response-packet-report --markdown
+python apps\hermes_gateway\cli.py --operations-viewer --json
+```
+
+```powershell
+python apps\hermes_gateway\tests\test_rag_preflight.py
+python apps\hermes_gateway\tests\test_rag_local_retrieval.py
+python apps\hermes_gateway\tests\test_rag_response_packet.py
+python apps\hermes_gateway\tests\test_llm_private_test_reply_replay.py
+python apps\hermes_gateway\tests\test_llm_private_test_reply.py
+python apps\hermes_gateway\tests\test_private_test_reply.py
+python apps\hermes_gateway\tests\test_private_test_reply_replay.py
+python apps\hermes_gateway\tests\test_private_test_reply_safety.py
+python apps\hermes_gateway\tests\test_llm_response_packet.py
+python apps\hermes_gateway\tests\test_llm_dry_call.py
+python scripts\validate_stoxl_configs.py
+```
+
+## Live Gates To Keep Off
+
+```powershell
+$env:HERMES_DISCORD_SEND_MESSAGES="false"
+$env:HERMES_DISCORD_PRIVATE_TEST_REPLY="false"
+$env:HERMES_LLM_DISCORD_SEND_ENABLED="false"
+$env:HERMES_LLM_PRIVATE_TEST_REPLY_ENABLED="false"
+$env:HERMES_DISCORD_RAG_ENABLED="false"
+$env:HERMES_LLM_RAG_ENABLED="false"
+```
+
+## Next Recommended Phase
+
+Phase 33D should remain a separate implementation phase. It should only begin
+after human review of:
+
+- source allow-list behavior
+- private test channel ID gating
+- retrieval context size limits
+- response packet safety
+- LLM output safety
+- one-message-per-human-message send limits
+
+Until then, RAG+LLM private test reply is not implemented.

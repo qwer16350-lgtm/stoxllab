@@ -1,0 +1,32 @@
+{
+  "report_type": "rag_local_retrieval_report",
+  "version": "phase33b_local_readonly_no_embedding",
+  "query_preview": "STOXL brand tone",
+  "source": "operation",
+  "source_valid": true,
+  "retrieval_executed": true,
+  "local_read_only": true,
+  "embedding_api_called": false,
+  "llm_api_called": false,
+  "discord_message_sent": false,
+  "external_execution": false,
+  "documents_found": 0,
+  "documents_returned": 0,
+  "documents_skipped": 0,
+  "missing_source_folder_warning": true,
+  "results": [],
+  "limits": {
+    "max_files": 20,
+    "max_chars_per_file": 4000,
+    "allowed_extensions": [".txt", ".md", ".json", ".yaml", ".yml"]
+  },
+  "safety_assertions": {
+    "api_key_value_logged": false,
+    "raw_discord_ids_logged": false,
+    "embedding_called": false,
+    "llm_called": false,
+    "discord_message_sent": false,
+    "external_execution": false,
+    "write_performed": false
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "packet_type": "rag_response_packet",
+  "version": "phase33c_no_llm_no_discord_send",
+  "source_report_type": "rag_local_retrieval_report",
+  "query_preview": "STOXL brand tone",
+  "source": "operation",
+  "source_valid": true,
+  "response_available": true,
+  "retrieval_summary": {
+    "documents_found": 0,
+    "documents_returned": 0,
+    "documents_skipped": 0,
+    "missing_source_folder_warning": true
+  },
+  "citations": [],
+  "review_notes": [
+    "Phase 33C does not call LLM.",
+    "Phase 33C does not send Discord messages.",
+    "Human review is required before any use."
+  ],
+  "human_review": {
+    "required": true,
+    "allowed_actions": ["review_only", "manual_edit"],
+    "disallowed_actions": ["auto_reply", "public_publish", "external_execution", "discord_send"]
+  },
+  "embedding_api_called": false,
+  "llm_api_called": false,
+  "discord_message_sent": false,
+  "external_execution": false,
+  "safety_assertions": {
+    "api_key_value_logged": false,
+    "raw_discord_ids_logged": false,
+    "embedding_called": false,
+    "llm_called": false,
+    "discord_message_sent": false,
+    "external_execution": false
+  }
+}

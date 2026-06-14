@@ -58,6 +58,9 @@ from operations_packet_viewer import (
 from private_test_reply import build_private_test_reply_report, render_private_test_reply_report_markdown
 from private_test_reply_replay import build_private_test_reply_replay_report, render_private_test_reply_replay_markdown
 from private_test_reply_safety import build_private_test_reply_safety_report, render_private_test_reply_safety_report_markdown
+from rag_local_retrieval import render_rag_local_retrieval_markdown, run_rag_local_retrieval
+from rag_preflight import build_rag_preflight_report, render_rag_preflight_markdown
+from rag_response_packet import build_rag_response_packet_report, render_rag_response_packet_markdown
 from persistence import get_default_log_root
 from readonly_runtime_stub import build_readonly_runtime_stub_report
 from live_capture_stub import build_live_capture_stub_report
@@ -236,6 +239,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--llm-response-packet-live-closeout", action="store_true", help="Print Phase 32C-LIVE closeout from latest LLM dry call artifact.")
     parser.add_argument("--llm-private-test-reply-report", action="store_true", help="Print Phase 32D guarded private-test-only LLM reply preflight.")
     parser.add_argument("--llm-private-test-reply-replay-report", action="store_true", help="Print Phase 32D closeout replay/audit report without live send.")
+    parser.add_argument("--rag-preflight-report", action="store_true", help="Print Phase 33A RAG preflight without retrieval.")
+    parser.add_argument("--rag-local-retrieval-report", action="store_true", help="Print Phase 33B local read-only RAG retrieval report.")
+    parser.add_argument("--rag-response-packet-report", action="store_true", help="Print Phase 33C RAG response packet without LLM or Discord send.")
+    parser.add_argument("--source", default="operation", help="RAG source for local retrieval reports.")
+    parser.add_argument("--query", default="STOXL brand tone", help="RAG query preview for local retrieval reports.")
     parser.add_argument("--allow-llm-api-call", action="store_true", help="Allow Phase 32B to attempt one gated provider call when env gates pass.")
     parser.add_argument("--write-artifact", action="store_true", help="Write supported local-only report artifacts.")
     parser.add_argument("--latest", action="store_true", help="Use latest local artifact for supported reports.")
@@ -742,6 +750,46 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- message_sent: {output.get('message_sent')}")
         return 0
 
+    if args.rag_preflight_report:
+        output = build_rag_preflight_report()
+        if args.markdown:
+            print(render_rag_preflight_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL RAG preflight")
+            print(f"- ready_for_rag_retrieval: {output.get('ready_for_rag_retrieval')}")
+            print(f"- ready_for_phase33b_local_readonly_retrieval: {output.get('ready_for_phase33b_local_readonly_retrieval')}")
+        return 0
+
+    if args.rag_local_retrieval_report:
+        cfg = load_config(Path(__file__).resolve())
+        output = run_rag_local_retrieval(cfg.repo_root, source=args.source, query=args.query)
+        if args.markdown:
+            print(render_rag_local_retrieval_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL RAG local retrieval")
+            print(f"- source: {output.get('source')}")
+            print(f"- documents_returned: {output.get('documents_returned')}")
+            print(f"- embedding_api_called: {output.get('embedding_api_called')}")
+        return 0
+
+    if args.rag_response_packet_report:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_rag_response_packet_report(cfg.repo_root, source=args.source, query=args.query)
+        if args.markdown:
+            print(render_rag_response_packet_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL RAG response packet")
+            print(f"- source: {output.get('source')}")
+            print(f"- response_available: {output.get('response_available')}")
+            print(f"- llm_api_called: {output.get('llm_api_called')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -883,6 +931,9 @@ def main(argv: list[str] | None = None) -> int:
         or args.llm_response_packet_live_closeout
         or args.llm_private_test_reply_report
         or args.llm_private_test_reply_replay_report
+        or args.rag_preflight_report
+        or args.rag_local_retrieval_report
+        or args.rag_response_packet_report
         or args.allow_llm_api_call
         or args.write_artifact
         or args.latest
@@ -902,6 +953,8 @@ def main(argv: list[str] | None = None) -> int:
         or args.agent
         or args.decision
         or args.event_id
+        or args.source != "operation"
+        or args.query != "STOXL brand tone"
     ):
         parser.error("Replay/export/readiness options require the matching mode option.")
     if args.event:

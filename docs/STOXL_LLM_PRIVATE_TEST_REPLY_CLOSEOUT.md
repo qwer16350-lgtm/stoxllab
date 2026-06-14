@@ -82,5 +82,19 @@ The operations viewer includes:
 - Phase 33A: RAG preflight only
 - Phase 33B: RAG read-only local retrieval
 - Phase 33C: RAG response packet, no Discord send
+- Phase 33D: guarded RAG+LLM private test reply, plan-only until separate review
 
 Public/team LLM replies remain forbidden after Phase 32D.
+
+## RAG Follow-up Boundary
+
+The next safe RAG flow is limited to:
+
+- source registry and preflight checks
+- repo-local read-only retrieval from `knowledge/<source>`
+- response packet generation for human review
+- operations viewer summaries
+
+The RAG follow-up does not implement RAG+LLM Discord reply, does not read
+external/NAS RAG roots, does not call embedding APIs, and does not send Discord
+messages. Public/team channel replies remain forbidden.

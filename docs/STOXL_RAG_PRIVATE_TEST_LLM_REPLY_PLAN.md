@@ -1,0 +1,55 @@
+# STOXL RAG Private Test LLM Reply Plan - Phase 33D
+
+## Goal
+
+- guarded private test RAG+LLM reply
+- private test channel only
+- source validation required
+- local retrieval only
+- retrieved context size cap
+- RAG response packet required
+- LLM output safety required
+- Discord send only after all gates
+
+## Prerequisites
+
+- Phase 33A RAG Preflight complete
+- Phase 33B Local Read-only Retrieval complete
+- Phase 33C RAG Response Packet complete
+- Phase 32D private test LLM reply safety complete
+
+## Forbidden
+
+- public/team channel reply
+- channel-name-based allow
+- `source=operations`
+- external execution
+- write/update/delete
+- unbounded context
+- raw Discord ID logging
+- token/API key logging
+
+## Future Gates
+
+- `HERMES_RAG_ENABLED=true`
+- `HERMES_RAG_MODE=local_readonly`
+- `HERMES_RAG_ALLOWED_SOURCES=marketing,operation,strategy,brand,archive`
+- `HERMES_RAG_PRIVATE_TEST_ONLY=true`
+- `HERMES_RAG_LLM_REPLY_ENABLED=true`
+- `HERMES_RAG_REQUIRE_RESPONSE_PACKET=true`
+- `HERMES_LLM_PRIVATE_TEST_REPLY_ENABLED=true`
+- `HERMES_DISCORD_PRIVATE_TEST_CHANNEL_ID` present
+
+## Future Tests
+
+- invalid source blocks before retrieval
+- public channel blocks before retrieval
+- self/bot blocks before retrieval
+- retrieval result too large blocks before LLM
+- output safety blocked prevents send
+- packet safety failure prevents send
+- exactly one send in private test channel
+- self echo skipped
+
+Phase 33D is not implemented in this phase.
+This document is a plan only.

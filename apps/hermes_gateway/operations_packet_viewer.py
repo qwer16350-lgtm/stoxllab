@@ -11,6 +11,9 @@ from typing import Any
 from private_test_reply_replay import build_private_test_reply_replay_report
 from llm_private_test_reply_replay import build_llm_private_test_reply_replay_report
 from llm_response_packet import llm_response_packet_preview
+from rag_preflight import build_rag_preflight_report
+from rag_local_retrieval import run_rag_local_retrieval
+from rag_response_packet import build_rag_response_packet
 
 
 VERSION = "phase31a_local_viewer"
@@ -316,6 +319,9 @@ def build_operations_packet_viewer_report(
     replay_summary = replay_report.get("summary", {})
     llm_reply_closeout = build_llm_private_test_reply_replay_report()
     llm_reply_summary = llm_reply_closeout.get("summary", {})
+    rag_preflight = build_rag_preflight_report()
+    rag_retrieval = run_rag_local_retrieval(root=root, source="operation", query="STOXL brand tone")
+    rag_packet = build_rag_response_packet(rag_retrieval)
     report = {
         "report_type": "operations_packet_viewer",
         "version": VERSION,
@@ -352,6 +358,20 @@ def build_operations_packet_viewer_report(
             "llm_api_called_by_replay": False,
             "discord_send_by_replay": False,
             "ready_for_phase33a_rag_preflight": bool(llm_reply_closeout.get("ready_for_phase33a_rag_preflight")),
+        },
+        "rag": {
+            "preflight_available": True,
+            "local_retrieval_available": True,
+            "response_packet_available": True,
+            "ready_for_phase33b_local_readonly_retrieval": bool(rag_preflight.get("ready_for_phase33b_local_readonly_retrieval")),
+            "ready_for_phase33c_rag_response_packet": bool(rag_retrieval.get("ready_for_phase33c_rag_response_packet")),
+            "ready_for_phase33d_plan_only": True,
+            "embedding_called": False,
+            "llm_called": False,
+            "discord_message_sent": False,
+            "external_execution": False,
+            "documents_returned": rag_retrieval.get("documents_returned", 0),
+            "response_available": bool(rag_packet.get("response_available")),
         },
         "daily_manifest_summary": load_daily_manifest(root=root, date=date),
         "filters": {
@@ -413,6 +433,7 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
         )
     private_summary = report.get("private_test_reply_summary", {})
     llm_reply_closeout = report.get("llm_private_test_reply_closeout", {})
+    rag = report.get("rag", {})
     llm_summary = report.get("latest_llm_response_packet", {})
     lines.extend(
         [
@@ -440,6 +461,15 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
             f"- Public channel blocked: {llm_reply_closeout.get('public_channel_blocked', 0)}",
             "- Replay Discord send: false",
             "- Replay LLM API call: false",
+            "",
+            "## RAG",
+            f"- Preflight: {'available' if rag.get('preflight_available') else 'unavailable'}",
+            f"- Local retrieval: {'available' if rag.get('local_retrieval_available') else 'unavailable'}",
+            f"- Response packet: {'available' if rag.get('response_packet_available') else 'unavailable'}",
+            f"- Embedding called: {str(rag.get('embedding_called', False)).lower()}",
+            f"- LLM called: {str(rag.get('llm_called', False)).lower()}",
+            f"- Discord sent: {str(rag.get('discord_message_sent', False)).lower()}",
+            f"- External execution: {str(rag.get('external_execution', False)).lower()}",
         ]
     )
     safety = report.get("safety_assertions", {})
