@@ -53,3 +53,11 @@
 
 Phase 33D is not implemented in this phase.
 This document is a plan only.
+
+## Phase 33D-safe Scaffold Status
+
+The safe scaffold adds preflight, context safety, prompt envelope preview,
+would-send preview, and replay/audit reports. It still does not implement live
+RAG+LLM Discord reply.
+
+Live implementation requires a separate manual approval and review phase.

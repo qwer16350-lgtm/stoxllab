@@ -14,6 +14,11 @@ from llm_response_packet import llm_response_packet_preview
 from rag_preflight import build_rag_preflight_report
 from rag_local_retrieval import run_rag_local_retrieval
 from rag_response_packet import build_rag_response_packet
+from rag_context_safety import build_rag_context_safety_report
+from rag_llm_private_test_reply import build_rag_llm_private_test_reply_preflight
+from rag_llm_prompt_envelope import build_rag_llm_prompt_envelope
+from rag_llm_would_send_preview import build_rag_llm_would_send_preview
+from rag_llm_private_test_reply_replay import build_rag_llm_private_test_reply_replay_report
 
 
 VERSION = "phase31a_local_viewer"
@@ -322,6 +327,11 @@ def build_operations_packet_viewer_report(
     rag_preflight = build_rag_preflight_report()
     rag_retrieval = run_rag_local_retrieval(root=root, source="operation", query="STOXL brand tone")
     rag_packet = build_rag_response_packet(rag_retrieval)
+    rag_context = build_rag_context_safety_report(rag_retrieval)
+    rag_llm_preflight = build_rag_llm_private_test_reply_preflight(root=str(_repo(root)))
+    rag_llm_envelope = build_rag_llm_prompt_envelope(root=str(_repo(root)))
+    rag_llm_preview = build_rag_llm_would_send_preview(root=str(_repo(root)))
+    rag_llm_replay = build_rag_llm_private_test_reply_replay_report(root=str(_repo(root)))
     report = {
         "report_type": "operations_packet_viewer",
         "version": VERSION,
@@ -372,6 +382,18 @@ def build_operations_packet_viewer_report(
             "external_execution": False,
             "documents_returned": rag_retrieval.get("documents_returned", 0),
             "response_available": bool(rag_packet.get("response_available")),
+        },
+        "rag_llm_private_test_scaffold": {
+            "preflight_available": bool(rag_llm_preflight),
+            "context_safety_available": bool(rag_context),
+            "prompt_envelope_available": bool(rag_llm_envelope),
+            "would_send_preview_available": bool(rag_llm_preview),
+            "replay_available": bool(rag_llm_replay),
+            "actual_discord_send": False,
+            "actual_llm_api_call": False,
+            "embedding_api_call": False,
+            "external_execution": False,
+            "ready_for_phase33d_live_review": bool(rag_llm_replay.get("ready_for_phase33d_live_review")),
         },
         "daily_manifest_summary": load_daily_manifest(root=root, date=date),
         "filters": {
@@ -434,6 +456,7 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
     private_summary = report.get("private_test_reply_summary", {})
     llm_reply_closeout = report.get("llm_private_test_reply_closeout", {})
     rag = report.get("rag", {})
+    rag_llm_scaffold = report.get("rag_llm_private_test_scaffold", {})
     llm_summary = report.get("latest_llm_response_packet", {})
     lines.extend(
         [
@@ -470,6 +493,17 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
             f"- LLM called: {str(rag.get('llm_called', False)).lower()}",
             f"- Discord sent: {str(rag.get('discord_message_sent', False)).lower()}",
             f"- External execution: {str(rag.get('external_execution', False)).lower()}",
+            "",
+            "## RAG+LLM Private Test Scaffold",
+            f"- Preflight: {'available' if rag_llm_scaffold.get('preflight_available') else 'unavailable'}",
+            f"- Context safety: {'available' if rag_llm_scaffold.get('context_safety_available') else 'unavailable'}",
+            f"- Prompt envelope: {'available' if rag_llm_scaffold.get('prompt_envelope_available') else 'unavailable'}",
+            f"- Would-send: {'available' if rag_llm_scaffold.get('would_send_preview_available') else 'unavailable'}",
+            f"- Replay: {'available' if rag_llm_scaffold.get('replay_available') else 'unavailable'}",
+            f"- Actual Discord send: {str(rag_llm_scaffold.get('actual_discord_send', False)).lower()}",
+            f"- Actual LLM API call: {str(rag_llm_scaffold.get('actual_llm_api_call', False)).lower()}",
+            f"- Embedding API call: {str(rag_llm_scaffold.get('embedding_api_call', False)).lower()}",
+            f"- External execution: {str(rag_llm_scaffold.get('external_execution', False)).lower()}",
         ]
     )
     safety = report.get("safety_assertions", {})

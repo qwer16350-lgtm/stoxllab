@@ -61,6 +61,10 @@ from private_test_reply_safety import build_private_test_reply_safety_report, re
 from rag_local_retrieval import render_rag_local_retrieval_markdown, run_rag_local_retrieval
 from rag_preflight import build_rag_preflight_report, render_rag_preflight_markdown
 from rag_response_packet import build_rag_response_packet_report, render_rag_response_packet_markdown
+from rag_llm_private_test_reply import build_rag_llm_private_test_reply_preflight, render_rag_llm_private_test_reply_markdown
+from rag_llm_prompt_envelope import build_rag_llm_prompt_envelope, render_rag_llm_prompt_envelope_markdown
+from rag_llm_would_send_preview import build_rag_llm_would_send_preview, render_rag_llm_would_send_preview_markdown
+from rag_llm_private_test_reply_replay import build_rag_llm_private_test_reply_replay_report, render_rag_llm_private_test_reply_replay_markdown
 from persistence import get_default_log_root
 from readonly_runtime_stub import build_readonly_runtime_stub_report
 from live_capture_stub import build_live_capture_stub_report
@@ -242,6 +246,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--rag-preflight-report", action="store_true", help="Print Phase 33A RAG preflight without retrieval.")
     parser.add_argument("--rag-local-retrieval-report", action="store_true", help="Print Phase 33B local read-only RAG retrieval report.")
     parser.add_argument("--rag-response-packet-report", action="store_true", help="Print Phase 33C RAG response packet without LLM or Discord send.")
+    parser.add_argument("--rag-llm-private-test-reply-report", action="store_true", help="Print Phase 33D-safe RAG+LLM private test reply preflight.")
+    parser.add_argument("--rag-llm-prompt-envelope-report", action="store_true", help="Print Phase 33D-safe RAG+LLM prompt envelope preview.")
+    parser.add_argument("--rag-llm-would-send-preview", action="store_true", help="Print Phase 33D-safe RAG+LLM would-send preview.")
+    parser.add_argument("--rag-llm-private-test-replay-report", action="store_true", help="Print Phase 33D-safe RAG+LLM private test replay/audit report.")
     parser.add_argument("--source", default="operation", help="RAG source for local retrieval reports.")
     parser.add_argument("--query", default="STOXL brand tone", help="RAG query preview for local retrieval reports.")
     parser.add_argument("--allow-llm-api-call", action="store_true", help="Allow Phase 32B to attempt one gated provider call when env gates pass.")
@@ -790,6 +798,62 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- llm_api_called: {output.get('llm_api_called')}")
         return 0
 
+    if args.rag_llm_private_test_reply_report:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_rag_llm_private_test_reply_preflight(root=str(cfg.repo_root), source=args.source, query=args.query)
+        if args.markdown:
+            print(render_rag_llm_private_test_reply_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL RAG+LLM private test reply preflight")
+            print(f"- ready: {output.get('ready')}")
+            print(f"- blocked: {output.get('blocked')}")
+            print(f"- live_implementation: {output.get('ready_for_phase33d_live_implementation')}")
+        return 0
+
+    if args.rag_llm_prompt_envelope_report:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_rag_llm_prompt_envelope(root=str(cfg.repo_root), source=args.source, query=args.query, agent_route_candidate=args.agent or "marin")
+        if args.markdown:
+            print(render_rag_llm_prompt_envelope_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL RAG+LLM prompt envelope")
+            print(f"- source: {output.get('source')}")
+            print(f"- context_safety_allowed: {output.get('context_safety_allowed')}")
+            print(f"- llm_api_called: {output.get('llm_api_called')}")
+        return 0
+
+    if args.rag_llm_would_send_preview:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_rag_llm_would_send_preview(root=str(cfg.repo_root), source=args.source, query=args.query)
+        if args.markdown:
+            print(render_rag_llm_would_send_preview_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL RAG+LLM would-send preview")
+            print(f"- will_send: {output.get('will_send')}")
+            print(f"- message_sent: {output.get('message_sent')}")
+            print(f"- llm_api_called: {output.get('llm_api_called')}")
+        return 0
+
+    if args.rag_llm_private_test_replay_report:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_rag_llm_private_test_reply_replay_report(root=str(cfg.repo_root))
+        if args.markdown:
+            print(render_rag_llm_private_test_reply_replay_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL RAG+LLM private test replay")
+            print(f"- events_replayed: {output.get('events_replayed')}")
+            print(f"- actual_message_sent: {output.get('actual_message_sent')}")
+            print(f"- ready_for_phase33d_live_review: {output.get('ready_for_phase33d_live_review')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -934,6 +998,10 @@ def main(argv: list[str] | None = None) -> int:
         or args.rag_preflight_report
         or args.rag_local_retrieval_report
         or args.rag_response_packet_report
+        or args.rag_llm_private_test_reply_report
+        or args.rag_llm_prompt_envelope_report
+        or args.rag_llm_would_send_preview
+        or args.rag_llm_private_test_replay_report
         or args.allow_llm_api_call
         or args.write_artifact
         or args.latest

@@ -1,0 +1,34 @@
+{
+  "report_type": "rag_llm_would_send_preview",
+  "version": "phase33d_no_live_send",
+  "channel_scope": "private_test_only",
+  "source": "operation",
+  "source_valid": true,
+  "rag_context_safety_allowed": true,
+  "llm_output_safety_allowed": false,
+  "would_call_llm": false,
+  "will_send": false,
+  "message_sent": false,
+  "discord_send_attempted": false,
+  "preview_text": "[RAG+LLM PRIVATE TEST PREVIEW ONLY] Review-only draft would be generated after live gates pass. No external action has been taken.",
+  "required_before_live": [
+    "rag_source_valid",
+    "context_safety_allowed",
+    "llm_api_call_enabled",
+    "output_safety_allowed",
+    "response_packet_created",
+    "private_test_channel_id_match",
+    "cooldown_budget_circuit_breaker_clear"
+  ],
+  "embedding_api_called": false,
+  "llm_api_called": false,
+  "external_execution": false,
+  "safety_assertions": {
+    "api_key_value_logged": false,
+    "raw_discord_ids_logged": false,
+    "embedding_called": false,
+    "llm_called": false,
+    "discord_message_sent": false,
+    "external_execution": false
+  }
+}

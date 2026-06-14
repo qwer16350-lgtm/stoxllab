@@ -1,0 +1,30 @@
+{
+  "envelope_type": "rag_llm_prompt_envelope",
+  "version": "phase33d_no_api_call",
+  "agent_route_candidate": "marin",
+  "channel_scope": "private_test_only",
+  "source": "operation",
+  "source_valid": true,
+  "context_safety_allowed": true,
+  "messages_preview": [
+    {
+      "role": "system",
+      "content": "Review-only RAG+LLM draft. Do not publish, submit, send, approve, confirm, or execute external actions. Use only the provided local read-only context."
+    },
+    {
+      "role": "user",
+      "content": "Query preview: STOXL brand tone\nUse retrieved context previews only. Return review-only wording."
+    }
+  ],
+  "retrieved_context_preview": [],
+  "input_limits": {
+    "max_context_chars": 3000,
+    "max_documents": 5,
+    "raw_content_included": false,
+    "content_preview_only": true
+  },
+  "embedding_api_called": false,
+  "llm_api_called": false,
+  "discord_message_sent": false,
+  "external_execution": false
+}

@@ -1,0 +1,30 @@
+{
+  "report_type": "rag_llm_private_test_reply_preflight",
+  "version": "phase33d_safe_scaffold_no_live_send",
+  "ready": false,
+  "blocked": true,
+  "blocked_reasons": ["rag_llm_reply_disabled_by_default"],
+  "source": "operation",
+  "source_valid": true,
+  "rag_mode": "local_readonly",
+  "rag_enabled": false,
+  "rag_response_packet_required": true,
+  "llm_reply_enabled": false,
+  "discord_send_enabled": false,
+  "private_test_only": true,
+  "private_test_channel_configured": false,
+  "retrieval_executed": false,
+  "embedding_api_called": false,
+  "llm_api_called": false,
+  "discord_message_sent": false,
+  "external_execution": false,
+  "ready_for_phase33d_live_implementation": false,
+  "safety_assertions": {
+    "api_key_value_logged": false,
+    "raw_discord_ids_logged": false,
+    "embedding_called": false,
+    "llm_called": false,
+    "discord_message_sent": false,
+    "external_execution": false
+  }
+}

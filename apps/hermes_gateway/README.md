@@ -41,6 +41,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - Build Phase 33A RAG preflight reports without retrieval, embeddings, LLM, Discord send, or external execution.
 - Build Phase 33B local read-only RAG retrieval reports from repo-local `knowledge/<source>` folders only.
 - Build Phase 33C RAG response packets for human review without LLM, embeddings, Discord send, or external execution.
+- Build Phase 33D-safe RAG+LLM private test scaffold reports for preflight, context safety, prompt envelope, would-send preview, and replay/audit without live send.
 
 ## Explicit Non-Goals
 
@@ -62,7 +63,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - No Phase 32C-LIVE closeout sends Discord messages, reads RAG, or performs external execution.
 - No Phase 32D LLM reply is allowed outside the configured private test channel ID.
 - No Phase 33A-C RAG flow reads external/NAS RAG roots, calls embedding APIs, calls LLM APIs, or sends Discord messages.
-- No Phase 33D RAG+LLM private test reply is implemented here; it is plan-only.
+- No Phase 33D live RAG+LLM private test reply is implemented here; the current Phase 33D-safe scaffold is review-only.
 
 ## Phase 21 Read-Only Planning Docs
 
@@ -103,6 +104,10 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - `docs/STOXL_RAG_LOCAL_READONLY_RETRIEVAL.md`
 - `docs/STOXL_RAG_RESPONSE_PACKET.md`
 - `docs/STOXL_RAG_PRIVATE_TEST_LLM_REPLY_PLAN.md`
+- `docs/STOXL_RAG_LLM_PRIVATE_TEST_REPLY_PREFLIGHT.md`
+- `docs/STOXL_RAG_LLM_PROMPT_ENVELOPE.md`
+- `docs/STOXL_RAG_LLM_WOULD_SEND_PREVIEW.md`
+- `docs/STOXL_RAG_LLM_PRIVATE_TEST_REPLY_REPLAY.md`
 
 These documents prepare for a later private server read-only connection review. They do not authorize or perform a Discord connection.
 
@@ -179,6 +184,14 @@ python apps\hermes_gateway\cli.py --rag-local-retrieval-report --json
 python apps\hermes_gateway\cli.py --rag-local-retrieval-report --markdown
 python apps\hermes_gateway\cli.py --rag-response-packet-report --json
 python apps\hermes_gateway\cli.py --rag-response-packet-report --markdown
+python apps\hermes_gateway\cli.py --rag-llm-private-test-reply-report --json
+python apps\hermes_gateway\cli.py --rag-llm-private-test-reply-report --markdown
+python apps\hermes_gateway\cli.py --rag-llm-prompt-envelope-report --json
+python apps\hermes_gateway\cli.py --rag-llm-prompt-envelope-report --markdown
+python apps\hermes_gateway\cli.py --rag-llm-would-send-preview --json
+python apps\hermes_gateway\cli.py --rag-llm-would-send-preview --markdown
+python apps\hermes_gateway\cli.py --rag-llm-private-test-replay-report --json
+python apps\hermes_gateway\cli.py --rag-llm-private-test-replay-report --markdown
 python apps\hermes_gateway\cli.py --run-discord-private-test-reply --json
 python apps\hermes_gateway\tests\test_local_pipeline.py
 python apps\hermes_gateway\tests\test_replay_approval.py
@@ -212,6 +225,11 @@ python apps\hermes_gateway\tests\test_llm_private_test_reply_replay.py
 python apps\hermes_gateway\tests\test_rag_preflight.py
 python apps\hermes_gateway\tests\test_rag_local_retrieval.py
 python apps\hermes_gateway\tests\test_rag_response_packet.py
+python apps\hermes_gateway\tests\test_rag_context_safety.py
+python apps\hermes_gateway\tests\test_rag_llm_private_test_reply.py
+python apps\hermes_gateway\tests\test_rag_llm_prompt_envelope.py
+python apps\hermes_gateway\tests\test_rag_llm_would_send_preview.py
+python apps\hermes_gateway\tests\test_rag_llm_private_test_reply_replay.py
 ```
 
 The `--run-discord-readonly` option is intentionally not part of normal local
@@ -268,6 +286,11 @@ Phase 33A-C add a local RAG safety ladder:
 
 These phases do not call embedding APIs, LLM APIs, Discord sends, external RAG
 roots, or external execution.
+
+Phase 33D-safe adds preflight, context safety, prompt envelope, would-send
+preview, and replay/audit reports for a future guarded RAG+LLM private test
+reply. It does not implement the live reply path. A separate manual approval is
+required before any live RAG+LLM private test implementation.
 
 If the registry file is missing, generate it from the repo root:
 

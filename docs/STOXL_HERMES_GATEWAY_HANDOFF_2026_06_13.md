@@ -6,7 +6,8 @@
 - Phase 33A RAG preflight is available.
 - Phase 33B local read-only RAG retrieval is available.
 - Phase 33C RAG response packet generation is available.
-- Phase 33D is plan-only and is not implemented.
+- Phase 33D-safe scaffold is available for preflight, context safety, prompt envelope, would-send preview, and replay/audit.
+- Phase 33D live RAG+LLM reply is not implemented.
 
 ## Completed Chain
 
@@ -15,6 +16,7 @@
 3. LLM dry calls, LLM response packets, and guarded private-test-only LLM reply reports were added.
 4. Phase 32D closeout replay/audit confirmed local verification without live Discord send or LLM API calls.
 5. Phase 33A-C added local RAG readiness, local read-only retrieval, and RAG response packets.
+6. Phase 33D-safe scaffold added review-only gates before any future RAG+LLM live reply.
 
 ## Current Safety Posture
 
@@ -26,6 +28,7 @@
 - RAG ingest, indexing, vector DB creation, and external vector service connections are not performed.
 - External posting, submission, email, contract, payment, or approval execution is not performed.
 - Raw token/API key values and raw Discord IDs must not be printed.
+- Phase 33D live implementation still requires separate manual approval.
 
 ## Important Commands
 
@@ -36,6 +39,10 @@ python apps\hermes_gateway\cli.py --rag-local-retrieval-report --json
 python apps\hermes_gateway\cli.py --rag-local-retrieval-report --markdown
 python apps\hermes_gateway\cli.py --rag-response-packet-report --json
 python apps\hermes_gateway\cli.py --rag-response-packet-report --markdown
+python apps\hermes_gateway\cli.py --rag-llm-private-test-reply-report --json
+python apps\hermes_gateway\cli.py --rag-llm-prompt-envelope-report --json
+python apps\hermes_gateway\cli.py --rag-llm-would-send-preview --json
+python apps\hermes_gateway\cli.py --rag-llm-private-test-replay-report --json
 python apps\hermes_gateway\cli.py --operations-viewer --json
 ```
 
@@ -43,6 +50,11 @@ python apps\hermes_gateway\cli.py --operations-viewer --json
 python apps\hermes_gateway\tests\test_rag_preflight.py
 python apps\hermes_gateway\tests\test_rag_local_retrieval.py
 python apps\hermes_gateway\tests\test_rag_response_packet.py
+python apps\hermes_gateway\tests\test_rag_context_safety.py
+python apps\hermes_gateway\tests\test_rag_llm_private_test_reply.py
+python apps\hermes_gateway\tests\test_rag_llm_prompt_envelope.py
+python apps\hermes_gateway\tests\test_rag_llm_would_send_preview.py
+python apps\hermes_gateway\tests\test_rag_llm_private_test_reply_replay.py
 python apps\hermes_gateway\tests\test_llm_private_test_reply_replay.py
 python apps\hermes_gateway\tests\test_llm_private_test_reply.py
 python apps\hermes_gateway\tests\test_private_test_reply.py
