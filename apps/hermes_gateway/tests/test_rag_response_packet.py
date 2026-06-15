@@ -59,6 +59,11 @@ def test_citations_and_human_review() -> None:
     with make_retrieval_root() as temp:
         packet = build_rag_response_packet_report(temp)
         assert_true(isinstance(packet["citations"], list), "Citations should be a list")
+        assert_true(isinstance(packet["evidence_packet"], dict), "Evidence packet should be included")
+        assert_true(isinstance(packet["citation_summary"], dict), "Citation summary should be included")
+        assert_true(packet["evidence_packet"]["full_content_included"] is False, "Full content should be false")
+        assert_true(packet["evidence_packet"]["content_preview_only"] is True, "Preview only should be true")
+        assert_true(packet["citation_summary"]["relative_paths_only"] is True, "Relative paths only")
         assert_true(packet["human_review"]["required"] is True, "Human review should be required")
         disallowed = packet["human_review"]["disallowed_actions"]
         assert_true("auto_reply" in disallowed, "auto_reply should be disallowed")

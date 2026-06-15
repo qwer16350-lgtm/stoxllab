@@ -48,6 +48,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - Maintain the Phase 33D-3 single live private test runbook for manual user-run execution only.
 - Build Phase 33D-4 single live private test closeout reports from an embedded sanitized success fixture without another live run.
 - Build Phase 34A-C local knowledge foundation reports for manifest, ingestion boundary, source routing, and evidence packets.
+- Build Phase 34D local evidence-to-RAG response packet integration reports without LLM, embeddings, Discord send, or external ingest.
 
 ## Explicit Non-Goals
 
@@ -76,6 +77,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - No Phase 33D-3 runbook step starts Discord, sends Discord messages, calls OpenRouter/LLM APIs, calls embeddings, or executes external actions automatically.
 - No Phase 33D-4 closeout starts Discord, sends additional Discord messages, calls OpenRouter/LLM APIs, calls embeddings, or executes external actions.
 - No Phase 34A-C knowledge foundation flow creates embeddings, vector DB indexes, external source ingest, public/team channel replies, additional Discord sends, LLM API calls, or external execution.
+- No Phase 34D evidence integration enables LLM prompts, embeddings, vector DB indexes, external source ingest, public/team channel replies, Discord sends, or external execution.
 
 ## Phase 21 Read-Only Planning Docs
 
@@ -130,6 +132,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - `docs/STOXL_KNOWLEDGE_MANIFEST.md`
 - `docs/STOXL_KNOWLEDGE_SOURCE_ROUTING.md`
 - `docs/STOXL_KNOWLEDGE_EVIDENCE_PACKET.md`
+- `docs/STOXL_RAG_EVIDENCE_INTEGRATION.md`
 
 These documents prepare for a later private server read-only connection review. They do not authorize or perform a Discord connection.
 
@@ -230,6 +233,8 @@ python apps\hermes_gateway\cli.py --knowledge-source-routing --json
 python apps\hermes_gateway\cli.py --knowledge-source-routing --markdown
 python apps\hermes_gateway\cli.py --knowledge-evidence-packet --json
 python apps\hermes_gateway\cli.py --knowledge-evidence-packet --markdown
+python apps\hermes_gateway\cli.py --rag-evidence-integration --json
+python apps\hermes_gateway\cli.py --rag-evidence-integration --markdown
 python apps\hermes_gateway\cli.py --run-discord-private-test-reply --json
 python apps\hermes_gateway\tests\test_local_pipeline.py
 python apps\hermes_gateway\tests\test_replay_approval.py
@@ -277,6 +282,7 @@ python apps\hermes_gateway\tests\test_knowledge_manifest.py
 python apps\hermes_gateway\tests\test_knowledge_ingestion_boundary.py
 python apps\hermes_gateway\tests\test_knowledge_source_routing.py
 python apps\hermes_gateway\tests\test_knowledge_evidence_packet.py
+python apps\hermes_gateway\tests\test_rag_evidence_integration.py
 ```
 
 The `--run-discord-readonly` option is intentionally not part of normal local
@@ -381,6 +387,11 @@ rules, agent source routing, and citation/evidence packets. `operation` remains
 canonical and `operations` remains blocked. Embedding, vector DB/index creation,
 external source ingest, LLM calls, Discord sends, and external execution remain
 deferred.
+
+Phase 34D integrates the local evidence packet into the RAG response packet. It
+adds `evidence_packet` and `citation_summary` fields while keeping full content
+out of packets, enforcing relative citations, and keeping `ready_for_llm_prompt`
+false. It is ready only for private-test review, not live public/team replies.
 
 If the registry file is missing, generate it from the repo root:
 

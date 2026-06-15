@@ -27,6 +27,7 @@ from knowledge_ingestion_boundary import build_knowledge_ingestion_boundary_repo
 from knowledge_manifest import build_knowledge_manifest
 from knowledge_source_routing import build_knowledge_source_routing_report
 from knowledge_evidence_packet import build_knowledge_evidence_packet
+from rag_evidence_integration import build_rag_evidence_integration_report
 
 
 VERSION = "phase31a_local_viewer"
@@ -348,6 +349,7 @@ def build_operations_packet_viewer_report(
     knowledge_manifest = build_knowledge_manifest(root=str(_repo(root)))
     knowledge_routing = build_knowledge_source_routing_report()
     knowledge_evidence = build_knowledge_evidence_packet(root=str(_repo(root)))
+    rag_evidence_integration = build_rag_evidence_integration_report(root=str(_repo(root)))
     report = {
         "report_type": "operations_packet_viewer",
         "version": VERSION,
@@ -466,6 +468,20 @@ def build_operations_packet_viewer_report(
             "discord_message_sent": False,
             "external_execution": False,
         },
+        "rag_evidence_integration": {
+            "available": True,
+            "evidence_packet_available": bool(rag_evidence_integration.get("evidence_packet_available")),
+            "rag_response_packet_created": bool(rag_evidence_integration.get("rag_response_packet_created")),
+            "citations_included": bool(rag_evidence_integration.get("citations_included")),
+            "ready_for_private_test_review": bool(rag_evidence_integration.get("ready_for_private_test_review")),
+            "ready_for_llm_prompt": bool(rag_evidence_integration.get("ready_for_llm_prompt")),
+            "ready_for_embedding": bool(rag_evidence_integration.get("ready_for_embedding")),
+            "ready_for_external_sources": bool(rag_evidence_integration.get("ready_for_external_sources")),
+            "embedding_api_called": False,
+            "llm_api_called": False,
+            "discord_message_sent": False,
+            "external_execution": False,
+        },
         "daily_manifest_summary": load_daily_manifest(root=root, date=date),
         "filters": {
             "channel_name": channel_name,
@@ -533,6 +549,7 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
     rag_llm_closeout = report.get("rag_llm_live_preflight_closeout", {})
     rag_llm_success_closeout = report.get("rag_llm_single_live_test_closeout", {})
     knowledge = report.get("knowledge_foundation", {})
+    rag_evidence = report.get("rag_evidence_integration", {})
     llm_summary = report.get("latest_llm_response_packet", {})
     lines.extend(
         [
@@ -633,6 +650,20 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
             f"- LLM API called: {str(knowledge.get('llm_api_called', False)).lower()}",
             f"- Discord message sent: {str(knowledge.get('discord_message_sent', False)).lower()}",
             f"- External execution: {str(knowledge.get('external_execution', False)).lower()}",
+            "",
+            "## RAG Evidence Integration",
+            f"- Available: {str(rag_evidence.get('available', False)).lower()}",
+            f"- Evidence packet available: {str(rag_evidence.get('evidence_packet_available', False)).lower()}",
+            f"- RAG response packet created: {str(rag_evidence.get('rag_response_packet_created', False)).lower()}",
+            f"- Citations included: {str(rag_evidence.get('citations_included', False)).lower()}",
+            f"- Ready for private test review: {str(rag_evidence.get('ready_for_private_test_review', False)).lower()}",
+            f"- Ready for LLM prompt: {str(rag_evidence.get('ready_for_llm_prompt', False)).lower()}",
+            f"- Ready for embedding: {str(rag_evidence.get('ready_for_embedding', False)).lower()}",
+            f"- Ready for external sources: {str(rag_evidence.get('ready_for_external_sources', False)).lower()}",
+            f"- Embedding API called: {str(rag_evidence.get('embedding_api_called', False)).lower()}",
+            f"- LLM API called: {str(rag_evidence.get('llm_api_called', False)).lower()}",
+            f"- Discord message sent: {str(rag_evidence.get('discord_message_sent', False)).lower()}",
+            f"- External execution: {str(rag_evidence.get('external_execution', False)).lower()}",
         ]
     )
     safety = report.get("safety_assertions", {})

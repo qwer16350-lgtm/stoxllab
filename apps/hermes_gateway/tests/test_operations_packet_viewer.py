@@ -245,6 +245,23 @@ def test_knowledge_foundation_summary() -> None:
     assert_true(knowledge["external_execution"] is False, "No external execution")
 
 
+def test_rag_evidence_integration_summary() -> None:
+    setup_artifacts()
+    integration = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")["rag_evidence_integration"]
+    assert_true(integration["available"] is True, "RAG evidence integration should be available")
+    assert_true(integration["evidence_packet_available"] is True, "Evidence packet should be available")
+    assert_true(integration["rag_response_packet_created"] is True, "RAG response packet should be created")
+    assert_true(integration["citations_included"] is True, "Citations should be included")
+    assert_true(integration["ready_for_private_test_review"] is True, "Private test review should be ready")
+    assert_true(integration["ready_for_llm_prompt"] is False, "LLM prompt should remain false")
+    assert_true(integration["ready_for_embedding"] is False, "Embedding should remain false")
+    assert_true(integration["ready_for_external_sources"] is False, "External sources should remain false")
+    assert_true(integration["embedding_api_called"] is False, "No embedding API call")
+    assert_true(integration["llm_api_called"] is False, "No LLM API call")
+    assert_true(integration["discord_message_sent"] is False, "No Discord message sent")
+    assert_true(integration["external_execution"] is False, "No external execution")
+
+
 def main() -> int:
     tests = [
         test_recent_events_returned,
@@ -267,6 +284,7 @@ def main() -> int:
         test_rag_llm_live_preflight_closeout_summary,
         test_rag_llm_single_live_test_closeout_summary,
         test_knowledge_foundation_summary,
+        test_rag_evidence_integration_summary,
     ]
     for test in tests:
         test()

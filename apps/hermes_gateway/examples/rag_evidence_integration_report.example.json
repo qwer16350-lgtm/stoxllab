@@ -1,0 +1,31 @@
+{
+  "report_type": "rag_evidence_integration",
+  "version": "phase34d_local_evidence_to_rag_packet",
+  "source": "operation",
+  "source_valid": true,
+  "agent": "kasumi",
+  "agent_source_allowed": true,
+  "evidence_packet_available": true,
+  "rag_response_packet_created": true,
+  "citations_included": true,
+  "relative_paths_only": true,
+  "full_content_included": false,
+  "content_preview_only": true,
+  "ready_for_llm_prompt": false,
+  "ready_for_private_test_review": true,
+  "ready_for_embedding": false,
+  "ready_for_external_sources": false,
+  "embedding_api_called": false,
+  "llm_api_called": false,
+  "discord_message_sent": false,
+  "external_execution": false,
+  "safety_assertions": {
+    "api_key_value_logged": false,
+    "token_value_logged": false,
+    "raw_discord_ids_logged": false,
+    "embedding_called": false,
+    "llm_called": false,
+    "discord_message_sent": false,
+    "external_execution": false
+  }
+}

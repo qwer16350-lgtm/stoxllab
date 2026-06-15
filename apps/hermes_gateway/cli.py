@@ -65,6 +65,7 @@ from private_test_reply_safety import build_private_test_reply_safety_report, re
 from rag_local_retrieval import render_rag_local_retrieval_markdown, run_rag_local_retrieval
 from rag_preflight import build_rag_preflight_report, render_rag_preflight_markdown
 from rag_response_packet import build_rag_response_packet_report, render_rag_response_packet_markdown
+from rag_evidence_integration import build_rag_evidence_integration_report, render_rag_evidence_integration_markdown
 from rag_llm_private_test_reply import build_rag_llm_private_test_reply_preflight, render_rag_llm_private_test_reply_markdown
 from rag_llm_prompt_envelope import build_rag_llm_prompt_envelope, render_rag_llm_prompt_envelope_markdown
 from rag_llm_would_send_preview import build_rag_llm_would_send_preview, render_rag_llm_would_send_preview_markdown
@@ -271,6 +272,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--knowledge-ingestion-boundary", action="store_true", help="Print Phase 34A local text-only knowledge ingestion boundary.")
     parser.add_argument("--knowledge-source-routing", action="store_true", help="Print Phase 34B agent knowledge source routing policy.")
     parser.add_argument("--knowledge-evidence-packet", action="store_true", help="Print Phase 34C local citation/evidence packet without LLM or Discord send.")
+    parser.add_argument("--rag-evidence-integration", action="store_true", help="Print Phase 34D local evidence-to-RAG response packet integration report.")
     parser.add_argument("--source", default="operation", help="RAG source for local retrieval reports.")
     parser.add_argument("--query", default="STOXL brand tone", help="RAG query preview for local retrieval reports.")
     parser.add_argument("--allow-llm-api-call", action="store_true", help="Allow Phase 32B to attempt one gated provider call when env gates pass.")
@@ -1001,6 +1003,21 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- ready_for_llm_prompt: {output.get('ready_for_llm_prompt')}")
         return 0
 
+    if args.rag_evidence_integration:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_rag_evidence_integration_report(root=cfg.repo_root, source=args.source, agent=args.agent or "kasumi", query=args.query)
+        if args.markdown:
+            print(render_rag_evidence_integration_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL RAG evidence integration")
+            print(f"- source: {output.get('source')}")
+            print(f"- agent: {output.get('agent')}")
+            print(f"- rag_response_packet_created: {output.get('rag_response_packet_created')}")
+            print(f"- ready_for_private_test_review: {output.get('ready_for_private_test_review')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -1158,6 +1175,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.knowledge_ingestion_boundary
         or args.knowledge_source_routing
         or args.knowledge_evidence_packet
+        or args.rag_evidence_integration
         or args.allow_llm_api_call
         or args.write_artifact
         or args.latest
