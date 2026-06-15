@@ -70,6 +70,15 @@ G. No-live operator rehearsal and safety lock
 - `kasumi` may be listed as a future candidate from operation evidence.
 - Actual LLM draft remains blocked until a later explicit approval phase.
 
+## Phase 36B Safe Mock
+
+- Mock one-shot LLM draft packet only.
+- Output safety rehearsal only.
+- No OpenRouter/LLM API call or attempt.
+- No Discord send.
+- Negative fixtures must block secret values, approval phrases, raw Discord IDs,
+  public/team send instructions, unattended reply instructions, and full content.
+
 ## Hold
 
 - Embedding/vector DB.

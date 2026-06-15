@@ -663,6 +663,31 @@ def test_phase36a_preflight_summary() -> None:
     assert_true(preflight["ready_for_unattended_auto_reply"] is False, "No unattended")
 
 
+def test_phase36b_mock_and_safety_summary() -> None:
+    setup_artifacts()
+    report = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")
+    mock = report["phase36b_one_shot_llm_draft_mock_packet"]
+    safety = report["phase36b_output_safety_rehearsal"]
+    assert_true(mock["available"] is True, "Phase 36B mock available")
+    assert_true(mock["report_only"] is True, "Mock report only")
+    assert_true(mock["phase36_live_execution_started"] is False, "No live execution")
+    assert_true(mock["llm_called"] is False, "No LLM")
+    assert_true(mock["llm_api_call_attempted"] is False, "No LLM attempt")
+    assert_true(mock["discord_message_sent"] is False, "No Discord")
+    assert_true(mock["mock_candidate_agents"] == ["kasumi"], "Kasumi mock candidate")
+    assert_true(mock["ready_for_output_safety_rehearsal"] is True, "Ready for rehearsal")
+    assert_true(mock["ready_for_actual_llm_call"] is False, "No actual LLM ready")
+    assert_true(mock["ready_for_discord_send"] is False, "No Discord ready")
+    assert_true(safety["available"] is True, "Safety rehearsal available")
+    assert_true(safety["report_only"] is True, "Safety report only")
+    assert_true(safety["output_safety_allowed_agents"] == ["kasumi"], "Kasumi safety allowed")
+    assert_true(safety["negative_fixtures_passed"] is True, "Negative fixtures passed")
+    assert_true(safety["ready_for_phase36c_actual_llm_call_preflight"] is True, "Ready for Phase 36C preflight")
+    assert_true(safety["ready_for_actual_llm_call"] is False, "No actual LLM ready")
+    assert_true(safety["ready_for_discord_send"] is False, "No Discord ready")
+    assert_true(safety["ready_for_unattended_auto_reply"] is False, "No unattended")
+
+
 def main() -> int:
     tests = [
         test_recent_events_returned,
@@ -708,6 +733,7 @@ def main() -> int:
         test_phase35d_summaries,
         test_phase35e_g_and_phase36_summaries,
         test_phase36a_preflight_summary,
+        test_phase36b_mock_and_safety_summary,
     ]
     for test in tests:
         test()

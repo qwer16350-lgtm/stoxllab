@@ -34,6 +34,12 @@ Phase 36A may add a private-test one-shot LLM draft preflight. That preflight is
 still no-call and no-send: it does not start live execution, attempt an LLM API
 call, generate an approval phrase, or send a Discord message.
 
+## Phase 36B
+
+Phase 36B may add a mock LLM draft packet and output safety rehearsal. It still
+does not call OpenRouter/LLM, attempt an API call, generate approval phrases,
+or send Discord messages.
+
 ## CLI
 
 ```powershell

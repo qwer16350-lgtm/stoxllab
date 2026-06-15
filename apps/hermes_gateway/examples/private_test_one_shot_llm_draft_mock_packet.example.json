@@ -1,0 +1,35 @@
+{
+  "report_type": "private_test_one_shot_llm_draft_mock_packet",
+  "version": "phase36b_one_shot_llm_draft_mock_packet_no_api_no_send",
+  "mock_packet_available": true,
+  "report_only": true,
+  "phase36_live_execution_started": false,
+  "source_preflight": "phase36a_private_test_one_shot_llm_draft_preflight_no_call_no_send",
+  "llm_called": false,
+  "llm_api_call_attempted": false,
+  "llm_api_call_count": 0,
+  "discord_message_sent": false,
+  "discord_api_send_called": false,
+  "embedding_api_called": false,
+  "external_execution": false,
+  "approval_phrase_generated": false,
+  "manual_approval_actualized": false,
+  "ready_for_actual_llm_call": false,
+  "ready_for_discord_send": false,
+  "ready_for_unattended_auto_reply": false,
+  "mock_candidate_agents": ["kasumi"],
+  "mock_draft_packets": {
+    "kasumi": {
+      "agent": "kasumi",
+      "candidate_from_preflight": true,
+      "allowed_sources": ["operation"],
+      "evidence_citations": ["knowledge/operation/stoxl_operation_tone_sample.md"],
+      "mock_response_created": true,
+      "mock_response_review_only": true,
+      "mock_response_summary": "Review-only operational draft based on operation evidence. No Discord send is allowed in this phase.",
+      "full_content_included": false,
+      "ready_for_output_safety_rehearsal": true,
+      "ready_for_actual_llm_call": false
+    }
+  }
+}

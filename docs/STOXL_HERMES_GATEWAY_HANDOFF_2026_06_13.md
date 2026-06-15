@@ -279,3 +279,8 @@ future candidate agents and manual gate names. It does not call OpenRouter/LLM,
 attempt an LLM API call, send Discord messages, generate approval phrases,
 activate manual approval, create embeddings/vector indexes, or execute external
 actions.
+
+Phase 36B adds a mock one-shot LLM draft packet and output safety rehearsal for
+`kasumi`. It performs no OpenRouter/LLM API call or attempt, no Discord send,
+no approval phrase generation, no manual approval activation, no embedding or
+vector creation, and no external execution.

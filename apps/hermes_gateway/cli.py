@@ -92,6 +92,8 @@ from operations_dashboard_lock import build_operations_dashboard_lock, render_op
 from forbidden_behavior_sentinel import build_forbidden_behavior_sentinel, render_forbidden_behavior_sentinel_markdown
 from phase36_entry_gate import build_phase36_entry_gate, render_phase36_entry_gate_markdown
 from private_test_one_shot_llm_draft_preflight import build_private_test_one_shot_llm_draft_preflight, render_private_test_one_shot_llm_draft_preflight_markdown
+from private_test_one_shot_llm_draft_mock_packet import build_private_test_one_shot_llm_draft_mock_packet, render_private_test_one_shot_llm_draft_mock_packet_markdown
+from one_shot_llm_draft_output_safety_rehearsal import build_one_shot_llm_draft_output_safety_rehearsal, render_one_shot_llm_draft_output_safety_rehearsal_markdown
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight, render_rag_evidence_private_test_send_preflight_markdown
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope, render_rag_evidence_prompt_envelope_markdown
 from rag_evidence_review_packet import build_rag_evidence_review_packet, render_rag_evidence_review_packet_markdown
@@ -333,6 +335,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--forbidden-behavior-sentinel", action="store_true", help="Print Phase 35G forbidden behavior sentinel.")
     parser.add_argument("--phase36-entry-gate", action="store_true", help="Print Phase 36 entry gate preview.")
     parser.add_argument("--private-test-one-shot-llm-draft-preflight", action="store_true", help="Print Phase 36A private-test one-shot LLM draft preflight without API calls.")
+    parser.add_argument("--private-test-one-shot-llm-draft-mock-packet", action="store_true", help="Print Phase 36B one-shot LLM draft mock packet without API calls.")
+    parser.add_argument("--one-shot-llm-draft-output-safety-rehearsal", action="store_true", help="Print Phase 36B one-shot LLM draft output safety rehearsal.")
     parser.add_argument("--source", default="operation", help="RAG source for local retrieval reports.")
     parser.add_argument("--query", default="STOXL brand tone", help="RAG query preview for local retrieval reports.")
     parser.add_argument("--allow-llm-api-call", action="store_true", help="Allow Phase 32B to attempt one gated provider call when env gates pass.")
@@ -1498,6 +1502,32 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- ready_for_actual_llm_call: {output.get('ready_for_actual_llm_call')}")
         return 0
 
+    if args.private_test_one_shot_llm_draft_mock_packet:
+        output = build_private_test_one_shot_llm_draft_mock_packet()
+        if args.markdown:
+            print(render_private_test_one_shot_llm_draft_mock_packet_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL private-test one-shot LLM draft mock packet")
+            print(f"- report_only: {output.get('report_only')}")
+            print(f"- mock_candidate_agents: {', '.join(output.get('mock_candidate_agents', [])) or 'none'}")
+            print(f"- ready_for_actual_llm_call: {output.get('ready_for_actual_llm_call')}")
+        return 0
+
+    if args.one_shot_llm_draft_output_safety_rehearsal:
+        output = build_one_shot_llm_draft_output_safety_rehearsal()
+        if args.markdown:
+            print(render_one_shot_llm_draft_output_safety_rehearsal_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL one-shot LLM draft output safety rehearsal")
+            print(f"- report_only: {output.get('report_only')}")
+            print(f"- output_safety_allowed_agents: {', '.join(output.get('output_safety_allowed_agents', [])) or 'none'}")
+            print(f"- ready_for_phase36c_actual_llm_call_preflight: {output.get('ready_for_phase36c_actual_llm_call_preflight')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -1686,6 +1716,8 @@ def main(argv: list[str] | None = None) -> int:
         or args.forbidden_behavior_sentinel
         or args.phase36_entry_gate
         or args.private_test_one_shot_llm_draft_preflight
+        or args.private_test_one_shot_llm_draft_mock_packet
+        or args.one_shot_llm_draft_output_safety_rehearsal
         or args.allow_llm_api_call
         or args.allow_rag_evidence_llm_api_call
         or args.allow_rag_evidence_private_test_discord_send

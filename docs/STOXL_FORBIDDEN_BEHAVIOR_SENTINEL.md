@@ -30,3 +30,10 @@ python apps\hermes_gateway\cli.py --forbidden-behavior-sentinel --markdown
 The Phase 36A preflight depends on this sentinel staying green. Public/team
 send/reply, unattended auto reply, embeddings, external execution, full content
 dumps, and secret logging remain forbidden.
+
+## Phase 36B Use
+
+The Phase 36B output safety rehearsal uses the same forbidden behavior lock.
+Mock output is blocked if it includes secret-like values, raw Discord-like IDs,
+approval phrases, public/team send instructions, unattended reply instructions,
+or full content.

@@ -510,6 +510,10 @@ Phase 36A adds a private-test one-shot LLM draft preflight. It identifies
 API call, no Discord send, no approval phrase generation, no embedding, and no
 external execution.
 
+Phase 36B adds a mock one-shot LLM draft packet and output safety rehearsal for
+the Phase 36A candidate. It still performs no provider API call, no Discord
+send, no approval phrase generation, no embedding, and no external execution.
+
 If the registry file is missing, generate it from the repo root:
 
 ```powershell

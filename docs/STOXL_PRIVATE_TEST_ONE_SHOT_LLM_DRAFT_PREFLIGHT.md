@@ -52,3 +52,8 @@ The report lists future gate names only. It does not generate or print values:
 python apps\hermes_gateway\cli.py --private-test-one-shot-llm-draft-preflight --json
 python apps\hermes_gateway\cli.py --private-test-one-shot-llm-draft-preflight --markdown
 ```
+
+## Phase 36B Follow-up
+
+Phase 36B may create a mock draft packet and output safety rehearsal from this
+preflight. That follow-up remains no-API and no-send.

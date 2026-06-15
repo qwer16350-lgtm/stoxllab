@@ -1,0 +1,41 @@
+{
+  "report_type": "one_shot_llm_draft_output_safety_rehearsal",
+  "version": "phase36b_one_shot_llm_draft_output_safety_rehearsal_no_api_no_send",
+  "output_safety_rehearsal_available": true,
+  "report_only": true,
+  "llm_called": false,
+  "discord_message_sent": false,
+  "input_mock_packet_available": true,
+  "safety_checks": {
+    "review_only_language_checked": true,
+    "evidence_citation_checked": true,
+    "no_secret_checked": true,
+    "no_raw_discord_id_checked": true,
+    "no_approval_phrase_checked": true,
+    "no_public_team_send_instruction_checked": true,
+    "no_unattended_instruction_checked": true,
+    "full_content_absence_checked": true
+  },
+  "agent_safety_results": {
+    "kasumi": {
+      "mock_response_created": true,
+      "output_safety_checked": true,
+      "output_safety_allowed": true,
+      "blocked_reasons": [],
+      "ready_for_actual_llm_call": false,
+      "ready_for_discord_send": false
+    }
+  },
+  "negative_fixtures": {
+    "secret_value_present_blocks": true,
+    "approval_phrase_present_blocks": true,
+    "raw_discord_id_present_blocks": true,
+    "public_team_send_instruction_blocks": true,
+    "unattended_auto_reply_instruction_blocks": true,
+    "full_content_included_blocks": true
+  },
+  "ready_for_phase36c_actual_llm_call_preflight": true,
+  "ready_for_actual_llm_call": false,
+  "ready_for_discord_send": false,
+  "ready_for_unattended_auto_reply": false
+}

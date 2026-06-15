@@ -54,6 +54,8 @@ from operations_dashboard_lock import build_operations_dashboard_lock
 from forbidden_behavior_sentinel import build_forbidden_behavior_sentinel
 from phase36_entry_gate import build_phase36_entry_gate
 from private_test_one_shot_llm_draft_preflight import build_private_test_one_shot_llm_draft_preflight
+from private_test_one_shot_llm_draft_mock_packet import build_private_test_one_shot_llm_draft_mock_packet
+from one_shot_llm_draft_output_safety_rehearsal import build_one_shot_llm_draft_output_safety_rehearsal
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope
 from rag_evidence_review_packet import build_rag_evidence_review_packet
@@ -446,6 +448,8 @@ def build_operations_packet_viewer_report(
     forbidden_sentinel = build_forbidden_behavior_sentinel()
     phase36_gate = build_phase36_entry_gate()
     phase36a_preflight = build_private_test_one_shot_llm_draft_preflight()
+    phase36b_mock = build_private_test_one_shot_llm_draft_mock_packet()
+    phase36b_safety = build_one_shot_llm_draft_output_safety_rehearsal(phase36b_mock)
     report = {
         "report_type": "operations_packet_viewer",
         "version": VERSION,
@@ -932,6 +936,31 @@ def build_operations_packet_viewer_report(
             "ready_for_actual_llm_call": bool(phase36a_preflight.get("ready_for_actual_llm_call")),
             "ready_for_discord_send": bool(phase36a_preflight.get("ready_for_discord_send")),
             "ready_for_unattended_auto_reply": bool(phase36a_preflight.get("ready_for_unattended_auto_reply")),
+        },
+        "phase36b_one_shot_llm_draft_mock_packet": {
+            "available": True,
+            "report_only": bool(phase36b_mock.get("report_only")),
+            "phase36_live_execution_started": bool(phase36b_mock.get("phase36_live_execution_started")),
+            "llm_called": bool(phase36b_mock.get("llm_called")),
+            "llm_api_call_attempted": bool(phase36b_mock.get("llm_api_call_attempted")),
+            "discord_message_sent": bool(phase36b_mock.get("discord_message_sent")),
+            "mock_candidate_agents": list(phase36b_mock.get("mock_candidate_agents", [])),
+            "ready_for_output_safety_rehearsal": any(
+                bool(packet.get("ready_for_output_safety_rehearsal"))
+                for packet in phase36b_mock.get("mock_draft_packets", {}).values()
+            ),
+            "ready_for_actual_llm_call": bool(phase36b_mock.get("ready_for_actual_llm_call")),
+            "ready_for_discord_send": bool(phase36b_mock.get("ready_for_discord_send")),
+        },
+        "phase36b_output_safety_rehearsal": {
+            "available": True,
+            "report_only": bool(phase36b_safety.get("report_only")),
+            "output_safety_allowed_agents": list(phase36b_safety.get("output_safety_allowed_agents", [])),
+            "negative_fixtures_passed": bool(phase36b_safety.get("negative_fixtures_passed")),
+            "ready_for_phase36c_actual_llm_call_preflight": bool(phase36b_safety.get("ready_for_phase36c_actual_llm_call_preflight")),
+            "ready_for_actual_llm_call": bool(phase36b_safety.get("ready_for_actual_llm_call")),
+            "ready_for_discord_send": bool(phase36b_safety.get("ready_for_discord_send")),
+            "ready_for_unattended_auto_reply": bool(phase36b_safety.get("ready_for_unattended_auto_reply")),
         },
         "daily_manifest_summary": load_daily_manifest(root=root, date=date),
         "filters": {
