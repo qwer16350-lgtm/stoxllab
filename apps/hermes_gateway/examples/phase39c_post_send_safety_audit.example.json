@@ -1,0 +1,21 @@
+{
+  "report_type": "phase39c_post_send_safety_audit",
+  "version": "phase39c_post_send_safety_audit",
+  "report_only": true,
+  "phase39b_actual_send_count": 1,
+  "phase39c_additional_send_count": 0,
+  "total_actual_discord_send_count_this_sequence": 1,
+  "gate_off_verified": true,
+  "approval_gate_off": true,
+  "discord_send_messages_off": true,
+  "private_test_reply_off": true,
+  "reply_mode_empty": true,
+  "real_discord_send_execution_off": true,
+  "llm_disabled": true,
+  "rag_disabled": true,
+  "embedding_disabled": true,
+  "external_execution_disabled": true,
+  "public_team_forbidden": true,
+  "unattended_auto_reply_allowed": false,
+  "secret_values_logged": false
+}

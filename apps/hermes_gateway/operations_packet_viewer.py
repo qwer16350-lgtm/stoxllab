@@ -78,6 +78,10 @@ from actual_private_test_send_safety_gate import EXPECTED_APPROVAL_PHRASE, build
 from actual_private_test_send_blocked_report import build_actual_private_test_send_blocked_report
 from phase39b_manual_send_reentry_packet import build_phase39b_manual_send_reentry_packet
 from phase39b_manual_send_no_send_lock import build_phase39b_manual_send_no_send_lock
+from phase39c_actual_send_closeout import build_phase39c_actual_send_closeout
+from phase39c_no_repeat_send_lock import build_phase39c_no_repeat_send_lock
+from phase39c_post_send_safety_audit import build_phase39c_post_send_safety_audit
+from phase39c_push_readiness import build_phase39c_push_readiness
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope
 from rag_evidence_review_packet import build_rag_evidence_review_packet
@@ -547,6 +551,25 @@ def build_operations_packet_viewer_report(
     )
     phase39b_reentry = build_phase39b_manual_send_reentry_packet()
     phase39b_no_send_lock = build_phase39b_manual_send_no_send_lock()
+    phase39c_closeout = build_phase39c_actual_send_closeout()
+    phase39c_no_repeat = build_phase39c_no_repeat_send_lock(phase39c_closeout)
+    phase39c_gate_off_env = {
+        "HERMES_PRIVATE_TEST_DRAFT_SEND_APPROVED": "false",
+        "HERMES_PRIVATE_TEST_DRAFT_SEND_APPROVAL_PHRASE": "",
+        "HERMES_DISCORD_SEND_MESSAGES": "false",
+        "HERMES_DISCORD_PRIVATE_TEST_REPLY": "false",
+        "HERMES_DISCORD_REPLY_MODE": "",
+        "HERMES_PHASE39B_REAL_DISCORD_SEND_EXECUTION": "false",
+        "HERMES_LLM_DISCORD_SEND_ENABLED": "false",
+        "HERMES_LLM_PRIVATE_TEST_REPLY_ENABLED": "false",
+        "HERMES_DISCORD_RAG_ENABLED": "false",
+        "HERMES_LLM_RAG_ENABLED": "false",
+        "HERMES_RAG_LLM_REPLY_ENABLED": "false",
+        "HERMES_DISCORD_EXTERNAL_EXECUTION": "false",
+        "HERMES_DISCORD_LLM_ENABLED": "false",
+    }
+    phase39c_safety = build_phase39c_post_send_safety_audit(env=phase39c_gate_off_env, closeout=phase39c_closeout, no_repeat_lock=phase39c_no_repeat)
+    phase39c_push = build_phase39c_push_readiness(closeout=phase39c_closeout, no_repeat_lock=phase39c_no_repeat, safety_audit=phase39c_safety)
     report = {
         "report_type": "operations_packet_viewer",
         "version": VERSION,
@@ -1313,6 +1336,36 @@ def build_operations_packet_viewer_report(
             "actual_discord_send_count": int(phase39b_no_send_lock.get("actual_discord_send_count", 0) or 0),
             "phase39c_closeout_not_available": bool(phase39b_no_send_lock.get("phase39c_closeout_not_available")),
             "ready_for_phase39c_send_closeout": bool(phase39b_no_send_lock.get("ready_for_phase39c_send_closeout")),
+        },
+        "phase39c_actual_send_closeout": {
+            "available": True,
+            "report_only": bool(phase39c_closeout.get("report_only")),
+            "phase39b_actual_send_success": bool(phase39c_closeout.get("phase39b_actual_send_success")),
+            "actual_discord_send_count": int(phase39c_closeout.get("actual_discord_send_count", 0) or 0),
+            "phase39c_additional_send_count": int(phase39c_closeout.get("additional_message_sent_count_in_phase39c", 0) or 0),
+            "phase39c_closeout_completed": bool(phase39c_closeout.get("phase39c_closeout_completed")),
+        },
+        "phase39c_no_repeat_send_lock": {
+            "available": True,
+            "report_only": bool(phase39c_no_repeat.get("report_only")),
+            "actual_discord_send_count_locked": int(phase39c_no_repeat.get("actual_discord_send_count_locked", 0) or 0),
+            "repeat_send_allowed": bool(phase39c_no_repeat.get("repeat_send_allowed")),
+            "automatic_retry_allowed": bool(phase39c_no_repeat.get("automatic_retry_allowed")),
+            "ready_for_repeat_send": bool(phase39c_no_repeat.get("ready_for_repeat_send")),
+        },
+        "phase39c_post_send_safety_audit": {
+            "available": True,
+            "report_only": bool(phase39c_safety.get("report_only")),
+            "gate_off_verified": bool(phase39c_safety.get("gate_off_verified")),
+            "total_actual_discord_send_count_this_sequence": int(phase39c_safety.get("total_actual_discord_send_count_this_sequence", 0) or 0),
+            "public_team_forbidden": bool(phase39c_safety.get("public_team_forbidden")),
+            "unattended_auto_reply_allowed": bool(phase39c_safety.get("unattended_auto_reply_allowed")),
+        },
+        "phase39c_push_readiness": {
+            "available": True,
+            "report_only": bool(phase39c_push.get("report_only")),
+            "remote_push_required": bool(phase39c_push.get("remote_push_required")),
+            "push_executed_by_codex": bool(phase39c_push.get("push_executed_by_codex")),
         },
         "daily_manifest_summary": load_daily_manifest(root=root, date=date),
         "filters": {

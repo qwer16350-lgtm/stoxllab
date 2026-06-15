@@ -10,6 +10,10 @@ Phase 39B Hotfix 3 can expose a mock execution gate in the one-shot report, but
 this no-send lock remains unchanged until an actual Discord message is observed
 in a separately approved phase. Mock gate readiness is not a closeout signal.
 
+After the separately approved operator-run Phase 39B actual send, Phase 39C is
+the canonical closeout/no-repeat lock. Phase 39C records the observed send count
+as 1 and keeps repeat/retry/unattended sends disabled.
+
 Safety state:
 
 - Report only: true

@@ -953,6 +953,34 @@ def test_phase39b_zero_send_summaries() -> None:
     assert_true(lock["ready_for_phase39c_send_closeout"] is False, "39C not ready")
 
 
+def test_phase39c_closeout_summaries() -> None:
+    setup_artifacts()
+    report = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")
+    closeout = report["phase39c_actual_send_closeout"]
+    no_repeat = report["phase39c_no_repeat_send_lock"]
+    safety = report["phase39c_post_send_safety_audit"]
+    push = report["phase39c_push_readiness"]
+    assert_true(closeout["available"] is True, "39C closeout available")
+    assert_true(closeout["report_only"] is True, "39C closeout report")
+    assert_true(closeout["phase39b_actual_send_success"] is True, "39B success")
+    assert_true(closeout["actual_discord_send_count"] == 1, "39C observed count")
+    assert_true(closeout["phase39c_additional_send_count"] == 0, "39C no additional")
+    assert_true(closeout["phase39c_closeout_completed"] is True, "39C closeout complete")
+    assert_true(no_repeat["available"] is True, "39C no-repeat available")
+    assert_true(no_repeat["actual_discord_send_count_locked"] == 1, "39C locked count")
+    assert_true(no_repeat["repeat_send_allowed"] is False, "39C repeat false")
+    assert_true(no_repeat["automatic_retry_allowed"] is False, "39C auto retry false")
+    assert_true(no_repeat["ready_for_repeat_send"] is False, "39C ready repeat false")
+    assert_true(safety["available"] is True, "39C safety available")
+    assert_true(safety["gate_off_verified"] is True, "39C gate off")
+    assert_true(safety["total_actual_discord_send_count_this_sequence"] == 1, "39C total count")
+    assert_true(safety["public_team_forbidden"] is True, "39C public/team forbidden")
+    assert_true(safety["unattended_auto_reply_allowed"] is False, "39C unattended false")
+    assert_true(push["available"] is True, "39C push available")
+    assert_true(push["remote_push_required"] is True, "39C push required")
+    assert_true(push["push_executed_by_codex"] is False, "Codex no push")
+
+
 def main() -> int:
     tests = [
         test_recent_events_returned,
@@ -1008,6 +1036,7 @@ def main() -> int:
         test_phase38a_e_summaries,
         test_phase39a_summaries,
         test_phase39b_zero_send_summaries,
+        test_phase39c_closeout_summaries,
     ]
     for test in tests:
         test()

@@ -1,0 +1,19 @@
+{
+  "report_type": "phase39c_no_repeat_send_lock",
+  "version": "phase39c_no_repeat_send_lock_after_actual_private_test_send",
+  "report_only": true,
+  "actual_discord_send_count_locked": 1,
+  "max_allowed_actual_send_count": 1,
+  "repeat_send_allowed": false,
+  "automatic_retry_allowed": false,
+  "manual_retry_allowed": false,
+  "unattended_auto_reply_allowed": false,
+  "send_gate_must_remain_off": true,
+  "real_execution_env_must_remain_off": true,
+  "approval_gate_must_remain_off": true,
+  "discord_api_send_called_in_phase39c": false,
+  "discord_message_sent_in_phase39c": false,
+  "message_sent_count_in_phase39c": 0,
+  "ready_for_phase40_private_test_runtime_planning": true,
+  "ready_for_repeat_send": false
+}

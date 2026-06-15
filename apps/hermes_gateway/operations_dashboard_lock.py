@@ -18,6 +18,9 @@ from post_llm_call_dashboard_lock import build_post_llm_call_dashboard_lock
 from phase35a_post_mvp_safety_audit import build_phase35a_post_mvp_safety_audit
 from actual_private_test_one_shot_send import build_actual_private_test_one_shot_send
 from phase39b_manual_send_no_send_lock import build_phase39b_manual_send_no_send_lock
+from phase39c_actual_send_closeout import build_phase39c_actual_send_closeout
+from phase39c_no_repeat_send_lock import build_phase39c_no_repeat_send_lock
+from phase39c_post_send_safety_audit import build_phase39c_post_send_safety_audit
 from private_test_live_send_entry_gate import build_private_test_live_send_entry_gate
 from rag_evidence_private_test_phase34_final_lock import build_rag_evidence_private_test_phase34_final_lock
 
@@ -42,6 +45,27 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
     phase38_entry_gate = build_private_test_live_send_entry_gate()
     phase39a_send_path = build_actual_private_test_one_shot_send()
     phase39b_no_send_lock = build_phase39b_manual_send_no_send_lock()
+    phase39c_closeout = build_phase39c_actual_send_closeout()
+    phase39c_no_repeat = build_phase39c_no_repeat_send_lock(phase39c_closeout)
+    phase39c_safety = build_phase39c_post_send_safety_audit(
+        env={
+            "HERMES_PRIVATE_TEST_DRAFT_SEND_APPROVED": "false",
+            "HERMES_PRIVATE_TEST_DRAFT_SEND_APPROVAL_PHRASE": "",
+            "HERMES_DISCORD_SEND_MESSAGES": "false",
+            "HERMES_DISCORD_PRIVATE_TEST_REPLY": "false",
+            "HERMES_DISCORD_REPLY_MODE": "",
+            "HERMES_PHASE39B_REAL_DISCORD_SEND_EXECUTION": "false",
+            "HERMES_LLM_DISCORD_SEND_ENABLED": "false",
+            "HERMES_LLM_PRIVATE_TEST_REPLY_ENABLED": "false",
+            "HERMES_DISCORD_RAG_ENABLED": "false",
+            "HERMES_LLM_RAG_ENABLED": "false",
+            "HERMES_RAG_LLM_REPLY_ENABLED": "false",
+            "HERMES_DISCORD_EXTERNAL_EXECUTION": "false",
+            "HERMES_DISCORD_LLM_ENABLED": "false",
+        },
+        closeout=phase39c_closeout,
+        no_repeat_lock=phase39c_no_repeat,
+    )
     counts = audit.get("final_e2e_counts", {})
     report = {
         "report_type": "operations_dashboard_lock",
@@ -82,6 +106,13 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
         "phase39b_discord_message_sent": bool(phase39b_no_send_lock.get("discord_message_sent")),
         "phase39c_closeout_not_available": bool(phase39b_no_send_lock.get("phase39c_closeout_not_available")),
         "ready_for_phase39c_send_closeout": bool(phase39b_no_send_lock.get("ready_for_phase39c_send_closeout")),
+        "phase39c_closeout_completed": bool(phase39c_closeout.get("phase39c_closeout_completed")),
+        "phase39c_actual_discord_send_count_locked": int(phase39c_no_repeat.get("actual_discord_send_count_locked", 0) or 0),
+        "phase39c_repeat_send_allowed": bool(phase39c_no_repeat.get("repeat_send_allowed")),
+        "phase39c_automatic_retry_allowed": bool(phase39c_no_repeat.get("automatic_retry_allowed")),
+        "phase39c_ready_for_repeat_send": bool(phase39c_no_repeat.get("ready_for_repeat_send")),
+        "phase39c_gate_off_verified": bool(phase39c_safety.get("gate_off_verified")),
+        "phase39c_additional_send_count": int(phase39c_safety.get("phase39c_additional_send_count", 0) or 0),
         "ready_for_live_runtime": False,
         "ready_for_llm_call": False,
         "ready_for_discord_send": False,
@@ -121,11 +152,20 @@ def assert_operations_dashboard_lock_safe(report: dict[str, Any]) -> None:
         "ready_for_phase39b_manual_one_shot_send",
         "phase39b_discord_message_sent",
         "ready_for_phase39c_send_closeout",
+        "phase39c_repeat_send_allowed",
+        "phase39c_automatic_retry_allowed",
+        "phase39c_ready_for_repeat_send",
     ):
         if report.get(key):
             raise ValueError(f"Operations dashboard lock unsafe flag is true: {key}")
     if int(report.get("phase39b_actual_discord_send_count", 0) or 0) != 0:
         raise ValueError("Operations dashboard lock requires Phase 39B send count 0.")
+    if int(report.get("phase39c_actual_discord_send_count_locked", 0) or 0) != 1:
+        raise ValueError("Operations dashboard lock requires Phase 39C send count locked to 1.")
+    if int(report.get("phase39c_additional_send_count", 0) or 0) != 0:
+        raise ValueError("Operations dashboard lock forbids Phase 39C additional sends.")
+    if not report.get("phase39c_closeout_completed") or not report.get("phase39c_gate_off_verified"):
+        raise ValueError("Operations dashboard lock requires Phase 39C closeout and gate-off audit.")
 
 
 def render_operations_dashboard_lock_markdown(report: dict[str, Any]) -> str:

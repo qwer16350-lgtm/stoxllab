@@ -54,6 +54,11 @@ message and then prepare Phase 39C closeout/no-repeat lock:
 `discord_api_send_called=true`, `discord_message_sent=true`,
 `message_sent_count=1`, and `ready_for_phase39c_send_closeout=true`.
 
+Phase 39C records that operator-observed success and locks the sequence. Phase
+39C does not send again. The actual Discord send count is locked to 1, repeat
+send and retries are false, and Phase 40 planning can only proceed from the
+no-repeat locked state.
+
 The approval phrase is compared by exact code constant. Reports must show only
 presence and exact-match booleans, never the approval phrase value.
 

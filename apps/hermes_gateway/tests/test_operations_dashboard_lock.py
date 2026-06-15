@@ -84,6 +84,17 @@ def test_operations_dashboard_lock_phase39b_no_send_state() -> None:
     assert_true(report["ready_for_phase39c_send_closeout"] is False, "No 39C ready")
 
 
+def test_operations_dashboard_lock_phase39c_closeout_state() -> None:
+    report = build_operations_dashboard_lock()
+    assert_true(report["phase39c_closeout_completed"] is True, "39C closeout complete")
+    assert_true(report["phase39c_actual_discord_send_count_locked"] == 1, "39C locked count 1")
+    assert_true(report["phase39c_repeat_send_allowed"] is False, "39C no repeat")
+    assert_true(report["phase39c_automatic_retry_allowed"] is False, "39C no auto retry")
+    assert_true(report["phase39c_ready_for_repeat_send"] is False, "39C no repeat readiness")
+    assert_true(report["phase39c_gate_off_verified"] is True, "39C gate off")
+    assert_true(report["phase39c_additional_send_count"] == 0, "39C no additional send")
+
+
 def test_operations_dashboard_lock_no_sensitive_values() -> None:
     text = json.dumps(build_operations_dashboard_lock(), ensure_ascii=False).lower()
     assert_true("sk-" not in text and "xoxb-" not in text and "token=" not in text, "No secrets")
@@ -104,6 +115,7 @@ def main() -> int:
         test_operations_dashboard_lock_phase38_entry_state,
         test_operations_dashboard_lock_phase39a_blocked_state,
         test_operations_dashboard_lock_phase39b_no_send_state,
+        test_operations_dashboard_lock_phase39c_closeout_state,
         test_operations_dashboard_lock_no_sensitive_values,
         test_operations_dashboard_lock_markdown,
     ]

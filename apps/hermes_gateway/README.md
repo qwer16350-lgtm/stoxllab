@@ -605,6 +605,13 @@ Discord API send is called during implementation. A successful operator-run real
 send is expected to produce exactly one private-test message and
 `ready_for_phase39c_send_closeout=true`.
 
+Phase 39C records the operator-observed Phase 39B send success as closeout,
+locks the actual Discord send count at 1, and adds a no-repeat/no-retry lock.
+Phase 39C performs no additional Discord live runtime, no additional Discord API
+send, no LLM/RAG/embedding call, and no external execution. Push readiness is
+report-only and leaves `git push origin feature/stoxl-hermes-agent-org` for the
+operator.
+
 If the registry file is missing, generate it from the repo root:
 
 ```powershell

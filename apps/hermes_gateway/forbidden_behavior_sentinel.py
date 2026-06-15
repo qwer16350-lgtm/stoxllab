@@ -51,6 +51,12 @@ FORBIDDEN_TRUE_FIELDS = (
     "private_test_channel_id_value_logged",
     "raw_discord_ids_logged",
     "approval_phrase_value_logged",
+    "additional_discord_send_called_in_phase39c",
+    "additional_discord_message_sent_in_phase39c",
+    "phase39c_repeat_send_allowed",
+    "phase39c_automatic_retry_allowed",
+    "phase39c_manual_retry_allowed",
+    "phase39c_ready_for_repeat_send",
 )
 
 
@@ -100,6 +106,16 @@ def build_forbidden_behavior_sentinel(overrides: dict[str, Any] | None = None) -
         "private_test_channel_id_value_logged": False,
         "raw_discord_ids_logged": False,
         "approval_phrase_value_logged": False,
+        "additional_discord_send_called_in_phase39c": False,
+        "additional_discord_message_sent_in_phase39c": False,
+        "additional_message_sent_count_in_phase39c": 0,
+        "phase39c_actual_discord_send_count_locked": 1,
+        "phase39c_repeat_send_allowed": False,
+        "phase39c_automatic_retry_allowed": False,
+        "phase39c_manual_retry_allowed": False,
+        "phase39c_ready_for_repeat_send": False,
+        "phase39c_closeout_completed": True,
+        "phase39c_no_repeat_lock_active": True,
         "post_llm_call_sentinel": False,
         "total_phase36_llm_call_count": 1,
         "total_phase36_discord_message_sent_count": 0,
@@ -134,6 +150,8 @@ def _sentinel_passed(report: dict[str, Any]) -> bool:
         return False
     if int(report.get("actual_discord_send_count", 0) or 0) != 0:
         return False
+    if int(report.get("additional_message_sent_count_in_phase39c", 0) or 0) != 0:
+        return False
     return True
 
 
@@ -157,6 +175,8 @@ def assert_forbidden_behavior_sentinel_safe(report: dict[str, Any]) -> None:
         raise ValueError("Forbidden behavior sentinel requires actual message sent count 0.")
     if int(report.get("actual_discord_send_count", 0) or 0) != 0:
         raise ValueError("Forbidden behavior sentinel requires actual Discord send count 0.")
+    if int(report.get("additional_message_sent_count_in_phase39c", 0) or 0) != 0:
+        raise ValueError("Forbidden behavior sentinel requires Phase 39C additional send count 0.")
 
 
 def render_forbidden_behavior_sentinel_markdown(report: dict[str, Any]) -> str:

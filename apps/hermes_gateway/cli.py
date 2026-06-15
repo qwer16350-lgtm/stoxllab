@@ -116,6 +116,10 @@ from actual_private_test_send_safety_gate import build_actual_private_test_send_
 from actual_private_test_send_blocked_report import build_actual_private_test_send_blocked_report, render_actual_private_test_send_blocked_report_markdown
 from phase39b_manual_send_reentry_packet import build_phase39b_manual_send_reentry_packet, render_phase39b_manual_send_reentry_packet_markdown
 from phase39b_manual_send_no_send_lock import build_phase39b_manual_send_no_send_lock, render_phase39b_manual_send_no_send_lock_markdown
+from phase39c_actual_send_closeout import build_phase39c_actual_send_closeout, render_phase39c_actual_send_closeout_markdown
+from phase39c_no_repeat_send_lock import build_phase39c_no_repeat_send_lock, render_phase39c_no_repeat_send_lock_markdown
+from phase39c_post_send_safety_audit import build_phase39c_post_send_safety_audit, render_phase39c_post_send_safety_audit_markdown
+from phase39c_push_readiness import build_phase39c_push_readiness, render_phase39c_push_readiness_markdown
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight, render_rag_evidence_private_test_send_preflight_markdown
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope, render_rag_evidence_prompt_envelope_markdown
 from rag_evidence_review_packet import build_rag_evidence_review_packet, render_rag_evidence_review_packet_markdown
@@ -383,6 +387,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--execute-actual-private-test-send", action="store_true", help="Mark the Phase 39B actual private-test send execution flag as present; Hotfix 3 still uses no-send mock gate.")
     parser.add_argument("--phase39b-manual-send-reentry-packet", action="store_true", help="Print Phase 39B-0 manual send re-entry packet.")
     parser.add_argument("--phase39b-manual-send-no-send-lock", action="store_true", help="Print Phase 39B-0 no-send lock.")
+    parser.add_argument("--phase39c-actual-send-closeout", action="store_true", help="Print Phase 39C actual send closeout report without sending.")
+    parser.add_argument("--phase39c-no-repeat-send-lock", action="store_true", help="Print Phase 39C no-repeat send lock report.")
+    parser.add_argument("--phase39c-post-send-safety-audit", action="store_true", help="Print Phase 39C post-send safety audit report.")
+    parser.add_argument("--phase39c-push-readiness", action="store_true", help="Print Phase 39C push readiness report.")
     parser.add_argument("--source", default="operation", help="RAG source for local retrieval reports.")
     parser.add_argument("--query", default="STOXL brand tone", help="RAG query preview for local retrieval reports.")
     parser.add_argument("--allow-llm-api-call", action="store_true", help="Allow Phase 32B to attempt one gated provider call when env gates pass.")
@@ -1873,6 +1881,58 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- ready_for_phase39c_send_closeout: {output.get('ready_for_phase39c_send_closeout')}")
         return 0
 
+    if args.phase39c_actual_send_closeout:
+        output = build_phase39c_actual_send_closeout()
+        if args.markdown:
+            print(render_phase39c_actual_send_closeout_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 39C actual send closeout")
+            print(f"- phase39b_actual_send_success: {output.get('phase39b_actual_send_success')}")
+            print(f"- actual_discord_send_count: {output.get('actual_discord_send_count')}")
+            print(f"- additional_message_sent_count_in_phase39c: {output.get('additional_message_sent_count_in_phase39c')}")
+        return 0
+
+    if args.phase39c_no_repeat_send_lock:
+        output = build_phase39c_no_repeat_send_lock()
+        if args.markdown:
+            print(render_phase39c_no_repeat_send_lock_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 39C no-repeat send lock")
+            print(f"- actual_discord_send_count_locked: {output.get('actual_discord_send_count_locked')}")
+            print(f"- repeat_send_allowed: {output.get('repeat_send_allowed')}")
+            print(f"- ready_for_repeat_send: {output.get('ready_for_repeat_send')}")
+        return 0
+
+    if args.phase39c_post_send_safety_audit:
+        output = build_phase39c_post_send_safety_audit()
+        if args.markdown:
+            print(render_phase39c_post_send_safety_audit_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 39C post-send safety audit")
+            print(f"- gate_off_verified: {output.get('gate_off_verified')}")
+            print(f"- total_actual_discord_send_count_this_sequence: {output.get('total_actual_discord_send_count_this_sequence')}")
+            print(f"- unattended_auto_reply_allowed: {output.get('unattended_auto_reply_allowed')}")
+        return 0
+
+    if args.phase39c_push_readiness:
+        output = build_phase39c_push_readiness()
+        if args.markdown:
+            print(render_phase39c_push_readiness_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 39C push readiness")
+            print(f"- phase39c_closeout_completed: {output.get('phase39c_closeout_completed')}")
+            print(f"- push_executed_by_codex: {output.get('push_executed_by_codex')}")
+            print(f"- push_command: {output.get('push_command')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -2087,6 +2147,10 @@ def main(argv: list[str] | None = None) -> int:
         or args.execute_actual_private_test_send
         or args.phase39b_manual_send_reentry_packet
         or args.phase39b_manual_send_no_send_lock
+        or args.phase39c_actual_send_closeout
+        or args.phase39c_no_repeat_send_lock
+        or args.phase39c_post_send_safety_audit
+        or args.phase39c_push_readiness
         or args.allow_llm_api_call
         or args.allow_actual_one_shot_llm_draft_call
         or args.allow_rag_evidence_llm_api_call

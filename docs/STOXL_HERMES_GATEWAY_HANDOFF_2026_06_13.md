@@ -377,3 +377,9 @@ token/channel presence, private-test-only scope, public/team blocked,
 unattended false, and LLM/RAG/embedding/external flags false. Tests inject a
 fake real adapter and verify adapter selection/call metadata while keeping
 actual Discord API send, Discord message sent, and message count at zero.
+
+Phase 39C records the operator-observed Phase 39B actual private-test one-shot
+send success. Closeout locks the actual Discord send count to 1, records zero
+additional Phase 39C sends, verifies gates off, forbids repeat/retry/unattended
+send, and prepares push readiness. Codex does not run Discord live runtime,
+does not call Discord API send, and does not push.
