@@ -68,6 +68,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - Build Phase 37D-F actual private-test send manual preflight, mock send rehearsal, and no-send lock reports without starting Phase 38 or sending Discord messages.
 - Build Phase 38A-E actual private-test send contract, final payload freeze, rollback gate, operator checklist, and live send entry gate reports without starting Phase 39 or sending Discord messages.
 - Build Phase 39A actual private-test one-shot send path scaffolding with default blocking, safety gate reports, and blocked report output. This phase does not run Discord live runtime or send messages.
+- Build Phase 39B-0 manual send re-entry and no-send lock reports without running Discord live runtime or sending messages.
 
 ## Explicit Non-Goals
 
@@ -113,6 +114,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - No Phase 35B preview starts Discord, sends messages, calls OpenRouter/LLM APIs, creates embeddings/vector indexes, watches files, schedules auto replies, or executes external actions.
 - No Phase 35C preview starts Discord, sends messages, calls OpenRouter/LLM APIs, executes prompts, creates embeddings/vector indexes, dumps full content, or executes external actions.
 - No Phase 39A report starts Discord live runtime, calls Discord API send, sends a Discord message, executes actual private-test send, calls OpenRouter/LLM APIs, generates or activates approval phrases, creates embeddings/vector indexes, enables unattended auto reply, or executes external actions.
+- No Phase 39B-0 report starts Discord live runtime, calls Discord API send, sends a Discord message, executes actual private-test send, calls OpenRouter/LLM APIs, reads RAG, creates embeddings/vector indexes, generates approval phrases, activates manual approval, enables unattended auto reply, or executes external actions.
 
 ## Phase 21 Read-Only Planning Docs
 
@@ -572,6 +574,13 @@ The `--allow-actual-private-test-send` CLI flag is recognized for this boundary
 so reports can show `allow_flag_present=true`. In Phase 39A Hotfix 1, the flag
 alone never starts Discord live runtime, never calls Discord API send, and never
 sends a Discord message.
+
+Phase 39B-0 adds a manual send re-entry packet and no-send lock. These reports
+document that Codex and the user's PowerShell session may not share process env
+values, so a future actual send must be run by the user from the same PowerShell
+session where token/channel presence is true. Phase 39B-0 does not run the
+actual send and keeps Phase 39C closeout unavailable because no actual Discord
+message has been sent in this phase.
 
 If the registry file is missing, generate it from the repo root:
 

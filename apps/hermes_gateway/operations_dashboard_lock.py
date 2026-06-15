@@ -17,6 +17,7 @@ from one_shot_llm_no_send_final_lock import build_one_shot_llm_no_send_final_loc
 from post_llm_call_dashboard_lock import build_post_llm_call_dashboard_lock
 from phase35a_post_mvp_safety_audit import build_phase35a_post_mvp_safety_audit
 from actual_private_test_one_shot_send import build_actual_private_test_one_shot_send
+from phase39b_manual_send_no_send_lock import build_phase39b_manual_send_no_send_lock
 from private_test_live_send_entry_gate import build_private_test_live_send_entry_gate
 from rag_evidence_private_test_phase34_final_lock import build_rag_evidence_private_test_phase34_final_lock
 
@@ -40,6 +41,7 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
     phase36_dashboard = build_post_llm_call_dashboard_lock(phase36_final_lock)
     phase38_entry_gate = build_private_test_live_send_entry_gate()
     phase39a_send_path = build_actual_private_test_one_shot_send()
+    phase39b_no_send_lock = build_phase39b_manual_send_no_send_lock()
     counts = audit.get("final_e2e_counts", {})
     report = {
         "report_type": "operations_dashboard_lock",
@@ -75,6 +77,11 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
         "phase39a_actual_private_test_send_executed": bool(phase39a_send_path.get("actual_private_test_send_executed")),
         "phase39a_discord_message_sent": bool(phase39a_send_path.get("discord_message_sent")),
         "ready_for_phase39b_manual_one_shot_send": bool(phase39a_send_path.get("ready_for_phase39b_manual_one_shot_send")),
+        "phase39b_actual_send_not_executed_yet": bool(phase39b_no_send_lock.get("phase39b_actual_send_not_executed_yet")),
+        "phase39b_actual_discord_send_count": int(phase39b_no_send_lock.get("actual_discord_send_count", 0) or 0),
+        "phase39b_discord_message_sent": bool(phase39b_no_send_lock.get("discord_message_sent")),
+        "phase39c_closeout_not_available": bool(phase39b_no_send_lock.get("phase39c_closeout_not_available")),
+        "ready_for_phase39c_send_closeout": bool(phase39b_no_send_lock.get("ready_for_phase39c_send_closeout")),
         "ready_for_live_runtime": False,
         "ready_for_llm_call": False,
         "ready_for_discord_send": False,
@@ -112,9 +119,13 @@ def assert_operations_dashboard_lock_safe(report: dict[str, Any]) -> None:
         "phase39a_actual_private_test_send_executed",
         "phase39a_discord_message_sent",
         "ready_for_phase39b_manual_one_shot_send",
+        "phase39b_discord_message_sent",
+        "ready_for_phase39c_send_closeout",
     ):
         if report.get(key):
             raise ValueError(f"Operations dashboard lock unsafe flag is true: {key}")
+    if int(report.get("phase39b_actual_discord_send_count", 0) or 0) != 0:
+        raise ValueError("Operations dashboard lock requires Phase 39B send count 0.")
 
 
 def render_operations_dashboard_lock_markdown(report: dict[str, Any]) -> str:

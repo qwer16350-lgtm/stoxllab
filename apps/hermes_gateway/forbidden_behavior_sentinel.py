@@ -41,6 +41,8 @@ FORBIDDEN_TRUE_FIELDS = (
     "ready_for_phase38_actual_private_test_send_path",
     "ready_for_phase39_live_execution",
     "ready_for_phase39b_manual_one_shot_send",
+    "ready_for_phase39b_actual_send_manual_attempt",
+    "ready_for_phase39c_send_closeout",
     "actual_discord_api_send_called",
     "actual_discord_message_sent",
     "api_key_value_logged",
@@ -86,8 +88,11 @@ def build_forbidden_behavior_sentinel(overrides: dict[str, Any] | None = None) -
         "ready_for_phase38_actual_private_test_send_path": False,
         "ready_for_phase39_live_execution": False,
         "ready_for_phase39b_manual_one_shot_send": False,
+        "ready_for_phase39b_actual_send_manual_attempt": False,
+        "ready_for_phase39c_send_closeout": False,
         "actual_discord_api_send_called": False,
         "actual_discord_message_sent": False,
+        "actual_discord_send_count": 0,
         "actual_message_sent_count": 0,
         "api_key_value_logged": False,
         "token_value_logged": False,
@@ -127,6 +132,8 @@ def _sentinel_passed(report: dict[str, Any]) -> bool:
             return False
     if int(report.get("actual_message_sent_count", 0) or 0) != 0:
         return False
+    if int(report.get("actual_discord_send_count", 0) or 0) != 0:
+        return False
     return True
 
 
@@ -148,6 +155,8 @@ def assert_forbidden_behavior_sentinel_safe(report: dict[str, Any]) -> None:
             raise ValueError("Post-LLM sentinel requires Phase 36 Discord message sent false.")
     if int(report.get("actual_message_sent_count", 0) or 0) != 0:
         raise ValueError("Forbidden behavior sentinel requires actual message sent count 0.")
+    if int(report.get("actual_discord_send_count", 0) or 0) != 0:
+        raise ValueError("Forbidden behavior sentinel requires actual Discord send count 0.")
 
 
 def render_forbidden_behavior_sentinel_markdown(report: dict[str, Any]) -> str:

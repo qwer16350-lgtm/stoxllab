@@ -1,0 +1,19 @@
+{
+  "report_type": "phase39b_manual_send_no_send_lock",
+  "version": "phase39b_manual_send_no_send_lock_before_actual_send",
+  "report_only": true,
+  "actual_discord_send_count": 0,
+  "discord_api_send_called": false,
+  "discord_message_sent": false,
+  "message_sent_count": 0,
+  "actual_private_test_send_executed": false,
+  "phase39b_actual_send_not_executed_yet": true,
+  "phase39c_closeout_not_available": true,
+  "phase39c_closeout_reason": "no_actual_discord_message_sent",
+  "repeat_send_allowed": false,
+  "automatic_retry_allowed": false,
+  "unattended_auto_reply_allowed": false,
+  "public_team_send_allowed": false,
+  "ready_for_phase39b_actual_send_manual_attempt": false,
+  "ready_for_phase39c_send_closeout": false
+}

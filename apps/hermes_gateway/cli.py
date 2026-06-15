@@ -114,6 +114,8 @@ from private_test_live_send_entry_gate import build_private_test_live_send_entry
 from actual_private_test_one_shot_send import build_actual_private_test_one_shot_send, render_actual_private_test_one_shot_send_markdown
 from actual_private_test_send_safety_gate import build_actual_private_test_send_safety_gate, render_actual_private_test_send_safety_gate_markdown
 from actual_private_test_send_blocked_report import build_actual_private_test_send_blocked_report, render_actual_private_test_send_blocked_report_markdown
+from phase39b_manual_send_reentry_packet import build_phase39b_manual_send_reentry_packet, render_phase39b_manual_send_reentry_packet_markdown
+from phase39b_manual_send_no_send_lock import build_phase39b_manual_send_no_send_lock, render_phase39b_manual_send_no_send_lock_markdown
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight, render_rag_evidence_private_test_send_preflight_markdown
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope, render_rag_evidence_prompt_envelope_markdown
 from rag_evidence_review_packet import build_rag_evidence_review_packet, render_rag_evidence_review_packet_markdown
@@ -378,6 +380,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--actual-private-test-send-safety-gate", action="store_true", help="Print Phase 39A actual private-test send safety gate.")
     parser.add_argument("--actual-private-test-send-blocked-report", action="store_true", help="Print Phase 39A actual private-test send blocked report.")
     parser.add_argument("--allow-actual-private-test-send", action="store_true", help="Mark the Phase 39 actual private-test send allow flag as present; Phase 39A still does not send.")
+    parser.add_argument("--phase39b-manual-send-reentry-packet", action="store_true", help="Print Phase 39B-0 manual send re-entry packet.")
+    parser.add_argument("--phase39b-manual-send-no-send-lock", action="store_true", help="Print Phase 39B-0 no-send lock.")
     parser.add_argument("--source", default="operation", help="RAG source for local retrieval reports.")
     parser.add_argument("--query", default="STOXL brand tone", help="RAG query preview for local retrieval reports.")
     parser.add_argument("--allow-llm-api-call", action="store_true", help="Allow Phase 32B to attempt one gated provider call when env gates pass.")
@@ -1838,6 +1842,35 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- discord_message_sent: {output.get('discord_message_sent')}")
         return 0
 
+    if args.phase39b_manual_send_reentry_packet:
+        output = build_phase39b_manual_send_reentry_packet()
+        if args.markdown:
+            print(render_phase39b_manual_send_reentry_packet_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 39B manual send re-entry packet")
+            print(f"- report_only: {output.get('report_only')}")
+            print(f"- allow_flag_cli_available: {output.get('allow_flag_cli_available')}")
+            print(f"- discord_api_send_called: {output.get('discord_api_send_called')}")
+            print(f"- discord_message_sent: {output.get('discord_message_sent')}")
+            print(f"- ready_for_phase39b_actual_send_manual_attempt: {output.get('ready_for_phase39b_actual_send_manual_attempt')}")
+        return 0
+
+    if args.phase39b_manual_send_no_send_lock:
+        output = build_phase39b_manual_send_no_send_lock()
+        if args.markdown:
+            print(render_phase39b_manual_send_no_send_lock_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 39B manual send no-send lock")
+            print(f"- report_only: {output.get('report_only')}")
+            print(f"- actual_discord_send_count: {output.get('actual_discord_send_count')}")
+            print(f"- discord_message_sent: {output.get('discord_message_sent')}")
+            print(f"- ready_for_phase39c_send_closeout: {output.get('ready_for_phase39c_send_closeout')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -2049,6 +2082,8 @@ def main(argv: list[str] | None = None) -> int:
         or args.actual_private_test_send_safety_gate
         or args.actual_private_test_send_blocked_report
         or args.allow_actual_private_test_send
+        or args.phase39b_manual_send_reentry_packet
+        or args.phase39b_manual_send_no_send_lock
         or args.allow_llm_api_call
         or args.allow_actual_one_shot_llm_draft_call
         or args.allow_rag_evidence_llm_api_call

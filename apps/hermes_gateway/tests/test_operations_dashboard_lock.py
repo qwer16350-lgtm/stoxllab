@@ -75,6 +75,15 @@ def test_operations_dashboard_lock_phase39a_blocked_state() -> None:
     assert_true(report["ready_for_phase39b_manual_one_shot_send"] is False, "No 39B readiness")
 
 
+def test_operations_dashboard_lock_phase39b_no_send_state() -> None:
+    report = build_operations_dashboard_lock()
+    assert_true(report["phase39b_actual_send_not_executed_yet"] is True, "39B not executed")
+    assert_true(report["phase39b_actual_discord_send_count"] == 0, "39B send count 0")
+    assert_true(report["phase39b_discord_message_sent"] is False, "39B no message")
+    assert_true(report["phase39c_closeout_not_available"] is True, "39C unavailable")
+    assert_true(report["ready_for_phase39c_send_closeout"] is False, "No 39C ready")
+
+
 def test_operations_dashboard_lock_no_sensitive_values() -> None:
     text = json.dumps(build_operations_dashboard_lock(), ensure_ascii=False).lower()
     assert_true("sk-" not in text and "xoxb-" not in text and "token=" not in text, "No secrets")
@@ -94,6 +103,7 @@ def main() -> int:
         test_operations_dashboard_lock_phase36_post_call_state,
         test_operations_dashboard_lock_phase38_entry_state,
         test_operations_dashboard_lock_phase39a_blocked_state,
+        test_operations_dashboard_lock_phase39b_no_send_state,
         test_operations_dashboard_lock_no_sensitive_values,
         test_operations_dashboard_lock_markdown,
     ]

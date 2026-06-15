@@ -26,6 +26,7 @@
 - Phase 35B local knowledge ingestion preview, evidence quality dry preview, and agent routing dry preview are available.
 - Phase 35C agent evidence pack composer and agent prompt preview are available.
 - Phase 39A actual private-test one-shot send path, safety gate, and blocked report are available, but execution remains default blocked.
+- Phase 39B-0 manual send re-entry packet and no-send lock are available, but actual send remains not executed.
 
 ## Completed Chain
 
@@ -343,3 +344,11 @@ actions. Phase 39B manual one-shot actual send has not been run.
 Phase 39A Hotfix 1 adds the missing `--allow-actual-private-test-send` parser
 flag. The flag is report-only in Phase 39A and only reflects
 `allow_flag_present=true`; it does not weaken the no-send policy.
+
+Phase 39B-0 documents the Codex/user PowerShell process-env separation and keeps
+the next actual send as a separate user-run action from the same PowerShell
+session where token/channel presence is true. It performs no Discord live
+runtime, no Discord API send, no message send, no OpenRouter/LLM attempt, no
+RAG call, no embedding/vector creation, and no external execution. Phase 39C
+closeout remains unavailable because no actual Phase 39B Discord message has
+been sent.

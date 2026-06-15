@@ -76,6 +76,8 @@ from private_test_live_send_entry_gate import build_private_test_live_send_entry
 from actual_private_test_one_shot_send import build_actual_private_test_one_shot_send
 from actual_private_test_send_safety_gate import build_actual_private_test_send_safety_gate
 from actual_private_test_send_blocked_report import build_actual_private_test_send_blocked_report
+from phase39b_manual_send_reentry_packet import build_phase39b_manual_send_reentry_packet
+from phase39b_manual_send_no_send_lock import build_phase39b_manual_send_no_send_lock
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope
 from rag_evidence_review_packet import build_rag_evidence_review_packet
@@ -490,6 +492,8 @@ def build_operations_packet_viewer_report(
     phase39a_safety_gate = build_actual_private_test_send_safety_gate(phase38e_gate=phase38e_gate, payload_freeze=phase38b_freeze, rollback_gate=phase38c_rollback, operator_checklist=phase38d_checklist)
     phase39a_blocked = build_actual_private_test_send_blocked_report(phase39a_safety_gate)
     phase39a_send_path = build_actual_private_test_one_shot_send()
+    phase39b_reentry = build_phase39b_manual_send_reentry_packet()
+    phase39b_no_send_lock = build_phase39b_manual_send_no_send_lock()
     report = {
         "report_type": "operations_packet_viewer",
         "version": VERSION,
@@ -1190,6 +1194,23 @@ def build_operations_packet_viewer_report(
             "report_only": bool(phase39a_blocked.get("report_only")),
             "blocked": bool(phase39a_blocked.get("blocked")),
             "phase39a_no_execution_policy": bool(phase39a_blocked.get("phase39a_no_execution_policy")),
+        },
+        "phase39b_manual_send_reentry_packet": {
+            "available": True,
+            "report_only": bool(phase39b_reentry.get("report_only")),
+            "actual_send_executed": bool(phase39b_reentry.get("actual_send_executed")),
+            "discord_api_send_called": bool(phase39b_reentry.get("discord_api_send_called")),
+            "discord_message_sent": bool(phase39b_reentry.get("discord_message_sent")),
+            "message_sent_count": int(phase39b_reentry.get("message_sent_count", 0) or 0),
+            "actual_send_must_be_run_from_same_user_powershell_session": bool(phase39b_reentry.get("actual_send_must_be_run_from_same_user_powershell_session")),
+            "ready_for_phase39b_actual_send_manual_attempt": bool(phase39b_reentry.get("ready_for_phase39b_actual_send_manual_attempt")),
+        },
+        "phase39b_manual_send_no_send_lock": {
+            "available": True,
+            "report_only": bool(phase39b_no_send_lock.get("report_only")),
+            "actual_discord_send_count": int(phase39b_no_send_lock.get("actual_discord_send_count", 0) or 0),
+            "phase39c_closeout_not_available": bool(phase39b_no_send_lock.get("phase39c_closeout_not_available")),
+            "ready_for_phase39c_send_closeout": bool(phase39b_no_send_lock.get("ready_for_phase39c_send_closeout")),
         },
         "daily_manifest_summary": load_daily_manifest(root=root, date=date),
         "filters": {

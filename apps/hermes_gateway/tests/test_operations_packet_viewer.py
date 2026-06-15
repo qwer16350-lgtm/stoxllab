@@ -890,6 +890,26 @@ def test_phase39a_summaries() -> None:
     assert_true(blocked["phase39a_no_execution_policy"] is True, "39A policy")
 
 
+def test_phase39b_zero_send_summaries() -> None:
+    setup_artifacts()
+    report = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")
+    reentry = report["phase39b_manual_send_reentry_packet"]
+    lock = report["phase39b_manual_send_no_send_lock"]
+    assert_true(reentry["available"] is True, "39B reentry available")
+    assert_true(reentry["report_only"] is True, "39B reentry report only")
+    assert_true(reentry["actual_send_executed"] is False, "39B reentry no send")
+    assert_true(reentry["discord_api_send_called"] is False, "39B reentry no API")
+    assert_true(reentry["discord_message_sent"] is False, "39B reentry no message")
+    assert_true(reentry["message_sent_count"] == 0, "39B reentry count 0")
+    assert_true(reentry["actual_send_must_be_run_from_same_user_powershell_session"] is True, "39B same shell")
+    assert_true(reentry["ready_for_phase39b_actual_send_manual_attempt"] is False, "39B reentry not ready")
+    assert_true(lock["available"] is True, "39B no-send lock available")
+    assert_true(lock["report_only"] is True, "39B lock report only")
+    assert_true(lock["actual_discord_send_count"] == 0, "39B actual send count 0")
+    assert_true(lock["phase39c_closeout_not_available"] is True, "39C unavailable")
+    assert_true(lock["ready_for_phase39c_send_closeout"] is False, "39C not ready")
+
+
 def main() -> int:
     tests = [
         test_recent_events_returned,
@@ -944,6 +964,7 @@ def main() -> int:
         test_phase37d_e_f_summaries,
         test_phase38a_e_summaries,
         test_phase39a_summaries,
+        test_phase39b_zero_send_summaries,
     ]
     for test in tests:
         test()
