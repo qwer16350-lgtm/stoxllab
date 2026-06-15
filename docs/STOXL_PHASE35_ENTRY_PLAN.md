@@ -124,3 +124,21 @@ The current safe maximum path includes Phase 38A-E report-only preparation for a
 future private-test send: contract, payload freeze, rollback gate, operator
 checklist, and live send entry gate. This does not start Phase 39, does not send
 Discord messages, and does not enable unattended replies.
+
+# Phase 39A Note
+
+Phase 39A adds the actual private-test one-shot send path as an implementation
+boundary that is still default blocked.
+
+- Discord live runtime: not run.
+- Discord API send: not called.
+- Discord message sent: false.
+- Actual private-test send executed: false.
+- OpenRouter/LLM API call attempted: false.
+- Approval phrase generated: false.
+- Manual approval actualized: false.
+- Embedding/vector creation: false.
+- External execution: false.
+- Public/team channel send or reply: forbidden.
+- Unattended auto reply: false.
+- Phase 39B manual one-shot actual send: not run.

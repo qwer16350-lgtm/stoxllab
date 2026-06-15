@@ -19,3 +19,16 @@ Safety state:
 - Ready for actual private-test send: false
 - Ready for Discord send: false
 - Ready for Phase 38 live execution: false
+
+## Phase 39A Note
+
+Phase 39A implements a visible one-shot send boundary, but it does not activate
+the contract for live execution.
+
+- Actual send path available for inspection: true
+- Actual send allowed: false
+- Discord live runtime executed: false
+- Discord API send called: false
+- Discord message sent: false
+- Manual approval actualized: false
+- Phase 39B manual one-shot actual send: not run

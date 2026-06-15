@@ -18,3 +18,16 @@ Safety state:
 - Ready for operator checklist: true
 - Ready for actual private-test send: false
 - Ready for Discord send: false
+
+## Phase 39A Rollback Note
+
+Phase 39A does not send anything, so rollback remains a preflight concern rather
+than an active recovery action.
+
+- Post-send delete/edit API implemented: false
+- Post-send delete/edit API called: false
+- Kill-switch command executed: false
+- Discord API send called: false
+- Discord message sent: false
+- Actual private-test send executed: false
+- External execution: false

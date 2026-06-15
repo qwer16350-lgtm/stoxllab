@@ -16,3 +16,15 @@ Safety state:
 - Ready for rollback gate: true
 - Ready for actual private-test send: false
 - Ready for Discord send: false
+
+## Phase 39A Note
+
+The frozen payload may be referenced by the Phase 39A one-shot send path, but
+Phase 39A does not send it.
+
+- Full payload content printed: false
+- Private channel ID printed: false
+- Approval phrase value printed: false
+- Discord API send called: false
+- Discord message sent: false
+- Actual private-test send executed: false
