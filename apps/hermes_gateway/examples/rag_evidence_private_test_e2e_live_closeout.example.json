@@ -1,0 +1,52 @@
+{
+  "report_type": "rag_evidence_private_test_e2e_live_closeout",
+  "version": "phase34l2_e2e_live_reply_and_no_llm_send_retry_closeout",
+  "e2e_live_reply_observed": true,
+  "discord_event_received": true,
+  "accepted_private_test_channel": true,
+  "llm_api_call_count": 1,
+  "llm_response_packet_created": true,
+  "output_safety_allowed": true,
+  "initial_discord_send_attempt": {
+    "discord_send_failed": true,
+    "discord_send_failure_reason": "ServerDisconnectedError",
+    "discord_message_sent": false,
+    "message_sent_count": 0
+  },
+  "no_llm_send_retry": {
+    "llm_recall_allowed": false,
+    "llm_api_called": false,
+    "llm_api_call_count": 0,
+    "discord_message_sent": true,
+    "message_sent_count": 1,
+    "sent_channel_scope": "private_test_only"
+  },
+  "final_result": {
+    "discord_message_sent": true,
+    "message_sent_count": 1,
+    "sent_channel_scope": "private_test_only",
+    "ready_for_unattended_auto_reply": false,
+    "closeout_passed": true,
+    "ready_for_phase34m_final_lock": true
+  },
+  "discord_live_runtime_executed_by_closeout": false,
+  "additional_discord_send": false,
+  "additional_llm_api_call": false,
+  "embedding_api_called": false,
+  "external_execution": false,
+  "safety_assertions": {
+    "api_key_value_logged": false,
+    "token_value_logged": false,
+    "raw_discord_ids_logged": false,
+    "approval_phrase_value_logged": false,
+    "public_channel_reply_called": false,
+    "team_channel_reply_called": false,
+    "public_channel_send_called": false,
+    "team_channel_send_called": false,
+    "total_llm_call_count": 1,
+    "send_retry_llm_call_count": 0,
+    "final_discord_message_sent_count": 1,
+    "embedding_called": false,
+    "external_execution": false
+  }
+}

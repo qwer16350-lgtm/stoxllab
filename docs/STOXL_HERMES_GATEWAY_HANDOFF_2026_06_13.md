@@ -19,6 +19,9 @@
 - Phase 34D local evidence-to-RAG response packet integration is available for private-test review only.
 - Phase 34E-F private-test evidence review packet and local sample dry-chain reports are available.
 - Phase 34G-H0 prompt envelope preview and no-API/mock-only LLM dry readiness reports are available.
+- Phase 34L-1E/F no-LLM send retry reporting is available for LLM-success/Discord-send-disconnect partial success, with the actual sender boundary wired behind manual gates.
+- Phase 34L-2 E2E live reply plus no-LLM send retry closeout is available and marks the chain ready for Phase 34M final lock.
+- Phase 34M final lock is available and marks the private-test E2E RAG+LLM+Discord MVP complete.
 
 ## Completed Chain
 
@@ -64,6 +67,9 @@
 - Phase 34D remains local evidence-to-RAG-packet integration only; `ready_for_llm_prompt=false`.
 - Phase 34E-F remains review packet plus local sample dry chain only; `ready_for_discord_send=false`.
 - Phase 34G-H0 remains prompt envelope preview plus no-API/mock-only LLM readiness only; `actual_llm_api_call=false`.
+- Phase 34L-1E/F does not run live Discord runtime by default, does not send Discord messages in reports/tests, does not call OpenRouter/LLM again, does not call embeddings, and does not execute external actions. It prepares a manual send retry from an already safety-checked partial-success artifact.
+- Phase 34L-2 does not run Discord, send another message, call OpenRouter/LLM, recall LLM, call embeddings, or execute external actions. It verifies LLM count 1, send retry LLM count 0, and final private-test sent count 1.
+- Phase 34M final lock does not run Discord, send another message, call OpenRouter/LLM, recall LLM, call embeddings, or execute external actions. It keeps future live runs behind manual approvals.
 
 ## Important Commands
 
@@ -104,6 +110,9 @@ python apps\hermes_gateway\cli.py --rag-evidence-private-test-send --markdown
 python apps\hermes_gateway\cli.py --rag-evidence-private-test-send-closeout --json
 python apps\hermes_gateway\cli.py --rag-evidence-private-test-e2e-preflight --json
 python apps\hermes_gateway\cli.py --rag-evidence-private-test-e2e-replay --json
+python apps\hermes_gateway\cli.py --rag-evidence-private-test-e2e-send-retry --json
+python apps\hermes_gateway\cli.py --rag-evidence-private-test-e2e-live-closeout --json
+python apps\hermes_gateway\cli.py --rag-evidence-private-test-phase34-final-lock --json
 python apps\hermes_gateway\cli.py --operations-viewer --json
 ```
 
@@ -228,3 +237,16 @@ the LLM manual approval gate also passes, and the call count remains capped at
 one. Output safety and Discord send remain downstream of a created LLM response
 packet. The latest retry was safe: `llm_api_called=false` and
 `discord_message_sent=false`. Next action is another Phase 34L-1 live retry.
+
+Phase 34L-1C eliminates the LLM allowed-but-not-attempted no-op. If
+`llm_call_allowed=true`, `llm_dispatch_invoked=true` and
+`llm_api_call_attempted=true` must follow. If dispatch cannot run, the report
+sets `llm_call_allowed=false` with a concrete `llm_dispatch_blocked_reason`.
+The previous retry was safe: `llm_api_called=false` and
+`discord_message_sent=false`. Next action is Phase 34L-1 live retry.
+
+Phase 34L-1D fixes OpenRouter key detection in that dispatch path. The E2E live
+dispatcher now recognizes `OPENROUTER_API_KEY` and
+`HERMES_OPENROUTER_API_KEY`; only `openrouter_api_key_present` is reported and
+key values remain hidden. The previous retry was safe: `llm_api_called=false`
+and `discord_message_sent=false`. Next action is Phase 34L-1 live retry.

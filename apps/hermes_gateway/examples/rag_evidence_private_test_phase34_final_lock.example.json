@@ -1,0 +1,40 @@
+{
+  "report_type": "rag_evidence_private_test_phase34_final_lock",
+  "version": "phase34m_private_test_e2e_mvp_final_lock",
+  "phase34_private_test_mvp_complete": true,
+  "local_knowledge_boundary": {
+    "ready_for_local_text_ingestion": true,
+    "ready_for_embedding": false,
+    "ready_for_external_sources": false,
+    "canonical_sources": ["marketing", "operation", "strategy", "brand", "archive"],
+    "forbidden_sources": ["operations"]
+  },
+  "e2e_live_reply_closeout": {
+    "closeout_passed": true,
+    "e2e_live_reply_observed": true,
+    "llm_api_call_count": 1,
+    "llm_response_packet_created": true,
+    "output_safety_allowed": true,
+    "initial_discord_send_failure_reason": "ServerDisconnectedError"
+  },
+  "no_llm_send_retry_closeout": {
+    "llm_recall_allowed": false,
+    "llm_api_call_count": 0,
+    "discord_message_sent": true,
+    "message_sent_count": 1,
+    "sent_channel_scope": "private_test_only"
+  },
+  "final_safety_state": {
+    "public_channel_reply_allowed": false,
+    "team_channel_reply_allowed": false,
+    "public_channel_send_allowed": false,
+    "team_channel_send_allowed": false,
+    "ready_for_unattended_auto_reply": false,
+    "embedding_api_called": false,
+    "external_execution": false
+  },
+  "manual_gates_required_for_future_live_runs": true,
+  "default_runtime_sends_disabled": true,
+  "phase34m_final_lock_passed": true,
+  "ready_for_next_phase": "phase35_or_commit_only"
+}

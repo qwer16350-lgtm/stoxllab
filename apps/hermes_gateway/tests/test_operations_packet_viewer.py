@@ -460,11 +460,18 @@ def test_rag_evidence_private_test_e2e_live_reply_summary() -> None:
     assert_true(live["private_test_channel_only"] is True, "Private-test only should be true")
     assert_true(live["public_channel_reply_allowed"] is False, "Public reply should be false")
     assert_true(live["team_channel_reply_allowed"] is False, "Team reply should be false")
+    assert_true(isinstance(live["openrouter_api_key_present"], bool), "OpenRouter key presence should be boolean")
+    assert_true("OPENROUTER_API_KEY" in live["openrouter_api_key_aliases_checked"], "OPENROUTER alias should be checked")
+    assert_true("HERMES_OPENROUTER_API_KEY" in live["openrouter_api_key_aliases_checked"], "HERMES alias should be checked")
+    assert_true(live["openrouter_api_key_value_logged"] is False, "OpenRouter key value should not be logged")
     assert_true(live["blocked"] is True, "Viewer default live reply should be blocked")
     assert_true(live["discord_live_runtime_executed"] is False, "Viewer should not run live runtime")
     assert_true(live["prompt_safety_checked"] is False, "Viewer default should not check prompt safety")
     assert_true(live["llm_stage_reached"] is False, "Viewer default should not reach LLM stage")
     assert_true(live["llm_call_allowed"] is False, "Viewer default should not allow LLM call")
+    assert_true(live["llm_dispatch_invoked"] is False, "Viewer default should not invoke dispatch")
+    assert_true(live["llm_dispatch_mode"] == "", "Viewer default dispatch mode should be empty")
+    assert_true(live["llm_dispatch_blocked_reason"] == "", "Viewer default blocked reason should be empty")
     assert_true(live["llm_api_call_attempted"] is False, "Viewer default should not attempt LLM call")
     assert_true(live["llm_api_called"] is False, "Viewer should not call LLM")
     assert_true(live["llm_response_packet_created"] is False, "Viewer default should not create response packet")
@@ -474,6 +481,51 @@ def test_rag_evidence_private_test_e2e_live_reply_summary() -> None:
     assert_true(live["message_sent_count"] == 0, "Viewer default should have zero sends")
     assert_true(live["ready_for_phase34l2_e2e_live_reply_closeout"] is False, "Closeout should not be ready by default")
     assert_true(live["ready_for_unattended_auto_reply"] is False, "Unattended false")
+
+
+def test_rag_evidence_private_test_e2e_send_retry_summary() -> None:
+    setup_artifacts()
+    report = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")
+    partial = report["rag_evidence_private_test_e2e_partial_success"]
+    retry = report["rag_evidence_private_test_e2e_send_retry"]
+    assert_true(partial["available"] is False, "Viewer default should not invent live partial success")
+    assert_true(partial["llm_api_called"] is False, "Viewer default should not call LLM")
+    assert_true(partial["discord_message_sent"] is False, "Viewer default should not send Discord")
+    assert_true(retry["available"] is True, "Retry summary should be available")
+    assert_true(retry["llm_recall_allowed"] is False, "Retry should never allow LLM recall")
+    assert_true(retry["manual_approval_required"] is True, "Retry should require manual approval")
+    assert_true(retry["actual_send_retry_sender_available"] is False, "Viewer default should not expose sender")
+    assert_true(retry["actual_send_retry_sender_not_provided"] is False, "Viewer should not report sender-not-provided")
+    assert_true(retry["ready_for_actual_send_retry"] is False, "Viewer default retry should be blocked")
+    assert_true(retry["discord_message_sent"] is False, "Viewer retry should not send")
+    assert_true(retry["message_sent_count"] == 0, "Viewer retry send count should be zero")
+
+
+def test_rag_evidence_private_test_e2e_live_closeout_summary() -> None:
+    setup_artifacts()
+    closeout = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")["rag_evidence_private_test_e2e_live_closeout"]
+    assert_true(closeout["available"] is True, "E2E live closeout should be available")
+    assert_true(closeout["e2e_live_reply_observed"] is True, "Observed fixture should be true")
+    assert_true(closeout["llm_api_call_count"] == 1, "Total LLM count should be one")
+    assert_true(closeout["send_retry_llm_call_count"] == 0, "Send retry LLM count should be zero")
+    assert_true(closeout["final_discord_message_sent_count"] == 1, "Final sent count should be one")
+    assert_true(closeout["sent_channel_scope"] == "private_test_only", "Sent scope should be private test")
+    assert_true(closeout["closeout_passed"] is True, "Closeout should pass")
+    assert_true(closeout["ready_for_phase34m_final_lock"] is True, "Phase 34M should be ready")
+    assert_true(closeout["ready_for_unattended_auto_reply"] is False, "Unattended false")
+
+
+def test_rag_evidence_private_test_phase34_final_lock_summary() -> None:
+    setup_artifacts()
+    final_lock = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")["rag_evidence_private_test_phase34_final_lock"]
+    assert_true(final_lock["available"] is True, "Final lock should be available")
+    assert_true(final_lock["phase34_private_test_mvp_complete"] is True, "MVP should be complete")
+    assert_true(final_lock["llm_api_call_count"] == 1, "LLM count should be one")
+    assert_true(final_lock["send_retry_llm_call_count"] == 0, "Retry LLM count should be zero")
+    assert_true(final_lock["final_discord_message_sent_count"] == 1, "Final sent count should be one")
+    assert_true(final_lock["sent_channel_scope"] == "private_test_only", "Scope should be private-test only")
+    assert_true(final_lock["ready_for_unattended_auto_reply"] is False, "Unattended false")
+    assert_true(final_lock["phase34m_final_lock_passed"] is True, "Final lock should pass")
 
 
 def main() -> int:
@@ -512,6 +564,9 @@ def main() -> int:
         test_rag_evidence_private_test_e2e_preflight_summary,
         test_rag_evidence_private_test_e2e_replay_summary,
         test_rag_evidence_private_test_e2e_live_reply_summary,
+        test_rag_evidence_private_test_e2e_send_retry_summary,
+        test_rag_evidence_private_test_e2e_live_closeout_summary,
+        test_rag_evidence_private_test_phase34_final_lock_summary,
     ]
     for test in tests:
         test()

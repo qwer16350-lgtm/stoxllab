@@ -37,6 +37,9 @@ from rag_evidence_private_test_send_closeout import build_rag_evidence_private_t
 from rag_evidence_private_test_e2e_preflight import build_rag_evidence_private_test_e2e_preflight
 from rag_evidence_private_test_e2e_replay import build_rag_evidence_private_test_e2e_replay
 from rag_evidence_private_test_e2e_live_reply import build_rag_evidence_private_test_e2e_live_reply_report
+from rag_evidence_private_test_e2e_send_retry import build_rag_evidence_private_test_e2e_send_retry_report
+from rag_evidence_private_test_e2e_live_closeout import build_rag_evidence_private_test_e2e_live_closeout
+from rag_evidence_private_test_phase34_final_lock import build_rag_evidence_private_test_phase34_final_lock
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope
 from rag_evidence_review_packet import build_rag_evidence_review_packet
@@ -71,6 +74,14 @@ def _safe_json_load(path: Path) -> dict[str, Any] | None:
 
 def _assert_no_raw_values(obj: Any) -> None:
     text = json.dumps(obj, ensure_ascii=False).lower()
+    for safe_label in (
+        "openrouter_api_key",
+        "hermes_openrouter_api_key",
+        "api_key_value_logged",
+        "openrouter api key present",
+        "openrouter api key value logged",
+    ):
+        text = text.replace(safe_label, "")
     if any(marker in text for marker in SECRET_MARKERS):
         raise ValueError("Viewer output contains secret-like values.")
     if LONG_ID_RE.search(text):
@@ -384,6 +395,26 @@ def build_operations_packet_viewer_report(
         allow_live_reply=False,
         preflight=rag_evidence_e2e_preflight,
     )
+    rag_evidence_e2e_partial_success = rag_evidence_e2e_live_reply.get("partial_success_artifact", {})
+    if not rag_evidence_e2e_partial_success:
+        rag_evidence_e2e_partial_success = {
+            "report_type": "rag_evidence_private_test_e2e_partial_success",
+            "available": False,
+            "llm_api_called": False,
+            "llm_api_call_count": 0,
+            "output_safety_allowed": False,
+            "discord_message_sent": False,
+            "ready_for_manual_send_retry_without_llm": False,
+        }
+    rag_evidence_e2e_send_retry = build_rag_evidence_private_test_e2e_send_retry_report(
+        partial_success=rag_evidence_e2e_partial_success,
+        allow_send_retry=False,
+    )
+    rag_evidence_e2e_live_closeout = build_rag_evidence_private_test_e2e_live_closeout()
+    rag_evidence_phase34_final_lock = build_rag_evidence_private_test_phase34_final_lock(
+        root=str(_repo(root)),
+        closeout=rag_evidence_e2e_live_closeout,
+    )
     report = {
         "report_type": "operations_packet_viewer",
         "version": VERSION,
@@ -676,6 +707,9 @@ def build_operations_packet_viewer_report(
             "private_test_channel_only": bool(rag_evidence_e2e_live_reply.get("private_test_channel_only")),
             "public_channel_reply_allowed": bool(rag_evidence_e2e_live_reply.get("public_channel_reply_allowed")),
             "team_channel_reply_allowed": bool(rag_evidence_e2e_live_reply.get("team_channel_reply_allowed")),
+            "openrouter_api_key_present": bool(rag_evidence_e2e_live_reply.get("openrouter_api_key_present")),
+            "openrouter_api_key_aliases_checked": rag_evidence_e2e_live_reply.get("openrouter_api_key_aliases_checked", []),
+            "openrouter_api_key_value_logged": bool(rag_evidence_e2e_live_reply.get("openrouter_api_key_value_logged")),
             "ready": bool(rag_evidence_e2e_live_reply.get("ready")),
             "blocked": bool(rag_evidence_e2e_live_reply.get("blocked")),
             "discord_live_runtime_executed": bool(rag_evidence_e2e_live_reply.get("discord_live_runtime_executed")),
@@ -686,6 +720,9 @@ def build_operations_packet_viewer_report(
             "prompt_safety_blocked": bool(rag_evidence_e2e_live_reply.get("prompt_safety_blocked")),
             "llm_stage_reached": bool(rag_evidence_e2e_live_reply.get("llm_stage_reached")),
             "llm_call_allowed": bool(rag_evidence_e2e_live_reply.get("llm_call_allowed")),
+            "llm_dispatch_invoked": bool(rag_evidence_e2e_live_reply.get("llm_dispatch_invoked")),
+            "llm_dispatch_mode": rag_evidence_e2e_live_reply.get("llm_dispatch_mode", ""),
+            "llm_dispatch_blocked_reason": rag_evidence_e2e_live_reply.get("llm_dispatch_blocked_reason", ""),
             "llm_api_call_attempted": bool(rag_evidence_e2e_live_reply.get("llm_api_call_attempted")),
             "llm_api_called": bool(rag_evidence_e2e_live_reply.get("llm_api_called")),
             "llm_api_call_count": int(rag_evidence_e2e_live_reply.get("llm_api_call_count", 0) or 0),
@@ -697,6 +734,46 @@ def build_operations_packet_viewer_report(
             "message_sent_count": int(rag_evidence_e2e_live_reply.get("message_sent_count", 0) or 0),
             "ready_for_phase34l2_e2e_live_reply_closeout": bool(rag_evidence_e2e_live_reply.get("ready_for_phase34l2_e2e_live_reply_closeout")),
             "ready_for_unattended_auto_reply": bool(rag_evidence_e2e_live_reply.get("ready_for_unattended_auto_reply")),
+        },
+        "rag_evidence_private_test_e2e_partial_success": {
+            "available": bool(rag_evidence_e2e_partial_success.get("ready_for_manual_send_retry_without_llm")),
+            "llm_api_called": bool(rag_evidence_e2e_partial_success.get("llm_api_called")),
+            "llm_api_call_count": int(rag_evidence_e2e_partial_success.get("llm_api_call_count", 0) or 0),
+            "output_safety_allowed": bool(rag_evidence_e2e_partial_success.get("output_safety_allowed")),
+            "discord_message_sent": bool(rag_evidence_e2e_partial_success.get("discord_message_sent")),
+            "ready_for_manual_send_retry_without_llm": bool(rag_evidence_e2e_partial_success.get("ready_for_manual_send_retry_without_llm")),
+        },
+        "rag_evidence_private_test_e2e_send_retry": {
+            "available": bool(rag_evidence_e2e_send_retry),
+            "llm_recall_allowed": bool(rag_evidence_e2e_send_retry.get("llm_recall_allowed")),
+            "manual_approval_required": bool(rag_evidence_e2e_send_retry.get("manual_approval_required")),
+            "actual_send_retry_sender_available": bool(rag_evidence_e2e_send_retry.get("actual_send_retry_sender_available")),
+            "actual_send_retry_sender_not_provided": bool(rag_evidence_e2e_send_retry.get("actual_send_retry_sender_not_provided")),
+            "ready_for_actual_send_retry": bool(rag_evidence_e2e_send_retry.get("ready_for_actual_send_retry")),
+            "ready_for_phase34l2_e2e_live_reply_closeout": bool(rag_evidence_e2e_send_retry.get("ready_for_phase34l2_e2e_live_reply_closeout")),
+            "discord_message_sent": bool(rag_evidence_e2e_send_retry.get("discord_message_sent")),
+            "message_sent_count": int(rag_evidence_e2e_send_retry.get("message_sent_count", 0) or 0),
+        },
+        "rag_evidence_private_test_e2e_live_closeout": {
+            "available": True,
+            "e2e_live_reply_observed": bool(rag_evidence_e2e_live_closeout.get("e2e_live_reply_observed")),
+            "llm_api_call_count": int(rag_evidence_e2e_live_closeout.get("llm_api_call_count", 0) or 0),
+            "send_retry_llm_call_count": int(rag_evidence_e2e_live_closeout.get("no_llm_send_retry", {}).get("llm_api_call_count", 0) or 0),
+            "final_discord_message_sent_count": int(rag_evidence_e2e_live_closeout.get("final_result", {}).get("message_sent_count", 0) or 0),
+            "sent_channel_scope": rag_evidence_e2e_live_closeout.get("final_result", {}).get("sent_channel_scope", ""),
+            "closeout_passed": bool(rag_evidence_e2e_live_closeout.get("closeout_passed")),
+            "ready_for_phase34m_final_lock": bool(rag_evidence_e2e_live_closeout.get("final_result", {}).get("ready_for_phase34m_final_lock")),
+            "ready_for_unattended_auto_reply": bool(rag_evidence_e2e_live_closeout.get("final_result", {}).get("ready_for_unattended_auto_reply")),
+        },
+        "rag_evidence_private_test_phase34_final_lock": {
+            "available": True,
+            "phase34_private_test_mvp_complete": bool(rag_evidence_phase34_final_lock.get("phase34_private_test_mvp_complete")),
+            "llm_api_call_count": int(rag_evidence_phase34_final_lock.get("e2e_live_reply_closeout", {}).get("llm_api_call_count", 0) or 0),
+            "send_retry_llm_call_count": int(rag_evidence_phase34_final_lock.get("no_llm_send_retry_closeout", {}).get("llm_api_call_count", 0) or 0),
+            "final_discord_message_sent_count": int(rag_evidence_phase34_final_lock.get("no_llm_send_retry_closeout", {}).get("message_sent_count", 0) or 0),
+            "sent_channel_scope": rag_evidence_phase34_final_lock.get("no_llm_send_retry_closeout", {}).get("sent_channel_scope", ""),
+            "ready_for_unattended_auto_reply": bool(rag_evidence_phase34_final_lock.get("final_safety_state", {}).get("ready_for_unattended_auto_reply")),
+            "phase34m_final_lock_passed": bool(rag_evidence_phase34_final_lock.get("phase34m_final_lock_passed")),
         },
         "daily_manifest_summary": load_daily_manifest(root=root, date=date),
         "filters": {
@@ -1045,6 +1122,8 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
             f"- Private test channel only: {str(rag_evidence_e2e_live_reply.get('private_test_channel_only', False)).lower()}",
             f"- Public channel reply allowed: {str(rag_evidence_e2e_live_reply.get('public_channel_reply_allowed', False)).lower()}",
             f"- Team channel reply allowed: {str(rag_evidence_e2e_live_reply.get('team_channel_reply_allowed', False)).lower()}",
+            f"- OpenRouter API key present: {str(rag_evidence_e2e_live_reply.get('openrouter_api_key_present', False)).lower()}",
+            "- OpenRouter API key value logged: false",
             f"- Ready: {str(rag_evidence_e2e_live_reply.get('ready', False)).lower()}",
             f"- Blocked: {str(rag_evidence_e2e_live_reply.get('blocked', True)).lower()}",
             f"- Discord live runtime executed: {str(rag_evidence_e2e_live_reply.get('discord_live_runtime_executed', False)).lower()}",
@@ -1055,6 +1134,9 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
             f"- Prompt safety blocked: {str(rag_evidence_e2e_live_reply.get('prompt_safety_blocked', False)).lower()}",
             f"- LLM stage reached: {str(rag_evidence_e2e_live_reply.get('llm_stage_reached', False)).lower()}",
             f"- LLM call allowed: {str(rag_evidence_e2e_live_reply.get('llm_call_allowed', False)).lower()}",
+            f"- LLM dispatch invoked: {str(rag_evidence_e2e_live_reply.get('llm_dispatch_invoked', False)).lower()}",
+            f"- LLM dispatch mode: {rag_evidence_e2e_live_reply.get('llm_dispatch_mode', '')}",
+            f"- LLM dispatch blocked reason: {rag_evidence_e2e_live_reply.get('llm_dispatch_blocked_reason', '')}",
             f"- LLM API call attempted: {str(rag_evidence_e2e_live_reply.get('llm_api_call_attempted', False)).lower()}",
             f"- LLM API called: {str(rag_evidence_e2e_live_reply.get('llm_api_called', False)).lower()}",
             f"- LLM API call count: {rag_evidence_e2e_live_reply.get('llm_api_call_count', 0)}",

@@ -18,6 +18,33 @@ gate also passes. Output safety remains post-LLM, and Discord send remains
 blocked unless output safety passes. The previous retry was safe because
 `llm_api_called=false` and `discord_message_sent=false`.
 
+Phase 34L-1C eliminates the LLM allowed-but-not-attempted no-op. If
+`llm_call_allowed=true`, LLM dispatch must be invoked and the API call attempt
+flag must become true. If dispatch cannot be invoked, `llm_call_allowed=false`
+with an explicit `llm_dispatch_blocked_reason`, such as
+`openrouter_api_key_missing`. The previous retry was safe because
+`llm_api_called=false` and `discord_message_sent=false`.
+
+Phase 34L-1D fixes OpenRouter API key detection in the E2E live dispatch path.
+The E2E dispatcher accepts both `OPENROUTER_API_KEY` and
+`HERMES_OPENROUTER_API_KEY`. Only API key presence is reported; API key values
+are never logged. The previous retry was safe because `llm_api_called=false`
+and `discord_message_sent=false`.
+
+Phase 34L-1E handles Discord send disconnects after a successful E2E LLM call.
+If the LLM call succeeds, output safety passes, and Discord send fails with a
+disconnect such as `ServerDisconnectedError`, the report records a partial
+success artifact. That artifact prepares a later manual send retry without
+calling the LLM again. This hotfix does not run a live retry.
+
+Phase 34L-2 closes out the observed E2E live reply plus the successful no-LLM
+send retry. The closeout is replay/audit-only and does not run Discord, send
+another message, call OpenRouter/LLM, call embeddings, or execute external
+actions.
+
+Phase 34M final lock marks the private-test E2E MVP complete. Future live runs
+still require separate manual approvals.
+
 ## Allowed Scope
 
 - One manually approved private-test channel event.
@@ -57,11 +84,16 @@ Expected default:
 - `llm_api_called=false`
 - `llm_stage_reached=false`
 - `llm_call_allowed=false`
+- `llm_dispatch_invoked=false`
+- `llm_dispatch_mode=""`
+- `llm_dispatch_blocked_reason=""`
 - `llm_api_call_attempted=false`
 - `llm_response_packet_created=false`
 - `output_safety_checked=false`
 - `output_safety_blocked=false`
 - `discord_message_sent=false`
+- `discord_send_failed=false`
+- `ready_for_phase34l1e_send_retry_without_llm=false`
 - `ready_for_unattended_auto_reply=false`
 
 ## Manual Live Command
@@ -105,6 +137,8 @@ $env:HERMES_DISCORD_REPLY_MODE=""
 - `prompt_safety_allowed=true`
 - `llm_stage_reached=true`
 - `llm_call_allowed=true`
+- `llm_dispatch_invoked=true`
+- `llm_dispatch_mode=actual_openrouter_once`
 - `llm_api_call_attempted=true`
 - `llm_api_called=true`
 - `llm_api_call_count=1`
@@ -121,6 +155,24 @@ $env:HERMES_DISCORD_REPLY_MODE=""
 - `external_execution=false`
 - `ready_for_phase34l2_e2e_live_reply_closeout=true`
 - `ready_for_unattended_auto_reply=false`
+
+## Send Disconnect Handling
+
+If Discord disconnects at the send boundary after LLM success:
+
+- `discord_send_stage_reached=true`
+- `discord_api_send_allowed=true`
+- `discord_send_failed=true`
+- `discord_send_failure_reason=ServerDisconnectedError`
+- `discord_message_sent=false`
+- `message_sent_count=0`
+- `llm_response_available_for_send_retry=true`
+- `ready_for_phase34l1e_send_retry_without_llm=true`
+- `ready_for_phase34l2_e2e_live_reply_closeout=false`
+
+The partial-success artifact keeps `llm_api_call_count=1` and
+`output_safety_allowed=true`, but it does not authorize another LLM call. The
+next step is a separate manual send retry without LLM.
 
 ## Prohibitions
 

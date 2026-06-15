@@ -75,6 +75,9 @@ from rag_evidence_private_test_send_closeout import build_rag_evidence_private_t
 from rag_evidence_private_test_e2e_preflight import build_rag_evidence_private_test_e2e_preflight, render_rag_evidence_private_test_e2e_preflight_markdown
 from rag_evidence_private_test_e2e_replay import build_rag_evidence_private_test_e2e_replay, render_rag_evidence_private_test_e2e_replay_markdown
 from rag_evidence_private_test_e2e_live_reply import build_rag_evidence_private_test_e2e_live_reply_report, render_rag_evidence_private_test_e2e_live_reply_markdown
+from rag_evidence_private_test_e2e_send_retry import build_rag_evidence_private_test_e2e_send_retry_report, render_rag_evidence_private_test_e2e_send_retry_markdown
+from rag_evidence_private_test_e2e_live_closeout import build_rag_evidence_private_test_e2e_live_closeout, render_rag_evidence_private_test_e2e_live_closeout_markdown
+from rag_evidence_private_test_phase34_final_lock import build_rag_evidence_private_test_phase34_final_lock, render_rag_evidence_private_test_phase34_final_lock_markdown
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight, render_rag_evidence_private_test_send_preflight_markdown
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope, render_rag_evidence_prompt_envelope_markdown
 from rag_evidence_review_packet import build_rag_evidence_review_packet, render_rag_evidence_review_packet_markdown
@@ -299,12 +302,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--rag-evidence-private-test-e2e-preflight", action="store_true", help="Print Phase 34K private-test E2E preflight without live runtime.")
     parser.add_argument("--rag-evidence-private-test-e2e-replay", action="store_true", help="Print Phase 34L-0 no-live/no-api/no-send E2E replay.")
     parser.add_argument("--rag-evidence-private-test-e2e-live-reply", action="store_true", help="Run/report Phase 34L-1 one manually approved private-test E2E live reply.")
+    parser.add_argument("--rag-evidence-private-test-e2e-send-retry", action="store_true", help="Print Phase 34L-1E no-LLM private-test E2E send retry report.")
+    parser.add_argument("--rag-evidence-private-test-e2e-live-closeout", action="store_true", help="Print Phase 34L-2 E2E live reply and no-LLM send retry closeout.")
+    parser.add_argument("--rag-evidence-private-test-phase34-final-lock", action="store_true", help="Print Phase 34M private-test E2E MVP final lock report.")
     parser.add_argument("--source", default="operation", help="RAG source for local retrieval reports.")
     parser.add_argument("--query", default="STOXL brand tone", help="RAG query preview for local retrieval reports.")
     parser.add_argument("--allow-llm-api-call", action="store_true", help="Allow Phase 32B to attempt one gated provider call when env gates pass.")
     parser.add_argument("--allow-rag-evidence-llm-api-call", action="store_true", help="Allow Phase 34H-1 to attempt one manually approved provider call when env gates pass.")
     parser.add_argument("--allow-rag-evidence-private-test-discord-send", action="store_true", help="Allow Phase 34J-1 to send one private-test Discord message when env gates pass.")
     parser.add_argument("--allow-rag-evidence-private-test-e2e-live-reply", action="store_true", help="Allow Phase 34L-1 to run one private-test E2E live reply when env gates pass.")
+    parser.add_argument("--allow-rag-evidence-private-test-e2e-send-retry", action="store_true", help="Allow Phase 34L-1E mock/injected no-LLM E2E send retry when gates pass.")
     parser.add_argument("--write-artifact", action="store_true", help="Write supported local-only report artifacts.")
     parser.add_argument("--latest", action="store_true", help="Use latest local artifact for supported reports.")
     parser.add_argument("--markdown", action="store_true", help="Print supported reports as Markdown.")
@@ -1240,6 +1247,54 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- ready_for_phase34l2_e2e_live_reply_closeout: {output.get('ready_for_phase34l2_e2e_live_reply_closeout')}")
         return 0
 
+    if args.rag_evidence_private_test_e2e_send_retry:
+        output = build_rag_evidence_private_test_e2e_send_retry_report(
+            allow_send_retry=args.allow_rag_evidence_private_test_e2e_send_retry,
+        )
+        if args.markdown:
+            print(render_rag_evidence_private_test_e2e_send_retry_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL RAG evidence private-test E2E send retry")
+            print(f"- partial_success_available: {output.get('partial_success_available')}")
+            print(f"- llm_api_called: {output.get('llm_api_called')}")
+            print(f"- ready_for_actual_send_retry: {output.get('ready_for_actual_send_retry')}")
+            print(f"- discord_message_sent: {output.get('discord_message_sent')}")
+            print(f"- ready_for_phase34l2_e2e_live_reply_closeout: {output.get('ready_for_phase34l2_e2e_live_reply_closeout')}")
+        return 0
+
+    if args.rag_evidence_private_test_e2e_live_closeout:
+        output = build_rag_evidence_private_test_e2e_live_closeout()
+        if args.markdown:
+            print(render_rag_evidence_private_test_e2e_live_closeout_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL RAG evidence private-test E2E live closeout")
+            print(f"- closeout_passed: {output.get('closeout_passed')}")
+            print(f"- llm_api_call_count: {output.get('llm_api_call_count')}")
+            print(f"- send_retry_llm_call_count: {output.get('no_llm_send_retry', {}).get('llm_api_call_count')}")
+            print(f"- final_discord_message_sent_count: {output.get('final_result', {}).get('message_sent_count')}")
+            print(f"- ready_for_phase34m_final_lock: {output.get('final_result', {}).get('ready_for_phase34m_final_lock')}")
+        return 0
+
+    if args.rag_evidence_private_test_phase34_final_lock:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_rag_evidence_private_test_phase34_final_lock(root=str(cfg.repo_root))
+        if args.markdown:
+            print(render_rag_evidence_private_test_phase34_final_lock_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL RAG evidence private-test Phase 34 final lock")
+            print(f"- phase34_private_test_mvp_complete: {output.get('phase34_private_test_mvp_complete')}")
+            print(f"- phase34m_final_lock_passed: {output.get('phase34m_final_lock_passed')}")
+            print(f"- llm_api_call_count: {output.get('e2e_live_reply_closeout', {}).get('llm_api_call_count')}")
+            print(f"- send_retry_llm_call_count: {output.get('no_llm_send_retry_closeout', {}).get('llm_api_call_count')}")
+            print(f"- final_discord_message_sent_count: {output.get('no_llm_send_retry_closeout', {}).get('message_sent_count')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -1411,10 +1466,14 @@ def main(argv: list[str] | None = None) -> int:
         or args.rag_evidence_private_test_e2e_preflight
         or args.rag_evidence_private_test_e2e_replay
         or args.rag_evidence_private_test_e2e_live_reply
+        or args.rag_evidence_private_test_e2e_send_retry
+        or args.rag_evidence_private_test_e2e_live_closeout
+        or args.rag_evidence_private_test_phase34_final_lock
         or args.allow_llm_api_call
         or args.allow_rag_evidence_llm_api_call
         or args.allow_rag_evidence_private_test_discord_send
         or args.allow_rag_evidence_private_test_e2e_live_reply
+        or args.allow_rag_evidence_private_test_e2e_send_retry
         or args.write_artifact
         or args.latest
         or args.force

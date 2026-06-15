@@ -59,6 +59,9 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - Build Phase 34J-2 private-test send closeout reports from an embedded sanitized success fixture without another Discord send.
 - Build Phase 34K private-test E2E preflight reports without live runtime.
 - Build Phase 34L-0 private-test E2E mock replay reports without live runtime, LLM API calls, embeddings, or Discord sends.
+- Build Phase 34L-1E/F no-LLM send retry reports for the case where an E2E LLM call succeeds but Discord send disconnects, including an actual sender boundary that remains manually gated.
+- Build Phase 34L-2 E2E live reply plus no-LLM send retry closeout reports from a sanitized replay/audit fixture.
+- Build Phase 34M final lock reports that mark the private-test E2E RAG+LLM+Discord MVP complete.
 
 ## Explicit Non-Goals
 
@@ -97,6 +100,9 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - No Phase 34J-1 default report sends Discord messages, calls OpenRouter/LLM APIs, calls embeddings, or executes external actions. Live send requires a separate human-run allow flag and manual approval gate.
 - No Phase 34J-2 closeout sends additional Discord messages or calls Discord APIs.
 - No Phase 34K/34L-0 E2E reports run live Discord runtime, call OpenRouter/LLM APIs, call embeddings, send Discord messages, or execute external actions.
+- No Phase 34L-1E/F default retry report runs live Discord runtime, sends Discord messages, calls OpenRouter/LLM APIs, calls embeddings, or executes external actions.
+- No Phase 34L-2 closeout starts Discord, sends additional Discord messages, calls OpenRouter/LLM APIs, recalls LLM, calls embeddings, or executes external actions.
+- No Phase 34M final lock starts Discord, sends additional Discord messages, calls OpenRouter/LLM APIs, recalls LLM, calls embeddings, or executes external actions.
 
 ## Phase 21 Read-Only Planning Docs
 
@@ -164,6 +170,9 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - `docs/STOXL_RAG_EVIDENCE_PRIVATE_TEST_SEND_CLOSEOUT.md`
 - `docs/STOXL_RAG_EVIDENCE_PRIVATE_TEST_E2E_PREFLIGHT.md`
 - `docs/STOXL_RAG_EVIDENCE_PRIVATE_TEST_E2E_REPLAY.md`
+- `docs/STOXL_RAG_EVIDENCE_PRIVATE_TEST_E2E_SEND_RETRY.md`
+- `docs/STOXL_RAG_EVIDENCE_PRIVATE_TEST_E2E_LIVE_CLOSEOUT.md`
+- `docs/STOXL_RAG_EVIDENCE_PRIVATE_TEST_PHASE34_FINAL_LOCK.md`
 
 These documents prepare for a later private server read-only connection review. They do not authorize or perform a Discord connection.
 
@@ -462,6 +471,14 @@ Phase 34L-1B connects the approved path to the LLM call stage. When the E2E
 manual approval, LLM manual approval, private-test channel gate, and prompt
 safety all pass, the runtime attempts at most one LLM call before post-LLM
 output safety and the one-message private-test send gate.
+
+Phase 34L-1C removes the allowed-but-not-attempted LLM no-op. An allowed LLM
+call must invoke dispatch and mark an API call attempt, while missing dispatch
+requirements now make `llm_call_allowed=false` with an explicit blocked reason.
+
+Phase 34L-1D fixes OpenRouter key detection in the E2E dispatch path. Both
+`OPENROUTER_API_KEY` and `HERMES_OPENROUTER_API_KEY` are accepted as aliases,
+but only key presence is reported; key values are never logged.
 
 If the registry file is missing, generate it from the repo root:
 
