@@ -221,3 +221,10 @@ The earlier blocked run is classified as safe but legacy-invalid ordering
 because it reported `output_safety_blocked` while `llm_api_called=false` and
 `discord_message_sent=false`. Next action is to retry Phase 34L-1 manually
 after the hotfix.
+
+Phase 34L-1B connects the approved E2E live path to the LLM stage. Prompt safety
+passing now reaches `llm_stage_reached=true`; LLM calls are allowed only when
+the LLM manual approval gate also passes, and the call count remains capped at
+one. Output safety and Discord send remain downstream of a created LLM response
+packet. The latest retry was safe: `llm_api_called=false` and
+`discord_message_sent=false`. Next action is another Phase 34L-1 live retry.

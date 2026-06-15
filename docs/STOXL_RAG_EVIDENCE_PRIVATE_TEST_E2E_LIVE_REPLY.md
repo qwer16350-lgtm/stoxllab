@@ -11,6 +11,13 @@ exists. `output_safety_blocked` must not occur before
 `llm_api_called=false` and `discord_message_sent=false`; the next action is to
 retry Phase 34L-1 after this hotfix.
 
+Phase 34L-1B connects the approved E2E live path to the LLM call stage. After
+private-test channel gating and prompt safety pass, the runtime enters the LLM
+stage and may attempt exactly one LLM call only when the LLM manual approval
+gate also passes. Output safety remains post-LLM, and Discord send remains
+blocked unless output safety passes. The previous retry was safe because
+`llm_api_called=false` and `discord_message_sent=false`.
+
 ## Allowed Scope
 
 - One manually approved private-test channel event.
@@ -48,6 +55,9 @@ Expected default:
 - `blocked=true`
 - `discord_live_runtime_executed=false`
 - `llm_api_called=false`
+- `llm_stage_reached=false`
+- `llm_call_allowed=false`
+- `llm_api_call_attempted=false`
 - `llm_response_packet_created=false`
 - `output_safety_checked=false`
 - `output_safety_blocked=false`
@@ -93,6 +103,9 @@ $env:HERMES_DISCORD_REPLY_MODE=""
 - `accepted_private_test_channel=true`
 - `prompt_safety_checked=true`
 - `prompt_safety_allowed=true`
+- `llm_stage_reached=true`
+- `llm_call_allowed=true`
+- `llm_api_call_attempted=true`
 - `llm_api_called=true`
 - `llm_api_call_count=1`
 - `llm_response_packet_created=true`

@@ -458,6 +458,11 @@ checked before the LLM call, output safety is checked only after an LLM response
 packet exists, and `output_safety_blocked` is no longer valid before
 `llm_response_packet_created=true`.
 
+Phase 34L-1B connects the approved path to the LLM call stage. When the E2E
+manual approval, LLM manual approval, private-test channel gate, and prompt
+safety all pass, the runtime attempts at most one LLM call before post-LLM
+output safety and the one-message private-test send gate.
+
 If the registry file is missing, generate it from the repo root:
 
 ```powershell

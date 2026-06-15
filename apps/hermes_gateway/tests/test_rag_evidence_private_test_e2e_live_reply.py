@@ -108,6 +108,9 @@ def test_default_blocks_live_e2e() -> None:
     assert_true(report["blocked"] is True, "Default should block")
     assert_true(report["discord_live_runtime_executed"] is False, "Default should not run live runtime")
     assert_true(report["llm_api_called"] is False, "Default should not call LLM")
+    assert_true(report["llm_stage_reached"] is False, "Default should not reach LLM stage")
+    assert_true(report["llm_call_allowed"] is False, "Default should not allow LLM call")
+    assert_true(report["llm_api_call_attempted"] is False, "Default should not attempt LLM call")
     assert_true(report["prompt_safety_checked"] is False, "Default should not check prompt safety")
     assert_true(report["output_safety_checked"] is False, "Default should not check output safety")
     assert_true(report["discord_message_sent"] is False, "Default should not send")
@@ -153,6 +156,7 @@ def test_llm_approval_missing_blocks_llm_call() -> None:
     )
     assert_true("llm_manual_approval_required" in report["blocked_reasons"], "LLM manual approval should be required")
     assert_true(report["llm_api_called"] is False, "LLM should not be called")
+    assert_true(report["llm_stage_reached"] is False, "LLM stage should not be reached")
 
 
 def test_send_messages_false_blocks_send() -> None:
@@ -240,6 +244,9 @@ def test_private_test_event_accepted_and_sends_once() -> None:
     assert_true(report["prompt_envelope_created"] is True, "Prompt envelope should be created")
     assert_true(report["prompt_safety_checked"] is True, "Prompt safety should be checked before LLM")
     assert_true(report["prompt_safety_allowed"] is True, "Prompt safety should pass")
+    assert_true(report["llm_stage_reached"] is True, "Prompt safety allowed should reach LLM stage")
+    assert_true(report["llm_call_allowed"] is True, "LLM call should be allowed in approved mock success")
+    assert_true(report["llm_api_call_attempted"] is True, "Mock success should attempt LLM call")
     assert_true(report["llm_api_called"] is True, "Mock LLM should be called")
     assert_true(report["llm_api_call_count"] == 1, "LLM call count should be exactly one")
     assert_true(report["llm_response_packet_created"] is True, "LLM response packet stage should be created")
@@ -307,6 +314,7 @@ def test_prompt_safety_blocked_prevents_llm_call() -> None:
     assert_true(report["prompt_safety_checked"] is True, "Prompt safety should be checked")
     assert_true(report["prompt_safety_blocked"] is True, "Prompt safety should be blocked")
     assert_true(report["llm_api_called"] is False, "LLM should not be called after prompt block")
+    assert_true(report["llm_stage_reached"] is False, "Prompt safety block should not reach LLM stage")
     assert_true(report["output_safety_checked"] is False, "Output safety should not be checked before LLM response")
 
 
@@ -319,10 +327,39 @@ def test_output_safety_not_checked_before_llm_response_exists() -> None:
         sender=mock_sender,
     )
     assert_true(report["llm_api_called"] is False, "No API key path should not call LLM")
+    assert_true(report["llm_stage_reached"] is True, "Approved path should reach LLM stage")
+    assert_true(report["llm_call_allowed"] is True, "Approved path should allow LLM call")
+    assert_true(report["llm_api_call_attempted"] is False, "No API key path should not attempt LLM call")
     assert_true(report["llm_response_packet_created"] is False, "No response packet should exist")
     assert_true(report["output_safety_checked"] is False, "Output safety should not be checked")
     assert_true(report["output_safety_blocked"] is False, "Output safety should not be blocked")
     assert_true("output_safety_blocked" not in report["blocked_reasons"], "Output safety block should not appear early")
+
+
+def test_llm_failure_prevents_discord_send() -> None:
+    def failing_runner(envelope: dict, config: dict) -> dict:
+        result = mock_client_runner(envelope, config)
+        result["api_call_succeeded"] = False
+        result["api_call_failed"] = True
+        result["response_text"] = ""
+        return result
+
+    report = build_rag_evidence_private_test_e2e_live_reply_report(
+        root=ROOT,
+        allow_live_reply=True,
+        env=ready_env(),
+        event=private_event(),
+        client_runner=failing_runner,
+        sender=mock_sender,
+    )
+    assert_true(report["llm_stage_reached"] is True, "LLM stage should be reached")
+    assert_true(report["llm_call_allowed"] is True, "LLM call should be allowed")
+    assert_true(report["llm_api_call_attempted"] is True, "LLM call should be attempted")
+    assert_true(report["llm_api_call_count"] == 1, "LLM call count should still be one")
+    assert_true(report["llm_response_packet_created"] is False, "Failed LLM should not create response packet")
+    assert_true(report["output_safety_checked"] is False, "No response packet means no output safety")
+    assert_true(report["discord_message_sent"] is False, "LLM failure should not send Discord")
+    assert_true("llm_api_call_failed" in report["blocked_reasons"], "LLM failure reason should be explicit")
 
 
 def test_legacy_invalid_ordering_fixture_detected() -> None:
@@ -384,6 +421,7 @@ def main() -> int:
         test_output_safety_blocked_prevents_send,
         test_prompt_safety_blocked_prevents_llm_call,
         test_output_safety_not_checked_before_llm_response_exists,
+        test_llm_failure_prevents_discord_send,
         test_legacy_invalid_ordering_fixture_detected,
         test_mentions_escaped,
         test_sensitive_values_not_logged,

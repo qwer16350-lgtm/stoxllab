@@ -120,6 +120,9 @@ def _base_report(env: dict[str, Any] | None, *, allow_live_reply: bool) -> dict[
         "prompt_safety_checked": False,
         "prompt_safety_allowed": False,
         "prompt_safety_blocked": False,
+        "llm_stage_reached": False,
+        "llm_call_allowed": False,
+        "llm_api_call_attempted": False,
         "llm_api_called": False,
         "llm_api_call_count": 0,
         "llm_response_packet_created": False,
@@ -218,11 +221,11 @@ def _llm_env_for_call(env: dict[str, Any] | None) -> dict[str, Any]:
     source["HERMES_DISCORD_EXTERNAL_EXECUTION"] = "false"
     source.setdefault("HERMES_LLM_PROVIDER", "openrouter")
     source.setdefault("HERMES_LLM_MODEL", "openai/gpt-5.4-mini")
-    source.setdefault("HERMES_LLM_ENABLED", "true")
-    source.setdefault("HERMES_LLM_API_CALL_ENABLED", "true")
-    source.setdefault("HERMES_LLM_DRY_CALL_MODE", "private_test_only")
-    source.setdefault("HERMES_LLM_PRIVATE_TEST_ONLY", "true")
-    source.setdefault("HERMES_LLM_COST_GUARD_ENABLED", "true")
+    source["HERMES_LLM_ENABLED"] = "true"
+    source["HERMES_LLM_API_CALL_ENABLED"] = "true"
+    source["HERMES_LLM_DRY_CALL_MODE"] = "private_test_only"
+    source["HERMES_LLM_PRIVATE_TEST_ONLY"] = "true"
+    source["HERMES_LLM_COST_GUARD_ENABLED"] = "true"
     return source
 
 
@@ -326,6 +329,16 @@ def build_rag_evidence_private_test_e2e_live_reply_report(
     if report["prompt_safety_blocked"]:
         return _mark_blocked(report, ["prompt_safety_blocked"])
 
+    report["llm_stage_reached"] = True
+    report["llm_call_allowed"] = bool(
+        allow_live_reply
+        and report["accepted_private_test_channel"]
+        and report["prompt_safety_allowed"]
+        and report.get("llm_manual_approval", {}).get("approved")
+    )
+    if not report["llm_call_allowed"]:
+        return _mark_blocked(report, ["llm_call_not_allowed"])
+
     llm_report = build_rag_evidence_llm_dry_call_report(
         root=root,
         query=str(selected_event.get("content", "") or "STOXL brand tone"),
@@ -333,8 +346,9 @@ def build_rag_evidence_private_test_e2e_live_reply_report(
         env=_llm_env_for_call(env),
         client_runner=client_runner,
     )
-    report["llm_api_called"] = bool(llm_report.get("api_call_attempted"))
-    report["llm_api_call_count"] = 1 if report["llm_api_called"] else 0
+    report["llm_api_call_attempted"] = bool(llm_report.get("api_call_attempted"))
+    report["llm_api_called"] = bool(report["llm_api_call_attempted"])
+    report["llm_api_call_count"] = 1 if report["llm_api_call_attempted"] else 0
     report["llm_response_packet_created"] = bool(llm_report.get("api_call_succeeded") or llm_report.get("llm_response_packet_created"))
     report["output_safety_checked"] = bool(report["llm_response_packet_created"])
     report["output_safety_allowed"] = bool(report["output_safety_checked"] and llm_report.get("output_safety_allowed"))
@@ -342,10 +356,10 @@ def build_rag_evidence_private_test_e2e_live_reply_report(
     selected_state["llm_api_call_count"] = int(selected_state.get("llm_api_call_count", 0)) + int(report["llm_api_call_count"])
     if selected_state["llm_api_call_count"] > 1:
         return _mark_blocked(report, ["llm_api_call_count_exceeded"])
-    if not report["llm_api_called"]:
+    if not report["llm_api_call_attempted"]:
         return _mark_blocked(report, ["llm_api_call_not_attempted"])
     if not report["llm_response_packet_created"]:
-        return _mark_blocked(report, ["llm_response_packet_missing"])
+        return _mark_blocked(report, ["llm_api_call_failed" if llm_report.get("api_call_failed") else "llm_response_packet_missing"])
     if report["output_safety_blocked"]:
         return _mark_blocked(report, ["output_safety_blocked"])
 
@@ -518,6 +532,9 @@ def render_rag_evidence_private_test_e2e_live_reply_markdown(report: dict[str, A
             f"- Prompt safety checked: {str(report.get('prompt_safety_checked')).lower()}",
             f"- Prompt safety allowed: {str(report.get('prompt_safety_allowed')).lower()}",
             f"- Prompt safety blocked: {str(report.get('prompt_safety_blocked')).lower()}",
+            f"- LLM stage reached: {str(report.get('llm_stage_reached')).lower()}",
+            f"- LLM call allowed: {str(report.get('llm_call_allowed')).lower()}",
+            f"- LLM API call attempted: {str(report.get('llm_api_call_attempted')).lower()}",
             f"- LLM API called: {str(report.get('llm_api_called')).lower()}",
             f"- LLM API call count: {report.get('llm_api_call_count', 0)}",
             f"- LLM response packet created: {str(report.get('llm_response_packet_created')).lower()}",
