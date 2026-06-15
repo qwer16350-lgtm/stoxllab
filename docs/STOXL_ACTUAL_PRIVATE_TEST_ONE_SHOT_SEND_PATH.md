@@ -23,6 +23,18 @@ present, the report can enter `phase39b_manual_ready_gate` with
 `ready_for_phase39b_manual_one_shot_send=true`. This readiness state still does
 not call Discord API send and still keeps `ready_for_discord_send=false`.
 
+Phase 39B Hotfix 3 adds a second explicit flag,
+`--execute-actual-private-test-send`, to separate readiness from execution-mode
+intent. With the allow flag, exact manual approval gates, and this execute flag,
+the report may enter `phase39b_actual_send_execution`. In this hotfix the
+execution adapter is `mock`: `ready_for_actual_private_test_send=true` can be
+reported, but `ready_for_discord_send=false`, `discord_api_send_called=false`,
+`discord_message_sent=false`, and `message_sent_count=0` remain locked.
+
+`HERMES_PHASE39B_REAL_DISCORD_SEND_EXECUTION` is reserved for a later separately
+approved implementation. This document and report only expose its boolean
+enabled state, never secret values.
+
 The approval phrase is compared by exact code constant. Reports must show only
 presence and exact-match booleans, never the approval phrase value.
 
@@ -37,3 +49,4 @@ Safety state:
 - Ready for actual private-test send: false
 - Ready for Discord send: false
 - Ready for Phase 39B manual one-shot send: false
+- Phase 39B actual execution adapter: mock when execute gate is explicitly met

@@ -29,6 +29,11 @@ def test_phase39b_reentry_packet_report_only() -> None:
     assert_true(report["allow_flag_parser_error_fixed"] is True, "Parser fixed")
     assert_true(report["codex_session_env_isolated_from_user_powershell"] is True, "Env separation")
     assert_true(report["actual_send_must_be_run_from_same_user_powershell_session"] is True, "Same session required")
+    assert_true("--allow-actual-private-test-send" in report["readiness_command"], "Readiness command")
+    assert_true("--execute-actual-private-test-send" in report["execution_gate_command"], "Execution gate command")
+    assert_true(report["execution_gate_command_report_only"] is True, "Execution gate report only")
+    assert_true(report["actual_execution_adapter"] == "mock", "Mock adapter")
+    assert_true(report["real_discord_send_execution_env_required_for_future_real_send"] == "HERMES_PHASE39B_REAL_DISCORD_SEND_EXECUTION", "Future env key")
 
 
 def test_phase39b_reentry_packet_never_sends() -> None:

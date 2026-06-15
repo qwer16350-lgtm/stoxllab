@@ -18,7 +18,20 @@ gate can confirm that all manual/env conditions are satisfied, but it still does
 not execute Discord API send. The actual send remains a separate user-run action
 from the same PowerShell session.
 
-Allowed next-phase command, for a separately approved manual run only:
+Phase 39B Hotfix 3 adds an explicit execution-mode flag for the one-shot send
+report:
+
+```powershell
+python apps\hermes_gateway\cli.py --actual-private-test-one-shot-send --json --allow-actual-private-test-send --execute-actual-private-test-send
+```
+
+This still does not execute Discord API send. When all gates are satisfied, it
+reports `phase39b_actual_send_execution` with `actual_execution_adapter=mock`.
+The future real-send env key is
+`HERMES_PHASE39B_REAL_DISCORD_SEND_EXECUTION`, but this hotfix keeps actual
+Discord send unavailable.
+
+Readiness-only command:
 
 ```powershell
 python apps\hermes_gateway\cli.py --actual-private-test-one-shot-send --json --allow-actual-private-test-send

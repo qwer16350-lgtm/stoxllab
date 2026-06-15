@@ -28,7 +28,8 @@ REQUIRED_USER_POWERSHELL_PRECONDITIONS = [
     "external execution disabled",
 ]
 
-NEXT_PHASE_COMMAND = r"python apps\hermes_gateway\cli.py --actual-private-test-one-shot-send --json --allow-actual-private-test-send"
+READINESS_COMMAND = r"python apps\hermes_gateway\cli.py --actual-private-test-one-shot-send --json --allow-actual-private-test-send"
+EXECUTION_GATE_COMMAND = r"python apps\hermes_gateway\cli.py --actual-private-test-one-shot-send --json --allow-actual-private-test-send --execute-actual-private-test-send"
 
 
 def build_phase39b_manual_send_reentry_packet() -> dict[str, Any]:
@@ -50,7 +51,11 @@ def build_phase39b_manual_send_reentry_packet() -> dict[str, Any]:
         "load_dotenv_values_in_codex_session": False,
         "print_dotenv_values": False,
         "required_user_powershell_preconditions": REQUIRED_USER_POWERSHELL_PRECONDITIONS,
-        "allowed_actual_send_command_for_next_phase_only": NEXT_PHASE_COMMAND,
+        "readiness_command": READINESS_COMMAND,
+        "execution_gate_command": EXECUTION_GATE_COMMAND,
+        "execution_gate_command_report_only": True,
+        "actual_execution_adapter": "mock",
+        "real_discord_send_execution_env_required_for_future_real_send": "HERMES_PHASE39B_REAL_DISCORD_SEND_EXECUTION",
         "repeat_send_allowed": False,
         "automatic_retry_allowed": False,
         "public_channel_send_allowed": False,
@@ -84,8 +89,9 @@ def build_phase39b_manual_send_reentry_packet() -> dict[str, Any]:
 
 def assert_phase39b_manual_send_reentry_packet_safe(report: dict[str, Any]) -> None:
     text = json.dumps(report, ensure_ascii=False)
-    command = str(report.get("allowed_actual_send_command_for_next_phase_only", ""))
-    text_without_command = text.replace(command, "")
+    text_without_command = text
+    for key in ("readiness_command", "execution_gate_command"):
+        text_without_command = text_without_command.replace(str(report.get(key, "")), "")
     if SECRET_RE.search(text_without_command.lower()) or LONG_ID_RE.search(text_without_command) or APPROVAL_RE.search(text_without_command):
         raise ValueError("Phase 39B-0 re-entry packet contains sensitive values.")
     for key in (

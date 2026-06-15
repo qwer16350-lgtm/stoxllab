@@ -13,6 +13,7 @@ from actual_private_test_send_safety_gate import build_actual_private_test_send_
 
 VERSION = "phase39a_actual_private_test_one_shot_send_path_default_blocked_no_execution"
 PHASE39B_READY_VERSION = "phase39b_manual_actual_private_test_one_shot_send_ready_gate"
+PHASE39B_EXECUTION_GATE_VERSION = "phase39b_actual_private_test_send_execution_gate_mock_no_send"
 LONG_ID_RE = re.compile(r"\b\d{15,25}\b")
 SECRET_RE = re.compile(r"(?i)(sk-[a-z0-9_-]+|xoxb-[a-z0-9_-]+|mfa\.|bearer\s+\S+|api[_ -]?key\s*[:=]\s*\S+|token\s*[:=]\s*\S+|password\s*[:=]\s*\S+)")
 APPROVAL_RE = re.compile(r"I_APPROVE_[A-Z0-9_]+")
@@ -29,6 +30,7 @@ def _env_present(env: dict[str, Any], key: str) -> bool:
 def build_actual_private_test_one_shot_send(
     *,
     allow_flag_present: bool = False,
+    execute_flag_present: bool = False,
     env: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     source_env = env if env is not None else os.environ
@@ -36,15 +38,32 @@ def build_actual_private_test_one_shot_send(
     blocked_report = build_actual_private_test_send_blocked_report(safety_gate)
     conditions = safety_gate.get("condition_values", {})
     phase39b_ready = bool(allow_flag_present) and bool(safety_gate.get("raw_required_conditions_met"))
+    phase39b_execution_gate = phase39b_ready and bool(execute_flag_present)
+    real_execution_env_enabled = _env_flag(source_env, "HERMES_PHASE39B_REAL_DISCORD_SEND_EXECUTION")
     blocked_reasons = _blocked_reasons(safety_gate)
+    mode = "phase39a_default_blocked"
+    version = VERSION
+    adapter = "none"
+    if phase39b_execution_gate:
+        mode = "phase39b_actual_send_execution"
+        version = PHASE39B_EXECUTION_GATE_VERSION
+        adapter = "mock"
+    elif phase39b_ready:
+        mode = "phase39b_manual_ready_gate"
+        version = PHASE39B_READY_VERSION
     report = {
         "report_type": "actual_private_test_one_shot_send",
-        "version": PHASE39B_READY_VERSION if phase39b_ready else VERSION,
+        "version": version,
         "actual_send_path_available": True,
         "report_only": True,
         "phase39a_implementation_only": not phase39b_ready,
         "phase39b_manual_execution": phase39b_ready,
-        "mode": "phase39b_manual_ready_gate" if phase39b_ready else "phase39a_default_blocked",
+        "mode": mode,
+        "execute_flag_present": bool(execute_flag_present),
+        "real_discord_send_execution_env_enabled": real_execution_env_enabled,
+        "execution_gate_conditions_met": phase39b_execution_gate,
+        "actual_execution_adapter": adapter,
+        "phase39b_actual_execution_mode_available": True,
         "actual_private_test_send_executed": False,
         "actual_send_executed": False,
         "discord_live_runtime_executed": False,
@@ -85,7 +104,7 @@ def build_actual_private_test_one_shot_send(
         "api_key_value_logged": False,
         "raw_discord_ids_logged": False,
         "full_content_included": False,
-        "ready_for_actual_private_test_send": False,
+        "ready_for_actual_private_test_send": phase39b_execution_gate,
         "ready_for_discord_send": False,
         "ready_for_phase39b_manual_one_shot_send": phase39b_ready,
         "blocked": not phase39b_ready,
@@ -123,6 +142,7 @@ def assert_actual_private_test_one_shot_send_safe(report: dict[str, Any]) -> Non
     if SECRET_RE.search(text.lower()) or LONG_ID_RE.search(text) or APPROVAL_RE.search(text):
         raise ValueError("Phase 39A one-shot send report contains sensitive values.")
     readiness_mode = bool(report.get("phase39b_manual_execution"))
+    execution_gate_mode = bool(report.get("execution_gate_conditions_met"))
     if not readiness_mode and not report.get("blocked"):
         raise ValueError("Phase 39A one-shot send must be blocked.")
     if readiness_mode and report.get("blocked"):
@@ -152,7 +172,6 @@ def assert_actual_private_test_one_shot_send_safe(report: dict[str, Any]) -> Non
         "api_key_value_logged",
         "raw_discord_ids_logged",
         "full_content_included",
-        "ready_for_actual_private_test_send",
         "ready_for_discord_send",
     ):
         if report.get(key):
@@ -165,6 +184,12 @@ def assert_actual_private_test_one_shot_send_safe(report: dict[str, Any]) -> Non
         raise ValueError("Phase 39B readiness mode requires manual approval actualized.")
     if readiness_mode and not report.get("ready_for_phase39b_manual_one_shot_send"):
         raise ValueError("Phase 39B readiness mode must be ready for the manual one-shot send.")
+    if not execution_gate_mode and report.get("ready_for_actual_private_test_send"):
+        raise ValueError("Actual private-test send readiness requires execution gate mode.")
+    if execution_gate_mode and not report.get("ready_for_actual_private_test_send"):
+        raise ValueError("Execution gate mode must set ready_for_actual_private_test_send true.")
+    if execution_gate_mode and report.get("actual_execution_adapter") != "mock":
+        raise ValueError("Phase 39B Hotfix 3 execution gate must use mock adapter.")
     if int(report.get("message_sent_count", 0) or 0) != 0:
         raise ValueError("Phase 39A one-shot send message sent count must be 0.")
 

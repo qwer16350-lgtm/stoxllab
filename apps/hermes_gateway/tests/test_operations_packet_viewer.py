@@ -895,6 +895,7 @@ def test_phase39b_zero_send_summaries() -> None:
     report = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")
     reentry = report["phase39b_manual_send_reentry_packet"]
     ready = report["phase39b_manual_send_ready_gate"]
+    execution = report["phase39b_actual_send_execution_gate"]
     lock = report["phase39b_manual_send_no_send_lock"]
     assert_true(reentry["available"] is True, "39B reentry available")
     assert_true(reentry["report_only"] is True, "39B reentry report only")
@@ -915,6 +916,19 @@ def test_phase39b_zero_send_summaries() -> None:
     assert_true(ready["discord_api_send_called"] is False, "39B ready no API")
     assert_true(ready["discord_message_sent"] is False, "39B ready no message")
     assert_true(ready["message_sent_count"] == 0, "39B ready count 0")
+    assert_true(execution["available"] is True, "39B execution gate available")
+    assert_true(execution["report_only"] is True, "39B execution report only")
+    assert_true(execution["mode"] == "phase39b_actual_send_execution", "39B execution mode")
+    assert_true(execution["execute_flag_present"] is True, "39B execute flag")
+    assert_true(execution["real_discord_send_execution_env_enabled"] is False, "39B real env false")
+    assert_true(execution["execution_gate_conditions_met"] is True, "39B execution gate met")
+    assert_true(execution["actual_execution_adapter"] == "mock", "39B mock adapter")
+    assert_true(execution["ready_for_actual_private_test_send"] is True, "39B execution readiness")
+    assert_true(execution["ready_for_discord_send"] is False, "39B execution no direct send ready")
+    assert_true(execution["actual_private_test_send_executed"] is False, "39B execution no actual send")
+    assert_true(execution["discord_api_send_called"] is False, "39B execution no API")
+    assert_true(execution["discord_message_sent"] is False, "39B execution no message")
+    assert_true(execution["message_sent_count"] == 0, "39B execution count 0")
     assert_true(lock["available"] is True, "39B no-send lock available")
     assert_true(lock["report_only"] is True, "39B lock report only")
     assert_true(lock["actual_discord_send_count"] == 0, "39B actual send count 0")

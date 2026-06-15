@@ -380,6 +380,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--actual-private-test-send-safety-gate", action="store_true", help="Print Phase 39A actual private-test send safety gate.")
     parser.add_argument("--actual-private-test-send-blocked-report", action="store_true", help="Print Phase 39A actual private-test send blocked report.")
     parser.add_argument("--allow-actual-private-test-send", action="store_true", help="Mark the Phase 39 actual private-test send allow flag as present; Phase 39A still does not send.")
+    parser.add_argument("--execute-actual-private-test-send", action="store_true", help="Mark the Phase 39B actual private-test send execution flag as present; Hotfix 3 still uses no-send mock gate.")
     parser.add_argument("--phase39b-manual-send-reentry-packet", action="store_true", help="Print Phase 39B-0 manual send re-entry packet.")
     parser.add_argument("--phase39b-manual-send-no-send-lock", action="store_true", help="Print Phase 39B-0 no-send lock.")
     parser.add_argument("--source", default="operation", help="RAG source for local retrieval reports.")
@@ -1804,6 +1805,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.actual_private_test_one_shot_send:
         output = build_actual_private_test_one_shot_send(
             allow_flag_present=args.allow_actual_private_test_send,
+            execute_flag_present=args.execute_actual_private_test_send,
         )
         if args.markdown:
             print(render_actual_private_test_one_shot_send_markdown(output))
@@ -2082,6 +2084,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.actual_private_test_send_safety_gate
         or args.actual_private_test_send_blocked_report
         or args.allow_actual_private_test_send
+        or args.execute_actual_private_test_send
         or args.phase39b_manual_send_reentry_packet
         or args.phase39b_manual_send_no_send_lock
         or args.allow_llm_api_call

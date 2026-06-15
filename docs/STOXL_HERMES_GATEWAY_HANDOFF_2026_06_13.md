@@ -359,3 +359,13 @@ the report can show `ready_for_phase39b_manual_one_shot_send=true`, but
 `ready_for_discord_send=false`, `discord_api_send_called=false`, and
 `discord_message_sent=false` remain locked. Approval phrase values are never
 printed; only presence/exact-match booleans are reported.
+
+Phase 39B Hotfix 3 adds `--execute-actual-private-test-send` as a separate
+execution-mode signal. With allow plus execute plus exact manual/env gates, the
+report enters `phase39b_actual_send_execution` using
+`actual_execution_adapter=mock`. This can set
+`ready_for_actual_private_test_send=true`, but `ready_for_discord_send=false`,
+`discord_api_send_called=false`, `discord_message_sent=false`, and
+`message_sent_count=0` remain locked. The real execution env
+`HERMES_PHASE39B_REAL_DISCORD_SEND_EXECUTION` is reported only as a boolean, and
+actual Discord send remains 0.

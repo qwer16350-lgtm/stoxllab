@@ -68,15 +68,14 @@ def _ready_env(phrase: str = EXPECTED_APPROVAL_PHRASE) -> dict[str, str]:
     return env
 
 
-def _run_cli(env: dict[str, str]) -> dict[str, object]:
+def _run_cli(env: dict[str, str], *, allow: bool = True, execute: bool = True) -> dict[str, object]:
+    command = [sys.executable, str(CLI), "--actual-private-test-one-shot-send", "--json"]
+    if allow:
+        command.append("--allow-actual-private-test-send")
+    if execute:
+        command.append("--execute-actual-private-test-send")
     result = subprocess.run(
-        [
-            sys.executable,
-            str(CLI),
-            "--actual-private-test-one-shot-send",
-            "--json",
-            "--allow-actual-private-test-send",
-        ],
+        command,
         cwd=ROOT,
         env=env,
         text=True,
@@ -87,32 +86,45 @@ def _run_cli(env: dict[str, str]) -> dict[str, object]:
     return json.loads(result.stdout)
 
 
-def test_phase39b_ready_gate_exact_phrase_required() -> None:
-    missing = _run_cli(_ready_env(""))
-    wrong = _run_cli(_ready_env("I_APPROVE_STOXL_PRIVATE_TEST_DRAFT_SEND"))
-    exact = _run_cli(_ready_env())
+def test_execute_flag_without_allow_blocks() -> None:
+    report = _run_cli(_ready_env(), allow=False, execute=True)
+    assert_true(report["execute_flag_present"] is True, "Execute flag reflected")
+    assert_true(report["allow_flag_present"] is False, "Allow missing")
+    assert_true(report["blocked"] is True, "Blocked")
+    assert_true(report["execution_gate_conditions_met"] is False, "Execution gate false")
+    assert_true(report["ready_for_actual_private_test_send"] is False, "No actual send readiness")
+
+
+def test_execute_flag_with_missing_or_wrong_approval_blocks() -> None:
+    missing = _run_cli(_ready_env(""), allow=True, execute=True)
+    wrong = _run_cli(_ready_env("I_APPROVE_STOXL_PRIVATE_TEST_DRAFT_SEND"), allow=True, execute=True)
     assert_true(missing["approval_phrase_exact_match"] is False, "Missing phrase false")
     assert_true(wrong["approval_phrase_exact_match"] is False, "Wrong phrase false")
-    assert_true(exact["approval_phrase_exact_match"] is True, "Exact phrase true")
-    assert_true(missing["ready_for_phase39b_manual_one_shot_send"] is False, "Missing phrase blocks")
-    assert_true(wrong["ready_for_phase39b_manual_one_shot_send"] is False, "Wrong phrase blocks")
-    assert_true(exact["ready_for_phase39b_manual_one_shot_send"] is True, "Exact phrase allows readiness")
+    assert_true(missing["execution_gate_conditions_met"] is False, "Missing blocks execution gate")
+    assert_true(wrong["execution_gate_conditions_met"] is False, "Wrong blocks execution gate")
+    assert_true(missing["discord_api_send_called"] is False, "Missing no API send")
+    assert_true(wrong["discord_message_sent"] is False, "Wrong no message sent")
 
 
-def test_phase39b_ready_gate_no_send_or_external_effects() -> None:
-    report = _run_cli(_ready_env())
-    assert_true(report["version"] == "phase39b_manual_actual_private_test_one_shot_send_ready_gate", "Ready version")
-    assert_true(report["phase39b_manual_execution"] is True, "Manual execution readiness")
-    assert_true(report["phase39a_implementation_only"] is False, "Not 39A only")
-    assert_true(report["manual_approval_actualized"] is True, "Manual approval actualized")
-    assert_true(report["blocked"] is False, "Readiness report not blocked")
-    assert_true(report["ready_for_phase39b_manual_one_shot_send"] is True, "Ready for manual one-shot")
-    assert_true(report["ready_for_discord_send"] is False, "No automatic Discord send readiness")
+def test_execute_flag_with_exact_phrase_reaches_mock_gate_no_send() -> None:
+    report = _run_cli(_ready_env(), allow=True, execute=True)
+    assert_true(report["version"] == "phase39b_actual_private_test_send_execution_gate_mock_no_send", "Execution gate version")
+    assert_true(report["mode"] == "phase39b_actual_send_execution", "Execution mode")
+    assert_true(report["execute_flag_present"] is True, "Execute flag")
+    assert_true(report["real_discord_send_execution_env_enabled"] is False, "Real env false")
+    assert_true(report["execution_gate_conditions_met"] is True, "Execution gate met")
+    assert_true(report["actual_execution_adapter"] == "mock", "Mock adapter")
+    assert_true(report["ready_for_actual_private_test_send"] is True, "Ready for actual manual send")
+    assert_true(report["ready_for_discord_send"] is False, "No direct Discord send ready")
+    assert_true(report["actual_private_test_send_executed"] is False, "No actual send")
+    assert_true(report["discord_api_send_called"] is False, "No API send")
+    assert_true(report["discord_message_sent"] is False, "No message sent")
+    assert_true(report["message_sent_count"] == 0, "Message count 0")
+
+
+def test_execute_gate_no_llm_rag_external_or_sensitive_values() -> None:
+    report = _run_cli(_ready_env(), allow=True, execute=True)
     for key in (
-        "actual_private_test_send_executed",
-        "discord_live_runtime_executed",
-        "discord_api_send_called",
-        "discord_message_sent",
         "new_llm_api_call_attempted",
         "new_llm_api_called",
         "llm_api_call_attempted",
@@ -127,29 +139,25 @@ def test_phase39b_ready_gate_no_send_or_external_effects() -> None:
         "unattended_auto_reply_allowed",
     ):
         assert_true(report[key] is False, f"{key} false")
-    assert_true(report["message_sent_count"] == 0, "No message count")
-
-
-def test_phase39b_ready_gate_no_sensitive_values_logged() -> None:
-    report = _run_cli(_ready_env())
     text = json.dumps(report, ensure_ascii=False).lower()
     assert_true("token-value" not in text, "Token value hidden")
     assert_true("private-channel-present" not in text, "Channel value hidden")
     assert_true(EXPECTED_APPROVAL_PHRASE.lower() not in text, "Approval phrase hidden")
     assert_true("sk-" not in text, "No API key")
-    assert_true(not LONG_NUMBER_RE.search(text), "No raw Discord IDs")
+    assert_true(not LONG_NUMBER_RE.search(text), "No raw IDs")
 
 
 def main() -> int:
     tests = [
-        test_phase39b_ready_gate_exact_phrase_required,
-        test_phase39b_ready_gate_no_send_or_external_effects,
-        test_phase39b_ready_gate_no_sensitive_values_logged,
+        test_execute_flag_without_allow_blocks,
+        test_execute_flag_with_missing_or_wrong_approval_blocks,
+        test_execute_flag_with_exact_phrase_reaches_mock_gate_no_send,
+        test_execute_gate_no_llm_rag_external_or_sensitive_values,
     ]
     for test in tests:
         test()
         print(f"PASS {test.__name__}")
-    print("All Phase 39B manual send ready gate tests passed.")
+    print("All Phase 39B actual send execution gate tests passed.")
     return 0
 
 

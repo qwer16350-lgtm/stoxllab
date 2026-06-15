@@ -18,6 +18,12 @@ match the code constant exactly, but reports must never print that phrase value.
 The safety gate may report `raw_required_conditions_met=true`, while actual
 send remains disallowed in this hotfix.
 
+Phase 39B Hotfix 3 leaves this safety gate intact and adds a separate execution
+intent flag at the one-shot send path. Only when raw required conditions, the
+allow flag, and `--execute-actual-private-test-send` are present can the
+one-shot report expose `ready_for_actual_private_test_send=true`. The adapter is
+still `mock`, and the Discord API send flags remain false.
+
 Safety state:
 
 - Conditions met: false

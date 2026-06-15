@@ -588,6 +588,15 @@ manual/env gates are present, the one-shot send report can show
 API send, Discord message sent, LLM/RAG/embedding, and external execution remain
 false until a separate manual actual-send phase.
 
+Phase 39B Hotfix 3 adds an explicit execution-mode flag:
+`--execute-actual-private-test-send`. It is only meaningful together with
+`--allow-actual-private-test-send` and the exact manual/env readiness gates. In
+this hotfix it enters `phase39b_actual_send_execution` with
+`actual_execution_adapter=mock`, `ready_for_actual_private_test_send=true`, and
+`ready_for_discord_send=false`. The real execution env
+`HERMES_PHASE39B_REAL_DISCORD_SEND_EXECUTION` is reported as a boolean only and
+does not cause a Discord API send here. Actual Discord send remains 0.
+
 If the registry file is missing, generate it from the repo root:
 
 ```powershell

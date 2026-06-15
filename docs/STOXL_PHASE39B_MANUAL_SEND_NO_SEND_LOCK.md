@@ -6,6 +6,10 @@ send has occurred yet.
 This is not a rollback record and not a closeout record. It exists to prevent
 accidental repeat attempts, automatic retries, or premature Phase 39C closeout.
 
+Phase 39B Hotfix 3 can expose a mock execution gate in the one-shot report, but
+this no-send lock remains unchanged until an actual Discord message is observed
+in a separately approved phase. Mock gate readiness is not a closeout signal.
+
 Safety state:
 
 - Report only: true

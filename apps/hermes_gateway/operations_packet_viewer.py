@@ -504,6 +504,20 @@ def build_operations_packet_viewer_report(
             "HERMES_DISCORD_REPLY_MODE": "private_test_only",
         },
     )
+    phase39b_execution_gate = build_actual_private_test_one_shot_send(
+        allow_flag_present=True,
+        execute_flag_present=True,
+        env={
+            "DISCORD_BOT_TOKEN": "token-value",
+            "HERMES_DISCORD_PRIVATE_TEST_CHANNEL_ID": "private-channel-present",
+            "HERMES_PRIVATE_TEST_DRAFT_SEND_APPROVED": "true",
+            "HERMES_PRIVATE_TEST_DRAFT_SEND_APPROVAL_PHRASE": EXPECTED_APPROVAL_PHRASE,
+            "HERMES_DISCORD_SEND_MESSAGES": "true",
+            "HERMES_DISCORD_PRIVATE_TEST_REPLY": "true",
+            "HERMES_DISCORD_REPLY_MODE": "private_test_only",
+            "HERMES_PHASE39B_REAL_DISCORD_SEND_EXECUTION": "false",
+        },
+    )
     phase39b_reentry = build_phase39b_manual_send_reentry_packet()
     phase39b_no_send_lock = build_phase39b_manual_send_no_send_lock()
     report = {
@@ -1231,6 +1245,21 @@ def build_operations_packet_viewer_report(
             "discord_api_send_called": bool(phase39b_ready_gate.get("discord_api_send_called")),
             "discord_message_sent": bool(phase39b_ready_gate.get("discord_message_sent")),
             "message_sent_count": int(phase39b_ready_gate.get("message_sent_count", 0) or 0),
+        },
+        "phase39b_actual_send_execution_gate": {
+            "available": True,
+            "report_only": bool(phase39b_execution_gate.get("report_only")),
+            "mode": phase39b_execution_gate.get("mode", ""),
+            "execute_flag_present": bool(phase39b_execution_gate.get("execute_flag_present")),
+            "real_discord_send_execution_env_enabled": bool(phase39b_execution_gate.get("real_discord_send_execution_env_enabled")),
+            "execution_gate_conditions_met": bool(phase39b_execution_gate.get("execution_gate_conditions_met")),
+            "actual_execution_adapter": phase39b_execution_gate.get("actual_execution_adapter", ""),
+            "ready_for_actual_private_test_send": bool(phase39b_execution_gate.get("ready_for_actual_private_test_send")),
+            "ready_for_discord_send": bool(phase39b_execution_gate.get("ready_for_discord_send")),
+            "actual_private_test_send_executed": bool(phase39b_execution_gate.get("actual_private_test_send_executed")),
+            "discord_api_send_called": bool(phase39b_execution_gate.get("discord_api_send_called")),
+            "discord_message_sent": bool(phase39b_execution_gate.get("discord_message_sent")),
+            "message_sent_count": int(phase39b_execution_gate.get("message_sent_count", 0) or 0),
         },
         "phase39b_manual_send_no_send_lock": {
             "available": True,
