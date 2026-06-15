@@ -352,3 +352,10 @@ runtime, no Discord API send, no message send, no OpenRouter/LLM attempt, no
 RAG call, no embedding/vector creation, and no external execution. Phase 39C
 closeout remains unavailable because no actual Phase 39B Discord message has
 been sent.
+
+Phase 39B Hotfix 2 separates the Phase 39A default blocked report from a Phase
+39B manual readiness gate. With allow flag plus all required env/manual gates,
+the report can show `ready_for_phase39b_manual_one_shot_send=true`, but
+`ready_for_discord_send=false`, `discord_api_send_called=false`, and
+`discord_message_sent=false` remain locked. Approval phrase values are never
+printed; only presence/exact-match booleans are reported.

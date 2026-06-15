@@ -74,7 +74,7 @@ from private_test_send_rollback_gate import build_private_test_send_rollback_gat
 from private_test_send_operator_checklist import build_private_test_send_operator_checklist
 from private_test_live_send_entry_gate import build_private_test_live_send_entry_gate
 from actual_private_test_one_shot_send import build_actual_private_test_one_shot_send
-from actual_private_test_send_safety_gate import build_actual_private_test_send_safety_gate
+from actual_private_test_send_safety_gate import EXPECTED_APPROVAL_PHRASE, build_actual_private_test_send_safety_gate
 from actual_private_test_send_blocked_report import build_actual_private_test_send_blocked_report
 from phase39b_manual_send_reentry_packet import build_phase39b_manual_send_reentry_packet
 from phase39b_manual_send_no_send_lock import build_phase39b_manual_send_no_send_lock
@@ -492,6 +492,18 @@ def build_operations_packet_viewer_report(
     phase39a_safety_gate = build_actual_private_test_send_safety_gate(phase38e_gate=phase38e_gate, payload_freeze=phase38b_freeze, rollback_gate=phase38c_rollback, operator_checklist=phase38d_checklist)
     phase39a_blocked = build_actual_private_test_send_blocked_report(phase39a_safety_gate)
     phase39a_send_path = build_actual_private_test_one_shot_send()
+    phase39b_ready_gate = build_actual_private_test_one_shot_send(
+        allow_flag_present=True,
+        env={
+            "DISCORD_BOT_TOKEN": "token-value",
+            "HERMES_DISCORD_PRIVATE_TEST_CHANNEL_ID": "private-channel-present",
+            "HERMES_PRIVATE_TEST_DRAFT_SEND_APPROVED": "true",
+            "HERMES_PRIVATE_TEST_DRAFT_SEND_APPROVAL_PHRASE": EXPECTED_APPROVAL_PHRASE,
+            "HERMES_DISCORD_SEND_MESSAGES": "true",
+            "HERMES_DISCORD_PRIVATE_TEST_REPLY": "true",
+            "HERMES_DISCORD_REPLY_MODE": "private_test_only",
+        },
+    )
     phase39b_reentry = build_phase39b_manual_send_reentry_packet()
     phase39b_no_send_lock = build_phase39b_manual_send_no_send_lock()
     report = {
@@ -1204,6 +1216,21 @@ def build_operations_packet_viewer_report(
             "message_sent_count": int(phase39b_reentry.get("message_sent_count", 0) or 0),
             "actual_send_must_be_run_from_same_user_powershell_session": bool(phase39b_reentry.get("actual_send_must_be_run_from_same_user_powershell_session")),
             "ready_for_phase39b_actual_send_manual_attempt": bool(phase39b_reentry.get("ready_for_phase39b_actual_send_manual_attempt")),
+        },
+        "phase39b_manual_send_ready_gate": {
+            "available": True,
+            "report_only": bool(phase39b_ready_gate.get("report_only")),
+            "version": phase39b_ready_gate.get("version", ""),
+            "phase39b_manual_execution": bool(phase39b_ready_gate.get("phase39b_manual_execution")),
+            "phase39a_implementation_only": bool(phase39b_ready_gate.get("phase39a_implementation_only")),
+            "manual_approval_actualized": bool(phase39b_ready_gate.get("manual_approval_actualized")),
+            "approval_phrase_exact_match": bool(phase39b_ready_gate.get("approval_phrase_exact_match")),
+            "ready_for_phase39b_manual_one_shot_send": bool(phase39b_ready_gate.get("ready_for_phase39b_manual_one_shot_send")),
+            "ready_for_discord_send": bool(phase39b_ready_gate.get("ready_for_discord_send")),
+            "actual_private_test_send_executed": bool(phase39b_ready_gate.get("actual_private_test_send_executed")),
+            "discord_api_send_called": bool(phase39b_ready_gate.get("discord_api_send_called")),
+            "discord_message_sent": bool(phase39b_ready_gate.get("discord_message_sent")),
+            "message_sent_count": int(phase39b_ready_gate.get("message_sent_count", 0) or 0),
         },
         "phase39b_manual_send_no_send_lock": {
             "available": True,

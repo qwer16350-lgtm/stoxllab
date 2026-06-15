@@ -17,6 +17,15 @@ future actual send must be run from the same user PowerShell session where
 token/channel env presence is true. Phase 39B-0 does not run the actual send and
 keeps Phase 39C closeout unavailable.
 
+Phase 39B Hotfix 2 separates the default Phase 39A blocked mode from the Phase
+39B manual readiness gate. When the allow flag and every env/manual gate are
+present, the report can enter `phase39b_manual_ready_gate` with
+`ready_for_phase39b_manual_one_shot_send=true`. This readiness state still does
+not call Discord API send and still keeps `ready_for_discord_send=false`.
+
+The approval phrase is compared by exact code constant. Reports must show only
+presence and exact-match booleans, never the approval phrase value.
+
 Safety state:
 
 - Actual send path available: true

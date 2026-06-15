@@ -14,6 +14,7 @@ from private_test_send_rollback_gate import build_private_test_send_rollback_gat
 
 
 VERSION = "phase39a_actual_private_test_send_safety_gate_no_execution"
+PHASE39B_READY_VERSION = "phase39b_manual_actual_private_test_send_ready_gate"
 REQUIRED_CONDITIONS = [
     "allow_flag_present",
     "manual_approval_flag_true",
@@ -34,7 +35,7 @@ REQUIRED_CONDITIONS = [
 LONG_ID_RE = re.compile(r"\b\d{15,25}\b")
 SECRET_RE = re.compile(r"(?i)(sk-[a-z0-9_-]+|xoxb-[a-z0-9_-]+|mfa\.|bearer\s+\S+|api[_ -]?key\s*[:=]\s*\S+|token\s*[:=]\s*\S+|password\s*[:=]\s*\S+)")
 APPROVAL_RE = re.compile(r"I_APPROVE_[A-Z0-9_]+")
-EXPECTED_APPROVAL_PHRASE = "I_APPROVE_STOXL_PRIVATE_TEST_DRAFT_SEND"
+EXPECTED_APPROVAL_PHRASE = "I_APPROVE_ONE_PRIVATE_TEST_DRAFT_SEND_PRIVATE_TEST_ONLY_ONCE"
 
 
 def _env_flag(env: dict[str, Any], key: str) -> bool:
@@ -83,6 +84,7 @@ def build_actual_private_test_send_safety_gate(
         "version": VERSION,
         "safety_gate_available": True,
         "report_only": True,
+        "expected_approval_phrase_documented": True,
         "required_conditions": REQUIRED_CONDITIONS,
         "condition_values": condition_values,
         "raw_required_conditions_met": raw_required_conditions_met,

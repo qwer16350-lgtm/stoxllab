@@ -13,6 +13,11 @@ The observed blocker is session separation:
 This document does not print token, channel ID, approval phrase, API key, raw
 Discord ID, `.env` content, or full message content.
 
+Phase 39B Hotfix 2 adds a readiness gate before any actual send. The readiness
+gate can confirm that all manual/env conditions are satisfied, but it still does
+not execute Discord API send. The actual send remains a separate user-run action
+from the same PowerShell session.
+
 Allowed next-phase command, for a separately approved manual run only:
 
 ```powershell

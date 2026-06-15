@@ -13,6 +13,11 @@ lets the safety report observe `allow_flag_present=true`; all other unmet
 conditions still block, and the Phase 39A no-execution policy still prevents
 send execution.
 
+Phase 39B Hotfix 2 makes the approval phrase check explicit. The phrase must
+match the code constant exactly, but reports must never print that phrase value.
+The safety gate may report `raw_required_conditions_met=true`, while actual
+send remains disallowed in this hotfix.
+
 Safety state:
 
 - Conditions met: false

@@ -582,6 +582,12 @@ session where token/channel presence is true. Phase 39B-0 does not run the
 actual send and keeps Phase 39C closeout unavailable because no actual Discord
 message has been sent in this phase.
 
+Phase 39B Hotfix 2 adds a manual readiness gate. When the allow flag and all
+manual/env gates are present, the one-shot send report can show
+`ready_for_phase39b_manual_one_shot_send=true`. This is still no-send: Discord
+API send, Discord message sent, LLM/RAG/embedding, and external execution remain
+false until a separate manual actual-send phase.
+
 If the registry file is missing, generate it from the repo root:
 
 ```powershell

@@ -12,6 +12,7 @@ from actual_private_test_send_safety_gate import build_actual_private_test_send_
 
 
 VERSION = "phase39a_actual_private_test_one_shot_send_path_default_blocked_no_execution"
+PHASE39B_READY_VERSION = "phase39b_manual_actual_private_test_one_shot_send_ready_gate"
 LONG_ID_RE = re.compile(r"\b\d{15,25}\b")
 SECRET_RE = re.compile(r"(?i)(sk-[a-z0-9_-]+|xoxb-[a-z0-9_-]+|mfa\.|bearer\s+\S+|api[_ -]?key\s*[:=]\s*\S+|token\s*[:=]\s*\S+|password\s*[:=]\s*\S+)")
 APPROVAL_RE = re.compile(r"I_APPROVE_[A-Z0-9_]+")
@@ -33,13 +34,17 @@ def build_actual_private_test_one_shot_send(
     source_env = env if env is not None else os.environ
     safety_gate = build_actual_private_test_send_safety_gate(allow_flag_present=allow_flag_present, env=source_env)
     blocked_report = build_actual_private_test_send_blocked_report(safety_gate)
+    conditions = safety_gate.get("condition_values", {})
+    phase39b_ready = bool(allow_flag_present) and bool(safety_gate.get("raw_required_conditions_met"))
     blocked_reasons = _blocked_reasons(safety_gate)
     report = {
         "report_type": "actual_private_test_one_shot_send",
-        "version": VERSION,
+        "version": PHASE39B_READY_VERSION if phase39b_ready else VERSION,
         "actual_send_path_available": True,
         "report_only": True,
-        "phase39a_implementation_only": True,
+        "phase39a_implementation_only": not phase39b_ready,
+        "phase39b_manual_execution": phase39b_ready,
+        "mode": "phase39b_manual_ready_gate" if phase39b_ready else "phase39a_default_blocked",
         "actual_private_test_send_executed": False,
         "actual_send_executed": False,
         "discord_live_runtime_executed": False,
@@ -48,7 +53,7 @@ def build_actual_private_test_one_shot_send(
         "message_sent_count": 0,
         "allow_flag_present": bool(allow_flag_present),
         "manual_approval_required": True,
-        "manual_approval_actualized": False,
+        "manual_approval_actualized": bool(conditions.get("manual_approval_flag_true") and conditions.get("approval_phrase_exact_match") and allow_flag_present),
         "approval_phrase_present": _env_present(source_env, "HERMES_PRIVATE_TEST_DRAFT_SEND_APPROVAL_PHRASE"),
         "approval_phrase_exact_match": bool(safety_gate.get("condition_values", {}).get("approval_phrase_exact_match")),
         "approval_phrase_generated": False,
@@ -82,9 +87,9 @@ def build_actual_private_test_one_shot_send(
         "full_content_included": False,
         "ready_for_actual_private_test_send": False,
         "ready_for_discord_send": False,
-        "ready_for_phase39b_manual_one_shot_send": False,
-        "blocked": True,
-        "blocked_reasons": blocked_reasons,
+        "ready_for_phase39b_manual_one_shot_send": phase39b_ready,
+        "blocked": not phase39b_ready,
+        "blocked_reasons": [] if phase39b_ready else blocked_reasons,
         "source_safety_gate_available": bool(safety_gate.get("safety_gate_available")),
         "source_blocked_report_available": bool(blocked_report.get("blocked_report_available")),
     }
@@ -117,15 +122,17 @@ def assert_actual_private_test_one_shot_send_safe(report: dict[str, Any]) -> Non
     text = json.dumps(report, ensure_ascii=False)
     if SECRET_RE.search(text.lower()) or LONG_ID_RE.search(text) or APPROVAL_RE.search(text):
         raise ValueError("Phase 39A one-shot send report contains sensitive values.")
-    if not report.get("blocked"):
+    readiness_mode = bool(report.get("phase39b_manual_execution"))
+    if not readiness_mode and not report.get("blocked"):
         raise ValueError("Phase 39A one-shot send must be blocked.")
+    if readiness_mode and report.get("blocked"):
+        raise ValueError("Phase 39B readiness gate must not be blocked.")
     for key in (
         "actual_private_test_send_executed",
         "actual_send_executed",
         "discord_live_runtime_executed",
         "discord_api_send_called",
         "discord_message_sent",
-        "manual_approval_actualized",
         "approval_phrase_generated",
         "approval_phrase_value_logged",
         "discord_token_value_logged",
@@ -147,10 +154,17 @@ def assert_actual_private_test_one_shot_send_safe(report: dict[str, Any]) -> Non
         "full_content_included",
         "ready_for_actual_private_test_send",
         "ready_for_discord_send",
-        "ready_for_phase39b_manual_one_shot_send",
     ):
         if report.get(key):
             raise ValueError(f"Phase 39A one-shot send unsafe flag is true: {key}")
+    if not readiness_mode and report.get("manual_approval_actualized"):
+        raise ValueError("Phase 39A default mode must not actualize manual approval.")
+    if not readiness_mode and report.get("ready_for_phase39b_manual_one_shot_send"):
+        raise ValueError("Phase 39A default mode must not be ready for Phase 39B.")
+    if readiness_mode and not report.get("manual_approval_actualized"):
+        raise ValueError("Phase 39B readiness mode requires manual approval actualized.")
+    if readiness_mode and not report.get("ready_for_phase39b_manual_one_shot_send"):
+        raise ValueError("Phase 39B readiness mode must be ready for the manual one-shot send.")
     if int(report.get("message_sent_count", 0) or 0) != 0:
         raise ValueError("Phase 39A one-shot send message sent count must be 0.")
 

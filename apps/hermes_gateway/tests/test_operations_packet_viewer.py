@@ -894,6 +894,7 @@ def test_phase39b_zero_send_summaries() -> None:
     setup_artifacts()
     report = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")
     reentry = report["phase39b_manual_send_reentry_packet"]
+    ready = report["phase39b_manual_send_ready_gate"]
     lock = report["phase39b_manual_send_no_send_lock"]
     assert_true(reentry["available"] is True, "39B reentry available")
     assert_true(reentry["report_only"] is True, "39B reentry report only")
@@ -903,6 +904,17 @@ def test_phase39b_zero_send_summaries() -> None:
     assert_true(reentry["message_sent_count"] == 0, "39B reentry count 0")
     assert_true(reentry["actual_send_must_be_run_from_same_user_powershell_session"] is True, "39B same shell")
     assert_true(reentry["ready_for_phase39b_actual_send_manual_attempt"] is False, "39B reentry not ready")
+    assert_true(ready["available"] is True, "39B ready gate available")
+    assert_true(ready["phase39b_manual_execution"] is True, "39B ready manual execution")
+    assert_true(ready["phase39a_implementation_only"] is False, "39B ready not 39A only")
+    assert_true(ready["manual_approval_actualized"] is True, "39B ready approval")
+    assert_true(ready["approval_phrase_exact_match"] is True, "39B ready exact phrase")
+    assert_true(ready["ready_for_phase39b_manual_one_shot_send"] is True, "39B ready true")
+    assert_true(ready["ready_for_discord_send"] is False, "39B no direct send ready")
+    assert_true(ready["actual_private_test_send_executed"] is False, "39B ready no actual send")
+    assert_true(ready["discord_api_send_called"] is False, "39B ready no API")
+    assert_true(ready["discord_message_sent"] is False, "39B ready no message")
+    assert_true(ready["message_sent_count"] == 0, "39B ready count 0")
     assert_true(lock["available"] is True, "39B no-send lock available")
     assert_true(lock["report_only"] is True, "39B lock report only")
     assert_true(lock["actual_discord_send_count"] == 0, "39B actual send count 0")

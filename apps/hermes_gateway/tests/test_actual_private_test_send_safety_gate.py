@@ -9,7 +9,7 @@ APP_DIR = Path(__file__).resolve().parents[1]
 if str(APP_DIR) not in sys.path:
     sys.path.insert(0, str(APP_DIR))
 
-from actual_private_test_send_safety_gate import build_actual_private_test_send_safety_gate, render_actual_private_test_send_safety_gate_markdown
+from actual_private_test_send_safety_gate import EXPECTED_APPROVAL_PHRASE, build_actual_private_test_send_safety_gate, render_actual_private_test_send_safety_gate_markdown
 
 
 LONG_NUMBER_RE = re.compile(r"\b\d{15,25}\b")
@@ -48,13 +48,42 @@ def test_safety_gate_no_send_or_llm_or_external() -> None:
     assert_true(report["message_sent_count"] == 0, "No message count")
 
 
+def test_safety_gate_approval_phrase_exact_match() -> None:
+    missing = build_actual_private_test_send_safety_gate(allow_flag_present=True, env={})
+    wrong = build_actual_private_test_send_safety_gate(
+        allow_flag_present=True,
+        env={
+            "HERMES_PRIVATE_TEST_DRAFT_SEND_APPROVED": "true",
+            "HERMES_PRIVATE_TEST_DRAFT_SEND_APPROVAL_PHRASE": "I_APPROVE_STOXL_PRIVATE_TEST_DRAFT_SEND",
+        },
+    )
+    exact = build_actual_private_test_send_safety_gate(
+        allow_flag_present=True,
+        env={
+            "DISCORD_BOT_TOKEN": "token-value",
+            "HERMES_DISCORD_PRIVATE_TEST_CHANNEL_ID": "private-channel-present",
+            "HERMES_PRIVATE_TEST_DRAFT_SEND_APPROVED": "true",
+            "HERMES_PRIVATE_TEST_DRAFT_SEND_APPROVAL_PHRASE": EXPECTED_APPROVAL_PHRASE,
+            "HERMES_DISCORD_SEND_MESSAGES": "true",
+            "HERMES_DISCORD_PRIVATE_TEST_REPLY": "true",
+            "HERMES_DISCORD_REPLY_MODE": "private_test_only",
+        },
+    )
+    assert_true(missing["condition_values"]["approval_phrase_exact_match"] is False, "Missing phrase false")
+    assert_true(wrong["condition_values"]["approval_phrase_exact_match"] is False, "Wrong phrase false")
+    assert_true(exact["condition_values"]["approval_phrase_exact_match"] is True, "Exact phrase true")
+    assert_true(exact["raw_required_conditions_met"] is True, "Raw conditions true")
+    assert_true(exact["conditions_met"] is False, "Safety gate remains no-execution")
+    assert_true(exact["actual_send_allowed"] is False, "No actual send allowed")
+
+
 def test_safety_gate_no_sensitive_values_and_markdown() -> None:
     report = build_actual_private_test_send_safety_gate(
         allow_flag_present=True,
         env={
             "DISCORD_BOT_TOKEN": "token-value",
             "HERMES_DISCORD_PRIVATE_TEST_CHANNEL_ID": "123456789012345678",
-            "HERMES_PRIVATE_TEST_DRAFT_SEND_APPROVAL_PHRASE": "I_APPROVE_STOXL_PRIVATE_TEST_DRAFT_SEND",
+            "HERMES_PRIVATE_TEST_DRAFT_SEND_APPROVAL_PHRASE": EXPECTED_APPROVAL_PHRASE,
         },
     )
     text = json.dumps(report, ensure_ascii=False).lower()
@@ -70,6 +99,7 @@ def main() -> int:
         test_safety_gate_success_fixture_default_blocked,
         test_safety_gate_blocks_missing_inputs,
         test_safety_gate_no_send_or_llm_or_external,
+        test_safety_gate_approval_phrase_exact_match,
         test_safety_gate_no_sensitive_values_and_markdown,
     ]
     for test in tests:
