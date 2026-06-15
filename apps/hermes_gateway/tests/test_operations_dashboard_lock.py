@@ -66,6 +66,15 @@ def test_operations_dashboard_lock_phase38_entry_state() -> None:
     assert_true(report["ready_for_phase39_live_execution"] is False, "No Phase 39 live readiness")
 
 
+def test_operations_dashboard_lock_phase39a_blocked_state() -> None:
+    report = build_operations_dashboard_lock()
+    assert_true(report["phase39a_actual_send_path_available"] is True, "39A path available")
+    assert_true(report["phase39a_blocked"] is True, "39A blocked")
+    assert_true(report["phase39a_actual_private_test_send_executed"] is False, "39A no actual send")
+    assert_true(report["phase39a_discord_message_sent"] is False, "39A no Discord message")
+    assert_true(report["ready_for_phase39b_manual_one_shot_send"] is False, "No 39B readiness")
+
+
 def test_operations_dashboard_lock_no_sensitive_values() -> None:
     text = json.dumps(build_operations_dashboard_lock(), ensure_ascii=False).lower()
     assert_true("sk-" not in text and "xoxb-" not in text and "token=" not in text, "No secrets")
@@ -84,6 +93,7 @@ def main() -> int:
         test_operations_dashboard_lock_safety_false,
         test_operations_dashboard_lock_phase36_post_call_state,
         test_operations_dashboard_lock_phase38_entry_state,
+        test_operations_dashboard_lock_phase39a_blocked_state,
         test_operations_dashboard_lock_no_sensitive_values,
         test_operations_dashboard_lock_markdown,
     ]

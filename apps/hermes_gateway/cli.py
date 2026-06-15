@@ -111,6 +111,9 @@ from final_would_send_payload_freeze import build_final_would_send_payload_freez
 from private_test_send_rollback_gate import build_private_test_send_rollback_gate, render_private_test_send_rollback_gate_markdown
 from private_test_send_operator_checklist import build_private_test_send_operator_checklist, render_private_test_send_operator_checklist_markdown
 from private_test_live_send_entry_gate import build_private_test_live_send_entry_gate, render_private_test_live_send_entry_gate_markdown
+from actual_private_test_one_shot_send import build_actual_private_test_one_shot_send, render_actual_private_test_one_shot_send_markdown
+from actual_private_test_send_safety_gate import build_actual_private_test_send_safety_gate, render_actual_private_test_send_safety_gate_markdown
+from actual_private_test_send_blocked_report import build_actual_private_test_send_blocked_report, render_actual_private_test_send_blocked_report_markdown
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight, render_rag_evidence_private_test_send_preflight_markdown
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope, render_rag_evidence_prompt_envelope_markdown
 from rag_evidence_review_packet import build_rag_evidence_review_packet, render_rag_evidence_review_packet_markdown
@@ -371,6 +374,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--private-test-send-rollback-gate", action="store_true", help="Print Phase 38C private-test send rollback gate.")
     parser.add_argument("--private-test-send-operator-checklist", action="store_true", help="Print Phase 38D private-test send operator checklist.")
     parser.add_argument("--private-test-live-send-entry-gate", action="store_true", help="Print Phase 38E private-test live send entry gate.")
+    parser.add_argument("--actual-private-test-one-shot-send", action="store_true", help="Print Phase 39A actual private-test one-shot send path blocked report.")
+    parser.add_argument("--actual-private-test-send-safety-gate", action="store_true", help="Print Phase 39A actual private-test send safety gate.")
+    parser.add_argument("--actual-private-test-send-blocked-report", action="store_true", help="Print Phase 39A actual private-test send blocked report.")
     parser.add_argument("--source", default="operation", help="RAG source for local retrieval reports.")
     parser.add_argument("--query", default="STOXL brand tone", help="RAG query preview for local retrieval reports.")
     parser.add_argument("--allow-llm-api-call", action="store_true", help="Allow Phase 32B to attempt one gated provider call when env gates pass.")
@@ -1790,6 +1796,45 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- ready_for_phase39_live_execution: {output.get('ready_for_phase39_live_execution')}")
         return 0
 
+    if args.actual_private_test_one_shot_send:
+        output = build_actual_private_test_one_shot_send()
+        if args.markdown:
+            print(render_actual_private_test_one_shot_send_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL actual private-test one-shot send path")
+            print(f"- blocked: {output.get('blocked')}")
+            print(f"- discord_api_send_called: {output.get('discord_api_send_called')}")
+            print(f"- ready_for_phase39b_manual_one_shot_send: {output.get('ready_for_phase39b_manual_one_shot_send')}")
+        return 0
+
+    if args.actual_private_test_send_safety_gate:
+        output = build_actual_private_test_send_safety_gate()
+        if args.markdown:
+            print(render_actual_private_test_send_safety_gate_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL actual private-test send safety gate")
+            print(f"- conditions_met: {output.get('conditions_met')}")
+            print(f"- actual_send_allowed: {output.get('actual_send_allowed')}")
+            print(f"- discord_message_sent: {output.get('discord_message_sent')}")
+        return 0
+
+    if args.actual_private_test_send_blocked_report:
+        output = build_actual_private_test_send_blocked_report()
+        if args.markdown:
+            print(render_actual_private_test_send_blocked_report_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL actual private-test send blocked report")
+            print(f"- blocked: {output.get('blocked')}")
+            print(f"- phase39a_no_execution_policy: {output.get('phase39a_no_execution_policy')}")
+            print(f"- discord_message_sent: {output.get('discord_message_sent')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -1997,6 +2042,9 @@ def main(argv: list[str] | None = None) -> int:
         or args.private_test_send_rollback_gate
         or args.private_test_send_operator_checklist
         or args.private_test_live_send_entry_gate
+        or args.actual_private_test_one_shot_send
+        or args.actual_private_test_send_safety_gate
+        or args.actual_private_test_send_blocked_report
         or args.allow_llm_api_call
         or args.allow_actual_one_shot_llm_draft_call
         or args.allow_rag_evidence_llm_api_call

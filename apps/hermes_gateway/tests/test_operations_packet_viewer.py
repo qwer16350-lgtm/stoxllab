@@ -866,6 +866,30 @@ def test_phase38a_e_summaries() -> None:
     assert_true(gate["ready_for_phase39_live_execution"] is False, "38E no live")
 
 
+def test_phase39a_summaries() -> None:
+    setup_artifacts()
+    report = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")
+    send_path = report["phase39a_actual_private_test_one_shot_send_path"]
+    safety = report["phase39a_actual_private_test_send_safety_gate"]
+    blocked = report["phase39a_actual_private_test_send_blocked_report"]
+    assert_true(send_path["available"] is True, "39A path available")
+    assert_true(send_path["report_only"] is True, "39A report only")
+    assert_true(send_path["implementation_only"] is True, "39A implementation only")
+    assert_true(send_path["actual_send_executed"] is False, "39A no actual send")
+    assert_true(send_path["discord_api_send_called"] is False, "39A no API send")
+    assert_true(send_path["discord_message_sent"] is False, "39A no message")
+    assert_true(send_path["message_sent_count"] == 0, "39A no message count")
+    assert_true(send_path["ready_for_actual_private_test_send"] is False, "39A no ready")
+    assert_true(send_path["ready_for_phase39b_manual_one_shot_send"] is False, "39A no 39B ready")
+    assert_true(safety["available"] is True, "39A safety available")
+    assert_true(safety["actual_send_allowed"] is False, "39A no allow")
+    assert_true(safety["actual_send_executed"] is False, "39A no safety execution")
+    assert_true(safety["secret_values_logged"] is False, "39A no secrets")
+    assert_true(blocked["available"] is True, "39A blocked available")
+    assert_true(blocked["blocked"] is True, "39A blocked")
+    assert_true(blocked["phase39a_no_execution_policy"] is True, "39A policy")
+
+
 def main() -> int:
     tests = [
         test_recent_events_returned,
@@ -919,6 +943,7 @@ def main() -> int:
         test_phase37a_b_c_summaries,
         test_phase37d_e_f_summaries,
         test_phase38a_e_summaries,
+        test_phase39a_summaries,
     ]
     for test in tests:
         test()

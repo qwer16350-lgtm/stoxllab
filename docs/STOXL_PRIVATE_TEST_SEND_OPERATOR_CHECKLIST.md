@@ -25,3 +25,17 @@ Safety state:
 - Ready for Phase 38E live send entry gate: true
 - Ready for actual private-test send: false
 - Ready for Discord send: false
+
+## Phase 39A Operator Note
+
+Phase 39A introduces a default-blocked one-shot send path, but it does not
+activate the operator approval. The checklist remains a review artifact.
+
+- Approval phrase value must not be generated or printed.
+- Token, private channel ID, API key, raw Discord ID, and full message content
+  must not be printed.
+- Actual send path exists for inspection only.
+- Discord live runtime must not be started by this phase.
+- Discord API send must remain uncalled.
+- Discord message sent must remain false.
+- Phase 39B manual one-shot actual send remains a separate future step.

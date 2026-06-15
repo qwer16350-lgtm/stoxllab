@@ -73,6 +73,9 @@ from final_would_send_payload_freeze import build_final_would_send_payload_freez
 from private_test_send_rollback_gate import build_private_test_send_rollback_gate
 from private_test_send_operator_checklist import build_private_test_send_operator_checklist
 from private_test_live_send_entry_gate import build_private_test_live_send_entry_gate
+from actual_private_test_one_shot_send import build_actual_private_test_one_shot_send
+from actual_private_test_send_safety_gate import build_actual_private_test_send_safety_gate
+from actual_private_test_send_blocked_report import build_actual_private_test_send_blocked_report
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope
 from rag_evidence_review_packet import build_rag_evidence_review_packet
@@ -484,6 +487,9 @@ def build_operations_packet_viewer_report(
     phase38c_rollback = build_private_test_send_rollback_gate(phase38b_freeze)
     phase38d_checklist = build_private_test_send_operator_checklist(phase38c_rollback)
     phase38e_gate = build_private_test_live_send_entry_gate(phase38a_contract, phase38b_freeze, phase38c_rollback, phase38d_checklist)
+    phase39a_safety_gate = build_actual_private_test_send_safety_gate(phase38e_gate=phase38e_gate, payload_freeze=phase38b_freeze, rollback_gate=phase38c_rollback, operator_checklist=phase38d_checklist)
+    phase39a_blocked = build_actual_private_test_send_blocked_report(phase39a_safety_gate)
+    phase39a_send_path = build_actual_private_test_one_shot_send()
     report = {
         "report_type": "operations_packet_viewer",
         "version": VERSION,
@@ -1160,6 +1166,30 @@ def build_operations_packet_viewer_report(
             "phase39_not_started": bool(phase38e_gate.get("phase39_not_started")),
             "requires_explicit_user_approval": bool(phase38e_gate.get("requires_explicit_user_approval")),
             "ready_for_phase39_live_execution": bool(phase38e_gate.get("ready_for_phase39_live_execution")),
+        },
+        "phase39a_actual_private_test_one_shot_send_path": {
+            "available": True,
+            "report_only": bool(phase39a_send_path.get("report_only")),
+            "implementation_only": bool(phase39a_send_path.get("phase39a_implementation_only")),
+            "actual_send_executed": bool(phase39a_send_path.get("actual_send_executed")),
+            "discord_api_send_called": bool(phase39a_send_path.get("discord_api_send_called")),
+            "discord_message_sent": bool(phase39a_send_path.get("discord_message_sent")),
+            "message_sent_count": int(phase39a_send_path.get("message_sent_count", 0) or 0),
+            "ready_for_actual_private_test_send": bool(phase39a_send_path.get("ready_for_actual_private_test_send")),
+            "ready_for_phase39b_manual_one_shot_send": bool(phase39a_send_path.get("ready_for_phase39b_manual_one_shot_send")),
+        },
+        "phase39a_actual_private_test_send_safety_gate": {
+            "available": True,
+            "report_only": bool(phase39a_safety_gate.get("report_only")),
+            "actual_send_allowed": bool(phase39a_safety_gate.get("actual_send_allowed")),
+            "actual_send_executed": bool(phase39a_safety_gate.get("actual_send_executed")),
+            "secret_values_logged": bool(phase39a_safety_gate.get("secret_values_logged")),
+        },
+        "phase39a_actual_private_test_send_blocked_report": {
+            "available": True,
+            "report_only": bool(phase39a_blocked.get("report_only")),
+            "blocked": bool(phase39a_blocked.get("blocked")),
+            "phase39a_no_execution_policy": bool(phase39a_blocked.get("phase39a_no_execution_policy")),
         },
         "daily_manifest_summary": load_daily_manifest(root=root, date=date),
         "filters": {

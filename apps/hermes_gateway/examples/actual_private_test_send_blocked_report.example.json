@@ -1,0 +1,21 @@
+{
+  "report_type": "actual_private_test_send_blocked_report",
+  "version": "phase39a_actual_private_test_send_blocked_report",
+  "blocked_report_available": true,
+  "report_only": true,
+  "blocked": true,
+  "blocked_reason_categories": [
+    "manual_approval_missing",
+    "allow_flag_missing",
+    "discord_send_disabled",
+    "phase39a_no_execution_policy"
+  ],
+  "phase39a_no_execution_policy": true,
+  "actual_send_executed": false,
+  "discord_api_send_called": false,
+  "discord_message_sent": false,
+  "message_sent_count": 0,
+  "ready_for_actual_private_test_send": false,
+  "ready_for_discord_send": false,
+  "ready_for_phase39b_manual_one_shot_send": false
+}

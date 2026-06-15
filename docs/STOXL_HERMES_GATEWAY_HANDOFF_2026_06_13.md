@@ -25,6 +25,7 @@
 - Phase 35A post-MVP safety audit, operator runbook, and Phase 35 entry plan are available.
 - Phase 35B local knowledge ingestion preview, evidence quality dry preview, and agent routing dry preview are available.
 - Phase 35C agent evidence pack composer and agent prompt preview are available.
+- Phase 39A actual private-test one-shot send path, safety gate, and blocked report are available, but execution remains default blocked.
 
 ## Completed Chain
 
@@ -76,6 +77,7 @@
 - Phase 35A does not run Discord, send messages, call OpenRouter/LLM, recall LLM, create embeddings/vector indexes, schedule auto replies, or execute external actions. It confirms public/team channel send/reply remains forbidden and unattended auto reply remains false.
 - Phase 35B does not run Discord, send messages, call OpenRouter/LLM, create embeddings/vector indexes, watch files, schedule auto replies, or execute external actions. It keeps `operation` canonical and `operations` forbidden.
 - Phase 35C does not run Discord, send messages, call OpenRouter/LLM, execute prompts, create embeddings/vector indexes, dump full content, or execute external actions.
+- Phase 39A does not run Discord live runtime, call Discord API send, send a Discord message, execute actual private-test send, call OpenRouter/LLM, generate or actualize an approval phrase, create embeddings/vector indexes, enable unattended auto reply, or execute external actions.
 
 ## Important Commands
 
@@ -125,6 +127,9 @@ python apps\hermes_gateway\cli.py --evidence-quality-preview --json
 python apps\hermes_gateway\cli.py --agent-routing-dry-preview --json
 python apps\hermes_gateway\cli.py --agent-evidence-pack-composer --json
 python apps\hermes_gateway\cli.py --agent-prompt-preview --json
+python apps\hermes_gateway\cli.py --actual-private-test-one-shot-send --json
+python apps\hermes_gateway\cli.py --actual-private-test-send-safety-gate --json
+python apps\hermes_gateway\cli.py --actual-private-test-send-blocked-report --json
 python apps\hermes_gateway\cli.py --operations-viewer --json
 ```
 
@@ -326,3 +331,11 @@ attempt, no Discord live runtime, no Discord API send, no Discord message send,
 no actual private-test send, no approval phrase generation, no manual approval
 actualization, no embedding/vector creation, and no external execution. Phase
 39 actual private-test send remains not started.
+
+Phase 39A adds the actual private-test one-shot send path, safety gate, and
+blocked report as default-blocked implementation scaffolding. It does not run
+Discord live runtime, call Discord API send, send a Discord message, execute
+actual private-test send, call OpenRouter/LLM, attempt an LLM API call, generate
+or actualize an approval phrase, create embeddings/vector indexes, enable
+public/team channel replies, enable unattended auto reply, or execute external
+actions. Phase 39B manual one-shot actual send has not been run.

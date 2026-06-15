@@ -1,0 +1,20 @@
+# STOXL Actual Private-test Send Safety Gate
+
+Phase 39A safety gate lists the conditions that would be required before a
+future actual private-test send. In Phase 39A, the gate never allows execution.
+
+Required condition categories include explicit allow flag, manual approval,
+exact approval phrase, private-test reply mode, token/channel presence booleans,
+Phase 38E gate availability, frozen payload, rollback readiness, operator
+checklist readiness, private-test scope, public/team block, and unattended false.
+
+Safety state:
+
+- Conditions met: false
+- Actual send allowed: false
+- Actual send executed: false
+- Discord API send called: false
+- Discord message sent: false
+- Secret values logged: false
+- Approval phrase value logged: false
+- Raw Discord IDs logged: false

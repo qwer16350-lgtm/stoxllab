@@ -67,6 +67,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - Build Phase 35C agent evidence pack composer and agent prompt preview reports without live execution.
 - Build Phase 37D-F actual private-test send manual preflight, mock send rehearsal, and no-send lock reports without starting Phase 38 or sending Discord messages.
 - Build Phase 38A-E actual private-test send contract, final payload freeze, rollback gate, operator checklist, and live send entry gate reports without starting Phase 39 or sending Discord messages.
+- Build Phase 39A actual private-test one-shot send path scaffolding with default blocking, safety gate reports, and blocked report output. This phase does not run Discord live runtime or send messages.
 
 ## Explicit Non-Goals
 
@@ -111,6 +112,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - No Phase 35A audit starts Discord, sends messages, calls OpenRouter/LLM APIs, recalls LLM, creates embeddings/vector indexes, schedules auto replies, or executes external actions.
 - No Phase 35B preview starts Discord, sends messages, calls OpenRouter/LLM APIs, creates embeddings/vector indexes, watches files, schedules auto replies, or executes external actions.
 - No Phase 35C preview starts Discord, sends messages, calls OpenRouter/LLM APIs, executes prompts, creates embeddings/vector indexes, dumps full content, or executes external actions.
+- No Phase 39A report starts Discord live runtime, calls Discord API send, sends a Discord message, executes actual private-test send, calls OpenRouter/LLM APIs, generates or activates approval phrases, creates embeddings/vector indexes, enables unattended auto reply, or executes external actions.
 
 ## Phase 21 Read-Only Planning Docs
 
@@ -556,6 +558,15 @@ live send entry gate. It performs no OpenRouter/LLM API call, no Discord live
 runtime, no Discord API send, no message send, no approval phrase generation, no
 manual approval actualization, no embedding/vector creation, and no external
 execution. Phase 39 remains not started.
+
+Phase 39A adds the actual private-test one-shot send path as code-visible
+scaffolding only. The path is intentionally default blocked and reports
+`actual_send_allowed=false`, `discord_api_send_called=false`,
+`discord_message_sent=false`, `llm_api_call_attempted=false`,
+`embedding_or_vector_created=false`, and `external_execution=false`. Manual
+approval is not actualized, approval phrase values are not generated or logged,
+public/team channel sends remain forbidden, and unattended auto reply remains
+false. Phase 39B manual one-shot actual send has not been run.
 
 If the registry file is missing, generate it from the repo root:
 
