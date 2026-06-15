@@ -30,3 +30,9 @@ python apps\hermes_gateway\cli.py --rag-evidence-review-packet --markdown
 - `ready_for_external_sources=false`
 
 This packet is not a live reply and not a general automatic response.
+
+## Phase 34G Prompt Envelope
+
+Phase 34G converts this review packet into a prompt envelope preview only.
+
+The preview includes review-only and no-external-action instructions, uses only local evidence previews, and keeps `ready_for_llm_api_call=false`.

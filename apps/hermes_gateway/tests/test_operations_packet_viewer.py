@@ -295,6 +295,35 @@ def test_knowledge_dry_chain_summary() -> None:
     assert_true(chain["ready_for_external_sources"] is False, "External sources should be false")
 
 
+def test_rag_evidence_prompt_envelope_summary() -> None:
+    setup_artifacts()
+    prompt = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")["rag_evidence_prompt_envelope"]
+    assert_true(prompt["available"] is True, "Prompt envelope should be available")
+    assert_true(prompt["review_only"] is True, "Review only should be true")
+    assert_true(prompt["human_review_required"] is True, "Human review should be required")
+    assert_true(prompt["ready_for_prompt_preview"] is True, "Prompt preview should be ready")
+    assert_true(prompt["ready_for_llm_api_call"] is False, "LLM API call should be false")
+    assert_true(prompt["ready_for_discord_send"] is False, "Discord send should be false")
+    assert_true(prompt["ready_for_embedding"] is False, "Embedding should be false")
+    assert_true(prompt["ready_for_external_sources"] is False, "External sources should be false")
+
+
+def test_rag_evidence_llm_dry_readiness_summary() -> None:
+    setup_artifacts()
+    dry = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")["rag_evidence_llm_dry_readiness"]
+    assert_true(dry["available"] is True, "Dry readiness should be available")
+    assert_true(dry["prompt_envelope_available"] is True, "Prompt envelope should be available")
+    assert_true(dry["prompt_safety_allowed"] is True, "Prompt safety should be allowed")
+    assert_true(dry["mock_response_created"] is True, "Mock response should be created")
+    assert_true(dry["mock_response_safety_allowed"] is True, "Mock response safety should pass")
+    assert_true(dry["llm_response_packet_created"] is True, "LLM response packet should be created")
+    assert_true(dry["ready_for_actual_llm_dry_call"] is True, "Actual dry call readiness should be true")
+    assert_true(dry["actual_llm_api_call"] is False, "Actual LLM API call should be false")
+    assert_true(dry["ready_for_discord_send"] is False, "Discord send should be false")
+    assert_true(dry["embedding_api_called"] is False, "Embedding API call should be false")
+    assert_true(dry["external_execution"] is False, "External execution should be false")
+
+
 def main() -> int:
     tests = [
         test_recent_events_returned,
@@ -320,6 +349,8 @@ def main() -> int:
         test_rag_evidence_integration_summary,
         test_rag_evidence_review_packet_summary,
         test_knowledge_dry_chain_summary,
+        test_rag_evidence_prompt_envelope_summary,
+        test_rag_evidence_llm_dry_readiness_summary,
     ]
     for test in tests:
         test()

@@ -1,0 +1,28 @@
+{
+  "report_type": "rag_evidence_llm_dry_readiness",
+  "version": "phase34h0_no_api_mock_only",
+  "prompt_envelope_available": true,
+  "prompt_safety_allowed": true,
+  "mock_response_created": true,
+  "mock_response_safety_allowed": true,
+  "llm_response_packet_created": true,
+  "ready_for_actual_llm_dry_call": true,
+  "actual_llm_api_call": false,
+  "discord_message_sent": false,
+  "embedding_api_called": false,
+  "external_execution": false,
+  "ready_for_discord_send": false,
+  "mock_response": {
+    "review_only": true,
+    "text_preview": "This is a review-only draft. No external action has been taken..."
+  },
+  "safety_assertions": {
+    "api_key_value_logged": false,
+    "token_value_logged": false,
+    "raw_discord_ids_logged": false,
+    "embedding_called": false,
+    "llm_called": false,
+    "discord_message_sent": false,
+    "external_execution": false
+  }
+}

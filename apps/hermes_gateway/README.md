@@ -50,6 +50,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - Build Phase 34A-C local knowledge foundation reports for manifest, ingestion boundary, source routing, and evidence packets.
 - Build Phase 34D local evidence-to-RAG response packet integration reports without LLM, embeddings, Discord send, or external ingest.
 - Build Phase 34E-F private-test review packets and local sample dry-chain reports without LLM, embeddings, Discord send, or external ingest.
+- Build Phase 34G-H0 prompt envelope previews and no-API/mock-only LLM dry readiness reports without provider calls.
 
 ## Explicit Non-Goals
 
@@ -80,6 +81,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - No Phase 34A-C knowledge foundation flow creates embeddings, vector DB indexes, external source ingest, public/team channel replies, additional Discord sends, LLM API calls, or external execution.
 - No Phase 34D evidence integration enables LLM prompts, embeddings, vector DB indexes, external source ingest, public/team channel replies, Discord sends, or external execution.
 - No Phase 34E-F review packet or dry-chain flow enables LLM prompts, Discord sends, embeddings, external source ingest, vector DB/index creation, or external execution.
+- No Phase 34G-H0 prompt readiness flow calls OpenRouter/LLM APIs, sends Discord messages, calls embeddings, ingests external sources, or executes external actions.
 
 ## Phase 21 Read-Only Planning Docs
 
@@ -137,6 +139,8 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - `docs/STOXL_RAG_EVIDENCE_INTEGRATION.md`
 - `docs/STOXL_RAG_EVIDENCE_REVIEW_PACKET.md`
 - `docs/STOXL_KNOWLEDGE_DRY_CHAIN.md`
+- `docs/STOXL_RAG_EVIDENCE_PROMPT_ENVELOPE.md`
+- `docs/STOXL_RAG_EVIDENCE_LLM_DRY_READINESS.md`
 
 These documents prepare for a later private server read-only connection review. They do not authorize or perform a Discord connection.
 
@@ -243,6 +247,10 @@ python apps\hermes_gateway\cli.py --rag-evidence-review-packet --json
 python apps\hermes_gateway\cli.py --rag-evidence-review-packet --markdown
 python apps\hermes_gateway\cli.py --knowledge-dry-chain --json
 python apps\hermes_gateway\cli.py --knowledge-dry-chain --markdown
+python apps\hermes_gateway\cli.py --rag-evidence-prompt-envelope --json
+python apps\hermes_gateway\cli.py --rag-evidence-prompt-envelope --markdown
+python apps\hermes_gateway\cli.py --rag-evidence-llm-dry-readiness --json
+python apps\hermes_gateway\cli.py --rag-evidence-llm-dry-readiness --markdown
 python apps\hermes_gateway\cli.py --run-discord-private-test-reply --json
 python apps\hermes_gateway\tests\test_local_pipeline.py
 python apps\hermes_gateway\tests\test_replay_approval.py
@@ -293,6 +301,8 @@ python apps\hermes_gateway\tests\test_knowledge_evidence_packet.py
 python apps\hermes_gateway\tests\test_rag_evidence_integration.py
 python apps\hermes_gateway\tests\test_rag_evidence_review_packet.py
 python apps\hermes_gateway\tests\test_knowledge_dry_chain.py
+python apps\hermes_gateway\tests\test_rag_evidence_prompt_envelope.py
+python apps\hermes_gateway\tests\test_rag_evidence_llm_dry_readiness.py
 ```
 
 The `--run-discord-readonly` option is intentionally not part of normal local
@@ -407,6 +417,11 @@ Phase 34E-F adds the review-only packet and a local sample dry chain. The sample
 chain verifies repo-local `knowledge/operation` files through manifest,
 evidence packet, RAG response packet, and review packet outputs. It remains
 private-test review only.
+
+Phase 34G-H0 prepares prompt envelope preview and no-API/mock-only LLM dry-call
+readiness. It creates a review-only message preview and a mock LLM response
+packet, but actual provider calls remain reserved for a later separately
+approved phase.
 
 If the registry file is missing, generate it from the repo root:
 

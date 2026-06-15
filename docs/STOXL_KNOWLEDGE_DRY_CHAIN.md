@@ -35,3 +35,9 @@ python apps\hermes_gateway\cli.py --knowledge-dry-chain --markdown
 - `ready_for_discord_send=false`
 - `ready_for_embedding=false`
 - `ready_for_external_sources=false`
+
+## Phase 34G-H0 Follow-up
+
+The dry chain can feed a prompt envelope preview and no-API/mock-only LLM dry readiness report.
+
+Those follow-up reports do not call OpenRouter/LLM APIs, do not send Discord messages, do not call embeddings, and do not perform external execution.

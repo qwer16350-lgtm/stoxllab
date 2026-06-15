@@ -1,0 +1,33 @@
+{
+  "report_type": "rag_evidence_prompt_envelope",
+  "version": "phase34g_prompt_preview_no_api_call",
+  "source": "operation",
+  "source_valid": true,
+  "agent": "kasumi",
+  "agent_source_allowed": true,
+  "review_packet_available": true,
+  "prompt_envelope_created": true,
+  "review_only": true,
+  "human_review_required": true,
+  "ready_for_prompt_preview": true,
+  "ready_for_llm_api_call": false,
+  "ready_for_discord_send": false,
+  "ready_for_embedding": false,
+  "ready_for_external_sources": false,
+  "messages_preview": [
+    {
+      "role": "system",
+      "content": "Review-only draft. No external action has been taken. Do not publish, submit, send, approve, confirm, or execute external actions. Use only the provided local evidence preview. If evidence is insufficient, say that evidence is insufficient."
+    }
+  ],
+  "citation_summary": {
+    "citation_count": 2,
+    "relative_paths_only": true
+  },
+  "full_content_included": false,
+  "content_preview_only": true,
+  "embedding_api_called": false,
+  "llm_api_called": false,
+  "discord_message_sent": false,
+  "external_execution": false
+}

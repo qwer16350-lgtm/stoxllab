@@ -18,6 +18,7 @@
 - Phase 34A-C local knowledge foundation is available for manifest, ingestion boundary, source routing, and citation/evidence packets.
 - Phase 34D local evidence-to-RAG response packet integration is available for private-test review only.
 - Phase 34E-F private-test evidence review packet and local sample dry-chain reports are available.
+- Phase 34G-H0 prompt envelope preview and no-API/mock-only LLM dry readiness reports are available.
 
 ## Completed Chain
 
@@ -37,6 +38,7 @@
 14. Phase 34A-C added repo-local `knowledge/` source folders, text-only manifest rules, source routing policy, and evidence packet formatting.
 15. Phase 34D connected evidence packets into RAG response packets with citation summaries and no live LLM/Discord/embedding behavior.
 16. Phase 34E-F added private-test evidence review packets and a sample local knowledge dry chain.
+17. Phase 34G-H0 added RAG evidence prompt envelope previews and mock-only LLM dry-call readiness reports.
 
 ## Current Safety Posture
 
@@ -61,6 +63,7 @@
 - Phase 34A-C keeps `operation` canonical and keeps `operations` blocked.
 - Phase 34D remains local evidence-to-RAG-packet integration only; `ready_for_llm_prompt=false`.
 - Phase 34E-F remains review packet plus local sample dry chain only; `ready_for_discord_send=false`.
+- Phase 34G-H0 remains prompt envelope preview plus no-API/mock-only LLM readiness only; `actual_llm_api_call=false`.
 
 ## Important Commands
 
@@ -86,6 +89,8 @@ python apps\hermes_gateway\cli.py --knowledge-evidence-packet --json
 python apps\hermes_gateway\cli.py --rag-evidence-integration --json
 python apps\hermes_gateway\cli.py --rag-evidence-review-packet --json
 python apps\hermes_gateway\cli.py --knowledge-dry-chain --json
+python apps\hermes_gateway\cli.py --rag-evidence-prompt-envelope --json
+python apps\hermes_gateway\cli.py --rag-evidence-llm-dry-readiness --json
 python apps\hermes_gateway\cli.py --operations-viewer --json
 ```
 
@@ -110,6 +115,8 @@ python apps\hermes_gateway\tests\test_knowledge_evidence_packet.py
 python apps\hermes_gateway\tests\test_rag_evidence_integration.py
 python apps\hermes_gateway\tests\test_rag_evidence_review_packet.py
 python apps\hermes_gateway\tests\test_knowledge_dry_chain.py
+python apps\hermes_gateway\tests\test_rag_evidence_prompt_envelope.py
+python apps\hermes_gateway\tests\test_rag_evidence_llm_dry_readiness.py
 python apps\hermes_gateway\tests\test_llm_private_test_reply_replay.py
 python apps\hermes_gateway\tests\test_llm_private_test_reply.py
 python apps\hermes_gateway\tests\test_private_test_reply.py
@@ -148,8 +155,8 @@ The user-run single live private test should only begin after human review of:
 - LLM output safety
 - one-message-per-human-message send limits
 
-The next recommended phase is Phase 34G local review packet handoff UX or
-Phase 35 planning for still-local prompt-envelope preparation. It should still
-avoid live LLM prompts, external ingestion, embedding APIs, vector DB/index
-creation, broad Discord replies, public/team channel reply paths, and external
-execution until separately approved.
+The next recommended phase is Phase 34H-1 actual LLM dry call planning and
+manual approval design, or a local review handoff UX pass. It should still avoid
+Discord sends, external ingestion, embedding APIs, vector DB/index creation,
+broad Discord replies, public/team channel reply paths, and external execution
+until separately approved.
