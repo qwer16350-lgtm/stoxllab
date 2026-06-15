@@ -29,6 +29,7 @@ from knowledge_source_routing import build_knowledge_source_routing_report
 from knowledge_evidence_packet import build_knowledge_evidence_packet
 from knowledge_dry_chain import build_knowledge_dry_chain_report
 from rag_evidence_integration import build_rag_evidence_integration_report
+from rag_evidence_llm_dry_call import build_rag_evidence_llm_dry_call_report
 from rag_evidence_llm_dry_readiness import build_rag_evidence_llm_dry_readiness_report
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope
 from rag_evidence_review_packet import build_rag_evidence_review_packet
@@ -358,6 +359,7 @@ def build_operations_packet_viewer_report(
     knowledge_dry_chain = build_knowledge_dry_chain_report(root=str(_repo(root)))
     rag_evidence_prompt = build_rag_evidence_prompt_envelope(root=str(_repo(root)))
     rag_evidence_llm_readiness = build_rag_evidence_llm_dry_readiness_report(root=str(_repo(root)))
+    rag_evidence_llm_dry_call = build_rag_evidence_llm_dry_call_report(root=str(_repo(root)), allow_api_call=False)
     report = {
         "report_type": "operations_packet_viewer",
         "version": VERSION,
@@ -536,6 +538,22 @@ def build_operations_packet_viewer_report(
             "embedding_api_called": bool(rag_evidence_llm_readiness.get("embedding_api_called")),
             "external_execution": bool(rag_evidence_llm_readiness.get("external_execution")),
         },
+        "rag_evidence_llm_dry_call": {
+            "available": True,
+            "manual_approval_required": bool(rag_evidence_llm_dry_call.get("manual_approval", {}).get("required")),
+            "manual_approval_approved": bool(rag_evidence_llm_dry_call.get("manual_approval", {}).get("approved")),
+            "ready": bool(rag_evidence_llm_dry_call.get("ready")),
+            "blocked": bool(rag_evidence_llm_dry_call.get("blocked")),
+            "actual_llm_api_call": bool(rag_evidence_llm_dry_call.get("actual_llm_api_call")),
+            "api_call_attempted": bool(rag_evidence_llm_dry_call.get("api_call_attempted")),
+            "api_call_succeeded": bool(rag_evidence_llm_dry_call.get("api_call_succeeded")),
+            "llm_response_packet_created": bool(rag_evidence_llm_dry_call.get("llm_response_packet_created")),
+            "output_safety_allowed": bool(rag_evidence_llm_dry_call.get("output_safety_allowed")),
+            "ready_for_discord_send": bool(rag_evidence_llm_dry_call.get("ready_for_discord_send")),
+            "discord_message_sent": bool(rag_evidence_llm_dry_call.get("discord_message_sent")),
+            "embedding_api_called": bool(rag_evidence_llm_dry_call.get("embedding_api_called")),
+            "external_execution": bool(rag_evidence_llm_dry_call.get("external_execution")),
+        },
         "daily_manifest_summary": load_daily_manifest(root=root, date=date),
         "filters": {
             "channel_name": channel_name,
@@ -608,6 +626,7 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
     knowledge_dry_chain = report.get("knowledge_dry_chain", {})
     rag_evidence_prompt = report.get("rag_evidence_prompt_envelope", {})
     rag_evidence_llm = report.get("rag_evidence_llm_dry_readiness", {})
+    rag_evidence_llm_dry_call = report.get("rag_evidence_llm_dry_call", {})
     llm_summary = report.get("latest_llm_response_packet", {})
     lines.extend(
         [
@@ -768,6 +787,22 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
             f"- Ready for Discord send: {str(rag_evidence_llm.get('ready_for_discord_send', False)).lower()}",
             f"- Embedding API called: {str(rag_evidence_llm.get('embedding_api_called', False)).lower()}",
             f"- External execution: {str(rag_evidence_llm.get('external_execution', False)).lower()}",
+            "",
+            "## RAG Evidence LLM Dry Call",
+            f"- Available: {str(rag_evidence_llm_dry_call.get('available', False)).lower()}",
+            f"- Manual approval required: {str(rag_evidence_llm_dry_call.get('manual_approval_required', False)).lower()}",
+            f"- Manual approval approved: {str(rag_evidence_llm_dry_call.get('manual_approval_approved', False)).lower()}",
+            f"- Ready: {str(rag_evidence_llm_dry_call.get('ready', False)).lower()}",
+            f"- Blocked: {str(rag_evidence_llm_dry_call.get('blocked', True)).lower()}",
+            f"- Actual LLM API call: {str(rag_evidence_llm_dry_call.get('actual_llm_api_call', False)).lower()}",
+            f"- API call attempted: {str(rag_evidence_llm_dry_call.get('api_call_attempted', False)).lower()}",
+            f"- API call succeeded: {str(rag_evidence_llm_dry_call.get('api_call_succeeded', False)).lower()}",
+            f"- LLM response packet created: {str(rag_evidence_llm_dry_call.get('llm_response_packet_created', False)).lower()}",
+            f"- Output safety allowed: {str(rag_evidence_llm_dry_call.get('output_safety_allowed', False)).lower()}",
+            f"- Ready for Discord send: {str(rag_evidence_llm_dry_call.get('ready_for_discord_send', False)).lower()}",
+            f"- Discord message sent: {str(rag_evidence_llm_dry_call.get('discord_message_sent', False)).lower()}",
+            f"- Embedding API called: {str(rag_evidence_llm_dry_call.get('embedding_api_called', False)).lower()}",
+            f"- External execution: {str(rag_evidence_llm_dry_call.get('external_execution', False)).lower()}",
         ]
     )
     safety = report.get("safety_assertions", {})

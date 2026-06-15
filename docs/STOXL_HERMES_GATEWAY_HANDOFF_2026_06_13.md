@@ -91,6 +91,8 @@ python apps\hermes_gateway\cli.py --rag-evidence-review-packet --json
 python apps\hermes_gateway\cli.py --knowledge-dry-chain --json
 python apps\hermes_gateway\cli.py --rag-evidence-prompt-envelope --json
 python apps\hermes_gateway\cli.py --rag-evidence-llm-dry-readiness --json
+python apps\hermes_gateway\cli.py --rag-evidence-llm-dry-call-report --json
+python apps\hermes_gateway\cli.py --rag-evidence-llm-dry-call-report --markdown
 python apps\hermes_gateway\cli.py --operations-viewer --json
 ```
 
@@ -117,6 +119,7 @@ python apps\hermes_gateway\tests\test_rag_evidence_review_packet.py
 python apps\hermes_gateway\tests\test_knowledge_dry_chain.py
 python apps\hermes_gateway\tests\test_rag_evidence_prompt_envelope.py
 python apps\hermes_gateway\tests\test_rag_evidence_llm_dry_readiness.py
+python apps\hermes_gateway\tests\test_rag_evidence_llm_dry_call.py
 python apps\hermes_gateway\tests\test_llm_private_test_reply_replay.py
 python apps\hermes_gateway\tests\test_llm_private_test_reply.py
 python apps\hermes_gateway\tests\test_private_test_reply.py
@@ -138,6 +141,8 @@ $env:HERMES_DISCORD_RAG_ENABLED="false"
 $env:HERMES_LLM_RAG_ENABLED="false"
 $env:HERMES_RAG_LLM_SINGLE_LIVE_TEST_APPROVED="false"
 $env:HERMES_RAG_LLM_SINGLE_LIVE_TEST_APPROVAL_PHRASE=""
+$env:HERMES_RAG_EVIDENCE_LLM_DRY_CALL_APPROVED="false"
+$env:HERMES_RAG_EVIDENCE_LLM_DRY_CALL_APPROVAL_PHRASE=""
 ```
 
 ## Next Recommended Phase
@@ -155,8 +160,8 @@ The user-run single live private test should only begin after human review of:
 - LLM output safety
 - one-message-per-human-message send limits
 
-The next recommended phase is Phase 34H-1 actual LLM dry call planning and
-manual approval design, or a local review handoff UX pass. It should still avoid
-Discord sends, external ingestion, embedding APIs, vector DB/index creation,
-broad Discord replies, public/team channel reply paths, and external execution
-until separately approved.
+Phase 34H-1 adds the manually approved actual LLM dry-call boundary. The default
+report path remains no-call. A provider call requires the separate CLI allow flag
+and manual env approval gate, and it still avoids Discord sends, external
+ingestion, embedding APIs, vector DB/index creation, broad Discord replies,
+public/team channel reply paths, and external execution.

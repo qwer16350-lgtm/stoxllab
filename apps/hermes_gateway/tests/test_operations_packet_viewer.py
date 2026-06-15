@@ -324,6 +324,23 @@ def test_rag_evidence_llm_dry_readiness_summary() -> None:
     assert_true(dry["external_execution"] is False, "External execution should be false")
 
 
+def test_rag_evidence_llm_dry_call_summary() -> None:
+    setup_artifacts()
+    dry = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")["rag_evidence_llm_dry_call"]
+    assert_true(dry["available"] is True, "Dry call summary should be available")
+    assert_true(dry["manual_approval_required"] is True, "Manual approval should be required")
+    assert_true(dry["manual_approval_approved"] is False, "Viewer should not approve actual call")
+    assert_true(dry["blocked"] is True, "Viewer default dry call should be blocked")
+    assert_true(dry["actual_llm_api_call"] is False, "Viewer should not call LLM API")
+    assert_true(dry["api_call_attempted"] is False, "Viewer should not attempt API call")
+    assert_true(dry["llm_response_packet_created"] is False, "Blocked default should not create packet")
+    assert_true(dry["output_safety_allowed"] is False, "Blocked default should not be output-ready")
+    assert_true(dry["ready_for_discord_send"] is False, "Discord send should be false")
+    assert_true(dry["discord_message_sent"] is False, "Discord message sent should be false")
+    assert_true(dry["embedding_api_called"] is False, "Embedding API call should be false")
+    assert_true(dry["external_execution"] is False, "External execution should be false")
+
+
 def main() -> int:
     tests = [
         test_recent_events_returned,
@@ -351,6 +368,7 @@ def main() -> int:
         test_knowledge_dry_chain_summary,
         test_rag_evidence_prompt_envelope_summary,
         test_rag_evidence_llm_dry_readiness_summary,
+        test_rag_evidence_llm_dry_call_summary,
     ]
     for test in tests:
         test()

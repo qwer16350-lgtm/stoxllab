@@ -31,4 +31,4 @@ python apps\hermes_gateway\cli.py --rag-evidence-prompt-envelope --markdown
 - `full_content_included=false`
 - `content_preview_only=true`
 
-This is prompt preview only. Actual LLM dry call requires a later separate approval phase.
+This is prompt preview only. Phase 34H-1 adds a separate manual-approval dry-call boundary; the default report path still does not call an LLM provider.

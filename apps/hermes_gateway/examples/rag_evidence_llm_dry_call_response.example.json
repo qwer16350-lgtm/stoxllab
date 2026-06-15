@@ -1,0 +1,17 @@
+{
+  "report_type": "rag_evidence_llm_dry_call",
+  "version": "phase34h1_actual_llm_dry_call_no_discord_send",
+  "ready": true,
+  "blocked": false,
+  "blocked_reasons": [],
+  "actual_llm_api_call": true,
+  "api_call_attempted": true,
+  "api_call_succeeded": true,
+  "llm_response_packet_created": true,
+  "output_safety_allowed": true,
+  "ready_for_discord_send": false,
+  "discord_message_sent": false,
+  "embedding_api_called": false,
+  "external_execution": false,
+  "note": "Example shape only. No API key, approval phrase, token, raw Discord ID, or Discord send payload is included."
+}

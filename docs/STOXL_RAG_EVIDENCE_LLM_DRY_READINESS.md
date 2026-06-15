@@ -24,4 +24,6 @@ python apps\hermes_gateway\cli.py --rag-evidence-llm-dry-readiness --markdown
 - `ready_for_embedding=false`
 - `ready_for_external_sources=false`
 
-`ready_for_actual_llm_dry_call=true` means the next phase may request a separately approved dry call. It does not mean this phase called an LLM provider.
+`ready_for_actual_llm_dry_call=true` means Phase 34H-1 may request a separately approved dry call. It does not mean this phase called an LLM provider.
+
+The Phase 34H-1 default command is still blocked/report-only unless a human provides the separate allow flag and manual approval env gate.

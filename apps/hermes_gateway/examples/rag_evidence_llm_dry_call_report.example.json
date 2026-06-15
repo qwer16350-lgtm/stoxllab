@@ -1,0 +1,38 @@
+{
+  "report_type": "rag_evidence_llm_dry_call",
+  "version": "phase34h1_actual_llm_dry_call_no_discord_send",
+  "prompt_envelope_available": true,
+  "manual_approval": {
+    "required": true,
+    "approved": false,
+    "approval_phrase_present": false,
+    "approval_phrase_value_logged": false
+  },
+  "ready": false,
+  "blocked": true,
+  "blocked_reasons": [
+    "allow_rag_evidence_llm_api_call_required",
+    "manual_approval_required"
+  ],
+  "provider": "openrouter",
+  "model_configured": true,
+  "api_key_present": false,
+  "api_key_value_logged": false,
+  "actual_llm_api_call": false,
+  "api_call_attempted": false,
+  "api_call_succeeded": false,
+  "llm_response_packet_created": false,
+  "output_safety_allowed": false,
+  "ready_for_discord_send": false,
+  "discord_message_sent": false,
+  "embedding_api_called": false,
+  "external_execution": false,
+  "safety_assertions": {
+    "api_key_value_logged": false,
+    "token_value_logged": false,
+    "raw_discord_ids_logged": false,
+    "embedding_called": false,
+    "discord_message_sent": false,
+    "external_execution": false
+  }
+}
