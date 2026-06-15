@@ -55,6 +55,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - Build Phase 34H-2 RAG evidence LLM dry-call closeout reports from an embedded sanitized success fixture without another OpenRouter call.
 - Build Phase 34I private-test would-send previews without Discord API calls.
 - Build Phase 34J-0 private-test send preflight and manual approval gate reports without actual send.
+- Build Phase 34J-1 one-shot private-test Discord send boundary with default blocking, explicit allow flag, and manual approval gate.
 
 ## Explicit Non-Goals
 
@@ -90,6 +91,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - No Phase 34H-2 closeout calls OpenRouter/LLM APIs, sends Discord messages, calls embeddings, ingests external sources, or executes external actions.
 - No Phase 34I would-send preview calls Discord APIs, sends messages, calls OpenRouter/LLM APIs, calls embeddings, or executes external actions.
 - No Phase 34J-0 preflight calls Discord APIs, sends messages, calls OpenRouter/LLM APIs, calls embeddings, or executes external actions.
+- No Phase 34J-1 default report sends Discord messages, calls OpenRouter/LLM APIs, calls embeddings, or executes external actions. Live send requires a separate human-run allow flag and manual approval gate.
 
 ## Phase 21 Read-Only Planning Docs
 
@@ -153,6 +155,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - `docs/STOXL_RAG_EVIDENCE_LLM_DRY_CALL_CLOSEOUT.md`
 - `docs/STOXL_RAG_EVIDENCE_WOULD_SEND_PREVIEW.md`
 - `docs/STOXL_RAG_EVIDENCE_PRIVATE_TEST_SEND_PREFLIGHT.md`
+- `docs/STOXL_RAG_EVIDENCE_PRIVATE_TEST_SEND.md`
 
 These documents prepare for a later private server read-only connection review. They do not authorize or perform a Discord connection.
 

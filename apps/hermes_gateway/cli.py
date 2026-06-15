@@ -70,6 +70,7 @@ from rag_evidence_integration import build_rag_evidence_integration_report, rend
 from rag_evidence_llm_dry_call_closeout import build_rag_evidence_llm_dry_call_closeout, render_rag_evidence_llm_dry_call_closeout_markdown
 from rag_evidence_llm_dry_call import build_rag_evidence_llm_dry_call_report, render_rag_evidence_llm_dry_call_markdown
 from rag_evidence_llm_dry_readiness import build_rag_evidence_llm_dry_readiness_report, render_rag_evidence_llm_dry_readiness_markdown
+from rag_evidence_private_test_send import build_rag_evidence_private_test_send_report, render_rag_evidence_private_test_send_markdown
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight, render_rag_evidence_private_test_send_preflight_markdown
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope, render_rag_evidence_prompt_envelope_markdown
 from rag_evidence_review_packet import build_rag_evidence_review_packet, render_rag_evidence_review_packet_markdown
@@ -289,10 +290,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--rag-evidence-llm-dry-call-closeout", action="store_true", help="Print Phase 34H-2 closeout from embedded sanitized RAG evidence LLM dry-call fixture.")
     parser.add_argument("--rag-evidence-would-send-preview", action="store_true", help="Print Phase 34I private-test would-send preview without Discord API.")
     parser.add_argument("--rag-evidence-private-test-send-preflight", action="store_true", help="Print Phase 34J-0 private-test send preflight without Discord API.")
+    parser.add_argument("--rag-evidence-private-test-send", action="store_true", help="Run/report Phase 34J-1 one private-test Discord send gate.")
     parser.add_argument("--source", default="operation", help="RAG source for local retrieval reports.")
     parser.add_argument("--query", default="STOXL brand tone", help="RAG query preview for local retrieval reports.")
     parser.add_argument("--allow-llm-api-call", action="store_true", help="Allow Phase 32B to attempt one gated provider call when env gates pass.")
     parser.add_argument("--allow-rag-evidence-llm-api-call", action="store_true", help="Allow Phase 34H-1 to attempt one manually approved provider call when env gates pass.")
+    parser.add_argument("--allow-rag-evidence-private-test-discord-send", action="store_true", help="Allow Phase 34J-1 to send one private-test Discord message when env gates pass.")
     parser.add_argument("--write-artifact", action="store_true", help="Write supported local-only report artifacts.")
     parser.add_argument("--latest", action="store_true", help="Use latest local artifact for supported reports.")
     parser.add_argument("--markdown", action="store_true", help="Print supported reports as Markdown.")
@@ -1156,6 +1159,20 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- ready_for_phase34j1_manual_live_send: {output.get('ready_for_phase34j1_manual_live_send')}")
         return 0
 
+    if args.rag_evidence_private_test_send:
+        output = build_rag_evidence_private_test_send_report(allow_send=args.allow_rag_evidence_private_test_discord_send)
+        if args.markdown:
+            print(render_rag_evidence_private_test_send_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL RAG evidence private-test send")
+            print(f"- ready: {output.get('ready')}")
+            print(f"- blocked: {output.get('blocked')}")
+            print(f"- discord_message_sent: {output.get('discord_message_sent')}")
+            print(f"- message_sent_count: {output.get('message_sent_count')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -1322,8 +1339,10 @@ def main(argv: list[str] | None = None) -> int:
         or args.rag_evidence_llm_dry_call_closeout
         or args.rag_evidence_would_send_preview
         or args.rag_evidence_private_test_send_preflight
+        or args.rag_evidence_private_test_send
         or args.allow_llm_api_call
         or args.allow_rag_evidence_llm_api_call
+        or args.allow_rag_evidence_private_test_discord_send
         or args.write_artifact
         or args.latest
         or args.force

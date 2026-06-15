@@ -32,6 +32,7 @@ from rag_evidence_integration import build_rag_evidence_integration_report
 from rag_evidence_llm_dry_call_closeout import build_rag_evidence_llm_dry_call_closeout
 from rag_evidence_llm_dry_call import build_rag_evidence_llm_dry_call_report
 from rag_evidence_llm_dry_readiness import build_rag_evidence_llm_dry_readiness_report
+from rag_evidence_private_test_send import build_rag_evidence_private_test_send_report
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope
 from rag_evidence_review_packet import build_rag_evidence_review_packet
@@ -366,6 +367,11 @@ def build_operations_packet_viewer_report(
     rag_evidence_llm_closeout = build_rag_evidence_llm_dry_call_closeout()
     rag_evidence_would_send = build_rag_evidence_would_send_preview(rag_evidence_llm_closeout)
     rag_evidence_send_preflight = build_rag_evidence_private_test_send_preflight(rag_evidence_would_send)
+    rag_evidence_send = build_rag_evidence_private_test_send_report(
+        allow_send=False,
+        preview=rag_evidence_would_send,
+        preflight=rag_evidence_send_preflight,
+    )
     report = {
         "report_type": "operations_packet_viewer",
         "version": VERSION,
@@ -598,6 +604,20 @@ def build_operations_packet_viewer_report(
             "ready_for_actual_private_test_send": bool(rag_evidence_send_preflight.get("ready_for_actual_private_test_send")),
             "ready_for_phase34j1_manual_live_send": bool(rag_evidence_send_preflight.get("ready_for_phase34j1_manual_live_send")),
         },
+        "rag_evidence_private_test_send": {
+            "available": True,
+            "manual_approval_required": True,
+            "private_test_channel_only": bool(rag_evidence_send.get("private_test_channel_only")),
+            "public_channel_send_allowed": bool(rag_evidence_send.get("public_channel_send_allowed")),
+            "team_channel_send_allowed": bool(rag_evidence_send.get("team_channel_send_allowed")),
+            "discord_api_send_called": bool(rag_evidence_send.get("discord_api_send_called")),
+            "discord_message_sent": bool(rag_evidence_send.get("discord_message_sent")),
+            "message_sent_count": int(rag_evidence_send.get("message_sent_count", 0) or 0),
+            "ready_for_phase34j2_send_closeout": bool(rag_evidence_send.get("ready_for_phase34j2_send_closeout")),
+            "llm_api_called": bool(rag_evidence_send.get("llm_api_called")),
+            "embedding_api_called": bool(rag_evidence_send.get("embedding_api_called")),
+            "external_execution": bool(rag_evidence_send.get("external_execution")),
+        },
         "daily_manifest_summary": load_daily_manifest(root=root, date=date),
         "filters": {
             "channel_name": channel_name,
@@ -674,6 +694,7 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
     rag_evidence_llm_closeout = report.get("rag_evidence_llm_dry_call_closeout", {})
     rag_evidence_would_send = report.get("rag_evidence_would_send_preview", {})
     rag_evidence_send_preflight = report.get("rag_evidence_private_test_send_preflight", {})
+    rag_evidence_send = report.get("rag_evidence_private_test_send", {})
     llm_summary = report.get("latest_llm_response_packet", {})
     lines.extend(
         [
@@ -888,6 +909,20 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
             f"- Discord message sent: {str(rag_evidence_send_preflight.get('discord_message_sent', False)).lower()}",
             f"- Ready for actual private-test send: {str(rag_evidence_send_preflight.get('ready_for_actual_private_test_send', False)).lower()}",
             f"- Ready for Phase 34J-1 manual live send: {str(rag_evidence_send_preflight.get('ready_for_phase34j1_manual_live_send', False)).lower()}",
+            "",
+            "## RAG Evidence Private-test Send",
+            f"- Available: {str(rag_evidence_send.get('available', False)).lower()}",
+            f"- Manual approval required: {str(rag_evidence_send.get('manual_approval_required', False)).lower()}",
+            f"- Private test channel only: {str(rag_evidence_send.get('private_test_channel_only', False)).lower()}",
+            f"- Public channel send allowed: {str(rag_evidence_send.get('public_channel_send_allowed', False)).lower()}",
+            f"- Team channel send allowed: {str(rag_evidence_send.get('team_channel_send_allowed', False)).lower()}",
+            f"- Discord API send called: {str(rag_evidence_send.get('discord_api_send_called', False)).lower()}",
+            f"- Discord message sent: {str(rag_evidence_send.get('discord_message_sent', False)).lower()}",
+            f"- Message sent count: {rag_evidence_send.get('message_sent_count', 0)}",
+            f"- Ready for Phase 34J-2 send closeout: {str(rag_evidence_send.get('ready_for_phase34j2_send_closeout', False)).lower()}",
+            f"- LLM API called: {str(rag_evidence_send.get('llm_api_called', False)).lower()}",
+            f"- Embedding API called: {str(rag_evidence_send.get('embedding_api_called', False)).lower()}",
+            f"- External execution: {str(rag_evidence_send.get('external_execution', False)).lower()}",
         ]
     )
     safety = report.get("safety_assertions", {})

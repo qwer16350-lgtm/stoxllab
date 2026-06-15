@@ -99,6 +99,8 @@ python apps\hermes_gateway\cli.py --rag-evidence-would-send-preview --json
 python apps\hermes_gateway\cli.py --rag-evidence-would-send-preview --markdown
 python apps\hermes_gateway\cli.py --rag-evidence-private-test-send-preflight --json
 python apps\hermes_gateway\cli.py --rag-evidence-private-test-send-preflight --markdown
+python apps\hermes_gateway\cli.py --rag-evidence-private-test-send --json
+python apps\hermes_gateway\cli.py --rag-evidence-private-test-send --markdown
 python apps\hermes_gateway\cli.py --operations-viewer --json
 ```
 
@@ -129,6 +131,7 @@ python apps\hermes_gateway\tests\test_rag_evidence_llm_dry_call.py
 python apps\hermes_gateway\tests\test_rag_evidence_llm_dry_call_closeout.py
 python apps\hermes_gateway\tests\test_rag_evidence_would_send_preview.py
 python apps\hermes_gateway\tests\test_rag_evidence_private_test_send_preflight.py
+python apps\hermes_gateway\tests\test_rag_evidence_private_test_send.py
 python apps\hermes_gateway\tests\test_llm_private_test_reply_replay.py
 python apps\hermes_gateway\tests\test_llm_private_test_reply.py
 python apps\hermes_gateway\tests\test_private_test_reply.py
@@ -187,3 +190,9 @@ the private-test send preflight and manual approval gate design only. Neither
 phase calls Discord APIs, sends a message, calls OpenRouter/LLM again, calls
 embeddings, or executes external actions. Phase 34J-1 would require a separate
 manual request before any single live private-test send.
+
+Phase 34J-1 adds the one-shot private-test Discord send boundary. Default CLI
+reports remain blocked. A live send requires `--allow-rag-evidence-private-test-discord-send`,
+the manual approval env gate, `private_test_only` reply mode, and a configured
+private test channel ID. It still does not call OpenRouter/LLM again, embeddings,
+or external execution.

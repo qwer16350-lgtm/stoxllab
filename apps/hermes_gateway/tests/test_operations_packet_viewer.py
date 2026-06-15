@@ -388,6 +388,23 @@ def test_rag_evidence_private_test_send_preflight_summary() -> None:
     assert_true(preflight["ready_for_phase34j1_manual_live_send"] is True, "Phase 34J-1 should be ready")
 
 
+def test_rag_evidence_private_test_send_summary() -> None:
+    setup_artifacts()
+    send = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")["rag_evidence_private_test_send"]
+    assert_true(send["available"] is True, "Private-test send summary should be available")
+    assert_true(send["manual_approval_required"] is True, "Manual approval should be required")
+    assert_true(send["private_test_channel_only"] is True, "Private-test only should be true")
+    assert_true(send["public_channel_send_allowed"] is False, "Public channel send should be false")
+    assert_true(send["team_channel_send_allowed"] is False, "Team channel send should be false")
+    assert_true(send["discord_api_send_called"] is False, "Viewer should not call Discord send")
+    assert_true(send["discord_message_sent"] is False, "Viewer should not send Discord")
+    assert_true(send["message_sent_count"] == 0, "Viewer default should have zero sends")
+    assert_true(send["ready_for_phase34j2_send_closeout"] is False, "No send closeout readiness without live send")
+    assert_true(send["llm_api_called"] is False, "Viewer should not call LLM")
+    assert_true(send["embedding_api_called"] is False, "Viewer should not call embeddings")
+    assert_true(send["external_execution"] is False, "Viewer should not execute external action")
+
+
 def main() -> int:
     tests = [
         test_recent_events_returned,
@@ -419,6 +436,7 @@ def main() -> int:
         test_rag_evidence_llm_dry_call_closeout_summary,
         test_rag_evidence_would_send_preview_summary,
         test_rag_evidence_private_test_send_preflight_summary,
+        test_rag_evidence_private_test_send_summary,
     ]
     for test in tests:
         test()
