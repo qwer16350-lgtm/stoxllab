@@ -27,7 +27,9 @@ from knowledge_ingestion_boundary import build_knowledge_ingestion_boundary_repo
 from knowledge_manifest import build_knowledge_manifest
 from knowledge_source_routing import build_knowledge_source_routing_report
 from knowledge_evidence_packet import build_knowledge_evidence_packet
+from knowledge_dry_chain import build_knowledge_dry_chain_report
 from rag_evidence_integration import build_rag_evidence_integration_report
+from rag_evidence_review_packet import build_rag_evidence_review_packet
 
 
 VERSION = "phase31a_local_viewer"
@@ -350,6 +352,8 @@ def build_operations_packet_viewer_report(
     knowledge_routing = build_knowledge_source_routing_report()
     knowledge_evidence = build_knowledge_evidence_packet(root=str(_repo(root)))
     rag_evidence_integration = build_rag_evidence_integration_report(root=str(_repo(root)))
+    rag_evidence_review = build_rag_evidence_review_packet(root=str(_repo(root)))
+    knowledge_dry_chain = build_knowledge_dry_chain_report(root=str(_repo(root)))
     report = {
         "report_type": "operations_packet_viewer",
         "version": VERSION,
@@ -482,6 +486,29 @@ def build_operations_packet_viewer_report(
             "discord_message_sent": False,
             "external_execution": False,
         },
+        "rag_evidence_review_packet": {
+            "available": True,
+            "review_only": bool(rag_evidence_review.get("review_only")),
+            "human_review_required": bool(rag_evidence_review.get("human_review_required")),
+            "ready_for_private_test_review": bool(rag_evidence_review.get("ready_for_private_test_review")),
+            "ready_for_llm_prompt": bool(rag_evidence_review.get("ready_for_llm_prompt")),
+            "ready_for_discord_send": bool(rag_evidence_review.get("ready_for_discord_send")),
+            "ready_for_embedding": bool(rag_evidence_review.get("ready_for_embedding")),
+            "ready_for_external_sources": bool(rag_evidence_review.get("ready_for_external_sources")),
+        },
+        "knowledge_dry_chain": {
+            "available": True,
+            "sample_files_present": bool(knowledge_dry_chain.get("sample_files_present")),
+            "manifest_available": bool(knowledge_dry_chain.get("manifest_available")),
+            "evidence_packet_available": bool(knowledge_dry_chain.get("evidence_packet_available")),
+            "rag_response_packet_available": bool(knowledge_dry_chain.get("rag_response_packet_available")),
+            "review_packet_available": bool(knowledge_dry_chain.get("review_packet_available")),
+            "ready_for_private_test_review": bool(knowledge_dry_chain.get("ready_for_private_test_review")),
+            "ready_for_llm_prompt": bool(knowledge_dry_chain.get("ready_for_llm_prompt")),
+            "ready_for_discord_send": bool(knowledge_dry_chain.get("ready_for_discord_send")),
+            "ready_for_embedding": bool(knowledge_dry_chain.get("ready_for_embedding")),
+            "ready_for_external_sources": bool(knowledge_dry_chain.get("ready_for_external_sources")),
+        },
         "daily_manifest_summary": load_daily_manifest(root=root, date=date),
         "filters": {
             "channel_name": channel_name,
@@ -550,6 +577,8 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
     rag_llm_success_closeout = report.get("rag_llm_single_live_test_closeout", {})
     knowledge = report.get("knowledge_foundation", {})
     rag_evidence = report.get("rag_evidence_integration", {})
+    rag_evidence_review = report.get("rag_evidence_review_packet", {})
+    knowledge_dry_chain = report.get("knowledge_dry_chain", {})
     llm_summary = report.get("latest_llm_response_packet", {})
     lines.extend(
         [
@@ -664,6 +693,29 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
             f"- LLM API called: {str(rag_evidence.get('llm_api_called', False)).lower()}",
             f"- Discord message sent: {str(rag_evidence.get('discord_message_sent', False)).lower()}",
             f"- External execution: {str(rag_evidence.get('external_execution', False)).lower()}",
+            "",
+            "## RAG Evidence Review Packet",
+            f"- Available: {str(rag_evidence_review.get('available', False)).lower()}",
+            f"- Review only: {str(rag_evidence_review.get('review_only', False)).lower()}",
+            f"- Human review required: {str(rag_evidence_review.get('human_review_required', False)).lower()}",
+            f"- Ready for private test review: {str(rag_evidence_review.get('ready_for_private_test_review', False)).lower()}",
+            f"- Ready for LLM prompt: {str(rag_evidence_review.get('ready_for_llm_prompt', False)).lower()}",
+            f"- Ready for Discord send: {str(rag_evidence_review.get('ready_for_discord_send', False)).lower()}",
+            f"- Ready for embedding: {str(rag_evidence_review.get('ready_for_embedding', False)).lower()}",
+            f"- Ready for external sources: {str(rag_evidence_review.get('ready_for_external_sources', False)).lower()}",
+            "",
+            "## Knowledge Dry Chain",
+            f"- Available: {str(knowledge_dry_chain.get('available', False)).lower()}",
+            f"- Sample files present: {str(knowledge_dry_chain.get('sample_files_present', False)).lower()}",
+            f"- Manifest available: {str(knowledge_dry_chain.get('manifest_available', False)).lower()}",
+            f"- Evidence packet available: {str(knowledge_dry_chain.get('evidence_packet_available', False)).lower()}",
+            f"- RAG response packet available: {str(knowledge_dry_chain.get('rag_response_packet_available', False)).lower()}",
+            f"- Review packet available: {str(knowledge_dry_chain.get('review_packet_available', False)).lower()}",
+            f"- Ready for private test review: {str(knowledge_dry_chain.get('ready_for_private_test_review', False)).lower()}",
+            f"- Ready for LLM prompt: {str(knowledge_dry_chain.get('ready_for_llm_prompt', False)).lower()}",
+            f"- Ready for Discord send: {str(knowledge_dry_chain.get('ready_for_discord_send', False)).lower()}",
+            f"- Ready for embedding: {str(knowledge_dry_chain.get('ready_for_embedding', False)).lower()}",
+            f"- Ready for external sources: {str(knowledge_dry_chain.get('ready_for_external_sources', False)).lower()}",
         ]
     )
     safety = report.get("safety_assertions", {})

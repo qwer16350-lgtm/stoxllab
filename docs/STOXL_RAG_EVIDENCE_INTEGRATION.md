@@ -48,3 +48,15 @@ python apps\hermes_gateway\cli.py --operations-viewer --json
 - general automatic response
 
 Phase 34D is only evidence-to-RAG-packet integration.
+
+## Phase 34E-F Follow-up
+
+Phase 34E converts the integrated evidence output into a private-test review packet.
+
+Phase 34F verifies the local sample dry chain:
+
+```text
+knowledge sample files -> manifest -> evidence packet -> RAG response packet -> review packet
+```
+
+Both phases remain local-only. They do not enable LLM prompts, Discord sends, embeddings, vector DB/index creation, external source ingestion, public/team replies, or external execution.

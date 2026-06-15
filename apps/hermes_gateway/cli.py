@@ -35,6 +35,7 @@ from live_event_pipeline import build_live_event_pipeline_report
 from live_event_review_packet import build_live_event_review_packet
 from live_event_routing_report import build_live_event_routing_report
 from knowledge_evidence_packet import build_knowledge_evidence_packet, render_knowledge_evidence_packet_markdown
+from knowledge_dry_chain import build_knowledge_dry_chain_report, render_knowledge_dry_chain_markdown
 from knowledge_ingestion_boundary import build_knowledge_ingestion_boundary_report, render_knowledge_ingestion_boundary_markdown
 from knowledge_manifest import build_knowledge_manifest, render_knowledge_manifest_markdown
 from knowledge_source_routing import build_knowledge_source_routing_report, render_knowledge_source_routing_markdown
@@ -66,6 +67,7 @@ from rag_local_retrieval import render_rag_local_retrieval_markdown, run_rag_loc
 from rag_preflight import build_rag_preflight_report, render_rag_preflight_markdown
 from rag_response_packet import build_rag_response_packet_report, render_rag_response_packet_markdown
 from rag_evidence_integration import build_rag_evidence_integration_report, render_rag_evidence_integration_markdown
+from rag_evidence_review_packet import build_rag_evidence_review_packet, render_rag_evidence_review_packet_markdown
 from rag_llm_private_test_reply import build_rag_llm_private_test_reply_preflight, render_rag_llm_private_test_reply_markdown
 from rag_llm_prompt_envelope import build_rag_llm_prompt_envelope, render_rag_llm_prompt_envelope_markdown
 from rag_llm_would_send_preview import build_rag_llm_would_send_preview, render_rag_llm_would_send_preview_markdown
@@ -273,6 +275,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--knowledge-source-routing", action="store_true", help="Print Phase 34B agent knowledge source routing policy.")
     parser.add_argument("--knowledge-evidence-packet", action="store_true", help="Print Phase 34C local citation/evidence packet without LLM or Discord send.")
     parser.add_argument("--rag-evidence-integration", action="store_true", help="Print Phase 34D local evidence-to-RAG response packet integration report.")
+    parser.add_argument("--rag-evidence-review-packet", action="store_true", help="Print Phase 34E private-test review packet for local evidence output.")
+    parser.add_argument("--knowledge-dry-chain", action="store_true", help="Print Phase 34F local sample knowledge dry chain report.")
     parser.add_argument("--source", default="operation", help="RAG source for local retrieval reports.")
     parser.add_argument("--query", default="STOXL brand tone", help="RAG query preview for local retrieval reports.")
     parser.add_argument("--allow-llm-api-call", action="store_true", help="Allow Phase 32B to attempt one gated provider call when env gates pass.")
@@ -1018,6 +1022,35 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- ready_for_private_test_review: {output.get('ready_for_private_test_review')}")
         return 0
 
+    if args.rag_evidence_review_packet:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_rag_evidence_review_packet(root=str(cfg.repo_root), source=args.source, agent=args.agent or "kasumi", query=args.query)
+        if args.markdown:
+            print(render_rag_evidence_review_packet_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL RAG evidence review packet")
+            print(f"- source: {output.get('source')}")
+            print(f"- agent: {output.get('agent')}")
+            print(f"- human_review_required: {output.get('human_review_required')}")
+            print(f"- ready_for_private_test_review: {output.get('ready_for_private_test_review')}")
+        return 0
+
+    if args.knowledge_dry_chain:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_knowledge_dry_chain_report(root=cfg.repo_root, source=args.source, agent=args.agent or "kasumi", query=args.query)
+        if args.markdown:
+            print(render_knowledge_dry_chain_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL knowledge dry chain")
+            print(f"- sample_files_present: {output.get('sample_files_present')}")
+            print(f"- citation_count: {output.get('citation_count')}")
+            print(f"- ready_for_private_test_review: {output.get('ready_for_private_test_review')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -1176,6 +1209,8 @@ def main(argv: list[str] | None = None) -> int:
         or args.knowledge_source_routing
         or args.knowledge_evidence_packet
         or args.rag_evidence_integration
+        or args.rag_evidence_review_packet
+        or args.knowledge_dry_chain
         or args.allow_llm_api_call
         or args.write_artifact
         or args.latest

@@ -43,6 +43,10 @@ def assert_true(condition: bool, message: str) -> None:
 
 def setup_artifacts() -> dict:
     date = "20260613"
+    knowledge_dir = TEST_ROOT / "knowledge" / "operation"
+    knowledge_dir.mkdir(parents=True, exist_ok=True)
+    (knowledge_dir / "stoxl_operation_tone_sample.md").write_text("STOXL brand tone local review evidence for operation.", encoding="utf-8")
+    (knowledge_dir / "stoxl_private_test_workflow_sample.md").write_text("STOXL brand tone private test workflow evidence.", encoding="utf-8")
     log_dir = TEST_ROOT / "logs" / "hermes_gateway" / "live_events"
     log_dir.mkdir(parents=True, exist_ok=True)
     visibility = build_sample_visibility_event()
@@ -262,6 +266,35 @@ def test_rag_evidence_integration_summary() -> None:
     assert_true(integration["external_execution"] is False, "No external execution")
 
 
+def test_rag_evidence_review_packet_summary() -> None:
+    setup_artifacts()
+    review = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")["rag_evidence_review_packet"]
+    assert_true(review["available"] is True, "RAG evidence review packet should be available")
+    assert_true(review["review_only"] is True, "Review only should be true")
+    assert_true(review["human_review_required"] is True, "Human review should be required")
+    assert_true(review["ready_for_private_test_review"] is True, "Private test review should be ready")
+    assert_true(review["ready_for_llm_prompt"] is False, "LLM prompt should be false")
+    assert_true(review["ready_for_discord_send"] is False, "Discord send should be false")
+    assert_true(review["ready_for_embedding"] is False, "Embedding should be false")
+    assert_true(review["ready_for_external_sources"] is False, "External sources should be false")
+
+
+def test_knowledge_dry_chain_summary() -> None:
+    setup_artifacts()
+    chain = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")["knowledge_dry_chain"]
+    assert_true(chain["available"] is True, "Knowledge dry chain should be available")
+    assert_true(chain["sample_files_present"] is True, "Sample files should be present")
+    assert_true(chain["manifest_available"] is True, "Manifest should be available")
+    assert_true(chain["evidence_packet_available"] is True, "Evidence packet should be available")
+    assert_true(chain["rag_response_packet_available"] is True, "RAG response packet should be available")
+    assert_true(chain["review_packet_available"] is True, "Review packet should be available")
+    assert_true(chain["ready_for_private_test_review"] is True, "Private test review should be ready")
+    assert_true(chain["ready_for_llm_prompt"] is False, "LLM prompt should be false")
+    assert_true(chain["ready_for_discord_send"] is False, "Discord send should be false")
+    assert_true(chain["ready_for_embedding"] is False, "Embedding should be false")
+    assert_true(chain["ready_for_external_sources"] is False, "External sources should be false")
+
+
 def main() -> int:
     tests = [
         test_recent_events_returned,
@@ -285,6 +318,8 @@ def main() -> int:
         test_rag_llm_single_live_test_closeout_summary,
         test_knowledge_foundation_summary,
         test_rag_evidence_integration_summary,
+        test_rag_evidence_review_packet_summary,
+        test_knowledge_dry_chain_summary,
     ]
     for test in tests:
         test()
