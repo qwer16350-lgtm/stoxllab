@@ -70,8 +70,10 @@ from rag_evidence_integration import build_rag_evidence_integration_report, rend
 from rag_evidence_llm_dry_call_closeout import build_rag_evidence_llm_dry_call_closeout, render_rag_evidence_llm_dry_call_closeout_markdown
 from rag_evidence_llm_dry_call import build_rag_evidence_llm_dry_call_report, render_rag_evidence_llm_dry_call_markdown
 from rag_evidence_llm_dry_readiness import build_rag_evidence_llm_dry_readiness_report, render_rag_evidence_llm_dry_readiness_markdown
+from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight, render_rag_evidence_private_test_send_preflight_markdown
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope, render_rag_evidence_prompt_envelope_markdown
 from rag_evidence_review_packet import build_rag_evidence_review_packet, render_rag_evidence_review_packet_markdown
+from rag_evidence_would_send_preview import build_rag_evidence_would_send_preview, render_rag_evidence_would_send_preview_markdown
 from rag_llm_private_test_reply import build_rag_llm_private_test_reply_preflight, render_rag_llm_private_test_reply_markdown
 from rag_llm_prompt_envelope import build_rag_llm_prompt_envelope, render_rag_llm_prompt_envelope_markdown
 from rag_llm_would_send_preview import build_rag_llm_would_send_preview, render_rag_llm_would_send_preview_markdown
@@ -285,6 +287,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--rag-evidence-llm-dry-readiness", action="store_true", help="Print Phase 34H-0 no-API/mock-only LLM dry-call readiness report.")
     parser.add_argument("--rag-evidence-llm-dry-call-report", action="store_true", help="Print Phase 34H-1 manually approved RAG evidence LLM dry-call report.")
     parser.add_argument("--rag-evidence-llm-dry-call-closeout", action="store_true", help="Print Phase 34H-2 closeout from embedded sanitized RAG evidence LLM dry-call fixture.")
+    parser.add_argument("--rag-evidence-would-send-preview", action="store_true", help="Print Phase 34I private-test would-send preview without Discord API.")
+    parser.add_argument("--rag-evidence-private-test-send-preflight", action="store_true", help="Print Phase 34J-0 private-test send preflight without Discord API.")
     parser.add_argument("--source", default="operation", help="RAG source for local retrieval reports.")
     parser.add_argument("--query", default="STOXL brand tone", help="RAG query preview for local retrieval reports.")
     parser.add_argument("--allow-llm-api-call", action="store_true", help="Allow Phase 32B to attempt one gated provider call when env gates pass.")
@@ -1125,6 +1129,33 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- ready_for_phase34i_private_test_would_send_preview: {output.get('ready_for_phase34i_private_test_would_send_preview')}")
         return 0
 
+    if args.rag_evidence_would_send_preview:
+        output = build_rag_evidence_would_send_preview()
+        if args.markdown:
+            print(render_rag_evidence_would_send_preview_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL RAG evidence would-send preview")
+            print(f"- would_send_preview_created: {output.get('would_send_preview_created')}")
+            print(f"- private_test_channel_only: {output.get('private_test_channel_only')}")
+            print(f"- discord_api_send_called: {output.get('discord_api_send_called')}")
+            print(f"- ready_for_actual_discord_send: {output.get('ready_for_actual_discord_send')}")
+        return 0
+
+    if args.rag_evidence_private_test_send_preflight:
+        output = build_rag_evidence_private_test_send_preflight()
+        if args.markdown:
+            print(render_rag_evidence_private_test_send_preflight_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL RAG evidence private-test send preflight")
+            print(f"- would_send_preview_available: {output.get('would_send_preview_available')}")
+            print(f"- ready_for_actual_private_test_send: {output.get('ready_for_actual_private_test_send')}")
+            print(f"- ready_for_phase34j1_manual_live_send: {output.get('ready_for_phase34j1_manual_live_send')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -1289,6 +1320,8 @@ def main(argv: list[str] | None = None) -> int:
         or args.rag_evidence_llm_dry_readiness
         or args.rag_evidence_llm_dry_call_report
         or args.rag_evidence_llm_dry_call_closeout
+        or args.rag_evidence_would_send_preview
+        or args.rag_evidence_private_test_send_preflight
         or args.allow_llm_api_call
         or args.allow_rag_evidence_llm_api_call
         or args.write_artifact

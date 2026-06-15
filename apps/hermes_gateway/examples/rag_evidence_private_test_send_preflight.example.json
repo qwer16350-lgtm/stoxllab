@@ -1,0 +1,27 @@
+{
+  "report_type": "rag_evidence_private_test_send_preflight",
+  "version": "phase34j0_send_preflight_no_discord_api",
+  "would_send_preview_available": true,
+  "manual_approval": {
+    "required": true,
+    "approved": false,
+    "approval_phrase_present": false,
+    "approval_phrase_exact_match": false,
+    "approval_phrase_value_logged": false
+  },
+  "manual_approval_required": true,
+  "private_test_channel_configured": true,
+  "private_test_channel_only": true,
+  "public_channel_send_allowed": false,
+  "team_channel_send_allowed": false,
+  "discord_send_messages_enabled": false,
+  "discord_private_test_reply_enabled": false,
+  "discord_api_send_allowed": false,
+  "discord_api_send_called": false,
+  "discord_message_sent": false,
+  "ready_for_actual_private_test_send": false,
+  "ready_for_phase34j1_manual_live_send": true,
+  "llm_api_called": false,
+  "embedding_api_called": false,
+  "external_execution": false
+}

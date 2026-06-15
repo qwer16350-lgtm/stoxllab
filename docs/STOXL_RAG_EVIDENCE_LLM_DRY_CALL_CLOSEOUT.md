@@ -44,4 +44,4 @@ The closeout also rejects secret-like values and raw Discord-like IDs.
 
 ## Next Phase
 
-When Phase 34H-2 passes, the next safe step is Phase 34I private-test would-send preview. That step should remain preview-only unless separately approved.
+When Phase 34H-2 passes, the next safe step is Phase 34I private-test would-send preview. Phase 34I remains preview-only. Phase 34J-0 then designs the private-test send preflight gate, still without Discord API send.

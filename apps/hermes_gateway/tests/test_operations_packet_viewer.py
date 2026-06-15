@@ -357,6 +357,37 @@ def test_rag_evidence_llm_dry_call_closeout_summary() -> None:
     assert_true(closeout["ready_for_phase34i_private_test_would_send_preview"] is True, "Phase 34I preview should be ready")
 
 
+def test_rag_evidence_would_send_preview_summary() -> None:
+    setup_artifacts()
+    preview = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")["rag_evidence_would_send_preview"]
+    assert_true(preview["available"] is True, "Would-send preview summary should be available")
+    assert_true(preview["would_send_preview_created"] is True, "Would-send preview should be created")
+    assert_true(preview["private_test_channel_only"] is True, "Private-test only should be true")
+    assert_true(preview["public_channel_send_allowed"] is False, "Public send should be false")
+    assert_true(preview["team_channel_send_allowed"] is False, "Team send should be false")
+    assert_true(preview["discord_api_send_allowed"] is False, "Discord API send allowed should be false")
+    assert_true(preview["discord_api_send_called"] is False, "Discord API send called should be false")
+    assert_true(preview["discord_message_sent"] is False, "Discord message sent should be false")
+    assert_true(preview["ready_for_actual_discord_send"] is False, "Actual Discord send should be false")
+    assert_true(preview["ready_for_phase34j_private_test_send_preflight"] is True, "Phase 34J preflight should be ready")
+
+
+def test_rag_evidence_private_test_send_preflight_summary() -> None:
+    setup_artifacts()
+    preflight = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")["rag_evidence_private_test_send_preflight"]
+    assert_true(preflight["available"] is True, "Preflight summary should be available")
+    assert_true(preflight["would_send_preview_available"] is True, "Would-send preview should be available")
+    assert_true(preflight["manual_approval_required"] is True, "Manual approval should be required")
+    assert_true(preflight["private_test_channel_only"] is True, "Private-test only should be true")
+    assert_true(preflight["public_channel_send_allowed"] is False, "Public send should be false")
+    assert_true(preflight["team_channel_send_allowed"] is False, "Team send should be false")
+    assert_true(preflight["discord_api_send_allowed"] is False, "Discord API send should be false")
+    assert_true(preflight["discord_api_send_called"] is False, "Discord API send called should be false")
+    assert_true(preflight["discord_message_sent"] is False, "Discord message sent should be false")
+    assert_true(preflight["ready_for_actual_private_test_send"] is False, "Actual private-test send should be false")
+    assert_true(preflight["ready_for_phase34j1_manual_live_send"] is True, "Phase 34J-1 should be ready")
+
+
 def main() -> int:
     tests = [
         test_recent_events_returned,
@@ -386,6 +417,8 @@ def main() -> int:
         test_rag_evidence_llm_dry_readiness_summary,
         test_rag_evidence_llm_dry_call_summary,
         test_rag_evidence_llm_dry_call_closeout_summary,
+        test_rag_evidence_would_send_preview_summary,
+        test_rag_evidence_private_test_send_preflight_summary,
     ]
     for test in tests:
         test()

@@ -1,0 +1,33 @@
+{
+  "report_type": "rag_evidence_would_send_preview",
+  "version": "phase34i_private_test_would_send_preview_no_discord_api",
+  "source_closeout_available": true,
+  "llm_response_packet_available": true,
+  "output_safety_allowed": true,
+  "private_test_channel_configured": true,
+  "private_test_channel_only": true,
+  "public_channel_send_allowed": false,
+  "team_channel_send_allowed": false,
+  "discord_api_send_allowed": false,
+  "discord_api_send_called": false,
+  "discord_message_sent": false,
+  "would_send_preview_created": true,
+  "would_send_channel_scope": "private_test_only",
+  "would_send_message": {
+    "review_only": true,
+    "content_preview": "[REVIEW ONLY / NOT SENT]\n\nReview-only internal draft: No external action has been taken.",
+    "content_char_count": 85,
+    "max_chars_enforced": true,
+    "citations": [
+      "knowledge/operation/stoxl_operation_tone_sample.md",
+      "knowledge/operation/stoxl_private_test_workflow_sample.md"
+    ],
+    "mention_spam_blocked_or_escaped": false,
+    "full_content_included": false
+  },
+  "ready_for_phase34j_private_test_send_preflight": true,
+  "ready_for_actual_discord_send": false,
+  "embedding_api_called": false,
+  "llm_api_called": false,
+  "external_execution": false
+}
