@@ -27,8 +27,17 @@ FORBIDDEN_TRUE_FIELDS = (
     "external_execution",
     "full_content_included",
     "approval_phrase_generated",
+    "discord_api_send_called",
+    "ready_for_discord_send",
+    "ready_for_actual_private_test_send",
+    "ready_for_phase37d_actual_private_test_send",
+    "ready_for_phase38_actual_private_test_send_path",
+    "actual_discord_api_send_called",
+    "actual_discord_message_sent",
     "api_key_value_logged",
     "token_value_logged",
+    "discord_token_value_logged",
+    "private_test_channel_id_value_logged",
     "raw_discord_ids_logged",
     "approval_phrase_value_logged",
 )
@@ -54,10 +63,24 @@ def build_forbidden_behavior_sentinel(overrides: dict[str, Any] | None = None) -
         "external_execution": False,
         "full_content_included": False,
         "approval_phrase_generated": False,
+        "discord_api_send_called": False,
+        "ready_for_discord_send": False,
+        "ready_for_actual_private_test_send": False,
+        "ready_for_phase37d_actual_private_test_send": False,
+        "ready_for_phase38_actual_private_test_send_path": False,
+        "actual_discord_api_send_called": False,
+        "actual_discord_message_sent": False,
+        "actual_message_sent_count": 0,
         "api_key_value_logged": False,
         "token_value_logged": False,
+        "discord_token_value_logged": False,
+        "private_test_channel_id_value_logged": False,
         "raw_discord_ids_logged": False,
         "approval_phrase_value_logged": False,
+        "post_llm_call_sentinel": False,
+        "total_phase36_llm_call_count": 1,
+        "total_phase36_discord_message_sent_count": 0,
+        "phase36_discord_message_sent": False,
         "public_team_blocked": True,
         "embedding_vector_disabled": True,
         "forbidden_behavior_sentinel_passed": True,
@@ -75,7 +98,18 @@ def build_forbidden_behavior_sentinel(overrides: dict[str, Any] | None = None) -
 
 
 def _sentinel_passed(report: dict[str, Any]) -> bool:
-    return not any(bool(report.get(key)) for key in FORBIDDEN_TRUE_FIELDS)
+    if any(bool(report.get(key)) for key in FORBIDDEN_TRUE_FIELDS):
+        return False
+    if bool(report.get("post_llm_call_sentinel")):
+        if int(report.get("total_phase36_llm_call_count", 0) or 0) != 1:
+            return False
+        if int(report.get("total_phase36_discord_message_sent_count", 0) or 0) != 0:
+            return False
+        if report.get("phase36_discord_message_sent"):
+            return False
+    if int(report.get("actual_message_sent_count", 0) or 0) != 0:
+        return False
+    return True
 
 
 def assert_forbidden_behavior_sentinel_safe(report: dict[str, Any]) -> None:
@@ -87,6 +121,15 @@ def assert_forbidden_behavior_sentinel_safe(report: dict[str, Any]) -> None:
     for key in FORBIDDEN_TRUE_FIELDS:
         if report.get(key):
             raise ValueError(f"Forbidden behavior enabled: {key}")
+    if bool(report.get("post_llm_call_sentinel")):
+        if int(report.get("total_phase36_llm_call_count", 0) or 0) != 1:
+            raise ValueError("Post-LLM sentinel requires Phase 36 LLM call count exactly 1.")
+        if int(report.get("total_phase36_discord_message_sent_count", 0) or 0) != 0:
+            raise ValueError("Post-LLM sentinel requires Phase 36 Discord message count 0.")
+        if report.get("phase36_discord_message_sent"):
+            raise ValueError("Post-LLM sentinel requires Phase 36 Discord message sent false.")
+    if int(report.get("actual_message_sent_count", 0) or 0) != 0:
+        raise ValueError("Forbidden behavior sentinel requires actual message sent count 0.")
 
 
 def render_forbidden_behavior_sentinel_markdown(report: dict[str, Any]) -> str:

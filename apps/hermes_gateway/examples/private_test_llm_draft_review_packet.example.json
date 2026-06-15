@@ -1,0 +1,29 @@
+{
+  "report_type": "private_test_llm_draft_review_packet",
+  "version": "phase37a_private_test_llm_draft_review_packet_no_send",
+  "review_packet_available": true,
+  "report_only": true,
+  "source_phase36f_no_send_final_lock_passed": true,
+  "phase36_llm_call_count_locked": 1,
+  "phase36_discord_send_count_locked": 0,
+  "agent": "kasumi",
+  "allowed_sources": [
+    "operation"
+  ],
+  "evidence_citations": [
+    "knowledge/operation/stoxl_operation_tone_sample.md"
+  ],
+  "draft_review_packet_created": true,
+  "draft_review_only": true,
+  "response_preview_only": true,
+  "full_content_included": false,
+  "human_review_required": true,
+  "ready_for_private_test_send_preflight_preview": true,
+  "new_llm_api_call_attempted": false,
+  "new_llm_api_called": false,
+  "discord_api_send_called": false,
+  "discord_message_sent": false,
+  "message_sent_count": 0,
+  "ready_for_discord_send": false,
+  "ready_for_unattended_auto_reply": false
+}

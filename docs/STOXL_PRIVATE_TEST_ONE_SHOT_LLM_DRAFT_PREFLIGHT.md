@@ -57,3 +57,13 @@ python apps\hermes_gateway\cli.py --private-test-one-shot-llm-draft-preflight --
 
 Phase 36B may create a mock draft packet and output safety rehearsal from this
 preflight. That follow-up remains no-API and no-send.
+
+## Phase 36C Follow-up
+
+Phase 36C may check actual LLM call prerequisites, including OpenRouter key
+presence as a boolean. It still does not attempt an LLM API call.
+
+## Phase 36D Follow-up
+
+Phase 36D may attempt one manually gated review-only LLM draft call for
+`kasumi` and `operation` only. Discord send remains disabled.

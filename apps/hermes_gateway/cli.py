@@ -94,6 +94,18 @@ from phase36_entry_gate import build_phase36_entry_gate, render_phase36_entry_ga
 from private_test_one_shot_llm_draft_preflight import build_private_test_one_shot_llm_draft_preflight, render_private_test_one_shot_llm_draft_preflight_markdown
 from private_test_one_shot_llm_draft_mock_packet import build_private_test_one_shot_llm_draft_mock_packet, render_private_test_one_shot_llm_draft_mock_packet_markdown
 from one_shot_llm_draft_output_safety_rehearsal import build_one_shot_llm_draft_output_safety_rehearsal, render_one_shot_llm_draft_output_safety_rehearsal_markdown
+from actual_one_shot_llm_draft_call_preflight import build_actual_one_shot_llm_draft_call_preflight, render_actual_one_shot_llm_draft_call_preflight_markdown
+from actual_one_shot_llm_draft_call import build_actual_one_shot_llm_draft_call, render_actual_one_shot_llm_draft_call_markdown
+from actual_one_shot_llm_draft_call_closeout import build_actual_one_shot_llm_draft_call_closeout, render_actual_one_shot_llm_draft_call_closeout_markdown
+from one_shot_llm_no_send_final_lock import build_one_shot_llm_no_send_final_lock, render_one_shot_llm_no_send_final_lock_markdown
+from post_llm_call_dashboard_lock import build_post_llm_call_dashboard_lock, render_post_llm_call_dashboard_lock_markdown
+from phase37_entry_gate import build_phase37_entry_gate, render_phase37_entry_gate_markdown
+from private_test_llm_draft_review_packet import build_private_test_llm_draft_review_packet, render_private_test_llm_draft_review_packet_markdown
+from private_test_discord_send_preflight_preview import build_private_test_discord_send_preflight_preview, render_private_test_discord_send_preflight_preview_markdown
+from private_test_send_approval_rehearsal import build_private_test_send_approval_rehearsal, render_private_test_send_approval_rehearsal_markdown
+from actual_private_test_send_manual_preflight import build_actual_private_test_send_manual_preflight, render_actual_private_test_send_manual_preflight_markdown
+from mock_private_test_send_rehearsal import build_mock_private_test_send_rehearsal, render_mock_private_test_send_rehearsal_markdown
+from private_test_send_no_send_lock import build_private_test_send_no_send_lock, render_private_test_send_no_send_lock_markdown
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight, render_rag_evidence_private_test_send_preflight_markdown
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope, render_rag_evidence_prompt_envelope_markdown
 from rag_evidence_review_packet import build_rag_evidence_review_packet, render_rag_evidence_review_packet_markdown
@@ -337,6 +349,18 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--private-test-one-shot-llm-draft-preflight", action="store_true", help="Print Phase 36A private-test one-shot LLM draft preflight without API calls.")
     parser.add_argument("--private-test-one-shot-llm-draft-mock-packet", action="store_true", help="Print Phase 36B one-shot LLM draft mock packet without API calls.")
     parser.add_argument("--one-shot-llm-draft-output-safety-rehearsal", action="store_true", help="Print Phase 36B one-shot LLM draft output safety rehearsal.")
+    parser.add_argument("--actual-one-shot-llm-draft-call-preflight", action="store_true", help="Print Phase 36C actual one-shot LLM draft call preflight without API calls.")
+    parser.add_argument("--actual-one-shot-llm-draft-call", action="store_true", help="Print/run Phase 36D manually gated one-shot LLM draft call report.")
+    parser.add_argument("--actual-one-shot-llm-draft-call-closeout", action="store_true", help="Print Phase 36E one-shot LLM draft call no-send closeout report.")
+    parser.add_argument("--one-shot-llm-no-send-final-lock", action="store_true", help="Print Phase 36F one-shot LLM no-send final lock.")
+    parser.add_argument("--post-llm-call-dashboard-lock", action="store_true", help="Print Phase 36G post-LLM-call dashboard lock.")
+    parser.add_argument("--phase37-entry-gate", action="store_true", help="Print Phase 37 entry gate report.")
+    parser.add_argument("--private-test-llm-draft-review-packet", action="store_true", help="Print Phase 37A private-test LLM draft review packet.")
+    parser.add_argument("--private-test-discord-send-preflight-preview", action="store_true", help="Print Phase 37B private-test Discord send preflight preview.")
+    parser.add_argument("--private-test-send-approval-rehearsal", action="store_true", help="Print Phase 37C private-test send approval rehearsal.")
+    parser.add_argument("--actual-private-test-send-manual-preflight", action="store_true", help="Print Phase 37D actual private-test send manual preflight.")
+    parser.add_argument("--mock-private-test-send-rehearsal", action="store_true", help="Print Phase 37E mock private-test send rehearsal.")
+    parser.add_argument("--private-test-send-no-send-lock", action="store_true", help="Print Phase 37F private-test send no-send lock.")
     parser.add_argument("--source", default="operation", help="RAG source for local retrieval reports.")
     parser.add_argument("--query", default="STOXL brand tone", help="RAG query preview for local retrieval reports.")
     parser.add_argument("--allow-llm-api-call", action="store_true", help="Allow Phase 32B to attempt one gated provider call when env gates pass.")
@@ -344,6 +368,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--allow-rag-evidence-private-test-discord-send", action="store_true", help="Allow Phase 34J-1 to send one private-test Discord message when env gates pass.")
     parser.add_argument("--allow-rag-evidence-private-test-e2e-live-reply", action="store_true", help="Allow Phase 34L-1 to run one private-test E2E live reply when env gates pass.")
     parser.add_argument("--allow-rag-evidence-private-test-e2e-send-retry", action="store_true", help="Allow Phase 34L-1E mock/injected no-LLM E2E send retry when gates pass.")
+    parser.add_argument("--allow-actual-one-shot-llm-draft-call", action="store_true", help="Allow Phase 36D to attempt one manually approved OpenRouter call when gates pass.")
     parser.add_argument("--write-artifact", action="store_true", help="Write supported local-only report artifacts.")
     parser.add_argument("--latest", action="store_true", help="Use latest local artifact for supported reports.")
     parser.add_argument("--markdown", action="store_true", help="Print supported reports as Markdown.")
@@ -1528,6 +1553,168 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- ready_for_phase36c_actual_llm_call_preflight: {output.get('ready_for_phase36c_actual_llm_call_preflight')}")
         return 0
 
+    if args.actual_one_shot_llm_draft_call_preflight:
+        output = build_actual_one_shot_llm_draft_call_preflight()
+        if args.markdown:
+            print(render_actual_one_shot_llm_draft_call_preflight_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL actual one-shot LLM draft call preflight")
+            print(f"- report_only: {output.get('report_only')}")
+            print(f"- candidate_agent: {output.get('candidate_agent')}")
+            print(f"- preflight_ready_for_manual_llm_call: {output.get('preflight_ready_for_manual_llm_call')}")
+            print(f"- ready_for_actual_llm_call: {output.get('ready_for_actual_llm_call')}")
+        return 0
+
+    if args.actual_one_shot_llm_draft_call:
+        output = build_actual_one_shot_llm_draft_call(
+            allow_actual_call=args.allow_actual_one_shot_llm_draft_call,
+        )
+        if args.markdown:
+            print(render_actual_one_shot_llm_draft_call_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL actual one-shot LLM draft call")
+            print(f"- ready: {output.get('ready')}")
+            print(f"- blocked: {output.get('blocked')}")
+            print(f"- llm_api_call_attempted: {output.get('llm_api_call_attempted')}")
+            print(f"- llm_api_call_count: {output.get('llm_api_call_count')}")
+            print(f"- discord_message_sent: {output.get('discord_message_sent')}")
+        return 0
+
+    if args.actual_one_shot_llm_draft_call_closeout:
+        output = build_actual_one_shot_llm_draft_call_closeout()
+        if args.markdown:
+            print(render_actual_one_shot_llm_draft_call_closeout_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL actual one-shot LLM draft call closeout")
+            print(f"- phase36e_closeout_passed: {output.get('phase36e_closeout_passed')}")
+            print(f"- llm_api_called_count: {output.get('llm_api_called_count')}")
+            print(f"- discord_message_sent: {output.get('discord_message_sent')}")
+            print(f"- ready_for_discord_send: {output.get('ready_for_discord_send')}")
+        return 0
+
+    if args.one_shot_llm_no_send_final_lock:
+        output = build_one_shot_llm_no_send_final_lock()
+        if args.markdown:
+            print(render_one_shot_llm_no_send_final_lock_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL one-shot LLM no-send final lock")
+            print(f"- llm_call_count_locked: {output.get('llm_call_count_locked')}")
+            print(f"- discord_send_count_locked: {output.get('discord_send_count_locked')}")
+            print(f"- phase36f_no_send_final_lock_passed: {output.get('phase36f_no_send_final_lock_passed')}")
+        return 0
+
+    if args.post_llm_call_dashboard_lock:
+        output = build_post_llm_call_dashboard_lock()
+        if args.markdown:
+            print(render_post_llm_call_dashboard_lock_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL post-LLM-call dashboard lock")
+            print(f"- total_phase36_llm_call_count: {output.get('total_phase36_llm_call_count')}")
+            print(f"- total_phase36_discord_message_sent_count: {output.get('total_phase36_discord_message_sent_count')}")
+            print(f"- ready_for_phase37_entry_gate: {output.get('ready_for_phase37_entry_gate')}")
+        return 0
+
+    if args.phase37_entry_gate:
+        output = build_phase37_entry_gate()
+        if args.markdown:
+            print(render_phase37_entry_gate_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 37 entry gate")
+            print(f"- phase37_not_started: {output.get('phase37_not_started')}")
+            print(f"- requires_explicit_user_approval: {output.get('requires_explicit_user_approval')}")
+            print(f"- ready_for_phase37_live_execution: {output.get('ready_for_phase37_live_execution')}")
+        return 0
+
+    if args.private_test_llm_draft_review_packet:
+        output = build_private_test_llm_draft_review_packet()
+        if args.markdown:
+            print(render_private_test_llm_draft_review_packet_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL private-test LLM draft review packet")
+            print(f"- draft_review_packet_created: {output.get('draft_review_packet_created')}")
+            print(f"- human_review_required: {output.get('human_review_required')}")
+            print(f"- ready_for_discord_send: {output.get('ready_for_discord_send')}")
+        return 0
+
+    if args.private_test_discord_send_preflight_preview:
+        output = build_private_test_discord_send_preflight_preview()
+        if args.markdown:
+            print(render_private_test_discord_send_preflight_preview_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL private-test Discord send preflight preview")
+            print(f"- private_test_scope_only: {output.get('private_test_scope_only')}")
+            print(f"- discord_api_send_called: {output.get('discord_api_send_called')}")
+            print(f"- ready_for_actual_private_test_send: {output.get('ready_for_actual_private_test_send')}")
+        return 0
+
+    if args.private_test_send_approval_rehearsal:
+        output = build_private_test_send_approval_rehearsal()
+        if args.markdown:
+            print(render_private_test_send_approval_rehearsal_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL private-test send approval rehearsal")
+            print(f"- approval_phrase_generated: {output.get('approval_phrase_generated')}")
+            print(f"- manual_approval_actualized: {output.get('manual_approval_actualized')}")
+            print(f"- ready_for_phase37d_actual_private_test_send: {output.get('ready_for_phase37d_actual_private_test_send')}")
+        return 0
+
+    if args.actual_private_test_send_manual_preflight:
+        output = build_actual_private_test_send_manual_preflight()
+        if args.markdown:
+            print(render_actual_private_test_send_manual_preflight_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL actual private-test send manual preflight")
+            print(f"- manual_approval_required: {output.get('manual_approval_required')}")
+            print(f"- discord_api_send_called: {output.get('discord_api_send_called')}")
+            print(f"- ready_for_actual_private_test_send: {output.get('ready_for_actual_private_test_send')}")
+        return 0
+
+    if args.mock_private_test_send_rehearsal:
+        output = build_mock_private_test_send_rehearsal()
+        if args.markdown:
+            print(render_mock_private_test_send_rehearsal_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL mock private-test send rehearsal")
+            print(f"- mock_send_rehearsal_count: {output.get('mock_send_rehearsal_count')}")
+            print(f"- actual_discord_api_send_called: {output.get('actual_discord_api_send_called')}")
+            print(f"- ready_for_actual_private_test_send: {output.get('ready_for_actual_private_test_send')}")
+        return 0
+
+    if args.private_test_send_no_send_lock:
+        output = build_private_test_send_no_send_lock()
+        if args.markdown:
+            print(render_private_test_send_no_send_lock_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL private-test send no-send lock")
+            print(f"- mock_send_rehearsal_count_locked: {output.get('mock_send_rehearsal_count_locked')}")
+            print(f"- actual_discord_send_count_locked: {output.get('actual_discord_send_count_locked')}")
+            print(f"- ready_for_phase38_actual_private_test_send_path: {output.get('ready_for_phase38_actual_private_test_send_path')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -1718,7 +1905,20 @@ def main(argv: list[str] | None = None) -> int:
         or args.private_test_one_shot_llm_draft_preflight
         or args.private_test_one_shot_llm_draft_mock_packet
         or args.one_shot_llm_draft_output_safety_rehearsal
+        or args.actual_one_shot_llm_draft_call_preflight
+        or args.actual_one_shot_llm_draft_call
+        or args.actual_one_shot_llm_draft_call_closeout
+        or args.one_shot_llm_no_send_final_lock
+        or args.post_llm_call_dashboard_lock
+        or args.phase37_entry_gate
+        or args.private_test_llm_draft_review_packet
+        or args.private_test_discord_send_preflight_preview
+        or args.private_test_send_approval_rehearsal
+        or args.actual_private_test_send_manual_preflight
+        or args.mock_private_test_send_rehearsal
+        or args.private_test_send_no_send_lock
         or args.allow_llm_api_call
+        or args.allow_actual_one_shot_llm_draft_call
         or args.allow_rag_evidence_llm_api_call
         or args.allow_rag_evidence_private_test_discord_send
         or args.allow_rag_evidence_private_test_e2e_live_reply

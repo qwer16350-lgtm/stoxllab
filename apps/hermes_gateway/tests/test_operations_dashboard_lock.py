@@ -50,6 +50,15 @@ def test_operations_dashboard_lock_safety_false() -> None:
     assert_true(report["ready_for_live_runtime"] is False, "No live readiness")
 
 
+def test_operations_dashboard_lock_phase36_post_call_state() -> None:
+    report = build_operations_dashboard_lock()
+    assert_true(report["phase36f_no_send_final_lock_passed"] is True, "36F passed")
+    assert_true(report["phase36g_post_llm_dashboard_lock_available"] is True, "36G available")
+    assert_true(report["phase36_total_llm_call_count"] == 1, "Phase 36 LLM count")
+    assert_true(report["phase36_total_discord_message_sent_count"] == 0, "Phase 36 Discord count")
+    assert_true(report["ready_for_phase37_entry_gate"] is True, "Ready for 37 gate")
+
+
 def test_operations_dashboard_lock_no_sensitive_values() -> None:
     text = json.dumps(build_operations_dashboard_lock(), ensure_ascii=False).lower()
     assert_true("sk-" not in text and "xoxb-" not in text and "token=" not in text, "No secrets")
@@ -66,6 +75,7 @@ def main() -> int:
         test_operations_dashboard_lock_success_fixture,
         test_operations_dashboard_lock_final_counts,
         test_operations_dashboard_lock_safety_false,
+        test_operations_dashboard_lock_phase36_post_call_state,
         test_operations_dashboard_lock_no_sensitive_values,
         test_operations_dashboard_lock_markdown,
     ]

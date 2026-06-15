@@ -13,6 +13,8 @@ from agent_review_packet import build_agent_review_packet
 from forbidden_behavior_sentinel import build_forbidden_behavior_sentinel
 from local_knowledge_ingestion_preview import build_local_knowledge_ingestion_preview
 from no_live_rehearsal_packet import build_no_live_rehearsal_packet
+from one_shot_llm_no_send_final_lock import build_one_shot_llm_no_send_final_lock
+from post_llm_call_dashboard_lock import build_post_llm_call_dashboard_lock
 from phase35a_post_mvp_safety_audit import build_phase35a_post_mvp_safety_audit
 from rag_evidence_private_test_phase34_final_lock import build_rag_evidence_private_test_phase34_final_lock
 
@@ -32,6 +34,8 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
     review = build_agent_review_packet()
     rehearsal = build_no_live_rehearsal_packet()
     sentinel = build_forbidden_behavior_sentinel()
+    phase36_final_lock = build_one_shot_llm_no_send_final_lock()
+    phase36_dashboard = build_post_llm_call_dashboard_lock(phase36_final_lock)
     counts = audit.get("final_e2e_counts", {})
     report = {
         "report_type": "operations_dashboard_lock",
@@ -54,6 +58,11 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
         "embedding_vector_disabled": bool(sentinel.get("embedding_vector_disabled")),
         "external_execution": False,
         "ready_for_phase36_entry_gate": True,
+        "phase36f_no_send_final_lock_passed": bool(phase36_final_lock.get("phase36f_no_send_final_lock_passed")),
+        "phase36g_post_llm_dashboard_lock_available": bool(phase36_dashboard.get("dashboard_lock_available")),
+        "phase36_total_llm_call_count": int(phase36_dashboard.get("total_phase36_llm_call_count", 0) or 0),
+        "phase36_total_discord_message_sent_count": int(phase36_dashboard.get("total_phase36_discord_message_sent_count", 0) or 0),
+        "ready_for_phase37_entry_gate": bool(phase36_dashboard.get("ready_for_phase37_entry_gate")),
         "ready_for_live_runtime": False,
         "ready_for_llm_call": False,
         "ready_for_discord_send": False,

@@ -79,6 +79,29 @@ G. No-live operator rehearsal and safety lock
 - Negative fixtures must block secret values, approval phrases, raw Discord IDs,
   public/team send instructions, unattended reply instructions, and full content.
 
+## Phase 36C Safe Preflight
+
+- Actual one-shot LLM draft call preflight only.
+- OpenRouter key presence is reported as a boolean only.
+- No LLM API call or attempt.
+- No Discord send.
+- No approval phrase generation or manual approval activation.
+- `ready_for_actual_llm_call=false` remains locked.
+
+## Phase 36F-G Safe Lock
+
+- Phase 36 LLM draft call count is locked to `1`.
+- Phase 36 Discord send/message count is locked to `0`.
+- Dashboard and forbidden behavior sentinel remain report-only.
+- Phase 37 entry gate is available, but Phase 37 live/send execution is not started.
+
+## Phase 37A-C Safe Preview
+
+- Private-test LLM draft review packet only.
+- Private-test Discord send preflight preview only.
+- Private-test send approval rehearsal only.
+- No new LLM call, Discord send, approval phrase generation, embedding, or external execution.
+
 ## Hold
 
 - Embedding/vector DB.

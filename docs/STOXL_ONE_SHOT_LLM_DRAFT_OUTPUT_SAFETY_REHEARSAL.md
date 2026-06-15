@@ -31,6 +31,17 @@ The rehearsal verifies that the following cases block:
 be designed. It does not mean actual LLM calls or Discord sends are allowed in
 Phase 36B.
 
+## Phase 36C Follow-up
+
+Phase 36C checks this rehearsal result before any future actual LLM call phase.
+The Phase 36C report still keeps `ready_for_actual_llm_call=false`.
+
+## Phase 36D Follow-up
+
+Phase 36D can run the actual one-shot LLM draft call only after explicit manual
+approval and the CLI allow flag. The output safety gate is checked again on the
+provider response, and Discord send remains false.
+
 ## CLI
 
 ```powershell

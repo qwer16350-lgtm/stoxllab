@@ -284,3 +284,37 @@ Phase 36B adds a mock one-shot LLM draft packet and output safety rehearsal for
 `kasumi`. It performs no OpenRouter/LLM API call or attempt, no Discord send,
 no approval phrase generation, no manual approval activation, no embedding or
 vector creation, and no external execution.
+
+Phase 36C adds the actual one-shot LLM draft call preflight. It checks
+OpenRouter key presence as a boolean and confirms manual approval is still not
+actualized. It performs no OpenRouter/LLM API call or attempt and sends no
+Discord message.
+
+Phase 36D adds the manually gated actual one-shot LLM draft call path. The
+default report is blocked and performs no LLM API attempt. The actual path is
+limited to `kasumi`, source `operation`, one OpenRouter call, and review-only
+output safety. It never sends Discord messages, enables public/team replies,
+creates embeddings/vector indexes, or executes external actions.
+
+Phase 36E closes out the observed Phase 36D one-shot LLM draft call. It is
+report-only and locks the result as one LLM call, one review-only response
+packet, output safety allowed, and zero Discord sends. It performs no additional
+LLM attempt, no Discord runtime, no embeddings, and no external execution.
+
+Phase 36F-G adds the no-send final lock and post-call dashboard/sentinel update.
+Phase 36 is locked as one LLM call and zero Discord sends. Phase 37 entry gate
+is available as report-only classification, but Phase 37 is not started and
+live/send execution remains blocked without explicit approval.
+
+Phase 37A-C adds private-test review, Discord send preflight preview, and send
+approval rehearsal reports. These are all report-only: no new LLM call, no
+Discord runtime/send, no approval phrase generation, no embeddings, and no
+external execution.
+
+Phase 37D-F adds the actual private-test send manual preflight, mock send
+rehearsal, and no-send lock. The bundle remains report-only: OpenRouter/LLM API
+call attempt is false, Discord live runtime execution is false, Discord API send
+is false, Discord message sent is false, approval phrase generation is false,
+manual approval actualization is false, embeddings/vector creation is false, and
+external execution is false. Phase 38 actual private-test send path is not
+started and remains blocked until a separate explicit user approval request.

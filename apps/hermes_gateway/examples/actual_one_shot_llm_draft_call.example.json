@@ -1,0 +1,46 @@
+{
+  "report_type": "actual_one_shot_llm_draft_call",
+  "version": "phase36d_actual_one_shot_llm_draft_call_no_discord_send",
+  "actual_call_available": true,
+  "manual_approval_required": true,
+  "manual_approval": {
+    "required": true,
+    "approved": false,
+    "approval_flag_true": false,
+    "approval_phrase_present": false,
+    "approval_phrase_exact_match": false,
+    "approval_phrase_value_logged": false
+  },
+  "allow_flag_present": false,
+  "candidate_agent": "kasumi",
+  "candidate_agent_allowed": true,
+  "allowed_sources": [
+    "operation"
+  ],
+  "evidence_citations": [
+    "knowledge/operation/stoxl_operation_tone_sample.md"
+  ],
+  "openrouter_api_key_present": false,
+  "openrouter_api_key_value_logged": false,
+  "provider": "openrouter",
+  "model": "openai/gpt-5.4-mini",
+  "ready": false,
+  "blocked": true,
+  "blocked_reasons": [
+    "manual_approval_not_approved",
+    "allow_flag_missing",
+    "openrouter_api_key_missing"
+  ],
+  "llm_api_call_attempted": false,
+  "llm_api_called": false,
+  "llm_api_call_count": 0,
+  "llm_response_packet_created": false,
+  "output_safety_checked": false,
+  "output_safety_allowed": false,
+  "discord_api_send_called": false,
+  "discord_message_sent": false,
+  "message_sent_count": 0,
+  "ready_for_discord_send": false,
+  "ready_for_phase36e_closeout": false,
+  "ready_for_unattended_auto_reply": false
+}

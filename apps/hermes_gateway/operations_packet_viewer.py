@@ -56,6 +56,18 @@ from phase36_entry_gate import build_phase36_entry_gate
 from private_test_one_shot_llm_draft_preflight import build_private_test_one_shot_llm_draft_preflight
 from private_test_one_shot_llm_draft_mock_packet import build_private_test_one_shot_llm_draft_mock_packet
 from one_shot_llm_draft_output_safety_rehearsal import build_one_shot_llm_draft_output_safety_rehearsal
+from actual_one_shot_llm_draft_call_preflight import build_actual_one_shot_llm_draft_call_preflight
+from actual_one_shot_llm_draft_call import build_actual_one_shot_llm_draft_call
+from actual_one_shot_llm_draft_call_closeout import build_actual_one_shot_llm_draft_call_closeout
+from one_shot_llm_no_send_final_lock import build_one_shot_llm_no_send_final_lock
+from post_llm_call_dashboard_lock import build_post_llm_call_dashboard_lock
+from phase37_entry_gate import build_phase37_entry_gate
+from private_test_llm_draft_review_packet import build_private_test_llm_draft_review_packet
+from private_test_discord_send_preflight_preview import build_private_test_discord_send_preflight_preview
+from private_test_send_approval_rehearsal import build_private_test_send_approval_rehearsal
+from actual_private_test_send_manual_preflight import build_actual_private_test_send_manual_preflight
+from mock_private_test_send_rehearsal import build_mock_private_test_send_rehearsal
+from private_test_send_no_send_lock import build_private_test_send_no_send_lock
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope
 from rag_evidence_review_packet import build_rag_evidence_review_packet
@@ -450,6 +462,18 @@ def build_operations_packet_viewer_report(
     phase36a_preflight = build_private_test_one_shot_llm_draft_preflight()
     phase36b_mock = build_private_test_one_shot_llm_draft_mock_packet()
     phase36b_safety = build_one_shot_llm_draft_output_safety_rehearsal(phase36b_mock)
+    phase36c_preflight = build_actual_one_shot_llm_draft_call_preflight()
+    phase36d_call = build_actual_one_shot_llm_draft_call()
+    phase36e_closeout = build_actual_one_shot_llm_draft_call_closeout()
+    phase36f_final_lock = build_one_shot_llm_no_send_final_lock(phase36e_closeout)
+    phase36g_dashboard = build_post_llm_call_dashboard_lock(phase36f_final_lock)
+    phase37_gate = build_phase37_entry_gate(phase36f_final_lock)
+    phase37a_review = build_private_test_llm_draft_review_packet(phase36f_final_lock)
+    phase37b_preflight = build_private_test_discord_send_preflight_preview(review_packet=phase37a_review)
+    phase37c_rehearsal = build_private_test_send_approval_rehearsal(phase37a_review, phase37b_preflight)
+    phase37d_preflight = build_actual_private_test_send_manual_preflight()
+    phase37e_rehearsal = build_mock_private_test_send_rehearsal(phase37d_preflight)
+    phase37f_lock = build_private_test_send_no_send_lock(phase37d_preflight, phase37e_rehearsal)
     report = {
         "report_type": "operations_packet_viewer",
         "version": VERSION,
@@ -961,6 +985,134 @@ def build_operations_packet_viewer_report(
             "ready_for_actual_llm_call": bool(phase36b_safety.get("ready_for_actual_llm_call")),
             "ready_for_discord_send": bool(phase36b_safety.get("ready_for_discord_send")),
             "ready_for_unattended_auto_reply": bool(phase36b_safety.get("ready_for_unattended_auto_reply")),
+        },
+        "phase36c_actual_one_shot_llm_draft_call_preflight": {
+            "available": True,
+            "report_only": bool(phase36c_preflight.get("report_only")),
+            "candidate_agent": phase36c_preflight.get("candidate_agent", ""),
+            "openrouter_api_key_present": bool(phase36c_preflight.get("openrouter_api_key_present")),
+            "manual_approval_required": bool(phase36c_preflight.get("manual_approval_required")),
+            "manual_approval_actualized": bool(phase36c_preflight.get("manual_approval_actualized")),
+            "preflight_ready_for_manual_llm_call": bool(phase36c_preflight.get("preflight_ready_for_manual_llm_call")),
+            "ready_for_actual_llm_call": bool(phase36c_preflight.get("ready_for_actual_llm_call")),
+            "ready_for_discord_send": bool(phase36c_preflight.get("ready_for_discord_send")),
+            "llm_called": bool(phase36c_preflight.get("llm_called")),
+            "llm_api_call_attempted": bool(phase36c_preflight.get("llm_api_call_attempted")),
+            "discord_message_sent": bool(phase36c_preflight.get("discord_message_sent")),
+            "ready_for_unattended_auto_reply": bool(phase36c_preflight.get("ready_for_unattended_auto_reply")),
+        },
+        "phase36d_actual_one_shot_llm_draft_call": {
+            "available": True,
+            "manual_approval_required": bool(phase36d_call.get("manual_approval_required")),
+            "manual_approval_approved": bool(phase36d_call.get("manual_approval", {}).get("approved")),
+            "allow_flag_present": bool(phase36d_call.get("allow_flag_present")),
+            "candidate_agent": phase36d_call.get("candidate_agent", ""),
+            "candidate_agent_allowed": bool(phase36d_call.get("candidate_agent_allowed")),
+            "allowed_sources": list(phase36d_call.get("allowed_sources", [])),
+            "openrouter_api_key_present": bool(phase36d_call.get("openrouter_api_key_present")),
+            "ready": bool(phase36d_call.get("ready")),
+            "blocked": bool(phase36d_call.get("blocked")),
+            "llm_api_call_attempted": bool(phase36d_call.get("llm_api_call_attempted")),
+            "llm_api_call_count": int(phase36d_call.get("llm_api_call_count", 0) or 0),
+            "llm_response_packet_created": bool(phase36d_call.get("llm_response_packet_created")),
+            "output_safety_checked": bool(phase36d_call.get("output_safety_checked")),
+            "output_safety_allowed": bool(phase36d_call.get("output_safety_allowed")),
+            "discord_message_sent": bool(phase36d_call.get("discord_message_sent")),
+            "ready_for_discord_send": bool(phase36d_call.get("ready_for_discord_send")),
+            "ready_for_phase36e_closeout": bool(phase36d_call.get("ready_for_phase36e_closeout")),
+            "ready_for_unattended_auto_reply": bool(phase36d_call.get("ready_for_unattended_auto_reply")),
+        },
+        "phase36e_actual_one_shot_llm_draft_call_closeout": {
+            "available": True,
+            "report_only": bool(phase36e_closeout.get("report_only")),
+            "phase36d_actual_llm_draft_call_complete": bool(phase36e_closeout.get("phase36d_actual_llm_draft_call_complete")),
+            "llm_call_count": int(phase36e_closeout.get("llm_api_called_count", 0) or 0),
+            "llm_response_packet_created": bool(phase36e_closeout.get("llm_response_packet_created")),
+            "output_safety_allowed": bool(phase36e_closeout.get("output_safety_allowed")),
+            "discord_message_sent": bool(phase36e_closeout.get("discord_message_sent")),
+            "message_sent_count": int(phase36e_closeout.get("message_sent_count", 0) or 0),
+            "ready_for_discord_send": bool(phase36e_closeout.get("ready_for_discord_send")),
+            "phase36e_closeout_passed": bool(phase36e_closeout.get("phase36e_closeout_passed")),
+            "ready_for_phase36f_no_send_final_lock": bool(phase36e_closeout.get("ready_for_phase36f_no_send_final_lock")),
+            "ready_for_unattended_auto_reply": bool(phase36e_closeout.get("ready_for_unattended_auto_reply")),
+        },
+        "phase36f_one_shot_llm_no_send_final_lock": {
+            "available": True,
+            "report_only": bool(phase36f_final_lock.get("report_only")),
+            "llm_call_count_locked": int(phase36f_final_lock.get("llm_call_count_locked", 0) or 0),
+            "discord_send_count_locked": int(phase36f_final_lock.get("discord_send_count_locked", 0) or 0),
+            "phase36f_no_send_final_lock_passed": bool(phase36f_final_lock.get("phase36f_no_send_final_lock_passed")),
+            "ready_for_discord_send": bool(phase36f_final_lock.get("ready_for_discord_send")),
+            "ready_for_phase37_live_execution": bool(phase36f_final_lock.get("ready_for_phase37_live_execution")),
+        },
+        "phase36g_post_llm_call_dashboard_lock": {
+            "available": True,
+            "report_only": bool(phase36g_dashboard.get("report_only")),
+            "total_phase36_llm_call_count": int(phase36g_dashboard.get("total_phase36_llm_call_count", 0) or 0),
+            "total_phase36_discord_message_sent_count": int(phase36g_dashboard.get("total_phase36_discord_message_sent_count", 0) or 0),
+            "forbidden_behavior_sentinel_passed": bool(phase36g_dashboard.get("forbidden_behavior_sentinel_passed")),
+            "ready_for_phase37_entry_gate": bool(phase36g_dashboard.get("ready_for_phase37_entry_gate")),
+        },
+        "phase37_entry_gate": {
+            "available": True,
+            "phase37_not_started": bool(phase37_gate.get("phase37_not_started")),
+            "requires_explicit_user_approval": bool(phase37_gate.get("requires_explicit_user_approval")),
+            "ready_for_phase37_live_execution": bool(phase37_gate.get("ready_for_phase37_live_execution")),
+            "ready_for_discord_send": bool(phase37_gate.get("ready_for_discord_send")),
+        },
+        "phase37a_private_test_llm_draft_review_packet": {
+            "available": True,
+            "report_only": bool(phase37a_review.get("report_only")),
+            "draft_review_packet_created": bool(phase37a_review.get("draft_review_packet_created")),
+            "human_review_required": bool(phase37a_review.get("human_review_required")),
+            "new_llm_api_call_attempted": bool(phase37a_review.get("new_llm_api_call_attempted")),
+            "discord_message_sent": bool(phase37a_review.get("discord_message_sent")),
+            "ready_for_discord_send": bool(phase37a_review.get("ready_for_discord_send")),
+        },
+        "phase37b_private_test_discord_send_preflight_preview": {
+            "available": True,
+            "report_only": bool(phase37b_preflight.get("report_only")),
+            "private_test_scope_only": bool(phase37b_preflight.get("private_test_scope_only")),
+            "would_send_preview_created": bool(phase37b_preflight.get("would_send_preview_created")),
+            "discord_api_send_called": bool(phase37b_preflight.get("discord_api_send_called")),
+            "discord_message_sent": bool(phase37b_preflight.get("discord_message_sent")),
+            "ready_for_actual_private_test_send": bool(phase37b_preflight.get("ready_for_actual_private_test_send")),
+        },
+        "phase37c_private_test_send_approval_rehearsal": {
+            "available": True,
+            "report_only": bool(phase37c_rehearsal.get("report_only")),
+            "approval_phrase_generated": bool(phase37c_rehearsal.get("approval_phrase_generated")),
+            "manual_approval_actualized": bool(phase37c_rehearsal.get("manual_approval_actualized")),
+            "future_send_scope": phase37c_rehearsal.get("future_send_scope", ""),
+            "ready_for_phase37d_actual_private_test_send": bool(phase37c_rehearsal.get("ready_for_phase37d_actual_private_test_send")),
+            "ready_for_discord_send": bool(phase37c_rehearsal.get("ready_for_discord_send")),
+        },
+        "phase37d_actual_private_test_send_manual_preflight": {
+            "available": True,
+            "report_only": bool(phase37d_preflight.get("report_only")),
+            "private_test_scope_only": bool(phase37d_preflight.get("private_test_scope_only")),
+            "manual_approval_required": bool(phase37d_preflight.get("manual_approval_required")),
+            "manual_approval_actualized": bool(phase37d_preflight.get("manual_approval_actualized")),
+            "discord_api_send_called": bool(phase37d_preflight.get("discord_api_send_called")),
+            "discord_message_sent": bool(phase37d_preflight.get("discord_message_sent")),
+            "ready_for_actual_private_test_send": bool(phase37d_preflight.get("ready_for_actual_private_test_send")),
+        },
+        "phase37e_mock_private_test_send_rehearsal": {
+            "available": True,
+            "report_only": bool(phase37e_rehearsal.get("report_only")),
+            "mock_send_rehearsal_count": int(phase37e_rehearsal.get("mock_send_rehearsal_count", 0) or 0),
+            "actual_discord_api_send_called": bool(phase37e_rehearsal.get("actual_discord_api_send_called")),
+            "actual_discord_message_sent": bool(phase37e_rehearsal.get("actual_discord_message_sent")),
+            "ready_for_actual_private_test_send": bool(phase37e_rehearsal.get("ready_for_actual_private_test_send")),
+        },
+        "phase37f_private_test_send_no_send_lock": {
+            "available": True,
+            "report_only": bool(phase37f_lock.get("report_only")),
+            "mock_send_rehearsal_count_locked": int(phase37f_lock.get("mock_send_rehearsal_count_locked", 0) or 0),
+            "actual_discord_send_count_locked": int(phase37f_lock.get("actual_discord_send_count_locked", 0) or 0),
+            "phase37f_no_send_lock_passed": bool(phase37f_lock.get("phase37f_no_send_lock_passed")),
+            "phase38_not_started": bool(phase37f_lock.get("phase38_not_started")),
+            "ready_for_phase38_actual_private_test_send_path": bool(phase37f_lock.get("ready_for_phase38_actual_private_test_send_path")),
         },
         "daily_manifest_summary": load_daily_manifest(root=root, date=date),
         "filters": {

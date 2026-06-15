@@ -17,6 +17,14 @@ state without starting any runtime.
 - External execution: false
 - Ready for live runtime: false
 
+## Phase 36 Post-call State
+
+- Phase 36F no-send final lock passed: true
+- Phase 36G post-LLM dashboard lock available: true
+- Phase 36 total LLM call count: 1
+- Phase 36 total Discord message sent count: 0
+- Ready for Phase 37 entry gate: true
+
 ## CLI
 
 ```powershell

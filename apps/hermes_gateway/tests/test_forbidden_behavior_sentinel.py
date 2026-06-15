@@ -44,8 +44,21 @@ def test_forbidden_behavior_sentinel_flags_false() -> None:
 
 
 def test_forbidden_behavior_sentinel_negative_fixtures() -> None:
-    for key in ("public_channel_reply_allowed", "team_channel_reply_allowed", "public_channel_send_allowed", "team_channel_send_allowed", "unattended_auto_reply_allowed", "scheduler_auto_reply_allowed", "embedding_api_called", "vector_index_created", "external_execution", "full_content_included", "approval_phrase_generated", "api_key_value_logged"):
+    for key in ("public_channel_reply_allowed", "team_channel_reply_allowed", "public_channel_send_allowed", "team_channel_send_allowed", "unattended_auto_reply_allowed", "scheduler_auto_reply_allowed", "embedding_api_called", "vector_index_created", "external_execution", "full_content_included", "approval_phrase_generated", "discord_api_send_called", "ready_for_discord_send", "ready_for_actual_private_test_send", "ready_for_phase37d_actual_private_test_send", "ready_for_phase38_actual_private_test_send_path", "actual_discord_api_send_called", "actual_discord_message_sent", "api_key_value_logged", "token_value_logged", "discord_token_value_logged", "private_test_channel_id_value_logged", "raw_discord_ids_logged", "approval_phrase_value_logged"):
         assert_raises(lambda selected=key: build_forbidden_behavior_sentinel({selected: True}), f"{key} should fail")
+
+
+def test_forbidden_behavior_sentinel_actual_message_count_fixture() -> None:
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"actual_message_sent_count": 1}), "Actual message count should fail")
+
+
+def test_forbidden_behavior_sentinel_post_llm_call_fixtures() -> None:
+    ok = build_forbidden_behavior_sentinel({"post_llm_call_sentinel": True})
+    assert_true(ok["total_phase36_llm_call_count"] == 1, "Post LLM count")
+    assert_true(ok["total_phase36_discord_message_sent_count"] == 0, "Post Discord count")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"post_llm_call_sentinel": True, "total_phase36_llm_call_count": 2}), "LLM count >1 should fail")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"post_llm_call_sentinel": True, "total_phase36_discord_message_sent_count": 1}), "Discord count should fail")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"post_llm_call_sentinel": True, "phase36_discord_message_sent": True}), "Discord sent should fail")
 
 
 def test_forbidden_behavior_sentinel_no_sensitive_values() -> None:
@@ -64,6 +77,8 @@ def main() -> int:
         test_forbidden_behavior_sentinel_success_fixture,
         test_forbidden_behavior_sentinel_flags_false,
         test_forbidden_behavior_sentinel_negative_fixtures,
+        test_forbidden_behavior_sentinel_actual_message_count_fixture,
+        test_forbidden_behavior_sentinel_post_llm_call_fixtures,
         test_forbidden_behavior_sentinel_no_sensitive_values,
         test_forbidden_behavior_sentinel_markdown,
     ]

@@ -1,0 +1,19 @@
+{
+  "report_type": "post_llm_call_dashboard_lock",
+  "version": "phase36g_post_llm_call_dashboard_lock",
+  "dashboard_lock_available": true,
+  "report_only": true,
+  "phase36d_actual_llm_draft_call_complete": true,
+  "phase36e_closeout_passed": true,
+  "phase36f_no_send_final_lock_passed": true,
+  "new_llm_api_call_attempted": false,
+  "new_llm_api_called": false,
+  "total_phase36_llm_call_count": 1,
+  "total_phase36_discord_message_sent_count": 0,
+  "sent_channel_scope": "none",
+  "output_safety_allowed": true,
+  "ready_for_discord_send": false,
+  "ready_for_unattended_auto_reply": false,
+  "forbidden_behavior_sentinel_passed": true,
+  "ready_for_phase37_entry_gate": true
+}

@@ -1,0 +1,22 @@
+{
+  "report_type": "private_test_send_no_send_lock",
+  "version": "phase37f_private_test_send_no_send_lock",
+  "no_send_lock_available": true,
+  "report_only": true,
+  "source_phase37d_manual_preflight_available": true,
+  "source_phase37e_mock_rehearsal_available": true,
+  "mock_send_rehearsal_count_locked": 1,
+  "actual_discord_send_count_locked": 0,
+  "actual_discord_message_sent": false,
+  "actual_message_sent_count": 0,
+  "ready_for_actual_private_test_send": false,
+  "ready_for_phase38_actual_private_test_send_path": false,
+  "ready_for_discord_send": false,
+  "public_team_send_forbidden": true,
+  "unattended_auto_reply_allowed": false,
+  "embedding_api_called": false,
+  "external_execution": false,
+  "phase37f_no_send_lock_passed": true,
+  "phase38_not_started": true,
+  "requires_explicit_user_approval_for_phase38": true
+}

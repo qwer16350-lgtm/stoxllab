@@ -688,6 +688,146 @@ def test_phase36b_mock_and_safety_summary() -> None:
     assert_true(safety["ready_for_unattended_auto_reply"] is False, "No unattended")
 
 
+def test_phase36c_actual_llm_call_preflight_summary() -> None:
+    setup_artifacts()
+    preflight = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")["phase36c_actual_one_shot_llm_draft_call_preflight"]
+    assert_true(preflight["available"] is True, "Phase 36C preflight available")
+    assert_true(preflight["report_only"] is True, "Report only")
+    assert_true(preflight["candidate_agent"] == "kasumi", "Kasumi candidate")
+    assert_true(isinstance(preflight["openrouter_api_key_present"], bool), "Key presence boolean")
+    assert_true(preflight["manual_approval_required"] is True, "Manual approval required")
+    assert_true(preflight["manual_approval_actualized"] is False, "Manual approval not actualized")
+    assert_true(preflight["ready_for_actual_llm_call"] is False, "No actual LLM ready")
+    assert_true(preflight["ready_for_discord_send"] is False, "No Discord ready")
+    assert_true(preflight["llm_called"] is False, "No LLM")
+    assert_true(preflight["llm_api_call_attempted"] is False, "No LLM attempt")
+    assert_true(preflight["discord_message_sent"] is False, "No Discord message")
+    assert_true(preflight["ready_for_unattended_auto_reply"] is False, "No unattended")
+
+
+def test_phase36d_actual_llm_draft_call_summary() -> None:
+    setup_artifacts()
+    call = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")["phase36d_actual_one_shot_llm_draft_call"]
+    assert_true(call["available"] is True, "Phase 36D available")
+    assert_true(call["manual_approval_required"] is True, "Manual approval required")
+    assert_true(call["manual_approval_approved"] is False, "Manual approval not approved")
+    assert_true(call["allow_flag_present"] is False, "Allow flag absent")
+    assert_true(call["candidate_agent"] == "kasumi", "Kasumi candidate")
+    assert_true(call["candidate_agent_allowed"] is True, "Kasumi allowed")
+    assert_true(call["allowed_sources"] == ["operation"], "Operation only")
+    assert_true(call["ready"] is False, "Default not ready")
+    assert_true(call["blocked"] is True, "Default blocked")
+    assert_true(call["llm_api_call_attempted"] is False, "No LLM attempt")
+    assert_true(call["llm_api_call_count"] == 0, "No LLM count")
+    assert_true(call["llm_response_packet_created"] is False, "No packet")
+    assert_true(call["output_safety_checked"] is False, "No output safety until call")
+    assert_true(call["discord_message_sent"] is False, "No Discord")
+    assert_true(call["ready_for_discord_send"] is False, "Discord send false")
+    assert_true(call["ready_for_phase36e_closeout"] is False, "No closeout")
+    assert_true(call["ready_for_unattended_auto_reply"] is False, "No unattended")
+
+
+def test_phase36e_actual_llm_draft_call_closeout_summary() -> None:
+    setup_artifacts()
+    closeout = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")["phase36e_actual_one_shot_llm_draft_call_closeout"]
+    assert_true(closeout["available"] is True, "Phase 36E available")
+    assert_true(closeout["report_only"] is True, "Report only")
+    assert_true(closeout["phase36d_actual_llm_draft_call_complete"] is True, "36D complete")
+    assert_true(closeout["llm_call_count"] == 1, "LLM count one")
+    assert_true(closeout["llm_response_packet_created"] is True, "Packet created")
+    assert_true(closeout["output_safety_allowed"] is True, "Output allowed")
+    assert_true(closeout["discord_message_sent"] is False, "No Discord")
+    assert_true(closeout["message_sent_count"] == 0, "No message count")
+    assert_true(closeout["ready_for_discord_send"] is False, "Discord send false")
+    assert_true(closeout["phase36e_closeout_passed"] is True, "Closeout passed")
+    assert_true(closeout["ready_for_phase36f_no_send_final_lock"] is True, "Ready for 36F")
+    assert_true(closeout["ready_for_unattended_auto_reply"] is False, "No unattended")
+
+
+def test_phase36f_g_and_phase37_summaries() -> None:
+    setup_artifacts()
+    report = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")
+    final_lock = report["phase36f_one_shot_llm_no_send_final_lock"]
+    dashboard = report["phase36g_post_llm_call_dashboard_lock"]
+    gate = report["phase37_entry_gate"]
+    assert_true(final_lock["available"] is True, "36F available")
+    assert_true(final_lock["report_only"] is True, "36F report only")
+    assert_true(final_lock["llm_call_count_locked"] == 1, "36F LLM lock")
+    assert_true(final_lock["discord_send_count_locked"] == 0, "36F Discord lock")
+    assert_true(final_lock["phase36f_no_send_final_lock_passed"] is True, "36F passed")
+    assert_true(final_lock["ready_for_discord_send"] is False, "36F no Discord ready")
+    assert_true(final_lock["ready_for_phase37_live_execution"] is False, "36F no live")
+    assert_true(dashboard["available"] is True, "36G available")
+    assert_true(dashboard["report_only"] is True, "36G report only")
+    assert_true(dashboard["total_phase36_llm_call_count"] == 1, "36G LLM count")
+    assert_true(dashboard["total_phase36_discord_message_sent_count"] == 0, "36G Discord count")
+    assert_true(dashboard["forbidden_behavior_sentinel_passed"] is True, "36G sentinel")
+    assert_true(dashboard["ready_for_phase37_entry_gate"] is True, "36G ready for gate")
+    assert_true(gate["available"] is True, "37 available")
+    assert_true(gate["phase37_not_started"] is True, "37 not started")
+    assert_true(gate["requires_explicit_user_approval"] is True, "37 approval required")
+    assert_true(gate["ready_for_phase37_live_execution"] is False, "37 no live")
+    assert_true(gate["ready_for_discord_send"] is False, "37 no send")
+
+
+def test_phase37a_b_c_summaries() -> None:
+    setup_artifacts()
+    report = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")
+    review = report["phase37a_private_test_llm_draft_review_packet"]
+    preview = report["phase37b_private_test_discord_send_preflight_preview"]
+    rehearsal = report["phase37c_private_test_send_approval_rehearsal"]
+    assert_true(review["available"] is True, "37A available")
+    assert_true(review["report_only"] is True, "37A report only")
+    assert_true(review["draft_review_packet_created"] is True, "37A packet")
+    assert_true(review["human_review_required"] is True, "37A human review")
+    assert_true(review["new_llm_api_call_attempted"] is False, "37A no LLM")
+    assert_true(review["discord_message_sent"] is False, "37A no Discord")
+    assert_true(review["ready_for_discord_send"] is False, "37A no send ready")
+    assert_true(preview["available"] is True, "37B available")
+    assert_true(preview["report_only"] is True, "37B report only")
+    assert_true(preview["private_test_scope_only"] is True, "37B private")
+    assert_true(preview["would_send_preview_created"] is True, "37B preview")
+    assert_true(preview["discord_api_send_called"] is False, "37B no API send")
+    assert_true(preview["discord_message_sent"] is False, "37B no Discord")
+    assert_true(preview["ready_for_actual_private_test_send"] is False, "37B no actual send")
+    assert_true(rehearsal["available"] is True, "37C available")
+    assert_true(rehearsal["report_only"] is True, "37C report only")
+    assert_true(rehearsal["approval_phrase_generated"] is False, "37C no phrase")
+    assert_true(rehearsal["manual_approval_actualized"] is False, "37C no approval")
+    assert_true(rehearsal["future_send_scope"] == "private_test_only", "37C private")
+    assert_true(rehearsal["ready_for_phase37d_actual_private_test_send"] is False, "37C no 37D")
+    assert_true(rehearsal["ready_for_discord_send"] is False, "37C no send ready")
+
+
+def test_phase37d_e_f_summaries() -> None:
+    setup_artifacts()
+    report = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")
+    preflight = report["phase37d_actual_private_test_send_manual_preflight"]
+    rehearsal = report["phase37e_mock_private_test_send_rehearsal"]
+    lock = report["phase37f_private_test_send_no_send_lock"]
+    assert_true(preflight["available"] is True, "37D available")
+    assert_true(preflight["report_only"] is True, "37D report only")
+    assert_true(preflight["private_test_scope_only"] is True, "37D private")
+    assert_true(preflight["manual_approval_required"] is True, "37D manual approval")
+    assert_true(preflight["manual_approval_actualized"] is False, "37D no approval")
+    assert_true(preflight["discord_api_send_called"] is False, "37D no API send")
+    assert_true(preflight["discord_message_sent"] is False, "37D no message")
+    assert_true(preflight["ready_for_actual_private_test_send"] is False, "37D no actual send")
+    assert_true(rehearsal["available"] is True, "37E available")
+    assert_true(rehearsal["report_only"] is True, "37E report only")
+    assert_true(rehearsal["mock_send_rehearsal_count"] == 1, "37E mock count")
+    assert_true(rehearsal["actual_discord_api_send_called"] is False, "37E no API send")
+    assert_true(rehearsal["actual_discord_message_sent"] is False, "37E no message")
+    assert_true(rehearsal["ready_for_actual_private_test_send"] is False, "37E no actual send")
+    assert_true(lock["available"] is True, "37F available")
+    assert_true(lock["report_only"] is True, "37F report only")
+    assert_true(lock["mock_send_rehearsal_count_locked"] == 1, "37F mock count locked")
+    assert_true(lock["actual_discord_send_count_locked"] == 0, "37F actual send count locked")
+    assert_true(lock["phase37f_no_send_lock_passed"] is True, "37F passed")
+    assert_true(lock["phase38_not_started"] is True, "37F phase 38 not started")
+    assert_true(lock["ready_for_phase38_actual_private_test_send_path"] is False, "37F no phase 38 path")
+
+
 def main() -> int:
     tests = [
         test_recent_events_returned,
@@ -734,6 +874,12 @@ def main() -> int:
         test_phase35e_g_and_phase36_summaries,
         test_phase36a_preflight_summary,
         test_phase36b_mock_and_safety_summary,
+        test_phase36c_actual_llm_call_preflight_summary,
+        test_phase36d_actual_llm_draft_call_summary,
+        test_phase36e_actual_llm_draft_call_closeout_summary,
+        test_phase36f_g_and_phase37_summaries,
+        test_phase37a_b_c_summaries,
+        test_phase37d_e_f_summaries,
     ]
     for test in tests:
         test()

@@ -1,0 +1,43 @@
+{
+  "report_type": "actual_one_shot_llm_draft_call_closeout",
+  "version": "phase36e_actual_one_shot_llm_draft_call_closeout_no_send_final_lock",
+  "closeout_available": true,
+  "report_only": true,
+  "source_phase36d_actual_call_observed": true,
+  "agent": "kasumi",
+  "allowed_sources": [
+    "operation"
+  ],
+  "evidence_citations": [
+    "knowledge/operation/stoxl_operation_tone_sample.md"
+  ],
+  "provider": "openrouter",
+  "model": "openai/gpt-5.4-mini",
+  "usage": {
+    "prompt_tokens": 143,
+    "completion_tokens": 242,
+    "total_tokens": 385,
+    "cost": 0.00119625
+  },
+  "llm_api_call_attempted_count": 1,
+  "llm_api_called_count": 1,
+  "llm_response_packet_created": true,
+  "llm_response_review_only": true,
+  "output_safety_checked": true,
+  "output_safety_allowed": true,
+  "output_safety_blocked": false,
+  "discord_api_send_called": false,
+  "discord_message_sent": false,
+  "message_sent_count": 0,
+  "ready_for_discord_send": false,
+  "embedding_api_called": false,
+  "vector_index_created": false,
+  "external_execution": false,
+  "full_content_included": false,
+  "response_preview_only": true,
+  "phase36d_actual_llm_draft_call_complete": true,
+  "phase36e_closeout_passed": true,
+  "ready_for_phase36f_no_send_final_lock": true,
+  "ready_for_discord_send_phase": false,
+  "ready_for_unattended_auto_reply": false
+}

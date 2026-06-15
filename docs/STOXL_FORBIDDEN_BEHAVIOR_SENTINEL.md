@@ -37,3 +37,14 @@ The Phase 36B output safety rehearsal uses the same forbidden behavior lock.
 Mock output is blocked if it includes secret-like values, raw Discord-like IDs,
 approval phrases, public/team send instructions, unattended reply instructions,
 or full content.
+
+## Phase 36G Post-LLM Use
+
+After the one-shot LLM draft call, the sentinel also checks the locked post-call
+state:
+
+- Phase 36 LLM call count must equal `1`
+- Phase 36 Discord message count must equal `0`
+- Phase 36 Discord message sent must remain `false`
+- Secret/API key/token/raw Discord ID/approval phrase values must not be logged
+- Full content must not be included

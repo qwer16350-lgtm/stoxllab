@@ -35,3 +35,14 @@ content.
 python apps\hermes_gateway\cli.py --private-test-one-shot-llm-draft-mock-packet --json
 python apps\hermes_gateway\cli.py --private-test-one-shot-llm-draft-mock-packet --markdown
 ```
+
+## Phase 36C Follow-up
+
+The actual LLM draft call preflight consumes this mock packet as a dry
+prerequisite. It still does not call an LLM provider or send Discord messages.
+
+## Phase 36D Follow-up
+
+The manually gated one-shot draft call path may use the same `kasumi` and
+`operation` scope after explicit approval. Passing output still does not allow
+Discord send.

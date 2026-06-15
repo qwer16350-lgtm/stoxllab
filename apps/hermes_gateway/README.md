@@ -65,6 +65,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - Build Phase 35A post-MVP safety audit reports and operator runbooks without live execution.
 - Build Phase 35B local knowledge ingestion, evidence quality, and agent routing dry previews without live execution.
 - Build Phase 35C agent evidence pack composer and agent prompt preview reports without live execution.
+- Build Phase 37D-F actual private-test send manual preflight, mock send rehearsal, and no-send lock reports without starting Phase 38 or sending Discord messages.
 
 ## Explicit Non-Goals
 
@@ -513,6 +514,39 @@ external execution.
 Phase 36B adds a mock one-shot LLM draft packet and output safety rehearsal for
 the Phase 36A candidate. It still performs no provider API call, no Discord
 send, no approval phrase generation, no embedding, and no external execution.
+
+Phase 36C adds the actual one-shot LLM draft call preflight. It checks dry
+prerequisites, manual gate names, OpenRouter key presence as a boolean, and
+candidate safety, but it still performs no LLM API attempt and no Discord send.
+
+Phase 36D adds the manually gated one-shot LLM draft call path for `kasumi`
+using the `operation` source only. The default CLI remains blocked with no LLM
+API attempt. With the explicit allow flag, exact manual approval gate, and an
+OpenRouter key alias present, the path can attempt at most one provider call and
+create a review-only response packet. Discord send, embeddings, external
+execution, public/team replies, and unattended auto reply remain disabled.
+
+Phase 36E adds the no-send closeout/final-lock report for the observed Phase
+36D one-shot LLM draft. It records exactly one LLM call, review-only output
+safety success, and zero Discord messages. It performs no additional LLM call,
+no Discord runtime, no Discord send, no embeddings, and no external execution.
+
+Phase 36F-G locks the one-shot LLM draft as a no-send state and adds a
+post-call dashboard/sentinel update. The locked state is one Phase 36 LLM call
+and zero Phase 36 Discord messages. Phase 37 entry gate is report-only, not
+started, and keeps live/send execution blocked without explicit approval.
+
+Phase 37A-C adds private-test review and send-preflight previews only. The LLM
+draft is packaged for human review, a private-test Discord send preflight
+preview is produced, and future approval gate names are rehearsed. No new LLM
+call, Discord runtime, Discord send, approval phrase generation, embeddings, or
+external execution is performed.
+
+Phase 37D-F extends that path with an actual private-test send manual preflight,
+a mock send rehearsal, and a no-send lock. The lock records one mock rehearsal
+and zero actual Discord sends, keeps `ready_for_phase38_actual_private_test_send_path`
+false, and requires a separate explicit user approval before any Phase 38 actual
+private-test send path can be considered.
 
 If the registry file is missing, generate it from the repo root:
 

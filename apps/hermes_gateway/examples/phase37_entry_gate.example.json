@@ -1,0 +1,26 @@
+{
+  "report_type": "phase37_entry_gate",
+  "version": "phase37_entry_gate_report_only_after_phase36_no_send_lock",
+  "phase37_entry_gate_available": true,
+  "report_only": true,
+  "phase37_not_started": true,
+  "requires_explicit_user_approval": true,
+  "source_phase36f_no_send_final_lock_passed": true,
+  "allowed_next_candidates": [
+    "private_test_llm_draft_review_packet_no_send",
+    "private_test_discord_send_preflight_no_send"
+  ],
+  "hold_candidates": [
+    "actual_private_test_discord_send",
+    "multi_turn_private_test_runtime"
+  ],
+  "forbidden_candidates": [
+    "public_team_send",
+    "public_team_auto_reply",
+    "unattended_auto_reply",
+    "external_execution"
+  ],
+  "ready_for_phase37_live_execution": false,
+  "ready_for_discord_send": false,
+  "ready_for_unattended_auto_reply": false
+}
