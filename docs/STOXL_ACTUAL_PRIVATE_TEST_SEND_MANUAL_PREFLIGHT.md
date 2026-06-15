@@ -18,3 +18,6 @@ Safety state:
 - Unattended auto reply: false
 
 The report may show only token/channel ID presence booleans. It must not print token values, private channel IDs, raw Discord IDs, API keys, approval phrase values, or full message content.
+
+Phase 38A consumes this no-send chain only as a source for a report-only send
+contract. It does not start an actual send path.

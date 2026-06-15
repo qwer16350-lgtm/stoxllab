@@ -53,3 +53,10 @@ Phase 37D-F may create manual preflight, mock send rehearsal, and no-send lock
 reports only. It keeps Phase 38 actual private-test send path not started,
 locks actual Discord send count to zero, and requires a separate explicit user
 approval before any real private-test send path is considered.
+
+## Phase 38A-E
+
+Phase 38A-E creates the final no-send preparation layer: send contract, payload
+freeze, rollback gate, operator checklist, and live send entry gate. It keeps
+Phase 39 not started and requires a later explicit approval before any actual
+private-test send.

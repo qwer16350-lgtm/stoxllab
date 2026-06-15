@@ -1,0 +1,23 @@
+{
+  "report_type": "private_test_live_send_entry_gate",
+  "version": "phase38e_private_test_live_send_entry_gate_report_only",
+  "live_send_entry_gate_available": true,
+  "report_only": true,
+  "source_phase38a_contract_available": true,
+  "source_phase38b_payload_frozen": true,
+  "source_phase38c_rollback_gate_available": true,
+  "source_phase38d_operator_checklist_available": true,
+  "actual_private_test_send_not_started": true,
+  "phase39_not_started": true,
+  "requires_explicit_user_approval": true,
+  "future_send_scope": "private_test_only",
+  "public_team_send_forbidden": true,
+  "unattended_auto_reply_allowed": false,
+  "ready_for_actual_private_test_send": false,
+  "ready_for_discord_send": false,
+  "ready_for_phase39_live_execution": false,
+  "ready_for_unattended_auto_reply": false,
+  "discord_api_send_called": false,
+  "discord_message_sent": false,
+  "message_sent_count": 0
+}

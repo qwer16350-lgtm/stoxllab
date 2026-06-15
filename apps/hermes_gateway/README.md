@@ -66,6 +66,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - Build Phase 35B local knowledge ingestion, evidence quality, and agent routing dry previews without live execution.
 - Build Phase 35C agent evidence pack composer and agent prompt preview reports without live execution.
 - Build Phase 37D-F actual private-test send manual preflight, mock send rehearsal, and no-send lock reports without starting Phase 38 or sending Discord messages.
+- Build Phase 38A-E actual private-test send contract, final payload freeze, rollback gate, operator checklist, and live send entry gate reports without starting Phase 39 or sending Discord messages.
 
 ## Explicit Non-Goals
 
@@ -547,6 +548,14 @@ a mock send rehearsal, and a no-send lock. The lock records one mock rehearsal
 and zero actual Discord sends, keeps `ready_for_phase38_actual_private_test_send_path`
 false, and requires a separate explicit user approval before any Phase 38 actual
 private-test send path can be considered.
+
+Phase 38A-E prepares the last report-only layer before any later actual
+private-test send request. It defines the send contract, freezes a review-only
+payload preview, lists rollback gates, adds an operator checklist, and exposes a
+live send entry gate. It performs no OpenRouter/LLM API call, no Discord live
+runtime, no Discord API send, no message send, no approval phrase generation, no
+manual approval actualization, no embedding/vector creation, and no external
+execution. Phase 39 remains not started.
 
 If the registry file is missing, generate it from the repo root:
 

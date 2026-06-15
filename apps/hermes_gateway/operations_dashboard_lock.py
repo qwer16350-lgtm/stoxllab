@@ -16,6 +16,7 @@ from no_live_rehearsal_packet import build_no_live_rehearsal_packet
 from one_shot_llm_no_send_final_lock import build_one_shot_llm_no_send_final_lock
 from post_llm_call_dashboard_lock import build_post_llm_call_dashboard_lock
 from phase35a_post_mvp_safety_audit import build_phase35a_post_mvp_safety_audit
+from private_test_live_send_entry_gate import build_private_test_live_send_entry_gate
 from rag_evidence_private_test_phase34_final_lock import build_rag_evidence_private_test_phase34_final_lock
 
 
@@ -36,6 +37,7 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
     sentinel = build_forbidden_behavior_sentinel()
     phase36_final_lock = build_one_shot_llm_no_send_final_lock()
     phase36_dashboard = build_post_llm_call_dashboard_lock(phase36_final_lock)
+    phase38_entry_gate = build_private_test_live_send_entry_gate()
     counts = audit.get("final_e2e_counts", {})
     report = {
         "report_type": "operations_dashboard_lock",
@@ -63,6 +65,9 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
         "phase36_total_llm_call_count": int(phase36_dashboard.get("total_phase36_llm_call_count", 0) or 0),
         "phase36_total_discord_message_sent_count": int(phase36_dashboard.get("total_phase36_discord_message_sent_count", 0) or 0),
         "ready_for_phase37_entry_gate": bool(phase36_dashboard.get("ready_for_phase37_entry_gate")),
+        "phase38e_live_send_entry_gate_available": bool(phase38_entry_gate.get("live_send_entry_gate_available")),
+        "phase39_not_started": bool(phase38_entry_gate.get("phase39_not_started")),
+        "ready_for_phase39_live_execution": bool(phase38_entry_gate.get("ready_for_phase39_live_execution")),
         "ready_for_live_runtime": False,
         "ready_for_llm_call": False,
         "ready_for_discord_send": False,
@@ -96,6 +101,7 @@ def assert_operations_dashboard_lock_safe(report: dict[str, Any]) -> None:
         "ready_for_llm_call",
         "ready_for_discord_send",
         "ready_for_unattended_auto_reply",
+        "ready_for_phase39_live_execution",
     ):
         if report.get(key):
             raise ValueError(f"Operations dashboard lock unsafe flag is true: {key}")

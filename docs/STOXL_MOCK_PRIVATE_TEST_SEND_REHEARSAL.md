@@ -17,3 +17,6 @@ Safety state:
 - External execution: false
 
 Any non-private-test scope, actual send flag, full content inclusion, or sensitive value exposure must fail the rehearsal.
+
+Phase 38B may freeze a review-only would-send preview from this chain, but the
+payload remains no-send and does not include full content.

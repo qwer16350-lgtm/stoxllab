@@ -1,0 +1,25 @@
+{
+  "report_type": "private_test_send_rollback_gate",
+  "version": "phase38c_private_test_send_rollback_gate_no_send",
+  "rollback_gate_available": true,
+  "report_only": true,
+  "source_phase38b_payload_frozen": true,
+  "rollback_checklist_ready": true,
+  "emergency_disable_gates_listed": true,
+  "emergency_disable_gate_names": [
+    "HERMES_DISCORD_SEND_MESSAGES",
+    "HERMES_DISCORD_PRIVATE_TEST_REPLY",
+    "HERMES_DISCORD_REPLY_MODE",
+    "HERMES_PRIVATE_TEST_DRAFT_SEND_APPROVED",
+    "HERMES_PRIVATE_TEST_DRAFT_SEND_APPROVAL_PHRASE"
+  ],
+  "post_send_observation_required": true,
+  "post_send_delete_or_edit_api_implemented": false,
+  "post_send_delete_or_edit_api_called": false,
+  "discord_api_send_called": false,
+  "discord_message_sent": false,
+  "message_sent_count": 0,
+  "ready_for_operator_checklist": true,
+  "ready_for_actual_private_test_send": false,
+  "ready_for_discord_send": false
+}

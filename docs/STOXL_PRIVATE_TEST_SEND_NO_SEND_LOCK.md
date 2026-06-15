@@ -20,3 +20,7 @@ Required lock state:
 - Explicit user approval required for Phase 38: true
 
 This file is documentation only. It is not a send script and does not grant permission to call Discord.
+
+Phase 38A-E continues from this lock with contract, payload freeze, rollback,
+operator checklist, and entry gate reports only. Phase 39 actual private-test
+send is not started.

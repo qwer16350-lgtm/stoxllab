@@ -59,6 +59,13 @@ def test_operations_dashboard_lock_phase36_post_call_state() -> None:
     assert_true(report["ready_for_phase37_entry_gate"] is True, "Ready for 37 gate")
 
 
+def test_operations_dashboard_lock_phase38_entry_state() -> None:
+    report = build_operations_dashboard_lock()
+    assert_true(report["phase38e_live_send_entry_gate_available"] is True, "38E available")
+    assert_true(report["phase39_not_started"] is True, "Phase 39 not started")
+    assert_true(report["ready_for_phase39_live_execution"] is False, "No Phase 39 live readiness")
+
+
 def test_operations_dashboard_lock_no_sensitive_values() -> None:
     text = json.dumps(build_operations_dashboard_lock(), ensure_ascii=False).lower()
     assert_true("sk-" not in text and "xoxb-" not in text and "token=" not in text, "No secrets")
@@ -76,6 +83,7 @@ def main() -> int:
         test_operations_dashboard_lock_final_counts,
         test_operations_dashboard_lock_safety_false,
         test_operations_dashboard_lock_phase36_post_call_state,
+        test_operations_dashboard_lock_phase38_entry_state,
         test_operations_dashboard_lock_no_sensitive_values,
         test_operations_dashboard_lock_markdown,
     ]

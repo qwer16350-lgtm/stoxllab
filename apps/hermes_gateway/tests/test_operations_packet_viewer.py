@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import re
 import sys
+import tempfile
 from pathlib import Path
 
 APP_DIR = Path(__file__).resolve().parents[1]
@@ -32,7 +33,7 @@ from would_send_preview import build_would_send_preview
 
 
 ROOT = APP_DIR.parents[1]
-TEST_ROOT = ROOT / "logs" / "hermes_gateway_test" / "phase31_viewer"
+TEST_ROOT = Path(tempfile.gettempdir()) / "stoxl_hermes_gateway_test" / "phase31_viewer"
 LONG_NUMBER_RE = re.compile(r"\b\d{15,25}\b")
 
 
@@ -828,6 +829,43 @@ def test_phase37d_e_f_summaries() -> None:
     assert_true(lock["ready_for_phase38_actual_private_test_send_path"] is False, "37F no phase 38 path")
 
 
+def test_phase38a_e_summaries() -> None:
+    setup_artifacts()
+    report = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")
+    contract = report["phase38a_actual_private_test_send_contract"]
+    freeze = report["phase38b_final_would_send_payload_freeze"]
+    rollback = report["phase38c_private_test_send_rollback_gate"]
+    checklist = report["phase38d_private_test_send_operator_checklist"]
+    gate = report["phase38e_private_test_live_send_entry_gate"]
+    assert_true(contract["available"] is True, "38A available")
+    assert_true(contract["report_only"] is True, "38A report only")
+    assert_true(contract["send_scope"] == "private_test_only", "38A private")
+    assert_true(contract["discord_api_send_called"] is False, "38A no API send")
+    assert_true(contract["discord_message_sent"] is False, "38A no message")
+    assert_true(contract["ready_for_actual_private_test_send"] is False, "38A no actual readiness")
+    assert_true(freeze["available"] is True, "38B available")
+    assert_true(freeze["report_only"] is True, "38B report only")
+    assert_true(freeze["would_send_payload_frozen"] is True, "38B frozen")
+    assert_true(freeze["would_send_review_only"] is True, "38B review only")
+    assert_true(freeze["discord_message_sent"] is False, "38B no message")
+    assert_true(freeze["ready_for_discord_send"] is False, "38B no send ready")
+    assert_true(rollback["available"] is True, "38C available")
+    assert_true(rollback["report_only"] is True, "38C report only")
+    assert_true(rollback["rollback_checklist_ready"] is True, "38C checklist")
+    assert_true(rollback["emergency_disable_gates_listed"] is True, "38C gate names")
+    assert_true(rollback["discord_message_sent"] is False, "38C no message")
+    assert_true(checklist["available"] is True, "38D available")
+    assert_true(checklist["report_only"] is True, "38D report only")
+    assert_true(checklist["operator_checklist_ready"] is True, "38D ready")
+    assert_true(checklist["ready_for_actual_private_test_send"] is False, "38D no actual readiness")
+    assert_true(gate["available"] is True, "38E available")
+    assert_true(gate["report_only"] is True, "38E report only")
+    assert_true(gate["actual_private_test_send_not_started"] is True, "38E not started")
+    assert_true(gate["phase39_not_started"] is True, "38E phase39 not started")
+    assert_true(gate["requires_explicit_user_approval"] is True, "38E approval required")
+    assert_true(gate["ready_for_phase39_live_execution"] is False, "38E no live")
+
+
 def main() -> int:
     tests = [
         test_recent_events_returned,
@@ -880,6 +918,7 @@ def main() -> int:
         test_phase36f_g_and_phase37_summaries,
         test_phase37a_b_c_summaries,
         test_phase37d_e_f_summaries,
+        test_phase38a_e_summaries,
     ]
     for test in tests:
         test()

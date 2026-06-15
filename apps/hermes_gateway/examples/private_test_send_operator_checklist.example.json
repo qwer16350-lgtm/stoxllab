@@ -1,0 +1,28 @@
+{
+  "report_type": "private_test_send_operator_checklist",
+  "version": "phase38d_private_test_send_operator_checklist_no_send",
+  "operator_checklist_available": true,
+  "report_only": true,
+  "source_phase38c_rollback_gate_available": true,
+  "operator_checklist_ready": true,
+  "required_manual_checks": [
+    "working_tree_clean",
+    "validator_errors_zero",
+    "relevant_tests_passed",
+    "discord_token_presence_boolean_checked",
+    "private_test_channel_presence_boolean_checked",
+    "approval_false_by_default",
+    "public_team_forbidden",
+    "unattended_auto_reply_false",
+    "payload_preview_human_reviewed",
+    "final_send_command_not_run"
+  ],
+  "approval_phrase_generated": false,
+  "manual_approval_actualized": false,
+  "discord_api_send_called": false,
+  "discord_message_sent": false,
+  "message_sent_count": 0,
+  "ready_for_phase38e_live_send_entry_gate": true,
+  "ready_for_actual_private_test_send": false,
+  "ready_for_discord_send": false
+}
