@@ -227,6 +227,24 @@ def test_rag_llm_single_live_test_closeout_summary() -> None:
     assert_true(closeout["ready_for_phase34_knowledge_ingestion"] is True, "Phase 34 readiness should be true")
 
 
+def test_knowledge_foundation_summary() -> None:
+    setup_artifacts()
+    knowledge = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")["knowledge_foundation"]
+    assert_true(knowledge["available"] is True, "Knowledge foundation should be available")
+    assert_true(knowledge["ready_for_local_text_ingestion"] is True, "Local text ingestion should be ready")
+    assert_true(knowledge["ready_for_embedding"] is False, "Embedding should be deferred")
+    assert_true(knowledge["ready_for_external_sources"] is False, "External sources should be deferred")
+    assert_true(knowledge["source_routing_available"] is True, "Source routing should be available")
+    assert_true(knowledge["evidence_packet_available"] is True, "Evidence packet should be available")
+    assert_true("operation" in knowledge["canonical_sources"], "operation should be canonical")
+    assert_true("operations" not in knowledge["canonical_sources"], "operations should not be canonical")
+    assert_true(knowledge["operations_source_present"] is False, "operations folder should be absent")
+    assert_true(knowledge["embedding_api_called"] is False, "No embedding API call")
+    assert_true(knowledge["llm_api_called"] is False, "No LLM API call")
+    assert_true(knowledge["discord_message_sent"] is False, "No Discord message sent")
+    assert_true(knowledge["external_execution"] is False, "No external execution")
+
+
 def main() -> int:
     tests = [
         test_recent_events_returned,
@@ -248,6 +266,7 @@ def main() -> int:
         test_rag_llm_private_test_runtime_summary,
         test_rag_llm_live_preflight_closeout_summary,
         test_rag_llm_single_live_test_closeout_summary,
+        test_knowledge_foundation_summary,
     ]
     for test in tests:
         test()

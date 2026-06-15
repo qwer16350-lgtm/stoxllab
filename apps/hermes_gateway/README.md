@@ -47,6 +47,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - Build Phase 33D-2 live preflight closeout reports that confirm default blocking, mock live-ready fixture readiness, runtime option presence, and no live execution.
 - Maintain the Phase 33D-3 single live private test runbook for manual user-run execution only.
 - Build Phase 33D-4 single live private test closeout reports from an embedded sanitized success fixture without another live run.
+- Build Phase 34A-C local knowledge foundation reports for manifest, ingestion boundary, source routing, and evidence packets.
 
 ## Explicit Non-Goals
 
@@ -74,6 +75,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - No Phase 33D-2 closeout starts Discord, sends Discord messages, calls OpenRouter/LLM APIs, calls embeddings, or executes external actions.
 - No Phase 33D-3 runbook step starts Discord, sends Discord messages, calls OpenRouter/LLM APIs, calls embeddings, or executes external actions automatically.
 - No Phase 33D-4 closeout starts Discord, sends additional Discord messages, calls OpenRouter/LLM APIs, calls embeddings, or executes external actions.
+- No Phase 34A-C knowledge foundation flow creates embeddings, vector DB indexes, external source ingest, public/team channel replies, additional Discord sends, LLM API calls, or external execution.
 
 ## Phase 21 Read-Only Planning Docs
 
@@ -124,6 +126,10 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - `docs/STOXL_RAG_LLM_LIVE_PREFLIGHT_CLOSEOUT.md`
 - `docs/STOXL_RAG_LLM_SINGLE_LIVE_TEST_RUNBOOK.md`
 - `docs/STOXL_RAG_LLM_SINGLE_LIVE_TEST_CLOSEOUT.md`
+- `docs/STOXL_KNOWLEDGE_INGESTION_BOUNDARY.md`
+- `docs/STOXL_KNOWLEDGE_MANIFEST.md`
+- `docs/STOXL_KNOWLEDGE_SOURCE_ROUTING.md`
+- `docs/STOXL_KNOWLEDGE_EVIDENCE_PACKET.md`
 
 These documents prepare for a later private server read-only connection review. They do not authorize or perform a Discord connection.
 
@@ -216,6 +222,14 @@ python apps\hermes_gateway\cli.py --rag-llm-live-preflight-closeout --json
 python apps\hermes_gateway\cli.py --rag-llm-live-preflight-closeout --markdown
 python apps\hermes_gateway\cli.py --rag-llm-live-success-closeout --json
 python apps\hermes_gateway\cli.py --rag-llm-live-success-closeout --markdown
+python apps\hermes_gateway\cli.py --knowledge-manifest --json
+python apps\hermes_gateway\cli.py --knowledge-manifest --markdown
+python apps\hermes_gateway\cli.py --knowledge-ingestion-boundary --json
+python apps\hermes_gateway\cli.py --knowledge-ingestion-boundary --markdown
+python apps\hermes_gateway\cli.py --knowledge-source-routing --json
+python apps\hermes_gateway\cli.py --knowledge-source-routing --markdown
+python apps\hermes_gateway\cli.py --knowledge-evidence-packet --json
+python apps\hermes_gateway\cli.py --knowledge-evidence-packet --markdown
 python apps\hermes_gateway\cli.py --run-discord-private-test-reply --json
 python apps\hermes_gateway\tests\test_local_pipeline.py
 python apps\hermes_gateway\tests\test_replay_approval.py
@@ -259,6 +273,10 @@ python apps\hermes_gateway\tests\test_rag_llm_private_test_runtime.py
 python apps\hermes_gateway\tests\test_rag_llm_live_preflight_closeout.py
 python apps\hermes_gateway\tests\test_rag_llm_single_live_test_runbook.py
 python apps\hermes_gateway\tests\test_rag_llm_live_success_closeout.py
+python apps\hermes_gateway\tests\test_knowledge_manifest.py
+python apps\hermes_gateway\tests\test_knowledge_ingestion_boundary.py
+python apps\hermes_gateway\tests\test_knowledge_source_routing.py
+python apps\hermes_gateway\tests\test_knowledge_evidence_packet.py
 ```
 
 The `--run-discord-readonly` option is intentionally not part of normal local
@@ -356,6 +374,13 @@ LLM-allowed path, one output-safety-allowed path, one Discord send, and one
 self-message skip. It does not start Discord again, send another message, call
 OpenRouter again, call embeddings, or execute external actions. The closeout
 sets `ready_for_phase34_knowledge_ingestion=true`.
+
+Phase 34A-C adds the local knowledge foundation. It creates canonical
+`knowledge/` source folders, a local text-only manifest, ingestion boundary
+rules, agent source routing, and citation/evidence packets. `operation` remains
+canonical and `operations` remains blocked. Embedding, vector DB/index creation,
+external source ingest, LLM calls, Discord sends, and external execution remain
+deferred.
 
 If the registry file is missing, generate it from the repo root:
 

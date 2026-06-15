@@ -82,4 +82,12 @@ The operations viewer exposes a summary under `rag_llm_single_live_test_closeout
 
 This closeout marks `ready_for_phase34_knowledge_ingestion=true`.
 
-Phase 34 should remain cautious: it should design knowledge ingestion boundaries before enabling broader retrieval, indexing, embeddings, or non-private Discord behavior.
+Phase 34A-C adds that cautious local foundation:
+
+- local `knowledge/` folders
+- local text-only manifest
+- source ingestion boundary
+- agent source routing policy
+- citation/evidence packet
+
+Embedding, vector DB/index creation, external source ingest, public/team channel replies, additional Discord sends, additional OpenRouter/LLM calls, and external execution remain deferred.

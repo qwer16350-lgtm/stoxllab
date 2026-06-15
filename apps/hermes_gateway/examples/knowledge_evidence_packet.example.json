@@ -1,0 +1,20 @@
+{
+  "report_type": "knowledge_evidence_packet",
+  "version": "phase34c_local_evidence_packet",
+  "source": "operation",
+  "source_valid": true,
+  "agent": "kasumi",
+  "agent_source_allowed": true,
+  "documents": [],
+  "citations": [],
+  "max_documents": 5,
+  "max_excerpt_chars": 600,
+  "full_content_included": false,
+  "content_preview_only": true,
+  "ready_for_rag_response_packet": true,
+  "ready_for_llm_prompt": false,
+  "embedding_api_called": false,
+  "llm_api_called": false,
+  "discord_message_sent": false,
+  "external_execution": false
+}

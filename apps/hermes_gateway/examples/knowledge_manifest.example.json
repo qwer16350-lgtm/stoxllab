@@ -1,0 +1,16 @@
+{
+  "report_type": "knowledge_manifest",
+  "version": "phase34a_local_text_only_manifest",
+  "knowledge_root": "knowledge",
+  "canonical_sources": ["marketing", "operation", "strategy", "brand", "archive"],
+  "operations_source_present": false,
+  "content_preview_included": false,
+  "full_content_included": false,
+  "ready_for_local_text_ingestion": true,
+  "ready_for_embedding": false,
+  "ready_for_external_sources": false,
+  "embedding_api_called": false,
+  "llm_api_called": false,
+  "discord_message_sent": false,
+  "external_execution": false
+}

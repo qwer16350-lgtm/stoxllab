@@ -23,6 +23,10 @@ from rag_llm_live_readiness_review import build_rag_llm_live_readiness_review
 from rag_llm_private_test_runtime import build_rag_llm_private_test_runtime_report
 from rag_llm_live_preflight_closeout import build_rag_llm_live_preflight_closeout
 from rag_llm_live_success_closeout import build_rag_llm_live_success_closeout
+from knowledge_ingestion_boundary import build_knowledge_ingestion_boundary_report
+from knowledge_manifest import build_knowledge_manifest
+from knowledge_source_routing import build_knowledge_source_routing_report
+from knowledge_evidence_packet import build_knowledge_evidence_packet
 
 
 VERSION = "phase31a_local_viewer"
@@ -340,6 +344,10 @@ def build_operations_packet_viewer_report(
     rag_llm_runtime = build_rag_llm_private_test_runtime_report(root=str(_repo(root)))
     rag_llm_closeout = build_rag_llm_live_preflight_closeout(root=str(_repo(root)))
     rag_llm_success_closeout = build_rag_llm_live_success_closeout()
+    knowledge_boundary = build_knowledge_ingestion_boundary_report(root=str(_repo(root)))
+    knowledge_manifest = build_knowledge_manifest(root=str(_repo(root)))
+    knowledge_routing = build_knowledge_source_routing_report()
+    knowledge_evidence = build_knowledge_evidence_packet(root=str(_repo(root)))
     report = {
         "report_type": "operations_packet_viewer",
         "version": VERSION,
@@ -444,6 +452,20 @@ def build_operations_packet_viewer_report(
             "external_execution": bool(rag_llm_success_closeout.get("external_execution")),
             "ready_for_phase34_knowledge_ingestion": bool(rag_llm_success_closeout.get("ready_for_phase34_knowledge_ingestion")),
         },
+        "knowledge_foundation": {
+            "available": True,
+            "ready_for_local_text_ingestion": bool(knowledge_boundary.get("ready_for_local_text_ingestion")),
+            "ready_for_embedding": bool(knowledge_boundary.get("ready_for_embedding")),
+            "ready_for_external_sources": bool(knowledge_boundary.get("ready_for_external_sources")),
+            "source_routing_available": bool(knowledge_routing),
+            "evidence_packet_available": bool(knowledge_evidence),
+            "canonical_sources": knowledge_boundary.get("canonical_sources", []),
+            "operations_source_present": bool(knowledge_manifest.get("operations_source_present")),
+            "embedding_api_called": False,
+            "llm_api_called": False,
+            "discord_message_sent": False,
+            "external_execution": False,
+        },
         "daily_manifest_summary": load_daily_manifest(root=root, date=date),
         "filters": {
             "channel_name": channel_name,
@@ -510,6 +532,7 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
     rag_llm_runtime = report.get("rag_llm_private_test_runtime", {})
     rag_llm_closeout = report.get("rag_llm_live_preflight_closeout", {})
     rag_llm_success_closeout = report.get("rag_llm_single_live_test_closeout", {})
+    knowledge = report.get("knowledge_foundation", {})
     llm_summary = report.get("latest_llm_response_packet", {})
     lines.extend(
         [
@@ -596,6 +619,20 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
             f"- Embedding API called: {str(rag_llm_success_closeout.get('embedding_api_called', False)).lower()}",
             f"- External execution: {str(rag_llm_success_closeout.get('external_execution', False)).lower()}",
             f"- Ready for Phase 34 knowledge ingestion: {str(rag_llm_success_closeout.get('ready_for_phase34_knowledge_ingestion', False)).lower()}",
+            "",
+            "## Knowledge Foundation",
+            f"- Available: {str(knowledge.get('available', False)).lower()}",
+            f"- Ready for local text ingestion: {str(knowledge.get('ready_for_local_text_ingestion', False)).lower()}",
+            f"- Ready for embedding: {str(knowledge.get('ready_for_embedding', False)).lower()}",
+            f"- Ready for external sources: {str(knowledge.get('ready_for_external_sources', False)).lower()}",
+            f"- Source routing available: {str(knowledge.get('source_routing_available', False)).lower()}",
+            f"- Evidence packet available: {str(knowledge.get('evidence_packet_available', False)).lower()}",
+            f"- Canonical sources: {', '.join(knowledge.get('canonical_sources', []))}",
+            f"- Operations source present: {str(knowledge.get('operations_source_present', False)).lower()}",
+            f"- Embedding API called: {str(knowledge.get('embedding_api_called', False)).lower()}",
+            f"- LLM API called: {str(knowledge.get('llm_api_called', False)).lower()}",
+            f"- Discord message sent: {str(knowledge.get('discord_message_sent', False)).lower()}",
+            f"- External execution: {str(knowledge.get('external_execution', False)).lower()}",
         ]
     )
     safety = report.get("safety_assertions", {})

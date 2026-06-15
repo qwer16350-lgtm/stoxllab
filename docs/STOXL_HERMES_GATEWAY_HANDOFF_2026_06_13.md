@@ -15,6 +15,7 @@
 - Phase 33D-3A explicit single live approval env gate is required before the runtime can pass manual approval.
 - Phase 33D-3B RAG+LLM private test runtime adapter is wired, while live execution remains user-run only.
 - Phase 33D-4 single live private test closeout is available and marks the observed success ready for Phase 34 knowledge ingestion.
+- Phase 34A-C local knowledge foundation is available for manifest, ingestion boundary, source routing, and citation/evidence packets.
 
 ## Completed Chain
 
@@ -31,6 +32,7 @@
 11. Phase 33D-3A added `HERMES_RAG_LLM_SINGLE_LIVE_TEST_APPROVED` plus exact approval phrase gating.
 12. Phase 33D-3B connected the live command to the RAG+LLM private-test adapter instead of the missing-adapter block.
 13. Phase 33D-4 added a sanitized success-log parser, CLI report, operations viewer summary, and docs for the successful single live private test closeout.
+14. Phase 34A-C added repo-local `knowledge/` source folders, text-only manifest rules, source routing policy, and evidence packet formatting.
 
 ## Current Safety Posture
 
@@ -51,6 +53,8 @@
 - Phase 33D-3B tests use mock adapters and token-missing checks only; no Discord runtime, LLM API, or send is executed during tests.
 - Phase 33D-4 does not start Discord again, send another Discord message, call OpenRouter/LLM again, call embeddings, or execute external actions.
 - Phase 33D-4 verifies that the observed live test sent exactly one Discord private-test reply and skipped the self-message.
+- Phase 34A-C does not create embeddings, vector DB indexes, external source ingest, public/team channel replies, Discord sends, LLM API calls, or external execution.
+- Phase 34A-C keeps `operation` canonical and keeps `operations` blocked.
 
 ## Important Commands
 
@@ -69,6 +73,10 @@ python apps\hermes_gateway\cli.py --rag-llm-live-readiness-review --json
 python apps\hermes_gateway\cli.py --rag-llm-private-test-runtime-report --json
 python apps\hermes_gateway\cli.py --rag-llm-live-preflight-closeout --json
 python apps\hermes_gateway\cli.py --rag-llm-live-success-closeout --json
+python apps\hermes_gateway\cli.py --knowledge-manifest --json
+python apps\hermes_gateway\cli.py --knowledge-ingestion-boundary --json
+python apps\hermes_gateway\cli.py --knowledge-source-routing --json
+python apps\hermes_gateway\cli.py --knowledge-evidence-packet --json
 python apps\hermes_gateway\cli.py --operations-viewer --json
 ```
 
@@ -86,6 +94,10 @@ python apps\hermes_gateway\tests\test_rag_llm_private_test_runtime.py
 python apps\hermes_gateway\tests\test_rag_llm_live_preflight_closeout.py
 python apps\hermes_gateway\tests\test_rag_llm_single_live_test_runbook.py
 python apps\hermes_gateway\tests\test_rag_llm_live_success_closeout.py
+python apps\hermes_gateway\tests\test_knowledge_manifest.py
+python apps\hermes_gateway\tests\test_knowledge_ingestion_boundary.py
+python apps\hermes_gateway\tests\test_knowledge_source_routing.py
+python apps\hermes_gateway\tests\test_knowledge_evidence_packet.py
 python apps\hermes_gateway\tests\test_llm_private_test_reply_replay.py
 python apps\hermes_gateway\tests\test_llm_private_test_reply.py
 python apps\hermes_gateway\tests\test_private_test_reply.py
@@ -124,7 +136,7 @@ The user-run single live private test should only begin after human review of:
 - LLM output safety
 - one-message-per-human-message send limits
 
-The next recommended phase is Phase 34 knowledge ingestion boundary design.
-Phase 33D-4 sets `ready_for_phase34_knowledge_ingestion=true`, but Phase 34
-should still avoid external ingestion, embedding APIs, broad Discord replies,
-or public/team channel reply paths until separately approved.
+The next recommended phase is Phase 34D local text evidence integration into
+the existing RAG packet. It should still avoid external ingestion, embedding
+APIs, vector DB/index creation, broad Discord replies, public/team channel reply
+paths, and external execution until separately approved.

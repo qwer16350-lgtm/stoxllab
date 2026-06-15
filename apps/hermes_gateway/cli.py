@@ -34,6 +34,10 @@ from live_event_audit_persistence import (
 from live_event_pipeline import build_live_event_pipeline_report
 from live_event_review_packet import build_live_event_review_packet
 from live_event_routing_report import build_live_event_routing_report
+from knowledge_evidence_packet import build_knowledge_evidence_packet, render_knowledge_evidence_packet_markdown
+from knowledge_ingestion_boundary import build_knowledge_ingestion_boundary_report, render_knowledge_ingestion_boundary_markdown
+from knowledge_manifest import build_knowledge_manifest, render_knowledge_manifest_markdown
+from knowledge_source_routing import build_knowledge_source_routing_report, render_knowledge_source_routing_markdown
 from llm_preflight import build_llm_preflight_report, render_llm_preflight_markdown
 from llm_dry_call import build_llm_dry_call_request, render_llm_dry_call_markdown, run_llm_dry_call, write_llm_dry_call_artifact
 from llm_private_test_reply import build_llm_private_test_reply_preflight, render_llm_private_test_reply_report_markdown
@@ -263,6 +267,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--rag-llm-private-test-runtime-report", action="store_true", help="Print Phase 33D-1 guarded RAG+LLM private test runtime preflight report.")
     parser.add_argument("--rag-llm-live-preflight-closeout", action="store_true", help="Print Phase 33D-2 live preflight closeout without live execution.")
     parser.add_argument("--rag-llm-live-success-closeout", action="store_true", help="Print Phase 33D-4 single live success replay/audit closeout without live execution.")
+    parser.add_argument("--knowledge-manifest", action="store_true", help="Print Phase 34A local knowledge manifest without content dumps.")
+    parser.add_argument("--knowledge-ingestion-boundary", action="store_true", help="Print Phase 34A local text-only knowledge ingestion boundary.")
+    parser.add_argument("--knowledge-source-routing", action="store_true", help="Print Phase 34B agent knowledge source routing policy.")
+    parser.add_argument("--knowledge-evidence-packet", action="store_true", help="Print Phase 34C local citation/evidence packet without LLM or Discord send.")
     parser.add_argument("--source", default="operation", help="RAG source for local retrieval reports.")
     parser.add_argument("--query", default="STOXL brand tone", help="RAG query preview for local retrieval reports.")
     parser.add_argument("--allow-llm-api-call", action="store_true", help="Allow Phase 32B to attempt one gated provider call when env gates pass.")
@@ -937,6 +945,62 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- ready_for_phase34_knowledge_ingestion: {output.get('ready_for_phase34_knowledge_ingestion')}")
         return 0
 
+    if args.knowledge_manifest:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_knowledge_manifest(root=cfg.repo_root)
+        if args.markdown:
+            print(render_knowledge_manifest_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL knowledge manifest")
+            print(f"- ready_for_local_text_ingestion: {output.get('ready_for_local_text_ingestion')}")
+            print(f"- operations_source_present: {output.get('operations_source_present')}")
+            print(f"- full_content_included: {output.get('full_content_included')}")
+        return 0
+
+    if args.knowledge_ingestion_boundary:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_knowledge_ingestion_boundary_report(root=cfg.repo_root)
+        if args.markdown:
+            print(render_knowledge_ingestion_boundary_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL knowledge ingestion boundary")
+            print(f"- ready_for_local_text_ingestion: {output.get('ready_for_local_text_ingestion')}")
+            print(f"- ready_for_embedding: {output.get('ready_for_embedding')}")
+            print(f"- ready_for_external_sources: {output.get('ready_for_external_sources')}")
+        return 0
+
+    if args.knowledge_source_routing:
+        output = build_knowledge_source_routing_report()
+        if args.markdown:
+            print(render_knowledge_source_routing_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL knowledge source routing")
+            print(f"- review_only: {output.get('review_only')}")
+            print(f"- agents: {len(output.get('agent_source_policy', {}))}")
+            print(f"- forbidden_sources: {', '.join(output.get('forbidden_sources', []))}")
+        return 0
+
+    if args.knowledge_evidence_packet:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_knowledge_evidence_packet(root=cfg.repo_root, source=args.source, agent=args.agent or "kasumi", query=args.query)
+        if args.markdown:
+            print(render_knowledge_evidence_packet_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL knowledge evidence packet")
+            print(f"- source: {output.get('source')}")
+            print(f"- agent: {output.get('agent')}")
+            print(f"- ready_for_rag_response_packet: {output.get('ready_for_rag_response_packet')}")
+            print(f"- ready_for_llm_prompt: {output.get('ready_for_llm_prompt')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -1090,6 +1154,10 @@ def main(argv: list[str] | None = None) -> int:
         or args.rag_llm_private_test_runtime_report
         or args.rag_llm_live_preflight_closeout
         or args.rag_llm_live_success_closeout
+        or args.knowledge_manifest
+        or args.knowledge_ingestion_boundary
+        or args.knowledge_source_routing
+        or args.knowledge_evidence_packet
         or args.allow_llm_api_call
         or args.write_artifact
         or args.latest

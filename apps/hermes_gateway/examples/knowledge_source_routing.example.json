@@ -1,0 +1,18 @@
+{
+  "report_type": "knowledge_source_routing",
+  "version": "phase34b_agent_source_policy",
+  "agent_source_policy": {
+    "marin": ["marketing", "brand"],
+    "lucy": ["marketing", "brand", "archive"],
+    "kasumi": ["operation"],
+    "meiko": ["operation", "archive"],
+    "reze": ["strategy", "brand", "archive"],
+    "decision_maker_review": ["marketing", "operation", "strategy", "brand", "archive"]
+  },
+  "forbidden_sources": ["operations"],
+  "review_only": true,
+  "discord_message_sent": false,
+  "llm_api_called": false,
+  "embedding_api_called": false,
+  "external_execution": false
+}

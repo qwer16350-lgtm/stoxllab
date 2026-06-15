@@ -1,0 +1,16 @@
+{
+  "report_type": "knowledge_ingestion_boundary",
+  "version": "phase34a_local_text_only",
+  "ready_for_local_text_ingestion": true,
+  "ready_for_embedding": false,
+  "ready_for_external_sources": false,
+  "canonical_sources": ["marketing", "operation", "strategy", "brand", "archive"],
+  "forbidden_sources": ["operations", "external", "nas", "drive", "notion", "web"],
+  "allowed_extensions": [".txt", ".md", ".json", ".yaml", ".yml"],
+  "deferred_extensions": [".pdf", ".docx", ".xlsx", ".pptx", ".png", ".jpg", ".jpeg"],
+  "blocked_extensions": [".env", ".key", ".pem", ".p12", ".sqlite", ".db", ".zip", ".7z", ".exe", ".ps1", ".bat"],
+  "embedding_api_called": false,
+  "llm_api_called": false,
+  "discord_message_sent": false,
+  "external_execution": false
+}
