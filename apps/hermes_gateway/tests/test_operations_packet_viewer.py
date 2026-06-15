@@ -896,6 +896,7 @@ def test_phase39b_zero_send_summaries() -> None:
     reentry = report["phase39b_manual_send_reentry_packet"]
     ready = report["phase39b_manual_send_ready_gate"]
     execution = report["phase39b_actual_send_execution_gate"]
+    real_selection = report["phase39b_real_adapter_selection"]
     lock = report["phase39b_manual_send_no_send_lock"]
     assert_true(reentry["available"] is True, "39B reentry available")
     assert_true(reentry["report_only"] is True, "39B reentry report only")
@@ -929,6 +930,22 @@ def test_phase39b_zero_send_summaries() -> None:
     assert_true(execution["discord_api_send_called"] is False, "39B execution no API")
     assert_true(execution["discord_message_sent"] is False, "39B execution no message")
     assert_true(execution["message_sent_count"] == 0, "39B execution count 0")
+    assert_true(real_selection["available"] is True, "39B real adapter selection available")
+    assert_true(real_selection["mode"] == "phase39b_actual_send_execution", "39B real selection mode")
+    assert_true(real_selection["execute_flag_present"] is True, "39B real execute flag")
+    assert_true(real_selection["real_discord_send_execution_env_enabled"] is True, "39B real env true")
+    assert_true(real_selection["execution_gate_conditions_met"] is True, "39B real gate met")
+    assert_true(real_selection["actual_execution_adapter"] == "real", "39B real adapter")
+    assert_true(real_selection["real_adapter_selected"] is True, "39B real selected")
+    assert_true(real_selection["real_adapter_injected_for_test"] is True, "39B real injected")
+    assert_true(real_selection["real_adapter_called"] is True, "39B real adapter called")
+    assert_true(real_selection["ready_for_actual_private_test_send"] is True, "39B real readiness")
+    assert_true(real_selection["ready_for_discord_send"] is False, "39B real no direct send ready")
+    assert_true(real_selection["actual_private_test_send_executed"] is False, "39B real no actual send in viewer")
+    assert_true(real_selection["discord_api_send_called"] is False, "39B real no API in viewer")
+    assert_true(real_selection["discord_message_sent"] is False, "39B real no message in viewer")
+    assert_true(real_selection["message_sent_count"] == 0, "39B real count 0")
+    assert_true(real_selection["ready_for_phase39c_send_closeout"] is False, "39B real no closeout without send")
     assert_true(lock["available"] is True, "39B no-send lock available")
     assert_true(lock["report_only"] is True, "39B lock report only")
     assert_true(lock["actual_discord_send_count"] == 0, "39B actual send count 0")

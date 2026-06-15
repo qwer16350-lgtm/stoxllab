@@ -73,7 +73,7 @@ from final_would_send_payload_freeze import build_final_would_send_payload_freez
 from private_test_send_rollback_gate import build_private_test_send_rollback_gate
 from private_test_send_operator_checklist import build_private_test_send_operator_checklist
 from private_test_live_send_entry_gate import build_private_test_live_send_entry_gate
-from actual_private_test_one_shot_send import build_actual_private_test_one_shot_send
+from actual_private_test_one_shot_send import SendResult, build_actual_private_test_one_shot_send
 from actual_private_test_send_safety_gate import EXPECTED_APPROVAL_PHRASE, build_actual_private_test_send_safety_gate
 from actual_private_test_send_blocked_report import build_actual_private_test_send_blocked_report
 from phase39b_manual_send_reentry_packet import build_phase39b_manual_send_reentry_packet
@@ -87,6 +87,11 @@ from rag_evidence_would_send_preview import build_rag_evidence_would_send_previe
 VERSION = "phase31a_local_viewer"
 LONG_ID_RE = re.compile(r"\b\d{15,25}\b")
 SECRET_MARKERS = ("sk-", "xoxb-", "mfa.", "bearer ", "api_key", "apikey", "token=", "password=")
+
+
+class _OperationsViewerRealAdapterProbe:
+    def send_message(self, channel_id: str, content: str) -> SendResult:
+        return SendResult(api_send_called=False, message_sent=False, message_sent_count=0)
 
 
 def utc_now() -> str:
@@ -516,6 +521,28 @@ def build_operations_packet_viewer_report(
             "HERMES_DISCORD_PRIVATE_TEST_REPLY": "true",
             "HERMES_DISCORD_REPLY_MODE": "private_test_only",
             "HERMES_PHASE39B_REAL_DISCORD_SEND_EXECUTION": "false",
+        },
+    )
+    phase39b_real_adapter_selection = build_actual_private_test_one_shot_send(
+        allow_flag_present=True,
+        execute_flag_present=True,
+        send_adapter=_OperationsViewerRealAdapterProbe(),
+        env={
+            "DISCORD_BOT_TOKEN": "token-value",
+            "HERMES_DISCORD_PRIVATE_TEST_CHANNEL_ID": "private-channel-present",
+            "HERMES_PRIVATE_TEST_DRAFT_SEND_APPROVED": "true",
+            "HERMES_PRIVATE_TEST_DRAFT_SEND_APPROVAL_PHRASE": EXPECTED_APPROVAL_PHRASE,
+            "HERMES_DISCORD_SEND_MESSAGES": "true",
+            "HERMES_DISCORD_PRIVATE_TEST_REPLY": "true",
+            "HERMES_DISCORD_REPLY_MODE": "private_test_only",
+            "HERMES_PHASE39B_REAL_DISCORD_SEND_EXECUTION": "true",
+            "HERMES_LLM_DISCORD_SEND_ENABLED": "false",
+            "HERMES_LLM_PRIVATE_TEST_REPLY_ENABLED": "false",
+            "HERMES_DISCORD_RAG_ENABLED": "false",
+            "HERMES_LLM_RAG_ENABLED": "false",
+            "HERMES_RAG_LLM_REPLY_ENABLED": "false",
+            "HERMES_DISCORD_EXTERNAL_EXECUTION": "false",
+            "HERMES_DISCORD_LLM_ENABLED": "false",
         },
     )
     phase39b_reentry = build_phase39b_manual_send_reentry_packet()
@@ -1260,6 +1287,25 @@ def build_operations_packet_viewer_report(
             "discord_api_send_called": bool(phase39b_execution_gate.get("discord_api_send_called")),
             "discord_message_sent": bool(phase39b_execution_gate.get("discord_message_sent")),
             "message_sent_count": int(phase39b_execution_gate.get("message_sent_count", 0) or 0),
+        },
+        "phase39b_real_adapter_selection": {
+            "available": True,
+            "report_only": bool(phase39b_real_adapter_selection.get("report_only")),
+            "mode": phase39b_real_adapter_selection.get("mode", ""),
+            "execute_flag_present": bool(phase39b_real_adapter_selection.get("execute_flag_present")),
+            "real_discord_send_execution_env_enabled": bool(phase39b_real_adapter_selection.get("real_discord_send_execution_env_enabled")),
+            "execution_gate_conditions_met": bool(phase39b_real_adapter_selection.get("execution_gate_conditions_met")),
+            "actual_execution_adapter": phase39b_real_adapter_selection.get("actual_execution_adapter", ""),
+            "real_adapter_selected": bool(phase39b_real_adapter_selection.get("real_adapter_selected")),
+            "real_adapter_called": bool(phase39b_real_adapter_selection.get("real_adapter_called")),
+            "real_adapter_injected_for_test": bool(phase39b_real_adapter_selection.get("real_adapter_injected_for_test")),
+            "ready_for_actual_private_test_send": bool(phase39b_real_adapter_selection.get("ready_for_actual_private_test_send")),
+            "ready_for_discord_send": bool(phase39b_real_adapter_selection.get("ready_for_discord_send")),
+            "actual_private_test_send_executed": bool(phase39b_real_adapter_selection.get("actual_private_test_send_executed")),
+            "discord_api_send_called": bool(phase39b_real_adapter_selection.get("discord_api_send_called")),
+            "discord_message_sent": bool(phase39b_real_adapter_selection.get("discord_message_sent")),
+            "message_sent_count": int(phase39b_real_adapter_selection.get("message_sent_count", 0) or 0),
+            "ready_for_phase39c_send_closeout": bool(phase39b_real_adapter_selection.get("ready_for_phase39c_send_closeout")),
         },
         "phase39b_manual_send_no_send_lock": {
             "available": True,

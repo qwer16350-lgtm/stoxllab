@@ -24,6 +24,13 @@ allow flag, and `--execute-actual-private-test-send` are present can the
 one-shot report expose `ready_for_actual_private_test_send=true`. The adapter is
 still `mock`, and the Discord API send flags remain false.
 
+Phase 39B Final Bundle adds one more lock: the real adapter can be selected only
+when `HERMES_PHASE39B_REAL_DISCORD_SEND_EXECUTION=true` and LLM/RAG/embedding
+and external execution flags are all false. Codex tests use a fake injected real
+adapter only. Fake adapter calls are not Discord API calls and must leave
+`discord_api_send_called=false`, `discord_message_sent=false`, and
+`message_sent_count=0`.
+
 Safety state:
 
 - Conditions met: false

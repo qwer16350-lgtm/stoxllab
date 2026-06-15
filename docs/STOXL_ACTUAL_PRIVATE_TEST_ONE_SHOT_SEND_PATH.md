@@ -35,6 +35,25 @@ reported, but `ready_for_discord_send=false`, `discord_api_send_called=false`,
 approved implementation. This document and report only expose its boolean
 enabled state, never secret values.
 
+Phase 39B Final Bundle adds the real adapter selection path. Adapter choice is:
+
+- `none`: execute flag is absent.
+- `mock`: execute flag is present and real execution env is false.
+- `real`: execute flag is present, real execution env is true, and every gate is
+  satisfied.
+
+Codex implementation and tests do not execute the real Discord API send. Tests
+inject a fake real adapter, which verifies `actual_execution_adapter=real`,
+`real_adapter_selected=true`, and `real_adapter_called=true` while keeping
+`discord_api_send_called=false`, `discord_message_sent=false`, and
+`message_sent_count=0`.
+
+In an operator-run real send, success must produce exactly one private-test
+message and then prepare Phase 39C closeout/no-repeat lock:
+`actual_private_test_send_executed=true`,
+`discord_api_send_called=true`, `discord_message_sent=true`,
+`message_sent_count=1`, and `ready_for_phase39c_send_closeout=true`.
+
 The approval phrase is compared by exact code constant. Reports must show only
 presence and exact-match booleans, never the approval phrase value.
 
@@ -49,4 +68,4 @@ Safety state:
 - Ready for actual private-test send: false
 - Ready for Discord send: false
 - Ready for Phase 39B manual one-shot send: false
-- Phase 39B actual execution adapter: mock when execute gate is explicitly met
+- Phase 39B actual execution adapter: none/mock/real by explicit gates

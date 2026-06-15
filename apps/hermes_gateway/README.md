@@ -597,6 +597,14 @@ this hotfix it enters `phase39b_actual_send_execution` with
 `HERMES_PHASE39B_REAL_DISCORD_SEND_EXECUTION` is reported as a boolean only and
 does not cause a Discord API send here. Actual Discord send remains 0.
 
+Phase 39B Final Bundle separates the adapter choices. Without the execute flag
+the adapter is `none`; with execute and real env false it remains `mock`; with
+execute plus `HERMES_PHASE39B_REAL_DISCORD_SEND_EXECUTION=true` and all gates
+met it selects `real`. Codex tests only use an injected fake real adapter, so no
+Discord API send is called during implementation. A successful operator-run real
+send is expected to produce exactly one private-test message and
+`ready_for_phase39c_send_closeout=true`.
+
 If the registry file is missing, generate it from the repo root:
 
 ```powershell

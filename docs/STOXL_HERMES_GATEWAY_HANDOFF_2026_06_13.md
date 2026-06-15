@@ -369,3 +369,11 @@ report enters `phase39b_actual_send_execution` using
 `message_sent_count=0` remain locked. The real execution env
 `HERMES_PHASE39B_REAL_DISCORD_SEND_EXECUTION` is reported only as a boolean, and
 actual Discord send remains 0.
+
+Phase 39B Final Bundle adds real adapter selection without running it in Codex.
+Adapter selection is `none` without execute, `mock` with execute and real env
+false, and `real` only with execute, real env true, exact manual approval gates,
+token/channel presence, private-test-only scope, public/team blocked,
+unattended false, and LLM/RAG/embedding/external flags false. Tests inject a
+fake real adapter and verify adapter selection/call metadata while keeping
+actual Discord API send, Discord message sent, and message count at zero.
