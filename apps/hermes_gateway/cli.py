@@ -78,6 +78,7 @@ from rag_evidence_private_test_e2e_live_reply import build_rag_evidence_private_
 from rag_evidence_private_test_e2e_send_retry import build_rag_evidence_private_test_e2e_send_retry_report, render_rag_evidence_private_test_e2e_send_retry_markdown
 from rag_evidence_private_test_e2e_live_closeout import build_rag_evidence_private_test_e2e_live_closeout, render_rag_evidence_private_test_e2e_live_closeout_markdown
 from rag_evidence_private_test_phase34_final_lock import build_rag_evidence_private_test_phase34_final_lock, render_rag_evidence_private_test_phase34_final_lock_markdown
+from phase35a_post_mvp_safety_audit import build_phase35a_post_mvp_safety_audit, render_phase35a_post_mvp_safety_audit_markdown
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight, render_rag_evidence_private_test_send_preflight_markdown
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope, render_rag_evidence_prompt_envelope_markdown
 from rag_evidence_review_packet import build_rag_evidence_review_packet, render_rag_evidence_review_packet_markdown
@@ -305,6 +306,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--rag-evidence-private-test-e2e-send-retry", action="store_true", help="Print Phase 34L-1E no-LLM private-test E2E send retry report.")
     parser.add_argument("--rag-evidence-private-test-e2e-live-closeout", action="store_true", help="Print Phase 34L-2 E2E live reply and no-LLM send retry closeout.")
     parser.add_argument("--rag-evidence-private-test-phase34-final-lock", action="store_true", help="Print Phase 34M private-test E2E MVP final lock report.")
+    parser.add_argument("--phase35a-post-mvp-safety-audit", action="store_true", help="Print Phase 35A post-MVP safety audit report.")
     parser.add_argument("--source", default="operation", help="RAG source for local retrieval reports.")
     parser.add_argument("--query", default="STOXL brand tone", help="RAG query preview for local retrieval reports.")
     parser.add_argument("--allow-llm-api-call", action="store_true", help="Allow Phase 32B to attempt one gated provider call when env gates pass.")
@@ -1295,6 +1297,23 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- final_discord_message_sent_count: {output.get('no_llm_send_retry_closeout', {}).get('message_sent_count')}")
         return 0
 
+    if args.phase35a_post_mvp_safety_audit:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_phase35a_post_mvp_safety_audit(root=str(cfg.repo_root))
+        if args.markdown:
+            print(render_phase35a_post_mvp_safety_audit_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            counts = output.get("final_e2e_counts", {})
+            print("STOXL Phase 35A post-MVP safety audit")
+            print(f"- phase35a_audit_passed: {output.get('phase35a_audit_passed')}")
+            print(f"- phase34_private_test_mvp_complete: {output.get('phase34_private_test_mvp_complete')}")
+            print(f"- total_llm_call_count: {counts.get('total_llm_call_count')}")
+            print(f"- send_retry_llm_call_count: {counts.get('send_retry_llm_call_count')}")
+            print(f"- final_discord_message_sent_count: {counts.get('final_discord_message_sent_count')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -1469,6 +1488,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.rag_evidence_private_test_e2e_send_retry
         or args.rag_evidence_private_test_e2e_live_closeout
         or args.rag_evidence_private_test_phase34_final_lock
+        or args.phase35a_post_mvp_safety_audit
         or args.allow_llm_api_call
         or args.allow_rag_evidence_llm_api_call
         or args.allow_rag_evidence_private_test_discord_send

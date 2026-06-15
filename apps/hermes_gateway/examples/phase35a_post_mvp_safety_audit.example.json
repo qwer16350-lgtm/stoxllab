@@ -1,0 +1,39 @@
+{
+  "report_type": "phase35a_post_mvp_safety_audit",
+  "version": "phase35a_post_mvp_safety_audit_report_only",
+  "phase34_private_test_mvp_complete": true,
+  "phase34m_final_lock_passed": true,
+  "final_e2e_counts": {
+    "total_llm_call_count": 1,
+    "send_retry_llm_call_count": 0,
+    "final_discord_message_sent_count": 1,
+    "sent_channel_scope": "private_test_only"
+  },
+  "default_gate_state": {
+    "discord_send_messages_enabled": false,
+    "discord_private_test_reply_enabled": false,
+    "reply_mode_private_test_only": false,
+    "rag_evidence_e2e_live_reply_approved": false,
+    "rag_evidence_e2e_send_retry_approved": false,
+    "rag_evidence_llm_dry_call_approved": false,
+    "llm_discord_send_enabled": false,
+    "discord_rag_enabled": false,
+    "rag_llm_reply_enabled": false
+  },
+  "blocked_scopes": {
+    "public_channel_reply_allowed": false,
+    "team_channel_reply_allowed": false,
+    "public_channel_send_allowed": false,
+    "team_channel_send_allowed": false,
+    "unattended_auto_reply_allowed": false
+  },
+  "disabled_capabilities": {
+    "embedding_api_called": false,
+    "vector_index_created": false,
+    "external_execution": false,
+    "scheduler_auto_reply": false
+  },
+  "phase35a_audit_passed": true,
+  "ready_for_phase35_entry_planning": true,
+  "ready_for_unattended_auto_reply": false
+}

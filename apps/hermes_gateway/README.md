@@ -62,6 +62,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - Build Phase 34L-1E/F no-LLM send retry reports for the case where an E2E LLM call succeeds but Discord send disconnects, including an actual sender boundary that remains manually gated.
 - Build Phase 34L-2 E2E live reply plus no-LLM send retry closeout reports from a sanitized replay/audit fixture.
 - Build Phase 34M final lock reports that mark the private-test E2E RAG+LLM+Discord MVP complete.
+- Build Phase 35A post-MVP safety audit reports and operator runbooks without live execution.
 
 ## Explicit Non-Goals
 
@@ -103,6 +104,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - No Phase 34L-1E/F default retry report runs live Discord runtime, sends Discord messages, calls OpenRouter/LLM APIs, calls embeddings, or executes external actions.
 - No Phase 34L-2 closeout starts Discord, sends additional Discord messages, calls OpenRouter/LLM APIs, recalls LLM, calls embeddings, or executes external actions.
 - No Phase 34M final lock starts Discord, sends additional Discord messages, calls OpenRouter/LLM APIs, recalls LLM, calls embeddings, or executes external actions.
+- No Phase 35A audit starts Discord, sends messages, calls OpenRouter/LLM APIs, recalls LLM, creates embeddings/vector indexes, schedules auto replies, or executes external actions.
 
 ## Phase 21 Read-Only Planning Docs
 
@@ -173,6 +175,9 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - `docs/STOXL_RAG_EVIDENCE_PRIVATE_TEST_E2E_SEND_RETRY.md`
 - `docs/STOXL_RAG_EVIDENCE_PRIVATE_TEST_E2E_LIVE_CLOSEOUT.md`
 - `docs/STOXL_RAG_EVIDENCE_PRIVATE_TEST_PHASE34_FINAL_LOCK.md`
+- `docs/STOXL_PHASE35A_POST_MVP_SAFETY_AUDIT.md`
+- `docs/STOXL_HERMES_OPERATOR_RUNBOOK.md`
+- `docs/STOXL_PHASE35_ENTRY_PLAN.md`
 
 These documents prepare for a later private server read-only connection review. They do not authorize or perform a Discord connection.
 

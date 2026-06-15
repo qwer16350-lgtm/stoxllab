@@ -53,4 +53,4 @@ Expected values:
 
 ## Next Step
 
-Next recommended step is Phase 35 or commit-only consolidation.
+Phase 35A adds a post-MVP safety audit, operator runbook, and entry plan. It is report-only and keeps Discord, LLM, embedding/vector, external execution, public/team channel reply, and unattended auto reply disabled.

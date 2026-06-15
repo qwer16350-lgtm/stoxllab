@@ -22,6 +22,7 @@
 - Phase 34L-1E/F no-LLM send retry reporting is available for LLM-success/Discord-send-disconnect partial success, with the actual sender boundary wired behind manual gates.
 - Phase 34L-2 E2E live reply plus no-LLM send retry closeout is available and marks the chain ready for Phase 34M final lock.
 - Phase 34M final lock is available and marks the private-test E2E RAG+LLM+Discord MVP complete.
+- Phase 35A post-MVP safety audit, operator runbook, and Phase 35 entry plan are available.
 
 ## Completed Chain
 
@@ -70,6 +71,7 @@
 - Phase 34L-1E/F does not run live Discord runtime by default, does not send Discord messages in reports/tests, does not call OpenRouter/LLM again, does not call embeddings, and does not execute external actions. It prepares a manual send retry from an already safety-checked partial-success artifact.
 - Phase 34L-2 does not run Discord, send another message, call OpenRouter/LLM, recall LLM, call embeddings, or execute external actions. It verifies LLM count 1, send retry LLM count 0, and final private-test sent count 1.
 - Phase 34M final lock does not run Discord, send another message, call OpenRouter/LLM, recall LLM, call embeddings, or execute external actions. It keeps future live runs behind manual approvals.
+- Phase 35A does not run Discord, send messages, call OpenRouter/LLM, recall LLM, create embeddings/vector indexes, schedule auto replies, or execute external actions. It confirms public/team channel send/reply remains forbidden and unattended auto reply remains false.
 
 ## Important Commands
 
@@ -113,6 +115,7 @@ python apps\hermes_gateway\cli.py --rag-evidence-private-test-e2e-replay --json
 python apps\hermes_gateway\cli.py --rag-evidence-private-test-e2e-send-retry --json
 python apps\hermes_gateway\cli.py --rag-evidence-private-test-e2e-live-closeout --json
 python apps\hermes_gateway\cli.py --rag-evidence-private-test-phase34-final-lock --json
+python apps\hermes_gateway\cli.py --phase35a-post-mvp-safety-audit --json
 python apps\hermes_gateway\cli.py --operations-viewer --json
 ```
 

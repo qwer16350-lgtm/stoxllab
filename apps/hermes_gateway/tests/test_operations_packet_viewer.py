@@ -528,6 +528,22 @@ def test_rag_evidence_private_test_phase34_final_lock_summary() -> None:
     assert_true(final_lock["phase34m_final_lock_passed"] is True, "Final lock should pass")
 
 
+def test_phase35a_post_mvp_safety_audit_summary() -> None:
+    setup_artifacts()
+    audit = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")["phase35a_post_mvp_safety_audit"]
+    assert_true(audit["available"] is True, "Phase 35A audit should be available")
+    assert_true(audit["phase34_private_test_mvp_complete"] is True, "MVP should be complete")
+    assert_true(audit["phase34m_final_lock_passed"] is True, "Final lock should pass")
+    assert_true(audit["total_llm_call_count"] == 1, "Total LLM count should be one")
+    assert_true(audit["send_retry_llm_call_count"] == 0, "Retry LLM count should be zero")
+    assert_true(audit["final_discord_message_sent_count"] == 1, "Final sent count should be one")
+    assert_true(audit["sent_channel_scope"] == "private_test_only", "Scope should be private-test only")
+    assert_true(audit["public_team_blocked"] is True, "Public/team should be blocked")
+    assert_true(audit["unattended_auto_reply_allowed"] is False, "Unattended false")
+    assert_true(audit["embedding_external_disabled"] is True, "Embedding/external should be disabled")
+    assert_true(audit["phase35a_audit_passed"] is True, "Audit should pass")
+
+
 def main() -> int:
     tests = [
         test_recent_events_returned,
@@ -567,6 +583,7 @@ def main() -> int:
         test_rag_evidence_private_test_e2e_send_retry_summary,
         test_rag_evidence_private_test_e2e_live_closeout_summary,
         test_rag_evidence_private_test_phase34_final_lock_summary,
+        test_phase35a_post_mvp_safety_audit_summary,
     ]
     for test in tests:
         test()

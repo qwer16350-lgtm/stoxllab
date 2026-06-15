@@ -40,6 +40,7 @@ from rag_evidence_private_test_e2e_live_reply import build_rag_evidence_private_
 from rag_evidence_private_test_e2e_send_retry import build_rag_evidence_private_test_e2e_send_retry_report
 from rag_evidence_private_test_e2e_live_closeout import build_rag_evidence_private_test_e2e_live_closeout
 from rag_evidence_private_test_phase34_final_lock import build_rag_evidence_private_test_phase34_final_lock
+from phase35a_post_mvp_safety_audit import build_phase35a_post_mvp_safety_audit
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope
 from rag_evidence_review_packet import build_rag_evidence_review_packet
@@ -415,6 +416,10 @@ def build_operations_packet_viewer_report(
         root=str(_repo(root)),
         closeout=rag_evidence_e2e_live_closeout,
     )
+    phase35a_audit = build_phase35a_post_mvp_safety_audit(
+        root=str(_repo(root)),
+        final_lock=rag_evidence_phase34_final_lock,
+    )
     report = {
         "report_type": "operations_packet_viewer",
         "version": VERSION,
@@ -774,6 +779,22 @@ def build_operations_packet_viewer_report(
             "sent_channel_scope": rag_evidence_phase34_final_lock.get("no_llm_send_retry_closeout", {}).get("sent_channel_scope", ""),
             "ready_for_unattended_auto_reply": bool(rag_evidence_phase34_final_lock.get("final_safety_state", {}).get("ready_for_unattended_auto_reply")),
             "phase34m_final_lock_passed": bool(rag_evidence_phase34_final_lock.get("phase34m_final_lock_passed")),
+        },
+        "phase35a_post_mvp_safety_audit": {
+            "available": True,
+            "phase34_private_test_mvp_complete": bool(phase35a_audit.get("phase34_private_test_mvp_complete")),
+            "phase34m_final_lock_passed": bool(phase35a_audit.get("phase34m_final_lock_passed")),
+            "total_llm_call_count": int(phase35a_audit.get("final_e2e_counts", {}).get("total_llm_call_count", 0) or 0),
+            "send_retry_llm_call_count": int(phase35a_audit.get("final_e2e_counts", {}).get("send_retry_llm_call_count", 0) or 0),
+            "final_discord_message_sent_count": int(phase35a_audit.get("final_e2e_counts", {}).get("final_discord_message_sent_count", 0) or 0),
+            "sent_channel_scope": phase35a_audit.get("final_e2e_counts", {}).get("sent_channel_scope", ""),
+            "public_team_blocked": not any(
+                bool(phase35a_audit.get("blocked_scopes", {}).get(key))
+                for key in ("public_channel_reply_allowed", "team_channel_reply_allowed", "public_channel_send_allowed", "team_channel_send_allowed")
+            ),
+            "unattended_auto_reply_allowed": bool(phase35a_audit.get("blocked_scopes", {}).get("unattended_auto_reply_allowed")),
+            "embedding_external_disabled": not any(bool(value) for value in phase35a_audit.get("disabled_capabilities", {}).values()),
+            "phase35a_audit_passed": bool(phase35a_audit.get("phase35a_audit_passed")),
         },
         "daily_manifest_summary": load_daily_manifest(root=root, date=date),
         "filters": {
