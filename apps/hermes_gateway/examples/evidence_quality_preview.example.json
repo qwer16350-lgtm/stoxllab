@@ -1,0 +1,14 @@
+{
+  "report_type": "evidence_quality_preview",
+  "version": "phase35b_evidence_quality_preview_report_only",
+  "evidence_quality_preview_available": true,
+  "citation_sufficiency_checked": true,
+  "duplicate_evidence_checked": true,
+  "stale_doc_suspicion_checked": true,
+  "relative_paths_only": true,
+  "full_content_included": false,
+  "ready_for_llm_prompt": false,
+  "ready_for_embedding": false,
+  "ready_for_external_sources": false,
+  "ready_for_discord_send": false
+}

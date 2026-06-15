@@ -11,6 +11,7 @@ A. Local knowledge ingestion UX improvement
 - No external source.
 - No live Discord.
 - Strengthen source canonical validation.
+- Phase 35B adds report-only local knowledge ingestion preview.
 
 B. Evidence quality scoring
 
@@ -18,6 +19,7 @@ B. Evidence quality scoring
 - Duplicate evidence detection.
 - Stale document detection.
 - Relative path only.
+- Phase 35B adds dry evidence quality preview.
 
 C. Agent routing preview
 
@@ -25,6 +27,7 @@ C. Agent routing preview
 - Enforce `operation`, not `operations`.
 - No LLM call.
 - No Discord send.
+- Phase 35B adds rule-only agent routing dry preview.
 
 D. Operator dashboard
 

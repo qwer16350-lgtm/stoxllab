@@ -79,6 +79,9 @@ from rag_evidence_private_test_e2e_send_retry import build_rag_evidence_private_
 from rag_evidence_private_test_e2e_live_closeout import build_rag_evidence_private_test_e2e_live_closeout, render_rag_evidence_private_test_e2e_live_closeout_markdown
 from rag_evidence_private_test_phase34_final_lock import build_rag_evidence_private_test_phase34_final_lock, render_rag_evidence_private_test_phase34_final_lock_markdown
 from phase35a_post_mvp_safety_audit import build_phase35a_post_mvp_safety_audit, render_phase35a_post_mvp_safety_audit_markdown
+from local_knowledge_ingestion_preview import build_local_knowledge_ingestion_preview, render_local_knowledge_ingestion_preview_markdown
+from evidence_quality_preview import build_evidence_quality_preview, render_evidence_quality_preview_markdown
+from agent_routing_dry_preview import build_agent_routing_dry_preview, render_agent_routing_dry_preview_markdown
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight, render_rag_evidence_private_test_send_preflight_markdown
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope, render_rag_evidence_prompt_envelope_markdown
 from rag_evidence_review_packet import build_rag_evidence_review_packet, render_rag_evidence_review_packet_markdown
@@ -307,6 +310,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--rag-evidence-private-test-e2e-live-closeout", action="store_true", help="Print Phase 34L-2 E2E live reply and no-LLM send retry closeout.")
     parser.add_argument("--rag-evidence-private-test-phase34-final-lock", action="store_true", help="Print Phase 34M private-test E2E MVP final lock report.")
     parser.add_argument("--phase35a-post-mvp-safety-audit", action="store_true", help="Print Phase 35A post-MVP safety audit report.")
+    parser.add_argument("--local-knowledge-ingestion-preview", action="store_true", help="Print Phase 35B local knowledge ingestion preview.")
+    parser.add_argument("--evidence-quality-preview", action="store_true", help="Print Phase 35B evidence quality dry preview.")
+    parser.add_argument("--agent-routing-dry-preview", action="store_true", help="Print Phase 35B agent routing dry preview.")
     parser.add_argument("--source", default="operation", help="RAG source for local retrieval reports.")
     parser.add_argument("--query", default="STOXL brand tone", help="RAG query preview for local retrieval reports.")
     parser.add_argument("--allow-llm-api-call", action="store_true", help="Allow Phase 32B to attempt one gated provider call when env gates pass.")
@@ -1314,6 +1320,42 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- final_discord_message_sent_count: {counts.get('final_discord_message_sent_count')}")
         return 0
 
+    if args.local_knowledge_ingestion_preview:
+        output = build_local_knowledge_ingestion_preview(source=args.source)
+        if args.markdown:
+            print(render_local_knowledge_ingestion_preview_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL local knowledge ingestion preview")
+            print(f"- ready_for_local_text_ingestion: {output.get('ready_for_local_text_ingestion')}")
+            print(f"- ready_for_embedding: {output.get('ready_for_embedding')}")
+        return 0
+
+    if args.evidence_quality_preview:
+        output = build_evidence_quality_preview()
+        if args.markdown:
+            print(render_evidence_quality_preview_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL evidence quality preview")
+            print(f"- citation_sufficiency_checked: {output.get('citation_sufficiency_checked')}")
+            print(f"- full_content_included: {output.get('full_content_included')}")
+        return 0
+
+    if args.agent_routing_dry_preview:
+        output = build_agent_routing_dry_preview()
+        if args.markdown:
+            print(render_agent_routing_dry_preview_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL agent routing dry preview")
+            print(f"- routing_rule_only: {output.get('routing_rule_only')}")
+            print(f"- llm_called: {output.get('llm_called')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -1489,6 +1531,9 @@ def main(argv: list[str] | None = None) -> int:
         or args.rag_evidence_private_test_e2e_live_closeout
         or args.rag_evidence_private_test_phase34_final_lock
         or args.phase35a_post_mvp_safety_audit
+        or args.local_knowledge_ingestion_preview
+        or args.evidence_quality_preview
+        or args.agent_routing_dry_preview
         or args.allow_llm_api_call
         or args.allow_rag_evidence_llm_api_call
         or args.allow_rag_evidence_private_test_discord_send

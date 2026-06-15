@@ -23,6 +23,7 @@
 - Phase 34L-2 E2E live reply plus no-LLM send retry closeout is available and marks the chain ready for Phase 34M final lock.
 - Phase 34M final lock is available and marks the private-test E2E RAG+LLM+Discord MVP complete.
 - Phase 35A post-MVP safety audit, operator runbook, and Phase 35 entry plan are available.
+- Phase 35B local knowledge ingestion preview, evidence quality dry preview, and agent routing dry preview are available.
 
 ## Completed Chain
 
@@ -72,6 +73,7 @@
 - Phase 34L-2 does not run Discord, send another message, call OpenRouter/LLM, recall LLM, call embeddings, or execute external actions. It verifies LLM count 1, send retry LLM count 0, and final private-test sent count 1.
 - Phase 34M final lock does not run Discord, send another message, call OpenRouter/LLM, recall LLM, call embeddings, or execute external actions. It keeps future live runs behind manual approvals.
 - Phase 35A does not run Discord, send messages, call OpenRouter/LLM, recall LLM, create embeddings/vector indexes, schedule auto replies, or execute external actions. It confirms public/team channel send/reply remains forbidden and unattended auto reply remains false.
+- Phase 35B does not run Discord, send messages, call OpenRouter/LLM, create embeddings/vector indexes, watch files, schedule auto replies, or execute external actions. It keeps `operation` canonical and `operations` forbidden.
 
 ## Important Commands
 
@@ -116,6 +118,9 @@ python apps\hermes_gateway\cli.py --rag-evidence-private-test-e2e-send-retry --j
 python apps\hermes_gateway\cli.py --rag-evidence-private-test-e2e-live-closeout --json
 python apps\hermes_gateway\cli.py --rag-evidence-private-test-phase34-final-lock --json
 python apps\hermes_gateway\cli.py --phase35a-post-mvp-safety-audit --json
+python apps\hermes_gateway\cli.py --local-knowledge-ingestion-preview --json
+python apps\hermes_gateway\cli.py --evidence-quality-preview --json
+python apps\hermes_gateway\cli.py --agent-routing-dry-preview --json
 python apps\hermes_gateway\cli.py --operations-viewer --json
 ```
 

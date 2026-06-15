@@ -1,0 +1,15 @@
+{
+  "report_type": "local_knowledge_ingestion_preview",
+  "version": "phase35b_local_knowledge_ingestion_preview_report_only",
+  "ready_for_local_text_ingestion": true,
+  "ready_for_embedding": false,
+  "ready_for_external_sources": false,
+  "ready_for_llm_prompt": false,
+  "ready_for_discord_send": false,
+  "canonical_sources": ["marketing", "operation", "strategy", "brand", "archive"],
+  "forbidden_sources": ["operations"],
+  "relative_paths_only": true,
+  "full_content_included": false,
+  "candidate_files": [],
+  "blocked_candidates": []
+}

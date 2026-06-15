@@ -1,0 +1,9 @@
+{
+  "report_type": "agent_routing_dry_preview",
+  "version": "phase35b_agent_routing_dry_preview_report_only",
+  "routing_preview_available": true,
+  "routing_rule_only": true,
+  "llm_called": false,
+  "discord_message_sent": false,
+  "ready_for_unattended_auto_reply": false
+}

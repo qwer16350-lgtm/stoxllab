@@ -63,6 +63,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - Build Phase 34L-2 E2E live reply plus no-LLM send retry closeout reports from a sanitized replay/audit fixture.
 - Build Phase 34M final lock reports that mark the private-test E2E RAG+LLM+Discord MVP complete.
 - Build Phase 35A post-MVP safety audit reports and operator runbooks without live execution.
+- Build Phase 35B local knowledge ingestion, evidence quality, and agent routing dry previews without live execution.
 
 ## Explicit Non-Goals
 
@@ -105,6 +106,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - No Phase 34L-2 closeout starts Discord, sends additional Discord messages, calls OpenRouter/LLM APIs, recalls LLM, calls embeddings, or executes external actions.
 - No Phase 34M final lock starts Discord, sends additional Discord messages, calls OpenRouter/LLM APIs, recalls LLM, calls embeddings, or executes external actions.
 - No Phase 35A audit starts Discord, sends messages, calls OpenRouter/LLM APIs, recalls LLM, creates embeddings/vector indexes, schedules auto replies, or executes external actions.
+- No Phase 35B preview starts Discord, sends messages, calls OpenRouter/LLM APIs, creates embeddings/vector indexes, watches files, schedules auto replies, or executes external actions.
 
 ## Phase 21 Read-Only Planning Docs
 
@@ -178,6 +180,9 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - `docs/STOXL_PHASE35A_POST_MVP_SAFETY_AUDIT.md`
 - `docs/STOXL_HERMES_OPERATOR_RUNBOOK.md`
 - `docs/STOXL_PHASE35_ENTRY_PLAN.md`
+- `docs/STOXL_LOCAL_KNOWLEDGE_INGESTION_PREVIEW.md`
+- `docs/STOXL_EVIDENCE_QUALITY_PREVIEW.md`
+- `docs/STOXL_AGENT_ROUTING_DRY_PREVIEW.md`
 
 These documents prepare for a later private server read-only connection review. They do not authorize or perform a Discord connection.
 

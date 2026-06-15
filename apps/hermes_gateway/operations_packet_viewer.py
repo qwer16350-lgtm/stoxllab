@@ -41,6 +41,9 @@ from rag_evidence_private_test_e2e_send_retry import build_rag_evidence_private_
 from rag_evidence_private_test_e2e_live_closeout import build_rag_evidence_private_test_e2e_live_closeout
 from rag_evidence_private_test_phase34_final_lock import build_rag_evidence_private_test_phase34_final_lock
 from phase35a_post_mvp_safety_audit import build_phase35a_post_mvp_safety_audit
+from local_knowledge_ingestion_preview import build_local_knowledge_ingestion_preview
+from evidence_quality_preview import build_evidence_quality_preview
+from agent_routing_dry_preview import build_agent_routing_dry_preview
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope
 from rag_evidence_review_packet import build_rag_evidence_review_packet
@@ -420,6 +423,9 @@ def build_operations_packet_viewer_report(
         root=str(_repo(root)),
         final_lock=rag_evidence_phase34_final_lock,
     )
+    local_knowledge_preview = build_local_knowledge_ingestion_preview(root=str(_repo(root)), source="operation")
+    evidence_quality = build_evidence_quality_preview(root=str(_repo(root)))
+    routing_preview = build_agent_routing_dry_preview()
     report = {
         "report_type": "operations_packet_viewer",
         "version": VERSION,
@@ -795,6 +801,29 @@ def build_operations_packet_viewer_report(
             "unattended_auto_reply_allowed": bool(phase35a_audit.get("blocked_scopes", {}).get("unattended_auto_reply_allowed")),
             "embedding_external_disabled": not any(bool(value) for value in phase35a_audit.get("disabled_capabilities", {}).values()),
             "phase35a_audit_passed": bool(phase35a_audit.get("phase35a_audit_passed")),
+        },
+        "phase35b_local_knowledge_ingestion_preview": {
+            "available": True,
+            "ready_for_local_text_ingestion": bool(local_knowledge_preview.get("ready_for_local_text_ingestion")),
+            "ready_for_embedding": bool(local_knowledge_preview.get("ready_for_embedding")),
+            "ready_for_external_sources": bool(local_knowledge_preview.get("ready_for_external_sources")),
+            "canonical_operation_source": "operation" in local_knowledge_preview.get("canonical_sources", []),
+            "forbidden_operations_source": "operations" in local_knowledge_preview.get("forbidden_sources", []),
+        },
+        "phase35b_evidence_quality_preview": {
+            "available": True,
+            "citation_sufficiency_checked": bool(evidence_quality.get("citation_sufficiency_checked")),
+            "duplicate_evidence_checked": bool(evidence_quality.get("duplicate_evidence_checked")),
+            "stale_doc_suspicion_checked": bool(evidence_quality.get("stale_doc_suspicion_checked")),
+            "relative_paths_only": bool(evidence_quality.get("relative_paths_only")),
+            "full_content_included": bool(evidence_quality.get("full_content_included")),
+        },
+        "phase35b_agent_routing_dry_preview": {
+            "available": True,
+            "routing_rule_only": bool(routing_preview.get("routing_rule_only")),
+            "llm_called": bool(routing_preview.get("llm_called")),
+            "discord_message_sent": bool(routing_preview.get("discord_message_sent")),
+            "ready_for_unattended_auto_reply": bool(routing_preview.get("ready_for_unattended_auto_reply")),
         },
         "daily_manifest_summary": load_daily_manifest(root=root, date=date),
         "filters": {

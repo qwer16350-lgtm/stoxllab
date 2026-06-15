@@ -544,6 +544,29 @@ def test_phase35a_post_mvp_safety_audit_summary() -> None:
     assert_true(audit["phase35a_audit_passed"] is True, "Audit should pass")
 
 
+def test_phase35b_summaries() -> None:
+    setup_artifacts()
+    report = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")
+    local = report["phase35b_local_knowledge_ingestion_preview"]
+    quality = report["phase35b_evidence_quality_preview"]
+    routing = report["phase35b_agent_routing_dry_preview"]
+    assert_true(local["available"] is True, "Local preview should be available")
+    assert_true(local["ready_for_local_text_ingestion"] is True, "Local text ready")
+    assert_true(local["ready_for_embedding"] is False, "Embedding false")
+    assert_true(local["ready_for_external_sources"] is False, "External false")
+    assert_true(local["canonical_operation_source"] is True, "operation canonical")
+    assert_true(local["forbidden_operations_source"] is True, "operations forbidden")
+    assert_true(quality["citation_sufficiency_checked"] is True, "Citation checked")
+    assert_true(quality["duplicate_evidence_checked"] is True, "Duplicate checked")
+    assert_true(quality["stale_doc_suspicion_checked"] is True, "Stale checked")
+    assert_true(quality["relative_paths_only"] is True, "Relative paths")
+    assert_true(quality["full_content_included"] is False, "No full content")
+    assert_true(routing["routing_rule_only"] is True, "Rule-only")
+    assert_true(routing["llm_called"] is False, "No LLM")
+    assert_true(routing["discord_message_sent"] is False, "No Discord")
+    assert_true(routing["ready_for_unattended_auto_reply"] is False, "No unattended")
+
+
 def main() -> int:
     tests = [
         test_recent_events_returned,
@@ -584,6 +607,7 @@ def main() -> int:
         test_rag_evidence_private_test_e2e_live_closeout_summary,
         test_rag_evidence_private_test_phase34_final_lock_summary,
         test_phase35a_post_mvp_safety_audit_summary,
+        test_phase35b_summaries,
     ]
     for test in tests:
         test()
