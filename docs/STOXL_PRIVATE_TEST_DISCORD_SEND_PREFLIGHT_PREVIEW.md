@@ -32,3 +32,6 @@ python apps\hermes_gateway\cli.py --private-test-discord-send-preflight-preview 
 Phase 37D-F consumes this preview only for manual preflight, mock rehearsal, and
 no-send lock reports. It does not start Discord, call a send API, or mark Phase
 38 actual private-test send ready.
+
+Phase 38A-E keeps the same no-send position. It may freeze the preview text for
+human review, but still does not call Discord.

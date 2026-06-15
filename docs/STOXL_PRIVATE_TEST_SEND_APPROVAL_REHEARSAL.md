@@ -24,6 +24,9 @@ approval phrase or enabling approval.
 - Ready for unattended auto reply: false
 - Phase 37D-F keeps approval rehearsal as non-actualized and does not generate an approval phrase.
 
+Phase 38E may list future manual gate names, but no gate values or approval
+phrase values are generated or printed.
+
 ## CLI
 
 ```powershell

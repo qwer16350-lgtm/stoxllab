@@ -118,3 +118,9 @@ G. No-live operator rehearsal and safety lock
 - Token/key logging.
 - Raw Discord ID logging.
 - Approval phrase logging.
+# Phase 38A-E Note
+
+The current safe maximum path includes Phase 38A-E report-only preparation for a
+future private-test send: contract, payload freeze, rollback gate, operator
+checklist, and live send entry gate. This does not start Phase 39, does not send
+Discord messages, and does not enable unattended replies.
