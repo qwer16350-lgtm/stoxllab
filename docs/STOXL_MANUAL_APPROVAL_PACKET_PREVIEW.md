@@ -34,3 +34,13 @@ python apps\hermes_gateway\cli.py --manual-approval-packet-preview --markdown
 ```
 
 Both commands are report-only and do not call Discord, LLM, RAG, embeddings, or external systems.
+
+## Phase 35E-G Use
+
+The operator checklist and no-live rehearsal use this preview to show future
+manual gate names only. Approval phrase values are not generated or logged.
+
+## Phase 36A Use
+
+The private-test one-shot LLM draft preflight lists future manual gate names
+only. It does not generate approval phrase values or activate approval.

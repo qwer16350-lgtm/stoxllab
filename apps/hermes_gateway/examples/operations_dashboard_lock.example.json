@@ -1,0 +1,23 @@
+{
+  "report_type": "operations_dashboard_lock",
+  "version": "phase35f_operations_dashboard_lock_report_only",
+  "dashboard_lock_available": true,
+  "report_only": true,
+  "phase34_private_test_mvp_complete": true,
+  "phase35a_safety_audit_passed": true,
+  "phase35b_dry_previews_available": true,
+  "phase35c_agent_prompt_previews_available": true,
+  "phase35d_review_approval_previews_available": true,
+  "phase35e_operator_rehearsal_available": true,
+  "total_llm_call_count": 1,
+  "send_retry_llm_call_count": 0,
+  "final_discord_message_sent_count": 1,
+  "sent_channel_scope": "private_test_only",
+  "current_live_gates_off": true,
+  "public_team_blocked": true,
+  "unattended_auto_reply_allowed": false,
+  "embedding_vector_disabled": true,
+  "external_execution": false,
+  "ready_for_phase36_entry_gate": true,
+  "ready_for_live_runtime": false
+}

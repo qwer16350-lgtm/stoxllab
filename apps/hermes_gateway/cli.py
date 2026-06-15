@@ -86,6 +86,12 @@ from agent_evidence_pack_composer import build_agent_evidence_pack_composer, ren
 from agent_prompt_preview import build_agent_prompt_preview, render_agent_prompt_preview_markdown
 from agent_review_packet import build_agent_review_packet, render_agent_review_packet_markdown
 from manual_approval_packet_preview import build_manual_approval_packet_preview, render_manual_approval_packet_preview_markdown
+from operator_manual_checklist import build_operator_manual_checklist, render_operator_manual_checklist_markdown
+from no_live_rehearsal_packet import build_no_live_rehearsal_packet, render_no_live_rehearsal_packet_markdown
+from operations_dashboard_lock import build_operations_dashboard_lock, render_operations_dashboard_lock_markdown
+from forbidden_behavior_sentinel import build_forbidden_behavior_sentinel, render_forbidden_behavior_sentinel_markdown
+from phase36_entry_gate import build_phase36_entry_gate, render_phase36_entry_gate_markdown
+from private_test_one_shot_llm_draft_preflight import build_private_test_one_shot_llm_draft_preflight, render_private_test_one_shot_llm_draft_preflight_markdown
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight, render_rag_evidence_private_test_send_preflight_markdown
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope, render_rag_evidence_prompt_envelope_markdown
 from rag_evidence_review_packet import build_rag_evidence_review_packet, render_rag_evidence_review_packet_markdown
@@ -321,6 +327,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--agent-prompt-preview", action="store_true", help="Print Phase 35C agent prompt preview report.")
     parser.add_argument("--agent-review-packet", action="store_true", help="Print Phase 35D agent review packet report.")
     parser.add_argument("--manual-approval-packet-preview", action="store_true", help="Print Phase 35D manual approval packet preview.")
+    parser.add_argument("--operator-manual-checklist", action="store_true", help="Print Phase 35E operator manual checklist.")
+    parser.add_argument("--no-live-rehearsal-packet", action="store_true", help="Print Phase 35E no-live rehearsal packet.")
+    parser.add_argument("--operations-dashboard-lock", action="store_true", help="Print Phase 35F operations dashboard lock.")
+    parser.add_argument("--forbidden-behavior-sentinel", action="store_true", help="Print Phase 35G forbidden behavior sentinel.")
+    parser.add_argument("--phase36-entry-gate", action="store_true", help="Print Phase 36 entry gate preview.")
+    parser.add_argument("--private-test-one-shot-llm-draft-preflight", action="store_true", help="Print Phase 36A private-test one-shot LLM draft preflight without API calls.")
     parser.add_argument("--source", default="operation", help="RAG source for local retrieval reports.")
     parser.add_argument("--query", default="STOXL brand tone", help="RAG query preview for local retrieval reports.")
     parser.add_argument("--allow-llm-api-call", action="store_true", help="Allow Phase 32B to attempt one gated provider call when env gates pass.")
@@ -1414,6 +1426,78 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- ready_for_actual_approval: {output.get('ready_for_actual_approval')}")
         return 0
 
+    if args.operator_manual_checklist:
+        output = build_operator_manual_checklist()
+        if args.markdown:
+            print(render_operator_manual_checklist_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL operator manual checklist")
+            print(f"- report_only: {output.get('report_only')}")
+            print(f"- ready_for_live_runtime: {output.get('ready_for_live_runtime')}")
+        return 0
+
+    if args.no_live_rehearsal_packet:
+        output = build_no_live_rehearsal_packet()
+        if args.markdown:
+            print(render_no_live_rehearsal_packet_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL no-live rehearsal packet")
+            print(f"- report_only: {output.get('report_only')}")
+            print(f"- live_runtime_executed: {output.get('live_runtime_executed')}")
+        return 0
+
+    if args.operations_dashboard_lock:
+        output = build_operations_dashboard_lock()
+        if args.markdown:
+            print(render_operations_dashboard_lock_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL operations dashboard lock")
+            print(f"- dashboard_lock_available: {output.get('dashboard_lock_available')}")
+            print(f"- ready_for_live_runtime: {output.get('ready_for_live_runtime')}")
+        return 0
+
+    if args.forbidden_behavior_sentinel:
+        output = build_forbidden_behavior_sentinel()
+        if args.markdown:
+            print(render_forbidden_behavior_sentinel_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL forbidden behavior sentinel")
+            print(f"- sentinel_passed: {output.get('forbidden_behavior_sentinel_passed')}")
+        return 0
+
+    if args.phase36_entry_gate:
+        output = build_phase36_entry_gate()
+        if args.markdown:
+            print(render_phase36_entry_gate_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 36 entry gate")
+            print(f"- phase36_not_started: {output.get('phase36_not_started')}")
+            print(f"- ready_for_phase36_live_execution: {output.get('ready_for_phase36_live_execution')}")
+        return 0
+
+    if args.private_test_one_shot_llm_draft_preflight:
+        output = build_private_test_one_shot_llm_draft_preflight()
+        if args.markdown:
+            print(render_private_test_one_shot_llm_draft_preflight_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL private-test one-shot LLM draft preflight")
+            print(f"- report_only: {output.get('report_only')}")
+            print(f"- candidate_agents: {', '.join(output.get('candidate_agents', [])) or 'none'}")
+            print(f"- ready_for_actual_llm_call: {output.get('ready_for_actual_llm_call')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -1596,6 +1680,12 @@ def main(argv: list[str] | None = None) -> int:
         or args.agent_prompt_preview
         or args.agent_review_packet
         or args.manual_approval_packet_preview
+        or args.operator_manual_checklist
+        or args.no_live_rehearsal_packet
+        or args.operations_dashboard_lock
+        or args.forbidden_behavior_sentinel
+        or args.phase36_entry_gate
+        or args.private_test_one_shot_llm_draft_preflight
         or args.allow_llm_api_call
         or args.allow_rag_evidence_llm_api_call
         or args.allow_rag_evidence_private_test_discord_send

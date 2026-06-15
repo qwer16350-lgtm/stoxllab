@@ -268,3 +268,14 @@ They are dry/report-only artifacts for human review. They do not generate
 approval phrases, grant approval, run Discord live runtime, send Discord
 messages, call OpenRouter/LLM, create embeddings/vector indexes, read external
 sources, or execute external actions.
+
+Phase 35E-G adds no-live operator rehearsal, operations dashboard lock, and
+forbidden behavior sentinel reports. Phase 36 entry gate is added as a
+report-only classifier. Phase 36 is not started, live execution remains false,
+and explicit user approval is still required before any future live work.
+
+Phase 36A adds a private-test one-shot LLM draft preflight. It only identifies
+future candidate agents and manual gate names. It does not call OpenRouter/LLM,
+attempt an LLM API call, send Discord messages, generate approval phrases,
+activate manual approval, create embeddings/vector indexes, or execute external
+actions.

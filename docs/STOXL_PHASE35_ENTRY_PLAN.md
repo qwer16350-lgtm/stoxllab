@@ -52,6 +52,24 @@ F. Agent review and manual approval packet preview
 - No Discord send.
 - No embedding or external source access.
 
+G. No-live operator rehearsal and safety lock
+
+- Operator checklist and no-live rehearsal only.
+- Operations dashboard lock summarizes Phase 34M and Phase 35A-D state.
+- Forbidden behavior sentinel fails if public/team, unattended, embedding,
+  external execution, full content, secret logging, or approval phrase
+  generation is re-enabled.
+- Phase 36 entry gate is report-only and keeps live execution false.
+
+## Phase 36A Safe Preflight
+
+- Private-test one-shot LLM draft preflight only.
+- No LLM API call.
+- No Discord send.
+- No approval phrase generation.
+- `kasumi` may be listed as a future candidate from operation evidence.
+- Actual LLM draft remains blocked until a later explicit approval phase.
+
 ## Hold
 
 - Embedding/vector DB.

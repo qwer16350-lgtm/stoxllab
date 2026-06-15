@@ -500,6 +500,16 @@ review, show future approval gate requirements, and keep approval phrase
 generation, LLM calls, Discord sends, embeddings, external sources, and
 unattended auto replies disabled.
 
+Phase 35E-G adds no-live operator rehearsal reports, an operations dashboard
+lock, and a forbidden behavior regression sentinel. Phase 36 entry gate is
+available as a report-only classifier, but Phase 36 has not started and live
+execution remains false without a separate explicit approval.
+
+Phase 36A adds a private-test one-shot LLM draft preflight. It identifies
+`kasumi` as a future candidate from operation evidence, but it performs no LLM
+API call, no Discord send, no approval phrase generation, no embedding, and no
+external execution.
+
 If the registry file is missing, generate it from the repo root:
 
 ```powershell

@@ -612,6 +612,57 @@ def test_phase35d_summaries() -> None:
     assert_true(approval["ready_for_unattended_auto_reply"] is False, "No unattended")
 
 
+def test_phase35e_g_and_phase36_summaries() -> None:
+    setup_artifacts()
+    report = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")
+    checklist = report["phase35e_operator_manual_checklist"]
+    rehearsal = report["phase35e_no_live_rehearsal_packet"]
+    dashboard = report["phase35f_operations_dashboard_lock"]
+    sentinel = report["phase35g_forbidden_behavior_sentinel"]
+    gate = report["phase36_entry_gate"]
+    assert_true(checklist["available"] is True, "Checklist available")
+    assert_true(checklist["report_only"] is True, "Checklist report-only")
+    assert_true(checklist["approval_phrase_generated"] is False, "No approval phrase")
+    assert_true(checklist["ready_for_actual_approval"] is False, "No actual approval")
+    assert_true(checklist["ready_for_llm_call"] is False, "No LLM ready")
+    assert_true(checklist["ready_for_discord_send"] is False, "No Discord ready")
+    assert_true(rehearsal["available"] is True, "Rehearsal available")
+    assert_true(rehearsal["report_only"] is True, "Rehearsal report-only")
+    assert_true(rehearsal["live_runtime_executed"] is False, "No live runtime")
+    assert_true(rehearsal["llm_called"] is False, "No LLM")
+    assert_true(rehearsal["discord_message_sent"] is False, "No Discord")
+    assert_true(dashboard["available"] is True, "Dashboard lock available")
+    assert_true(dashboard["phase34_private_test_mvp_complete"] is True, "MVP complete")
+    assert_true(dashboard["total_llm_call_count"] == 1, "One LLM call")
+    assert_true(dashboard["final_discord_message_sent_count"] == 1, "One final Discord message")
+    assert_true(dashboard["ready_for_live_runtime"] is False, "No live readiness")
+    assert_true(sentinel["available"] is True, "Sentinel available")
+    assert_true(sentinel["forbidden_behavior_sentinel_passed"] is True, "Sentinel passed")
+    assert_true(sentinel["public_team_blocked"] is True, "Public/team blocked")
+    assert_true(sentinel["unattended_auto_reply_allowed"] is False, "No unattended")
+    assert_true(sentinel["embedding_vector_disabled"] is True, "Embedding/vector disabled")
+    assert_true(sentinel["external_execution"] is False, "No external")
+    assert_true(gate["available"] is True, "Phase 36 gate available")
+    assert_true(gate["phase36_not_started"] is True, "Phase 36 not started")
+    assert_true(gate["requires_explicit_user_approval"] is True, "Explicit approval required")
+    assert_true(gate["ready_for_phase36_live_execution"] is False, "No Phase 36 live execution")
+
+
+def test_phase36a_preflight_summary() -> None:
+    setup_artifacts()
+    preflight = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")["phase36a_private_test_one_shot_llm_draft_preflight"]
+    assert_true(preflight["available"] is True, "Phase 36A preflight available")
+    assert_true(preflight["report_only"] is True, "Report only")
+    assert_true(preflight["phase36_started"] is False, "Phase 36 not started")
+    assert_true(preflight["requires_explicit_user_approval"] is True, "Explicit approval")
+    assert_true(preflight["llm_called"] is False, "No LLM")
+    assert_true(preflight["discord_message_sent"] is False, "No Discord")
+    assert_true(preflight["candidate_agents"] == ["kasumi"], "Candidate agent is Kasumi")
+    assert_true(preflight["ready_for_actual_llm_call"] is False, "No actual LLM ready")
+    assert_true(preflight["ready_for_discord_send"] is False, "No Discord ready")
+    assert_true(preflight["ready_for_unattended_auto_reply"] is False, "No unattended")
+
+
 def main() -> int:
     tests = [
         test_recent_events_returned,
@@ -655,6 +706,8 @@ def main() -> int:
         test_phase35b_summaries,
         test_phase35c_summaries,
         test_phase35d_summaries,
+        test_phase35e_g_and_phase36_summaries,
+        test_phase36a_preflight_summary,
     ]
     for test in tests:
         test()

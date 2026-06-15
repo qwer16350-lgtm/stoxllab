@@ -65,3 +65,11 @@ $env:HERMES_RAG_LLM_REPLY_ENABLED="false"
 - Operations viewer final lock and Phase 35A audit summaries pass.
 - Manual approval phrase is present only for the one approved run.
 - Safety gates are turned off immediately after any manual run.
+
+## No-live Rehearsal Lock
+
+Before any Phase 36 work, review the operator checklist, no-live rehearsal
+packet, operations dashboard lock, forbidden behavior sentinel, and Phase 36
+entry gate reports. These reports do not generate approval phrases and do not
+enable live runtime, LLM calls, Discord sends, embeddings, or external
+execution.

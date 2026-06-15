@@ -1,0 +1,15 @@
+{
+  "report_type": "operator_manual_checklist",
+  "version": "phase35e_operator_manual_checklist_report_only",
+  "checklist_available": true,
+  "report_only": true,
+  "human_review_required": true,
+  "approval_phrase_generated": false,
+  "approval_phrase_value_logged": false,
+  "manual_approval_activated": false,
+  "ready_for_actual_approval": false,
+  "ready_for_live_runtime": false,
+  "ready_for_llm_call": false,
+  "ready_for_discord_send": false,
+  "ready_for_unattended_auto_reply": false
+}

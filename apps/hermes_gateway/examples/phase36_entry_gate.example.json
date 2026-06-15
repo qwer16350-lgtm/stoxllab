@@ -1,0 +1,23 @@
+{
+  "report_type": "phase36_entry_gate",
+  "version": "phase36_entry_gate_report_only",
+  "phase36_entry_gate_available": true,
+  "report_only": true,
+  "phase36_not_started": true,
+  "requires_explicit_user_approval": true,
+  "ready_for_phase36_live_execution": false,
+  "allowed_next_candidates": [
+    "private_test_one_shot_llm_draft_preflight_no_send",
+    "agent_review_packet_to_llm_draft_preview_no_send"
+  ],
+  "hold_candidates": [
+    "private_test_multi_turn_runtime",
+    "embedding_vector_db",
+    "scheduler"
+  ],
+  "forbidden_candidates": [
+    "public_team_auto_reply",
+    "unattended_auto_reply",
+    "external_execution"
+  ]
+}

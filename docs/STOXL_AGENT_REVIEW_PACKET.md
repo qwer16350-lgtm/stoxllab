@@ -54,3 +54,15 @@ python apps\hermes_gateway\cli.py --agent-review-packet --markdown
 ```
 
 Both commands are report-only and do not call Discord, LLM, RAG, embeddings, or external systems.
+
+## Phase 35E-G Use
+
+The no-live rehearsal and operations dashboard lock consume this report as a
+human-review input only. They do not turn the review packet into an approval or
+send action.
+
+## Phase 36A Use
+
+The private-test one-shot LLM draft preflight may read the review packet to
+identify future candidate agents. It still keeps actual LLM calls and Discord
+sends disabled.
