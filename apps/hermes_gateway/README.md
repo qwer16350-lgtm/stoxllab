@@ -52,6 +52,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - Build Phase 34E-F private-test review packets and local sample dry-chain reports without LLM, embeddings, Discord send, or external ingest.
 - Build Phase 34G-H0 prompt envelope previews and no-API/mock-only LLM dry readiness reports without provider calls.
 - Build Phase 34H-1 manually approved RAG evidence LLM dry-call reports. The default path is report-only; an actual provider call requires a separate CLI allow flag and manual env approval, and still never sends Discord messages.
+- Build Phase 34H-2 RAG evidence LLM dry-call closeout reports from an embedded sanitized success fixture without another OpenRouter call.
 
 ## Explicit Non-Goals
 
@@ -84,6 +85,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - No Phase 34E-F review packet or dry-chain flow enables LLM prompts, Discord sends, embeddings, external source ingest, vector DB/index creation, or external execution.
 - No Phase 34G-H0 prompt readiness flow calls OpenRouter/LLM APIs, sends Discord messages, calls embeddings, ingests external sources, or executes external actions.
 - No Phase 34H-1 default report calls OpenRouter/LLM APIs, sends Discord messages, calls embeddings, ingests external sources, or executes external actions. The actual dry-call path is manual-approval gated and does not enable Discord send.
+- No Phase 34H-2 closeout calls OpenRouter/LLM APIs, sends Discord messages, calls embeddings, ingests external sources, or executes external actions.
 
 ## Phase 21 Read-Only Planning Docs
 
@@ -144,6 +146,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - `docs/STOXL_RAG_EVIDENCE_PROMPT_ENVELOPE.md`
 - `docs/STOXL_RAG_EVIDENCE_LLM_DRY_READINESS.md`
 - `docs/STOXL_RAG_EVIDENCE_LLM_DRY_CALL.md`
+- `docs/STOXL_RAG_EVIDENCE_LLM_DRY_CALL_CLOSEOUT.md`
 
 These documents prepare for a later private server read-only connection review. They do not authorize or perform a Discord connection.
 

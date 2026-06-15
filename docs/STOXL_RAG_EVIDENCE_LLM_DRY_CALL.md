@@ -45,3 +45,13 @@ The report also redacts secret-like text and raw Discord-like numeric IDs.
 ## Operations Viewer
 
 `--operations-viewer` includes a default Phase 34H-1 summary. The viewer does not pass the allow flag and does not perform an LLM API call.
+
+## Phase 34H-2 Closeout
+
+Phase 34H-2 records the successful Phase 34H-1 dry call as an embedded sanitized fixture and validates it without another OpenRouter call:
+
+```powershell
+python apps\hermes_gateway\cli.py --rag-evidence-llm-dry-call-closeout --json
+```
+
+The closeout keeps Discord send, embeddings, external execution, and additional LLM API calls disabled.

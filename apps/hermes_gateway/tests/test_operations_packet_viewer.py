@@ -341,6 +341,22 @@ def test_rag_evidence_llm_dry_call_summary() -> None:
     assert_true(dry["external_execution"] is False, "External execution should be false")
 
 
+def test_rag_evidence_llm_dry_call_closeout_summary() -> None:
+    setup_artifacts()
+    closeout = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")["rag_evidence_llm_dry_call_closeout"]
+    assert_true(closeout["available"] is True, "Dry call closeout summary should be available")
+    assert_true(closeout["actual_dry_call_observed"] is True, "Actual dry call should be observed")
+    assert_true(closeout["api_call_succeeded_count"] == 1, "One API call should be recorded from fixture")
+    assert_true(closeout["llm_response_packet_created"] is True, "Response packet should be created")
+    assert_true(closeout["output_safety_allowed"] is True, "Output safety should pass")
+    assert_true(closeout["ready_for_discord_send"] is False, "Discord send should be false")
+    assert_true(closeout["discord_message_sent"] is False, "Discord message sent should be false")
+    assert_true(closeout["embedding_api_called"] is False, "Embedding API call should be false")
+    assert_true(closeout["external_execution"] is False, "External execution should be false")
+    assert_true(closeout["additional_llm_api_call"] is False, "No additional LLM call should happen")
+    assert_true(closeout["ready_for_phase34i_private_test_would_send_preview"] is True, "Phase 34I preview should be ready")
+
+
 def main() -> int:
     tests = [
         test_recent_events_returned,
@@ -369,6 +385,7 @@ def main() -> int:
         test_rag_evidence_prompt_envelope_summary,
         test_rag_evidence_llm_dry_readiness_summary,
         test_rag_evidence_llm_dry_call_summary,
+        test_rag_evidence_llm_dry_call_closeout_summary,
     ]
     for test in tests:
         test()

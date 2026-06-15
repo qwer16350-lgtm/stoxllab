@@ -1,0 +1,39 @@
+{
+  "report_type": "rag_evidence_llm_dry_call_closeout",
+  "version": "phase34h2_actual_llm_dry_call_closeout_no_additional_api",
+  "actual_dry_call_observed": true,
+  "provider": "openrouter",
+  "model": "openai/gpt-5.4-mini",
+  "api_call_attempted_count": 1,
+  "api_call_succeeded_count": 1,
+  "llm_response_packet_created": true,
+  "output_safety_allowed": true,
+  "review_only_response": true,
+  "safe_disclaimer_detected": true,
+  "relative_evidence_paths_only": true,
+  "evidence_paths": [
+    "knowledge/operation/stoxl_operation_tone_sample.md",
+    "knowledge/operation/stoxl_private_test_workflow_sample.md"
+  ],
+  "prompt_tokens": 335,
+  "completion_tokens": 101,
+  "total_tokens": 436,
+  "provider_cost_usd": 0.00070575,
+  "ready_for_discord_send": false,
+  "discord_message_sent": false,
+  "discord_send_attempted": false,
+  "embedding_api_called": false,
+  "external_execution": false,
+  "additional_llm_api_call": false,
+  "closeout_passed": true,
+  "ready_for_phase34i_private_test_would_send_preview": true,
+  "safety_assertions": {
+    "api_key_value_logged": false,
+    "token_value_logged": false,
+    "raw_discord_ids_logged": false,
+    "embedding_called": false,
+    "discord_message_sent": false,
+    "external_execution": false,
+    "additional_llm_api_call": false
+  }
+}

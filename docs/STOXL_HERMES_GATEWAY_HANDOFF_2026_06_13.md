@@ -93,6 +93,8 @@ python apps\hermes_gateway\cli.py --rag-evidence-prompt-envelope --json
 python apps\hermes_gateway\cli.py --rag-evidence-llm-dry-readiness --json
 python apps\hermes_gateway\cli.py --rag-evidence-llm-dry-call-report --json
 python apps\hermes_gateway\cli.py --rag-evidence-llm-dry-call-report --markdown
+python apps\hermes_gateway\cli.py --rag-evidence-llm-dry-call-closeout --json
+python apps\hermes_gateway\cli.py --rag-evidence-llm-dry-call-closeout --markdown
 python apps\hermes_gateway\cli.py --operations-viewer --json
 ```
 
@@ -120,6 +122,7 @@ python apps\hermes_gateway\tests\test_knowledge_dry_chain.py
 python apps\hermes_gateway\tests\test_rag_evidence_prompt_envelope.py
 python apps\hermes_gateway\tests\test_rag_evidence_llm_dry_readiness.py
 python apps\hermes_gateway\tests\test_rag_evidence_llm_dry_call.py
+python apps\hermes_gateway\tests\test_rag_evidence_llm_dry_call_closeout.py
 python apps\hermes_gateway\tests\test_llm_private_test_reply_replay.py
 python apps\hermes_gateway\tests\test_llm_private_test_reply.py
 python apps\hermes_gateway\tests\test_private_test_reply.py
@@ -165,3 +168,8 @@ report path remains no-call. A provider call requires the separate CLI allow fla
 and manual env approval gate, and it still avoids Discord sends, external
 ingestion, embedding APIs, vector DB/index creation, broad Discord replies,
 public/team channel reply paths, and external execution.
+
+Phase 34H-2 closes out the observed successful Phase 34H-1 dry call with an
+embedded sanitized fixture. It performs no additional OpenRouter/LLM API call,
+no Discord send, no embedding call, and no external execution. Passing closeout
+sets `ready_for_phase34i_private_test_would_send_preview=true`.

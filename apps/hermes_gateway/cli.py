@@ -67,6 +67,7 @@ from rag_local_retrieval import render_rag_local_retrieval_markdown, run_rag_loc
 from rag_preflight import build_rag_preflight_report, render_rag_preflight_markdown
 from rag_response_packet import build_rag_response_packet_report, render_rag_response_packet_markdown
 from rag_evidence_integration import build_rag_evidence_integration_report, render_rag_evidence_integration_markdown
+from rag_evidence_llm_dry_call_closeout import build_rag_evidence_llm_dry_call_closeout, render_rag_evidence_llm_dry_call_closeout_markdown
 from rag_evidence_llm_dry_call import build_rag_evidence_llm_dry_call_report, render_rag_evidence_llm_dry_call_markdown
 from rag_evidence_llm_dry_readiness import build_rag_evidence_llm_dry_readiness_report, render_rag_evidence_llm_dry_readiness_markdown
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope, render_rag_evidence_prompt_envelope_markdown
@@ -283,6 +284,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--rag-evidence-prompt-envelope", action="store_true", help="Print Phase 34G RAG evidence prompt envelope preview without API calls.")
     parser.add_argument("--rag-evidence-llm-dry-readiness", action="store_true", help="Print Phase 34H-0 no-API/mock-only LLM dry-call readiness report.")
     parser.add_argument("--rag-evidence-llm-dry-call-report", action="store_true", help="Print Phase 34H-1 manually approved RAG evidence LLM dry-call report.")
+    parser.add_argument("--rag-evidence-llm-dry-call-closeout", action="store_true", help="Print Phase 34H-2 closeout from embedded sanitized RAG evidence LLM dry-call fixture.")
     parser.add_argument("--source", default="operation", help="RAG source for local retrieval reports.")
     parser.add_argument("--query", default="STOXL brand tone", help="RAG query preview for local retrieval reports.")
     parser.add_argument("--allow-llm-api-call", action="store_true", help="Allow Phase 32B to attempt one gated provider call when env gates pass.")
@@ -1108,6 +1110,21 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- ready_for_discord_send: {output.get('ready_for_discord_send')}")
         return 0
 
+    if args.rag_evidence_llm_dry_call_closeout:
+        output = build_rag_evidence_llm_dry_call_closeout()
+        if args.markdown:
+            print(render_rag_evidence_llm_dry_call_closeout_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL RAG evidence LLM dry call closeout")
+            print(f"- actual_dry_call_observed: {output.get('actual_dry_call_observed')}")
+            print(f"- api_call_succeeded_count: {output.get('api_call_succeeded_count')}")
+            print(f"- output_safety_allowed: {output.get('output_safety_allowed')}")
+            print(f"- closeout_passed: {output.get('closeout_passed')}")
+            print(f"- ready_for_phase34i_private_test_would_send_preview: {output.get('ready_for_phase34i_private_test_would_send_preview')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -1271,6 +1288,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.rag_evidence_prompt_envelope
         or args.rag_evidence_llm_dry_readiness
         or args.rag_evidence_llm_dry_call_report
+        or args.rag_evidence_llm_dry_call_closeout
         or args.allow_llm_api_call
         or args.allow_rag_evidence_llm_api_call
         or args.write_artifact
