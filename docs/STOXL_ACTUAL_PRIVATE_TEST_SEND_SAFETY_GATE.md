@@ -8,6 +8,11 @@ exact approval phrase, private-test reply mode, token/channel presence booleans,
 Phase 38E gate availability, frozen payload, rollback readiness, operator
 checklist readiness, private-test scope, public/team block, and unattended false.
 
+Phase 39A Hotfix 1 wires the explicit allow flag into CLI parsing. This only
+lets the safety report observe `allow_flag_present=true`; all other unmet
+conditions still block, and the Phase 39A no-execution policy still prevents
+send execution.
+
 Safety state:
 
 - Conditions met: false

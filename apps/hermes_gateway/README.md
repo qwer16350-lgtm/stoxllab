@@ -568,6 +568,11 @@ approval is not actualized, approval phrase values are not generated or logged,
 public/team channel sends remain forbidden, and unattended auto reply remains
 false. Phase 39B manual one-shot actual send has not been run.
 
+The `--allow-actual-private-test-send` CLI flag is recognized for this boundary
+so reports can show `allow_flag_present=true`. In Phase 39A Hotfix 1, the flag
+alone never starts Discord live runtime, never calls Discord API send, and never
+sends a Discord message.
+
 If the registry file is missing, generate it from the repo root:
 
 ```powershell

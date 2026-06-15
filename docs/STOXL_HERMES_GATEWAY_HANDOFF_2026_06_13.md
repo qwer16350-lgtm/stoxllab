@@ -339,3 +339,7 @@ actual private-test send, call OpenRouter/LLM, attempt an LLM API call, generate
 or actualize an approval phrase, create embeddings/vector indexes, enable
 public/team channel replies, enable unattended auto reply, or execute external
 actions. Phase 39B manual one-shot actual send has not been run.
+
+Phase 39A Hotfix 1 adds the missing `--allow-actual-private-test-send` parser
+flag. The flag is report-only in Phase 39A and only reflects
+`allow_flag_present=true`; it does not weaken the no-send policy.

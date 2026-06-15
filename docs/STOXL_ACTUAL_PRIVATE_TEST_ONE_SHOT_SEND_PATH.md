@@ -7,6 +7,11 @@ This phase does not run a Discord live runtime, does not call Discord send, and
 does not send a message. The actual send remains reserved for a later Phase 39B
 manual request with a separate prompt, explicit approval, and separate command.
 
+Phase 39A Hotfix 1 adds parser support for
+`--allow-actual-private-test-send`. The flag only marks
+`allow_flag_present=true` in the report. It does not start Discord, does not
+call Discord API send, and does not send a message.
+
 Safety state:
 
 - Actual send path available: true

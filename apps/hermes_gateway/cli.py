@@ -377,6 +377,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--actual-private-test-one-shot-send", action="store_true", help="Print Phase 39A actual private-test one-shot send path blocked report.")
     parser.add_argument("--actual-private-test-send-safety-gate", action="store_true", help="Print Phase 39A actual private-test send safety gate.")
     parser.add_argument("--actual-private-test-send-blocked-report", action="store_true", help="Print Phase 39A actual private-test send blocked report.")
+    parser.add_argument("--allow-actual-private-test-send", action="store_true", help="Mark the Phase 39 actual private-test send allow flag as present; Phase 39A still does not send.")
     parser.add_argument("--source", default="operation", help="RAG source for local retrieval reports.")
     parser.add_argument("--query", default="STOXL brand tone", help="RAG query preview for local retrieval reports.")
     parser.add_argument("--allow-llm-api-call", action="store_true", help="Allow Phase 32B to attempt one gated provider call when env gates pass.")
@@ -1797,7 +1798,9 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.actual_private_test_one_shot_send:
-        output = build_actual_private_test_one_shot_send()
+        output = build_actual_private_test_one_shot_send(
+            allow_flag_present=args.allow_actual_private_test_send,
+        )
         if args.markdown:
             print(render_actual_private_test_one_shot_send_markdown(output))
         elif args.json:
@@ -2045,6 +2048,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.actual_private_test_one_shot_send
         or args.actual_private_test_send_safety_gate
         or args.actual_private_test_send_blocked_report
+        or args.allow_actual_private_test_send
         or args.allow_llm_api_call
         or args.allow_actual_one_shot_llm_draft_call
         or args.allow_rag_evidence_llm_api_call

@@ -41,6 +41,24 @@ def test_one_shot_send_missing_conditions_block() -> None:
     assert_true(report["private_test_channel_id_present"] is False, "Channel missing")
 
 
+def test_one_shot_send_allow_flag_alone_still_blocked() -> None:
+    report = build_actual_private_test_one_shot_send(allow_flag_present=True, env={})
+    assert_true(report["allow_flag_present"] is True, "Allow flag reflected")
+    assert_true(report["blocked"] is True, "Allow alone blocked")
+    assert_true("allow_flag_missing" not in report["blocked_reasons"], "Allow missing reason removed")
+    assert_true("manual_approval_not_actualized" in report["blocked_reasons"], "Manual approval still missing")
+    assert_true("discord_send_messages_disabled" in report["blocked_reasons"], "Send flag still disabled")
+    assert_true("discord_token_missing" in report["blocked_reasons"], "Token still missing")
+    assert_true("private_test_channel_id_missing" in report["blocked_reasons"], "Channel still missing")
+    assert_true("phase39a_no_execution_policy" in report["blocked_reasons"], "Policy reason remains")
+    assert_true(report["actual_private_test_send_executed"] is False, "No actual send")
+    assert_true(report["discord_live_runtime_executed"] is False, "No live runtime")
+    assert_true(report["discord_api_send_called"] is False, "No Discord API send")
+    assert_true(report["discord_message_sent"] is False, "No Discord message sent")
+    assert_true(report["message_sent_count"] == 0, "No message count")
+    assert_true(report["ready_for_discord_send"] is False, "Not ready for Discord send")
+
+
 def test_one_shot_send_no_execution_or_readiness() -> None:
     report = build_actual_private_test_one_shot_send(env={})
     for key in ("actual_private_test_send_executed", "actual_send_executed", "discord_live_runtime_executed", "discord_api_send_called", "discord_message_sent", "ready_for_actual_private_test_send", "ready_for_discord_send", "ready_for_phase39b_manual_one_shot_send", "llm_api_call_attempted", "llm_api_called", "embedding_api_called", "external_execution"):
@@ -69,6 +87,7 @@ def main() -> int:
     tests = [
         test_one_shot_send_default_blocked_report,
         test_one_shot_send_missing_conditions_block,
+        test_one_shot_send_allow_flag_alone_still_blocked,
         test_one_shot_send_no_execution_or_readiness,
         test_one_shot_send_no_sensitive_values_and_markdown,
     ]
