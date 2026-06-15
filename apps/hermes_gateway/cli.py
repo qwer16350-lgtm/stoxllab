@@ -71,6 +71,9 @@ from rag_evidence_llm_dry_call_closeout import build_rag_evidence_llm_dry_call_c
 from rag_evidence_llm_dry_call import build_rag_evidence_llm_dry_call_report, render_rag_evidence_llm_dry_call_markdown
 from rag_evidence_llm_dry_readiness import build_rag_evidence_llm_dry_readiness_report, render_rag_evidence_llm_dry_readiness_markdown
 from rag_evidence_private_test_send import build_rag_evidence_private_test_send_report, render_rag_evidence_private_test_send_markdown
+from rag_evidence_private_test_send_closeout import build_rag_evidence_private_test_send_closeout, render_rag_evidence_private_test_send_closeout_markdown
+from rag_evidence_private_test_e2e_preflight import build_rag_evidence_private_test_e2e_preflight, render_rag_evidence_private_test_e2e_preflight_markdown
+from rag_evidence_private_test_e2e_replay import build_rag_evidence_private_test_e2e_replay, render_rag_evidence_private_test_e2e_replay_markdown
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight, render_rag_evidence_private_test_send_preflight_markdown
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope, render_rag_evidence_prompt_envelope_markdown
 from rag_evidence_review_packet import build_rag_evidence_review_packet, render_rag_evidence_review_packet_markdown
@@ -291,6 +294,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--rag-evidence-would-send-preview", action="store_true", help="Print Phase 34I private-test would-send preview without Discord API.")
     parser.add_argument("--rag-evidence-private-test-send-preflight", action="store_true", help="Print Phase 34J-0 private-test send preflight without Discord API.")
     parser.add_argument("--rag-evidence-private-test-send", action="store_true", help="Run/report Phase 34J-1 one private-test Discord send gate.")
+    parser.add_argument("--rag-evidence-private-test-send-closeout", action="store_true", help="Print Phase 34J-2 send closeout from embedded sanitized fixture.")
+    parser.add_argument("--rag-evidence-private-test-e2e-preflight", action="store_true", help="Print Phase 34K private-test E2E preflight without live runtime.")
+    parser.add_argument("--rag-evidence-private-test-e2e-replay", action="store_true", help="Print Phase 34L-0 no-live/no-api/no-send E2E replay.")
     parser.add_argument("--source", default="operation", help="RAG source for local retrieval reports.")
     parser.add_argument("--query", default="STOXL brand tone", help="RAG query preview for local retrieval reports.")
     parser.add_argument("--allow-llm-api-call", action="store_true", help="Allow Phase 32B to attempt one gated provider call when env gates pass.")
@@ -1173,6 +1179,44 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- message_sent_count: {output.get('message_sent_count')}")
         return 0
 
+    if args.rag_evidence_private_test_send_closeout:
+        output = build_rag_evidence_private_test_send_closeout()
+        if args.markdown:
+            print(render_rag_evidence_private_test_send_closeout_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL RAG evidence private-test send closeout")
+            print(f"- closeout_passed: {output.get('closeout_passed')}")
+            print(f"- discord_message_sent_count: {output.get('discord_message_sent_count')}")
+        return 0
+
+    if args.rag_evidence_private_test_e2e_preflight:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_rag_evidence_private_test_e2e_preflight(root=cfg.repo_root)
+        if args.markdown:
+            print(render_rag_evidence_private_test_e2e_preflight_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL RAG evidence private-test E2E preflight")
+            print(f"- ready_for_phase34l1_manual_e2e_live_reply: {output.get('ready_for_phase34l1_manual_e2e_live_reply')}")
+            print(f"- ready_for_unattended_auto_reply: {output.get('ready_for_unattended_auto_reply')}")
+        return 0
+
+    if args.rag_evidence_private_test_e2e_replay:
+        cfg = load_config(Path(__file__).resolve())
+        output = build_rag_evidence_private_test_e2e_replay(root=cfg.repo_root)
+        if args.markdown:
+            print(render_rag_evidence_private_test_e2e_replay_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL RAG evidence private-test E2E replay")
+            print(f"- e2e_replay_passed: {output.get('e2e_replay_passed')}")
+            print(f"- ready_for_phase34l1_manual_e2e_live_reply: {output.get('ready_for_phase34l1_manual_e2e_live_reply')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -1340,6 +1384,9 @@ def main(argv: list[str] | None = None) -> int:
         or args.rag_evidence_would_send_preview
         or args.rag_evidence_private_test_send_preflight
         or args.rag_evidence_private_test_send
+        or args.rag_evidence_private_test_send_closeout
+        or args.rag_evidence_private_test_e2e_preflight
+        or args.rag_evidence_private_test_e2e_replay
         or args.allow_llm_api_call
         or args.allow_rag_evidence_llm_api_call
         or args.allow_rag_evidence_private_test_discord_send

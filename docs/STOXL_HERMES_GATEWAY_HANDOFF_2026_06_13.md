@@ -101,6 +101,9 @@ python apps\hermes_gateway\cli.py --rag-evidence-private-test-send-preflight --j
 python apps\hermes_gateway\cli.py --rag-evidence-private-test-send-preflight --markdown
 python apps\hermes_gateway\cli.py --rag-evidence-private-test-send --json
 python apps\hermes_gateway\cli.py --rag-evidence-private-test-send --markdown
+python apps\hermes_gateway\cli.py --rag-evidence-private-test-send-closeout --json
+python apps\hermes_gateway\cli.py --rag-evidence-private-test-e2e-preflight --json
+python apps\hermes_gateway\cli.py --rag-evidence-private-test-e2e-replay --json
 python apps\hermes_gateway\cli.py --operations-viewer --json
 ```
 
@@ -132,6 +135,9 @@ python apps\hermes_gateway\tests\test_rag_evidence_llm_dry_call_closeout.py
 python apps\hermes_gateway\tests\test_rag_evidence_would_send_preview.py
 python apps\hermes_gateway\tests\test_rag_evidence_private_test_send_preflight.py
 python apps\hermes_gateway\tests\test_rag_evidence_private_test_send.py
+python apps\hermes_gateway\tests\test_rag_evidence_private_test_send_closeout.py
+python apps\hermes_gateway\tests\test_rag_evidence_private_test_e2e_preflight.py
+python apps\hermes_gateway\tests\test_rag_evidence_private_test_e2e_replay.py
 python apps\hermes_gateway\tests\test_llm_private_test_reply_replay.py
 python apps\hermes_gateway\tests\test_llm_private_test_reply.py
 python apps\hermes_gateway\tests\test_private_test_reply.py
@@ -196,3 +202,8 @@ reports remain blocked. A live send requires `--allow-rag-evidence-private-test-
 the manual approval env gate, `private_test_only` reply mode, and a configured
 private test channel ID. It still does not call OpenRouter/LLM again, embeddings,
 or external execution.
+
+Phase 34J-2 closes out the observed single private-test send from an embedded
+sanitized fixture. Phase 34K adds no-live E2E preflight. Phase 34L-0 adds
+no-live/no-api/no-send mock replay. Actual E2E live reply remains deferred to a
+separate Phase 34L-1 manual approval request.

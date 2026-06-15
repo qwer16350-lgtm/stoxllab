@@ -1,0 +1,14 @@
+{
+  "report_type": "rag_evidence_private_test_send_closeout",
+  "version": "phase34j2_private_test_send_closeout_no_additional_send",
+  "actual_private_test_send_observed": true,
+  "discord_api_send_called_count": 1,
+  "discord_message_sent_count": 1,
+  "sent_channel_scope": "private_test_only",
+  "private_test_channel_only": true,
+  "public_channel_send_called": false,
+  "team_channel_send_called": false,
+  "additional_discord_send": false,
+  "closeout_passed": true,
+  "ready_for_phase34k_private_test_e2e_preflight": true
+}

@@ -33,6 +33,9 @@ from rag_evidence_llm_dry_call_closeout import build_rag_evidence_llm_dry_call_c
 from rag_evidence_llm_dry_call import build_rag_evidence_llm_dry_call_report
 from rag_evidence_llm_dry_readiness import build_rag_evidence_llm_dry_readiness_report
 from rag_evidence_private_test_send import build_rag_evidence_private_test_send_report
+from rag_evidence_private_test_send_closeout import build_rag_evidence_private_test_send_closeout
+from rag_evidence_private_test_e2e_preflight import build_rag_evidence_private_test_e2e_preflight
+from rag_evidence_private_test_e2e_replay import build_rag_evidence_private_test_e2e_replay
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope
 from rag_evidence_review_packet import build_rag_evidence_review_packet
@@ -372,6 +375,9 @@ def build_operations_packet_viewer_report(
         preview=rag_evidence_would_send,
         preflight=rag_evidence_send_preflight,
     )
+    rag_evidence_send_closeout = build_rag_evidence_private_test_send_closeout()
+    rag_evidence_e2e_preflight = build_rag_evidence_private_test_e2e_preflight(root=str(_repo(root)), send_closeout=rag_evidence_send_closeout)
+    rag_evidence_e2e_replay = build_rag_evidence_private_test_e2e_replay(root=str(_repo(root)), preflight=rag_evidence_e2e_preflight)
     report = {
         "report_type": "operations_packet_viewer",
         "version": VERSION,
@@ -618,6 +624,45 @@ def build_operations_packet_viewer_report(
             "embedding_api_called": bool(rag_evidence_send.get("embedding_api_called")),
             "external_execution": bool(rag_evidence_send.get("external_execution")),
         },
+        "rag_evidence_private_test_send_closeout": {
+            "available": True,
+            "actual_private_test_send_observed": bool(rag_evidence_send_closeout.get("actual_private_test_send_observed")),
+            "discord_api_send_called_count": int(rag_evidence_send_closeout.get("discord_api_send_called_count", 0) or 0),
+            "discord_message_sent_count": int(rag_evidence_send_closeout.get("discord_message_sent_count", 0) or 0),
+            "sent_channel_scope": rag_evidence_send_closeout.get("sent_channel_scope", ""),
+            "additional_discord_send": bool(rag_evidence_send_closeout.get("additional_discord_send")),
+            "llm_api_called": bool(rag_evidence_send_closeout.get("llm_api_called")),
+            "embedding_api_called": bool(rag_evidence_send_closeout.get("embedding_api_called")),
+            "external_execution": bool(rag_evidence_send_closeout.get("external_execution")),
+            "closeout_passed": bool(rag_evidence_send_closeout.get("closeout_passed")),
+            "ready_for_phase34k_private_test_e2e_preflight": bool(rag_evidence_send_closeout.get("ready_for_phase34k_private_test_e2e_preflight")),
+        },
+        "rag_evidence_private_test_e2e_preflight": {
+            "available": True,
+            "private_test_channel_only": bool(rag_evidence_e2e_preflight.get("private_test_channel_only")),
+            "public_channel_reply_allowed": bool(rag_evidence_e2e_preflight.get("public_channel_reply_allowed")),
+            "team_channel_reply_allowed": bool(rag_evidence_e2e_preflight.get("team_channel_reply_allowed")),
+            "discord_live_runtime_executed": bool(rag_evidence_e2e_preflight.get("discord_live_runtime_executed")),
+            "discord_api_send_called": bool(rag_evidence_e2e_preflight.get("discord_api_send_called")),
+            "discord_message_sent": bool(rag_evidence_e2e_preflight.get("discord_message_sent")),
+            "llm_api_called": bool(rag_evidence_e2e_preflight.get("llm_api_called")),
+            "embedding_api_called": bool(rag_evidence_e2e_preflight.get("embedding_api_called")),
+            "external_execution": bool(rag_evidence_e2e_preflight.get("external_execution")),
+            "ready_for_phase34l1_manual_e2e_live_reply": bool(rag_evidence_e2e_preflight.get("ready_for_phase34l1_manual_e2e_live_reply")),
+            "ready_for_unattended_auto_reply": bool(rag_evidence_e2e_preflight.get("ready_for_unattended_auto_reply")),
+        },
+        "rag_evidence_private_test_e2e_replay": {
+            "available": True,
+            "e2e_replay_passed": bool(rag_evidence_e2e_replay.get("e2e_replay_passed")),
+            "discord_live_runtime_executed": bool(rag_evidence_e2e_replay.get("discord_live_runtime_executed")),
+            "discord_api_send_called": bool(rag_evidence_e2e_replay.get("discord_api_send_called")),
+            "discord_message_sent": bool(rag_evidence_e2e_replay.get("discord_message_sent")),
+            "llm_api_called": bool(rag_evidence_e2e_replay.get("llm_api_called")),
+            "embedding_api_called": bool(rag_evidence_e2e_replay.get("embedding_api_called")),
+            "external_execution": bool(rag_evidence_e2e_replay.get("external_execution")),
+            "ready_for_phase34l1_manual_e2e_live_reply": bool(rag_evidence_e2e_replay.get("ready_for_phase34l1_manual_e2e_live_reply")),
+            "ready_for_unattended_auto_reply": bool(rag_evidence_e2e_replay.get("ready_for_unattended_auto_reply")),
+        },
         "daily_manifest_summary": load_daily_manifest(root=root, date=date),
         "filters": {
             "channel_name": channel_name,
@@ -695,6 +740,9 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
     rag_evidence_would_send = report.get("rag_evidence_would_send_preview", {})
     rag_evidence_send_preflight = report.get("rag_evidence_private_test_send_preflight", {})
     rag_evidence_send = report.get("rag_evidence_private_test_send", {})
+    rag_evidence_send_closeout = report.get("rag_evidence_private_test_send_closeout", {})
+    rag_evidence_e2e_preflight = report.get("rag_evidence_private_test_e2e_preflight", {})
+    rag_evidence_e2e_replay = report.get("rag_evidence_private_test_e2e_replay", {})
     llm_summary = report.get("latest_llm_response_packet", {})
     lines.extend(
         [
@@ -923,6 +971,36 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
             f"- LLM API called: {str(rag_evidence_send.get('llm_api_called', False)).lower()}",
             f"- Embedding API called: {str(rag_evidence_send.get('embedding_api_called', False)).lower()}",
             f"- External execution: {str(rag_evidence_send.get('external_execution', False)).lower()}",
+            "",
+            "## RAG Evidence Private-test Send Closeout",
+            f"- Available: {str(rag_evidence_send_closeout.get('available', False)).lower()}",
+            f"- Actual private-test send observed: {str(rag_evidence_send_closeout.get('actual_private_test_send_observed', False)).lower()}",
+            f"- Discord API send called count: {rag_evidence_send_closeout.get('discord_api_send_called_count', 0)}",
+            f"- Discord message sent count: {rag_evidence_send_closeout.get('discord_message_sent_count', 0)}",
+            f"- Sent channel scope: {rag_evidence_send_closeout.get('sent_channel_scope', '')}",
+            f"- Additional Discord send: {str(rag_evidence_send_closeout.get('additional_discord_send', False)).lower()}",
+            f"- Closeout passed: {str(rag_evidence_send_closeout.get('closeout_passed', False)).lower()}",
+            f"- Ready for Phase 34K E2E preflight: {str(rag_evidence_send_closeout.get('ready_for_phase34k_private_test_e2e_preflight', False)).lower()}",
+            "",
+            "## RAG Evidence Private-test E2E Preflight",
+            f"- Available: {str(rag_evidence_e2e_preflight.get('available', False)).lower()}",
+            f"- Private test channel only: {str(rag_evidence_e2e_preflight.get('private_test_channel_only', False)).lower()}",
+            f"- Public channel reply allowed: {str(rag_evidence_e2e_preflight.get('public_channel_reply_allowed', False)).lower()}",
+            f"- Team channel reply allowed: {str(rag_evidence_e2e_preflight.get('team_channel_reply_allowed', False)).lower()}",
+            f"- Discord live runtime executed: {str(rag_evidence_e2e_preflight.get('discord_live_runtime_executed', False)).lower()}",
+            f"- Discord message sent: {str(rag_evidence_e2e_preflight.get('discord_message_sent', False)).lower()}",
+            f"- LLM API called: {str(rag_evidence_e2e_preflight.get('llm_api_called', False)).lower()}",
+            f"- Ready for Phase 34L-1 manual E2E live reply: {str(rag_evidence_e2e_preflight.get('ready_for_phase34l1_manual_e2e_live_reply', False)).lower()}",
+            f"- Ready for unattended auto reply: {str(rag_evidence_e2e_preflight.get('ready_for_unattended_auto_reply', False)).lower()}",
+            "",
+            "## RAG Evidence Private-test E2E Replay",
+            f"- Available: {str(rag_evidence_e2e_replay.get('available', False)).lower()}",
+            f"- E2E replay passed: {str(rag_evidence_e2e_replay.get('e2e_replay_passed', False)).lower()}",
+            f"- Discord live runtime executed: {str(rag_evidence_e2e_replay.get('discord_live_runtime_executed', False)).lower()}",
+            f"- Discord message sent: {str(rag_evidence_e2e_replay.get('discord_message_sent', False)).lower()}",
+            f"- LLM API called: {str(rag_evidence_e2e_replay.get('llm_api_called', False)).lower()}",
+            f"- Ready for Phase 34L-1 manual E2E live reply: {str(rag_evidence_e2e_replay.get('ready_for_phase34l1_manual_e2e_live_reply', False)).lower()}",
+            f"- Ready for unattended auto reply: {str(rag_evidence_e2e_replay.get('ready_for_unattended_auto_reply', False)).lower()}",
         ]
     )
     safety = report.get("safety_assertions", {})

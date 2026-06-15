@@ -56,6 +56,9 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - Build Phase 34I private-test would-send previews without Discord API calls.
 - Build Phase 34J-0 private-test send preflight and manual approval gate reports without actual send.
 - Build Phase 34J-1 one-shot private-test Discord send boundary with default blocking, explicit allow flag, and manual approval gate.
+- Build Phase 34J-2 private-test send closeout reports from an embedded sanitized success fixture without another Discord send.
+- Build Phase 34K private-test E2E preflight reports without live runtime.
+- Build Phase 34L-0 private-test E2E mock replay reports without live runtime, LLM API calls, embeddings, or Discord sends.
 
 ## Explicit Non-Goals
 
@@ -92,6 +95,8 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - No Phase 34I would-send preview calls Discord APIs, sends messages, calls OpenRouter/LLM APIs, calls embeddings, or executes external actions.
 - No Phase 34J-0 preflight calls Discord APIs, sends messages, calls OpenRouter/LLM APIs, calls embeddings, or executes external actions.
 - No Phase 34J-1 default report sends Discord messages, calls OpenRouter/LLM APIs, calls embeddings, or executes external actions. Live send requires a separate human-run allow flag and manual approval gate.
+- No Phase 34J-2 closeout sends additional Discord messages or calls Discord APIs.
+- No Phase 34K/34L-0 E2E reports run live Discord runtime, call OpenRouter/LLM APIs, call embeddings, send Discord messages, or execute external actions.
 
 ## Phase 21 Read-Only Planning Docs
 
@@ -156,6 +161,9 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - `docs/STOXL_RAG_EVIDENCE_WOULD_SEND_PREVIEW.md`
 - `docs/STOXL_RAG_EVIDENCE_PRIVATE_TEST_SEND_PREFLIGHT.md`
 - `docs/STOXL_RAG_EVIDENCE_PRIVATE_TEST_SEND.md`
+- `docs/STOXL_RAG_EVIDENCE_PRIVATE_TEST_SEND_CLOSEOUT.md`
+- `docs/STOXL_RAG_EVIDENCE_PRIVATE_TEST_E2E_PREFLIGHT.md`
+- `docs/STOXL_RAG_EVIDENCE_PRIVATE_TEST_E2E_REPLAY.md`
 
 These documents prepare for a later private server read-only connection review. They do not authorize or perform a Discord connection.
 

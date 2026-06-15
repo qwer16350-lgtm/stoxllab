@@ -405,6 +405,52 @@ def test_rag_evidence_private_test_send_summary() -> None:
     assert_true(send["external_execution"] is False, "Viewer should not execute external action")
 
 
+def test_rag_evidence_private_test_send_closeout_summary() -> None:
+    setup_artifacts()
+    closeout = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")["rag_evidence_private_test_send_closeout"]
+    assert_true(closeout["available"] is True, "Send closeout should be available")
+    assert_true(closeout["actual_private_test_send_observed"] is True, "Prior send should be observed")
+    assert_true(closeout["discord_api_send_called_count"] == 1, "Send call count should be one")
+    assert_true(closeout["discord_message_sent_count"] == 1, "Sent count should be one")
+    assert_true(closeout["sent_channel_scope"] == "private_test_only", "Scope should be private-test only")
+    assert_true(closeout["additional_discord_send"] is False, "No additional send")
+    assert_true(closeout["llm_api_called"] is False, "No LLM call")
+    assert_true(closeout["embedding_api_called"] is False, "No embedding")
+    assert_true(closeout["external_execution"] is False, "No external execution")
+    assert_true(closeout["closeout_passed"] is True, "Closeout should pass")
+    assert_true(closeout["ready_for_phase34k_private_test_e2e_preflight"] is True, "Phase 34K should be ready")
+
+
+def test_rag_evidence_private_test_e2e_preflight_summary() -> None:
+    setup_artifacts()
+    preflight = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")["rag_evidence_private_test_e2e_preflight"]
+    assert_true(preflight["available"] is True, "E2E preflight should be available")
+    assert_true(preflight["private_test_channel_only"] is True, "Private-test only")
+    assert_true(preflight["public_channel_reply_allowed"] is False, "Public reply false")
+    assert_true(preflight["team_channel_reply_allowed"] is False, "Team reply false")
+    assert_true(preflight["discord_live_runtime_executed"] is False, "No live runtime")
+    assert_true(preflight["discord_message_sent"] is False, "No Discord message")
+    assert_true(preflight["llm_api_called"] is False, "No LLM call")
+    assert_true(preflight["embedding_api_called"] is False, "No embedding")
+    assert_true(preflight["external_execution"] is False, "No external execution")
+    assert_true(preflight["ready_for_phase34l1_manual_e2e_live_reply"] is True, "Phase 34L-1 should be ready")
+    assert_true(preflight["ready_for_unattended_auto_reply"] is False, "Unattended false")
+
+
+def test_rag_evidence_private_test_e2e_replay_summary() -> None:
+    setup_artifacts()
+    replay = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")["rag_evidence_private_test_e2e_replay"]
+    assert_true(replay["available"] is True, "E2E replay should be available")
+    assert_true(replay["e2e_replay_passed"] is True, "E2E replay should pass")
+    assert_true(replay["discord_live_runtime_executed"] is False, "No live runtime")
+    assert_true(replay["discord_message_sent"] is False, "No Discord message")
+    assert_true(replay["llm_api_called"] is False, "No LLM call")
+    assert_true(replay["embedding_api_called"] is False, "No embedding")
+    assert_true(replay["external_execution"] is False, "No external execution")
+    assert_true(replay["ready_for_phase34l1_manual_e2e_live_reply"] is True, "Phase 34L-1 should be ready")
+    assert_true(replay["ready_for_unattended_auto_reply"] is False, "Unattended false")
+
+
 def main() -> int:
     tests = [
         test_recent_events_returned,
@@ -437,6 +483,9 @@ def main() -> int:
         test_rag_evidence_would_send_preview_summary,
         test_rag_evidence_private_test_send_preflight_summary,
         test_rag_evidence_private_test_send_summary,
+        test_rag_evidence_private_test_send_closeout_summary,
+        test_rag_evidence_private_test_e2e_preflight_summary,
+        test_rag_evidence_private_test_e2e_replay_summary,
     ]
     for test in tests:
         test()

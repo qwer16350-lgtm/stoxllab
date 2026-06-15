@@ -1,0 +1,16 @@
+{
+  "report_type": "rag_evidence_private_test_e2e_replay",
+  "version": "phase34l0_e2e_replay_no_live_runtime_no_api_no_send",
+  "mock_user_message_present": true,
+  "accepted_private_test_channel": true,
+  "public_channel_rejected": true,
+  "team_channel_rejected": true,
+  "e2e_replay_passed": true,
+  "discord_live_runtime_executed": false,
+  "discord_message_sent": false,
+  "llm_api_called": false,
+  "embedding_api_called": false,
+  "external_execution": false,
+  "ready_for_phase34l1_manual_e2e_live_reply": true,
+  "ready_for_unattended_auto_reply": false
+}
