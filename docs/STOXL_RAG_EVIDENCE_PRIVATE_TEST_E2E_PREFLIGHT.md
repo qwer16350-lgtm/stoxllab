@@ -22,3 +22,6 @@ python apps\hermes_gateway\cli.py --rag-evidence-private-test-e2e-preflight --ma
 - `ready_for_unattended_auto_reply=false`
 
 Passing this phase only means a later Phase 34L-1 manual E2E live reply can be reviewed separately.
+
+Phase 34L-1 remains manually gated. Its default report is blocked and performs
+no live runtime, no LLM API call, and no Discord send.

@@ -451,6 +451,28 @@ def test_rag_evidence_private_test_e2e_replay_summary() -> None:
     assert_true(replay["ready_for_unattended_auto_reply"] is False, "Unattended false")
 
 
+def test_rag_evidence_private_test_e2e_live_reply_summary() -> None:
+    setup_artifacts()
+    live = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")["rag_evidence_private_test_e2e_live_reply"]
+    assert_true(live["available"] is True, "E2E live reply summary should be available")
+    assert_true(live["manual_approval_required"] is True, "Manual approval should be required")
+    assert_true(live["manual_approval_approved"] is False, "Viewer should not approve live reply")
+    assert_true(live["private_test_channel_only"] is True, "Private-test only should be true")
+    assert_true(live["public_channel_reply_allowed"] is False, "Public reply should be false")
+    assert_true(live["team_channel_reply_allowed"] is False, "Team reply should be false")
+    assert_true(live["blocked"] is True, "Viewer default live reply should be blocked")
+    assert_true(live["discord_live_runtime_executed"] is False, "Viewer should not run live runtime")
+    assert_true(live["prompt_safety_checked"] is False, "Viewer default should not check prompt safety")
+    assert_true(live["llm_api_called"] is False, "Viewer should not call LLM")
+    assert_true(live["llm_response_packet_created"] is False, "Viewer default should not create response packet")
+    assert_true(live["output_safety_checked"] is False, "Viewer default should not check output safety")
+    assert_true(live["output_safety_blocked"] is False, "Viewer default should not block output safety early")
+    assert_true(live["discord_message_sent"] is False, "Viewer should not send Discord")
+    assert_true(live["message_sent_count"] == 0, "Viewer default should have zero sends")
+    assert_true(live["ready_for_phase34l2_e2e_live_reply_closeout"] is False, "Closeout should not be ready by default")
+    assert_true(live["ready_for_unattended_auto_reply"] is False, "Unattended false")
+
+
 def main() -> int:
     tests = [
         test_recent_events_returned,
@@ -486,6 +508,7 @@ def main() -> int:
         test_rag_evidence_private_test_send_closeout_summary,
         test_rag_evidence_private_test_e2e_preflight_summary,
         test_rag_evidence_private_test_e2e_replay_summary,
+        test_rag_evidence_private_test_e2e_live_reply_summary,
     ]
     for test in tests:
         test()

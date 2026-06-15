@@ -446,6 +446,18 @@ readiness. It creates a review-only message preview and a mock LLM response
 packet, but actual provider calls remain reserved for a later separately
 approved phase.
 
+Phase 34L-1 adds the manual private-test E2E live reply boundary. Default CLI
+reports remain blocked and perform no Discord live runtime, OpenRouter/LLM API
+call, Discord message send, embedding call, or external execution. A live E2E
+reply requires the explicit allow flag plus the separate E2E and LLM approval
+env gates, and it is limited to one private-test channel event, one LLM call,
+and one Discord reply.
+
+Phase 34L-1A fixes the safety ordering for that boundary. Prompt/input safety is
+checked before the LLM call, output safety is checked only after an LLM response
+packet exists, and `output_safety_blocked` is no longer valid before
+`llm_response_packet_created=true`.
+
 If the registry file is missing, generate it from the repo root:
 
 ```powershell

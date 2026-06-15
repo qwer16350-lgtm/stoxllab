@@ -25,3 +25,8 @@ python apps\hermes_gateway\cli.py --rag-evidence-private-test-e2e-replay --markd
 - no external execution
 
 Passing this phase sets `ready_for_phase34l1_manual_e2e_live_reply=true` while keeping unattended auto reply disabled.
+
+Phase 34L-1 uses this replay as a safety baseline. The live path still requires
+an explicit allow flag, exact manual approval env gates, private-test channel
+ID matching, output safety, self/bot message skipping, and duplicate-send
+blocking.

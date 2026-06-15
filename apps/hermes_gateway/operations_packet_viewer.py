@@ -36,6 +36,7 @@ from rag_evidence_private_test_send import build_rag_evidence_private_test_send_
 from rag_evidence_private_test_send_closeout import build_rag_evidence_private_test_send_closeout
 from rag_evidence_private_test_e2e_preflight import build_rag_evidence_private_test_e2e_preflight
 from rag_evidence_private_test_e2e_replay import build_rag_evidence_private_test_e2e_replay
+from rag_evidence_private_test_e2e_live_reply import build_rag_evidence_private_test_e2e_live_reply_report
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope
 from rag_evidence_review_packet import build_rag_evidence_review_packet
@@ -378,6 +379,11 @@ def build_operations_packet_viewer_report(
     rag_evidence_send_closeout = build_rag_evidence_private_test_send_closeout()
     rag_evidence_e2e_preflight = build_rag_evidence_private_test_e2e_preflight(root=str(_repo(root)), send_closeout=rag_evidence_send_closeout)
     rag_evidence_e2e_replay = build_rag_evidence_private_test_e2e_replay(root=str(_repo(root)), preflight=rag_evidence_e2e_preflight)
+    rag_evidence_e2e_live_reply = build_rag_evidence_private_test_e2e_live_reply_report(
+        root=str(_repo(root)),
+        allow_live_reply=False,
+        preflight=rag_evidence_e2e_preflight,
+    )
     report = {
         "report_type": "operations_packet_viewer",
         "version": VERSION,
@@ -663,6 +669,32 @@ def build_operations_packet_viewer_report(
             "ready_for_phase34l1_manual_e2e_live_reply": bool(rag_evidence_e2e_replay.get("ready_for_phase34l1_manual_e2e_live_reply")),
             "ready_for_unattended_auto_reply": bool(rag_evidence_e2e_replay.get("ready_for_unattended_auto_reply")),
         },
+        "rag_evidence_private_test_e2e_live_reply": {
+            "available": True,
+            "manual_approval_required": bool(rag_evidence_e2e_live_reply.get("manual_approval", {}).get("required")),
+            "manual_approval_approved": bool(rag_evidence_e2e_live_reply.get("manual_approval", {}).get("approved")),
+            "private_test_channel_only": bool(rag_evidence_e2e_live_reply.get("private_test_channel_only")),
+            "public_channel_reply_allowed": bool(rag_evidence_e2e_live_reply.get("public_channel_reply_allowed")),
+            "team_channel_reply_allowed": bool(rag_evidence_e2e_live_reply.get("team_channel_reply_allowed")),
+            "ready": bool(rag_evidence_e2e_live_reply.get("ready")),
+            "blocked": bool(rag_evidence_e2e_live_reply.get("blocked")),
+            "discord_live_runtime_executed": bool(rag_evidence_e2e_live_reply.get("discord_live_runtime_executed")),
+            "discord_event_received": bool(rag_evidence_e2e_live_reply.get("discord_event_received")),
+            "accepted_private_test_channel": bool(rag_evidence_e2e_live_reply.get("accepted_private_test_channel")),
+            "prompt_safety_checked": bool(rag_evidence_e2e_live_reply.get("prompt_safety_checked")),
+            "prompt_safety_allowed": bool(rag_evidence_e2e_live_reply.get("prompt_safety_allowed")),
+            "prompt_safety_blocked": bool(rag_evidence_e2e_live_reply.get("prompt_safety_blocked")),
+            "llm_api_called": bool(rag_evidence_e2e_live_reply.get("llm_api_called")),
+            "llm_api_call_count": int(rag_evidence_e2e_live_reply.get("llm_api_call_count", 0) or 0),
+            "llm_response_packet_created": bool(rag_evidence_e2e_live_reply.get("llm_response_packet_created")),
+            "output_safety_checked": bool(rag_evidence_e2e_live_reply.get("output_safety_checked")),
+            "output_safety_allowed": bool(rag_evidence_e2e_live_reply.get("output_safety_allowed")),
+            "output_safety_blocked": bool(rag_evidence_e2e_live_reply.get("output_safety_blocked")),
+            "discord_message_sent": bool(rag_evidence_e2e_live_reply.get("discord_message_sent")),
+            "message_sent_count": int(rag_evidence_e2e_live_reply.get("message_sent_count", 0) or 0),
+            "ready_for_phase34l2_e2e_live_reply_closeout": bool(rag_evidence_e2e_live_reply.get("ready_for_phase34l2_e2e_live_reply_closeout")),
+            "ready_for_unattended_auto_reply": bool(rag_evidence_e2e_live_reply.get("ready_for_unattended_auto_reply")),
+        },
         "daily_manifest_summary": load_daily_manifest(root=root, date=date),
         "filters": {
             "channel_name": channel_name,
@@ -743,6 +775,7 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
     rag_evidence_send_closeout = report.get("rag_evidence_private_test_send_closeout", {})
     rag_evidence_e2e_preflight = report.get("rag_evidence_private_test_e2e_preflight", {})
     rag_evidence_e2e_replay = report.get("rag_evidence_private_test_e2e_replay", {})
+    rag_evidence_e2e_live_reply = report.get("rag_evidence_private_test_e2e_live_reply", {})
     llm_summary = report.get("latest_llm_response_packet", {})
     lines.extend(
         [
@@ -1001,6 +1034,32 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
             f"- LLM API called: {str(rag_evidence_e2e_replay.get('llm_api_called', False)).lower()}",
             f"- Ready for Phase 34L-1 manual E2E live reply: {str(rag_evidence_e2e_replay.get('ready_for_phase34l1_manual_e2e_live_reply', False)).lower()}",
             f"- Ready for unattended auto reply: {str(rag_evidence_e2e_replay.get('ready_for_unattended_auto_reply', False)).lower()}",
+            "",
+            "## RAG Evidence Private-test E2E Live Reply",
+            f"- Available: {str(rag_evidence_e2e_live_reply.get('available', False)).lower()}",
+            f"- Manual approval required: {str(rag_evidence_e2e_live_reply.get('manual_approval_required', False)).lower()}",
+            f"- Manual approval approved: {str(rag_evidence_e2e_live_reply.get('manual_approval_approved', False)).lower()}",
+            f"- Private test channel only: {str(rag_evidence_e2e_live_reply.get('private_test_channel_only', False)).lower()}",
+            f"- Public channel reply allowed: {str(rag_evidence_e2e_live_reply.get('public_channel_reply_allowed', False)).lower()}",
+            f"- Team channel reply allowed: {str(rag_evidence_e2e_live_reply.get('team_channel_reply_allowed', False)).lower()}",
+            f"- Ready: {str(rag_evidence_e2e_live_reply.get('ready', False)).lower()}",
+            f"- Blocked: {str(rag_evidence_e2e_live_reply.get('blocked', True)).lower()}",
+            f"- Discord live runtime executed: {str(rag_evidence_e2e_live_reply.get('discord_live_runtime_executed', False)).lower()}",
+            f"- Discord event received: {str(rag_evidence_e2e_live_reply.get('discord_event_received', False)).lower()}",
+            f"- Accepted private-test channel: {str(rag_evidence_e2e_live_reply.get('accepted_private_test_channel', False)).lower()}",
+            f"- Prompt safety checked: {str(rag_evidence_e2e_live_reply.get('prompt_safety_checked', False)).lower()}",
+            f"- Prompt safety allowed: {str(rag_evidence_e2e_live_reply.get('prompt_safety_allowed', False)).lower()}",
+            f"- Prompt safety blocked: {str(rag_evidence_e2e_live_reply.get('prompt_safety_blocked', False)).lower()}",
+            f"- LLM API called: {str(rag_evidence_e2e_live_reply.get('llm_api_called', False)).lower()}",
+            f"- LLM API call count: {rag_evidence_e2e_live_reply.get('llm_api_call_count', 0)}",
+            f"- LLM response packet created: {str(rag_evidence_e2e_live_reply.get('llm_response_packet_created', False)).lower()}",
+            f"- Output safety checked: {str(rag_evidence_e2e_live_reply.get('output_safety_checked', False)).lower()}",
+            f"- Output safety allowed: {str(rag_evidence_e2e_live_reply.get('output_safety_allowed', False)).lower()}",
+            f"- Output safety blocked: {str(rag_evidence_e2e_live_reply.get('output_safety_blocked', False)).lower()}",
+            f"- Discord message sent: {str(rag_evidence_e2e_live_reply.get('discord_message_sent', False)).lower()}",
+            f"- Message sent count: {rag_evidence_e2e_live_reply.get('message_sent_count', 0)}",
+            f"- Ready for Phase 34L-2 closeout: {str(rag_evidence_e2e_live_reply.get('ready_for_phase34l2_e2e_live_reply_closeout', False)).lower()}",
+            f"- Ready for unattended auto reply: {str(rag_evidence_e2e_live_reply.get('ready_for_unattended_auto_reply', False)).lower()}",
         ]
     )
     safety = report.get("safety_assertions", {})

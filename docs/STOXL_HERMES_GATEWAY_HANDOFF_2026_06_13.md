@@ -207,3 +207,17 @@ Phase 34J-2 closes out the observed single private-test send from an embedded
 sanitized fixture. Phase 34K adds no-live E2E preflight. Phase 34L-0 adds
 no-live/no-api/no-send mock replay. Actual E2E live reply remains deferred to a
 separate Phase 34L-1 manual approval request.
+
+Phase 34L-1 adds the manual private-test E2E live reply boundary. Default CLI
+reports are blocked and execute no live runtime, no LLM API call, no Discord
+send, no embedding API call, and no external execution. The actual live path is
+available only through the explicit allow flag and exact manual env gates, and
+must process one private-test event, one LLM call, and one private-test reply
+before Phase 34L-2 closeout/replay/audit.
+
+Phase 34L-1A fixes safety stage ordering. Prompt/input safety is pre-LLM, while
+output safety is post-LLM and may only run when an LLM response packet exists.
+The earlier blocked run is classified as safe but legacy-invalid ordering
+because it reported `output_safety_blocked` while `llm_api_called=false` and
+`discord_message_sent=false`. Next action is to retry Phase 34L-1 manually
+after the hotfix.
