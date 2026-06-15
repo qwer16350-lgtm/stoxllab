@@ -25,3 +25,5 @@ python apps\hermes_gateway\cli.py --agent-routing-dry-preview --markdown
 ```
 
 This preview is rule-only and never calls LLMs or sends Discord messages.
+
+Phase 35C uses this routing map to compose dry agent evidence packs and prompt previews.

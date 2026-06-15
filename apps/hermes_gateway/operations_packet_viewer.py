@@ -44,6 +44,10 @@ from phase35a_post_mvp_safety_audit import build_phase35a_post_mvp_safety_audit
 from local_knowledge_ingestion_preview import build_local_knowledge_ingestion_preview
 from evidence_quality_preview import build_evidence_quality_preview
 from agent_routing_dry_preview import build_agent_routing_dry_preview
+from agent_evidence_pack_composer import build_agent_evidence_pack_composer
+from agent_prompt_preview import build_agent_prompt_preview
+from agent_review_packet import build_agent_review_packet
+from manual_approval_packet_preview import build_manual_approval_packet_preview
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope
 from rag_evidence_review_packet import build_rag_evidence_review_packet
@@ -426,6 +430,10 @@ def build_operations_packet_viewer_report(
     local_knowledge_preview = build_local_knowledge_ingestion_preview(root=str(_repo(root)), source="operation")
     evidence_quality = build_evidence_quality_preview(root=str(_repo(root)))
     routing_preview = build_agent_routing_dry_preview()
+    evidence_pack_composer = build_agent_evidence_pack_composer()
+    agent_prompt = build_agent_prompt_preview(evidence_pack_composer)
+    agent_review = build_agent_review_packet()
+    manual_approval_preview = build_manual_approval_packet_preview(agent_review)
     report = {
         "report_type": "operations_packet_viewer",
         "version": VERSION,
@@ -824,6 +832,45 @@ def build_operations_packet_viewer_report(
             "llm_called": bool(routing_preview.get("llm_called")),
             "discord_message_sent": bool(routing_preview.get("discord_message_sent")),
             "ready_for_unattended_auto_reply": bool(routing_preview.get("ready_for_unattended_auto_reply")),
+        },
+        "phase35c_agent_evidence_pack_composer": {
+            "available": True,
+            "rule_only": bool(evidence_pack_composer.get("rule_only")),
+            "relative_paths_only": bool(evidence_pack_composer.get("relative_paths_only")),
+            "full_content_included": bool(evidence_pack_composer.get("full_content_included")),
+            "ready_for_llm_call": bool(evidence_pack_composer.get("ready_for_llm_call")),
+            "ready_for_discord_send": bool(evidence_pack_composer.get("ready_for_discord_send")),
+            "ready_for_embedding": bool(evidence_pack_composer.get("ready_for_embedding")),
+            "ready_for_external_sources": bool(evidence_pack_composer.get("ready_for_external_sources")),
+        },
+        "phase35c_agent_prompt_preview": {
+            "available": True,
+            "rule_only": bool(agent_prompt.get("rule_only")),
+            "llm_called": bool(agent_prompt.get("llm_called")),
+            "discord_message_sent": bool(agent_prompt.get("discord_message_sent")),
+            "ready_for_llm_call": bool(agent_prompt.get("ready_for_llm_call")),
+            "ready_for_discord_send": bool(agent_prompt.get("ready_for_discord_send")),
+            "ready_for_unattended_auto_reply": bool(agent_prompt.get("ready_for_unattended_auto_reply")),
+        },
+        "phase35d_agent_review_packet": {
+            "available": True,
+            "rule_only": bool(agent_review.get("rule_only")),
+            "human_review_required": bool(agent_review.get("human_review_required")),
+            "ready_for_llm_call": bool(agent_review.get("ready_for_llm_call")),
+            "ready_for_discord_send": bool(agent_review.get("ready_for_discord_send")),
+            "ready_for_embedding": bool(agent_review.get("ready_for_embedding")),
+            "ready_for_external_sources": bool(agent_review.get("ready_for_external_sources")),
+            "full_content_included": bool(agent_review.get("full_content_included")),
+        },
+        "phase35d_manual_approval_packet_preview": {
+            "available": True,
+            "rule_only": bool(manual_approval_preview.get("rule_only")),
+            "approval_phrase_generated": bool(manual_approval_preview.get("approval_phrase_generated")),
+            "approval_phrase_value_logged": bool(manual_approval_preview.get("approval_phrase_value_logged")),
+            "ready_for_actual_approval": bool(manual_approval_preview.get("ready_for_actual_approval")),
+            "ready_for_llm_call": bool(manual_approval_preview.get("ready_for_llm_call")),
+            "ready_for_discord_send": bool(manual_approval_preview.get("ready_for_discord_send")),
+            "ready_for_unattended_auto_reply": bool(manual_approval_preview.get("ready_for_unattended_auto_reply")),
         },
         "daily_manifest_summary": load_daily_manifest(root=root, date=date),
         "filters": {

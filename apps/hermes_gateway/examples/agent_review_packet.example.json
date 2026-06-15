@@ -1,0 +1,50 @@
+{
+  "report_type": "agent_review_packet",
+  "version": "phase35d_agent_review_packet_report_only",
+  "review_packet_available": true,
+  "rule_only": true,
+  "human_review_required": true,
+  "llm_called": false,
+  "discord_message_sent": false,
+  "ready_for_llm_call": false,
+  "ready_for_discord_send": false,
+  "ready_for_embedding": false,
+  "ready_for_external_sources": false,
+  "relative_paths_only": true,
+  "full_content_included": false,
+  "ready_for_unattended_auto_reply": false,
+  "agent_review_packets": {
+    "kasumi": {
+      "agent": "kasumi",
+      "allowed_sources": ["operation"],
+      "blocked_sources": ["marketing", "strategy", "brand", "archive", "operations"],
+      "evidence_citations": ["knowledge/operation/stoxl_operation_tone_sample.md"],
+      "prompt_preview_summary": "Use operation evidence only. Produce review-only operational guidance. Do not use operations source.",
+      "risk_flags": ["forbidden_source_requested"],
+      "human_review_required": true,
+      "ready_for_approval_packet": true
+    },
+    "marin": {
+      "agent": "marin",
+      "allowed_sources": ["marketing", "brand"],
+      "blocked_sources": ["operation", "strategy", "archive", "operations"],
+      "evidence_citations": [],
+      "prompt_preview_summary": "Use marketing/brand evidence only. Operation source is blocked for marin.",
+      "risk_flags": ["no_evidence_citations", "forbidden_source_requested", "not_ready_for_approval"],
+      "human_review_required": true,
+      "ready_for_approval_packet": false
+    }
+  },
+  "safety_assertions": {
+    "api_key_value_logged": false,
+    "token_value_logged": false,
+    "raw_discord_ids_logged": false,
+    "approval_phrase_value_logged": false,
+    "embedding_called": false,
+    "external_execution": false,
+    "llm_called": false,
+    "discord_message_sent": false,
+    "public_team_channel_reply_allowed": false,
+    "unattended_auto_reply_allowed": false
+  }
+}

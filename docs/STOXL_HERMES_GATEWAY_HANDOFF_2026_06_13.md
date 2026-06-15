@@ -24,6 +24,7 @@
 - Phase 34M final lock is available and marks the private-test E2E RAG+LLM+Discord MVP complete.
 - Phase 35A post-MVP safety audit, operator runbook, and Phase 35 entry plan are available.
 - Phase 35B local knowledge ingestion preview, evidence quality dry preview, and agent routing dry preview are available.
+- Phase 35C agent evidence pack composer and agent prompt preview are available.
 
 ## Completed Chain
 
@@ -74,6 +75,7 @@
 - Phase 34M final lock does not run Discord, send another message, call OpenRouter/LLM, recall LLM, call embeddings, or execute external actions. It keeps future live runs behind manual approvals.
 - Phase 35A does not run Discord, send messages, call OpenRouter/LLM, recall LLM, create embeddings/vector indexes, schedule auto replies, or execute external actions. It confirms public/team channel send/reply remains forbidden and unattended auto reply remains false.
 - Phase 35B does not run Discord, send messages, call OpenRouter/LLM, create embeddings/vector indexes, watch files, schedule auto replies, or execute external actions. It keeps `operation` canonical and `operations` forbidden.
+- Phase 35C does not run Discord, send messages, call OpenRouter/LLM, execute prompts, create embeddings/vector indexes, dump full content, or execute external actions.
 
 ## Important Commands
 
@@ -121,6 +123,8 @@ python apps\hermes_gateway\cli.py --phase35a-post-mvp-safety-audit --json
 python apps\hermes_gateway\cli.py --local-knowledge-ingestion-preview --json
 python apps\hermes_gateway\cli.py --evidence-quality-preview --json
 python apps\hermes_gateway\cli.py --agent-routing-dry-preview --json
+python apps\hermes_gateway\cli.py --agent-evidence-pack-composer --json
+python apps\hermes_gateway\cli.py --agent-prompt-preview --json
 python apps\hermes_gateway\cli.py --operations-viewer --json
 ```
 
@@ -258,3 +262,9 @@ dispatcher now recognizes `OPENROUTER_API_KEY` and
 `HERMES_OPENROUTER_API_KEY`; only `openrouter_api_key_present` is reported and
 key values remain hidden. The previous retry was safe: `llm_api_called=false`
 and `discord_message_sent=false`. Next action is Phase 34L-1 live retry.
+
+Phase 35D adds agent review packet and manual approval packet preview reports.
+They are dry/report-only artifacts for human review. They do not generate
+approval phrases, grant approval, run Discord live runtime, send Discord
+messages, call OpenRouter/LLM, create embeddings/vector indexes, read external
+sources, or execute external actions.

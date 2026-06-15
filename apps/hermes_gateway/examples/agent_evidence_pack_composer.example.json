@@ -1,0 +1,14 @@
+{
+  "report_type": "agent_evidence_pack_composer",
+  "version": "phase35c_agent_evidence_pack_composer_report_only",
+  "composer_available": true,
+  "rule_only": true,
+  "llm_called": false,
+  "discord_message_sent": false,
+  "ready_for_llm_call": false,
+  "ready_for_discord_send": false,
+  "ready_for_embedding": false,
+  "ready_for_external_sources": false,
+  "relative_paths_only": true,
+  "full_content_included": false
+}

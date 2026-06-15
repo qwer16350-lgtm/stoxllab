@@ -82,6 +82,10 @@ from phase35a_post_mvp_safety_audit import build_phase35a_post_mvp_safety_audit,
 from local_knowledge_ingestion_preview import build_local_knowledge_ingestion_preview, render_local_knowledge_ingestion_preview_markdown
 from evidence_quality_preview import build_evidence_quality_preview, render_evidence_quality_preview_markdown
 from agent_routing_dry_preview import build_agent_routing_dry_preview, render_agent_routing_dry_preview_markdown
+from agent_evidence_pack_composer import build_agent_evidence_pack_composer, render_agent_evidence_pack_composer_markdown
+from agent_prompt_preview import build_agent_prompt_preview, render_agent_prompt_preview_markdown
+from agent_review_packet import build_agent_review_packet, render_agent_review_packet_markdown
+from manual_approval_packet_preview import build_manual_approval_packet_preview, render_manual_approval_packet_preview_markdown
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight, render_rag_evidence_private_test_send_preflight_markdown
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope, render_rag_evidence_prompt_envelope_markdown
 from rag_evidence_review_packet import build_rag_evidence_review_packet, render_rag_evidence_review_packet_markdown
@@ -313,6 +317,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--local-knowledge-ingestion-preview", action="store_true", help="Print Phase 35B local knowledge ingestion preview.")
     parser.add_argument("--evidence-quality-preview", action="store_true", help="Print Phase 35B evidence quality dry preview.")
     parser.add_argument("--agent-routing-dry-preview", action="store_true", help="Print Phase 35B agent routing dry preview.")
+    parser.add_argument("--agent-evidence-pack-composer", action="store_true", help="Print Phase 35C agent evidence pack composer report.")
+    parser.add_argument("--agent-prompt-preview", action="store_true", help="Print Phase 35C agent prompt preview report.")
+    parser.add_argument("--agent-review-packet", action="store_true", help="Print Phase 35D agent review packet report.")
+    parser.add_argument("--manual-approval-packet-preview", action="store_true", help="Print Phase 35D manual approval packet preview.")
     parser.add_argument("--source", default="operation", help="RAG source for local retrieval reports.")
     parser.add_argument("--query", default="STOXL brand tone", help="RAG query preview for local retrieval reports.")
     parser.add_argument("--allow-llm-api-call", action="store_true", help="Allow Phase 32B to attempt one gated provider call when env gates pass.")
@@ -1356,6 +1364,56 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- llm_called: {output.get('llm_called')}")
         return 0
 
+    if args.agent_evidence_pack_composer:
+        output = build_agent_evidence_pack_composer()
+        if args.markdown:
+            print(render_agent_evidence_pack_composer_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL agent evidence pack composer")
+            print(f"- rule_only: {output.get('rule_only')}")
+            print(f"- ready_for_llm_call: {output.get('ready_for_llm_call')}")
+        return 0
+
+    if args.agent_prompt_preview:
+        output = build_agent_prompt_preview()
+        if args.markdown:
+            print(render_agent_prompt_preview_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL agent prompt preview")
+            print(f"- rule_only: {output.get('rule_only')}")
+            print(f"- ready_for_llm_call: {output.get('ready_for_llm_call')}")
+        return 0
+
+    if args.agent_review_packet:
+        output = build_agent_review_packet()
+        if args.markdown:
+            print(render_agent_review_packet_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL agent review packet")
+            print(f"- rule_only: {output.get('rule_only')}")
+            print(f"- human_review_required: {output.get('human_review_required')}")
+            print(f"- ready_for_llm_call: {output.get('ready_for_llm_call')}")
+        return 0
+
+    if args.manual_approval_packet_preview:
+        output = build_manual_approval_packet_preview()
+        if args.markdown:
+            print(render_manual_approval_packet_preview_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL manual approval packet preview")
+            print(f"- rule_only: {output.get('rule_only')}")
+            print(f"- approval_phrase_generated: {output.get('approval_phrase_generated')}")
+            print(f"- ready_for_actual_approval: {output.get('ready_for_actual_approval')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -1534,6 +1592,10 @@ def main(argv: list[str] | None = None) -> int:
         or args.local_knowledge_ingestion_preview
         or args.evidence_quality_preview
         or args.agent_routing_dry_preview
+        or args.agent_evidence_pack_composer
+        or args.agent_prompt_preview
+        or args.agent_review_packet
+        or args.manual_approval_packet_preview
         or args.allow_llm_api_call
         or args.allow_rag_evidence_llm_api_call
         or args.allow_rag_evidence_private_test_discord_send

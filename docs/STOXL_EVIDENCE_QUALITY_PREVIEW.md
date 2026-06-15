@@ -18,3 +18,5 @@ python apps\hermes_gateway\cli.py --evidence-quality-preview --markdown
 ```
 
 The preview keeps `ready_for_llm_prompt=false`, `ready_for_embedding=false`, `ready_for_external_sources=false`, and `ready_for_discord_send=false`.
+
+Phase 35C uses these dry quality fields when composing agent evidence packs. It still does not include full content.

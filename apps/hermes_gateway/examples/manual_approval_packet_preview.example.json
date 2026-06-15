@@ -1,0 +1,54 @@
+{
+  "report_type": "manual_approval_packet_preview",
+  "version": "phase35d_manual_approval_packet_preview_report_only",
+  "approval_packet_preview_available": true,
+  "rule_only": true,
+  "approval_phrase_generated": false,
+  "approval_phrase_value_logged": false,
+  "human_review_required": true,
+  "ready_for_actual_approval": false,
+  "ready_for_llm_call": false,
+  "ready_for_discord_send": false,
+  "ready_for_embedding": false,
+  "ready_for_external_sources": false,
+  "approval_packet_previews": {
+    "kasumi": {
+      "agent": "kasumi",
+      "review_packet_ready": true,
+      "manual_approval_required_for_future_live_run": true,
+      "approval_scope": "private_test_only",
+      "allowed_future_action": "one_private_test_review_only_llm_draft",
+      "discord_send_allowed": false,
+      "llm_call_allowed": false,
+      "embedding_allowed": false,
+      "external_execution_allowed": false,
+      "approval_phrase_generated": false
+    },
+    "marin": {
+      "agent": "marin",
+      "review_packet_ready": false,
+      "manual_approval_required_for_future_live_run": true,
+      "approval_scope": "none",
+      "allowed_future_action": "none",
+      "discord_send_allowed": false,
+      "llm_call_allowed": false,
+      "embedding_allowed": false,
+      "external_execution_allowed": false,
+      "approval_phrase_generated": false
+    }
+  },
+  "ready_for_unattended_auto_reply": false,
+  "safety_assertions": {
+    "api_key_value_logged": false,
+    "token_value_logged": false,
+    "raw_discord_ids_logged": false,
+    "approval_phrase_value_logged": false,
+    "approval_phrase_generated": false,
+    "embedding_called": false,
+    "external_execution": false,
+    "llm_called": false,
+    "discord_message_sent": false,
+    "public_team_channel_reply_allowed": false,
+    "unattended_auto_reply_allowed": false
+  }
+}

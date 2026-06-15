@@ -567,6 +567,51 @@ def test_phase35b_summaries() -> None:
     assert_true(routing["ready_for_unattended_auto_reply"] is False, "No unattended")
 
 
+def test_phase35c_summaries() -> None:
+    setup_artifacts()
+    report = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")
+    composer = report["phase35c_agent_evidence_pack_composer"]
+    prompt = report["phase35c_agent_prompt_preview"]
+    assert_true(composer["available"] is True, "Composer available")
+    assert_true(composer["rule_only"] is True, "Composer rule-only")
+    assert_true(composer["relative_paths_only"] is True, "Relative paths")
+    assert_true(composer["full_content_included"] is False, "No full content")
+    assert_true(composer["ready_for_llm_call"] is False, "No LLM ready")
+    assert_true(composer["ready_for_discord_send"] is False, "No Discord ready")
+    assert_true(composer["ready_for_embedding"] is False, "No embedding ready")
+    assert_true(composer["ready_for_external_sources"] is False, "No external ready")
+    assert_true(prompt["available"] is True, "Prompt preview available")
+    assert_true(prompt["rule_only"] is True, "Prompt rule-only")
+    assert_true(prompt["llm_called"] is False, "No LLM")
+    assert_true(prompt["discord_message_sent"] is False, "No Discord")
+    assert_true(prompt["ready_for_llm_call"] is False, "No LLM ready")
+    assert_true(prompt["ready_for_discord_send"] is False, "No Discord ready")
+    assert_true(prompt["ready_for_unattended_auto_reply"] is False, "No unattended")
+
+
+def test_phase35d_summaries() -> None:
+    setup_artifacts()
+    report = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")
+    review = report["phase35d_agent_review_packet"]
+    approval = report["phase35d_manual_approval_packet_preview"]
+    assert_true(review["available"] is True, "Review packet available")
+    assert_true(review["rule_only"] is True, "Review packet rule-only")
+    assert_true(review["human_review_required"] is True, "Human review required")
+    assert_true(review["ready_for_llm_call"] is False, "No LLM ready")
+    assert_true(review["ready_for_discord_send"] is False, "No Discord ready")
+    assert_true(review["ready_for_embedding"] is False, "No embedding ready")
+    assert_true(review["ready_for_external_sources"] is False, "No external ready")
+    assert_true(review["full_content_included"] is False, "No full content")
+    assert_true(approval["available"] is True, "Approval preview available")
+    assert_true(approval["rule_only"] is True, "Approval preview rule-only")
+    assert_true(approval["approval_phrase_generated"] is False, "No approval phrase generated")
+    assert_true(approval["approval_phrase_value_logged"] is False, "No approval phrase value logged")
+    assert_true(approval["ready_for_actual_approval"] is False, "No actual approval")
+    assert_true(approval["ready_for_llm_call"] is False, "No LLM ready")
+    assert_true(approval["ready_for_discord_send"] is False, "No Discord ready")
+    assert_true(approval["ready_for_unattended_auto_reply"] is False, "No unattended")
+
+
 def main() -> int:
     tests = [
         test_recent_events_returned,
@@ -608,6 +653,8 @@ def main() -> int:
         test_rag_evidence_private_test_phase34_final_lock_summary,
         test_phase35a_post_mvp_safety_audit_summary,
         test_phase35b_summaries,
+        test_phase35c_summaries,
+        test_phase35d_summaries,
     ]
     for test in tests:
         test()

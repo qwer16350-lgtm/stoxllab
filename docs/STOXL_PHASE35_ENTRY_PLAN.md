@@ -34,6 +34,24 @@ D. Operator dashboard
 - Final lock, audit, and viewer summary hardening.
 - Report-only.
 
+E. Agent evidence/prompt preview
+
+- Agent-specific evidence packs.
+- Prompt preview summaries only.
+- No full content.
+- No LLM call.
+- No Discord send.
+
+F. Agent review and manual approval packet preview
+
+- Agent-specific review packets for human inspection.
+- Manual approval gate preview only.
+- No approval phrase generation.
+- No actual approval.
+- No LLM call.
+- No Discord send.
+- No embedding or external source access.
+
 ## Hold
 
 - Embedding/vector DB.

@@ -64,6 +64,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - Build Phase 34M final lock reports that mark the private-test E2E RAG+LLM+Discord MVP complete.
 - Build Phase 35A post-MVP safety audit reports and operator runbooks without live execution.
 - Build Phase 35B local knowledge ingestion, evidence quality, and agent routing dry previews without live execution.
+- Build Phase 35C agent evidence pack composer and agent prompt preview reports without live execution.
 
 ## Explicit Non-Goals
 
@@ -107,6 +108,7 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - No Phase 34M final lock starts Discord, sends additional Discord messages, calls OpenRouter/LLM APIs, recalls LLM, calls embeddings, or executes external actions.
 - No Phase 35A audit starts Discord, sends messages, calls OpenRouter/LLM APIs, recalls LLM, creates embeddings/vector indexes, schedules auto replies, or executes external actions.
 - No Phase 35B preview starts Discord, sends messages, calls OpenRouter/LLM APIs, creates embeddings/vector indexes, watches files, schedules auto replies, or executes external actions.
+- No Phase 35C preview starts Discord, sends messages, calls OpenRouter/LLM APIs, executes prompts, creates embeddings/vector indexes, dumps full content, or executes external actions.
 
 ## Phase 21 Read-Only Planning Docs
 
@@ -183,6 +185,8 @@ It does not replace any NAS or production Hermes Gateway project. It exists so t
 - `docs/STOXL_LOCAL_KNOWLEDGE_INGESTION_PREVIEW.md`
 - `docs/STOXL_EVIDENCE_QUALITY_PREVIEW.md`
 - `docs/STOXL_AGENT_ROUTING_DRY_PREVIEW.md`
+- `docs/STOXL_AGENT_EVIDENCE_PACK_COMPOSER.md`
+- `docs/STOXL_AGENT_PROMPT_PREVIEW.md`
 
 These documents prepare for a later private server read-only connection review. They do not authorize or perform a Discord connection.
 
@@ -489,6 +493,12 @@ requirements now make `llm_call_allowed=false` with an explicit blocked reason.
 Phase 34L-1D fixes OpenRouter key detection in the E2E dispatch path. Both
 `OPENROUTER_API_KEY` and `HERMES_OPENROUTER_API_KEY` are accepted as aliases,
 but only key presence is reported; key values are never logged.
+
+Phase 35D adds report-only agent review packets and manual approval packet
+previews. These packets combine Phase 35C evidence/prompt summaries for human
+review, show future approval gate requirements, and keep approval phrase
+generation, LLM calls, Discord sends, embeddings, external sources, and
+unattended auto replies disabled.
 
 If the registry file is missing, generate it from the repo root:
 

@@ -1,0 +1,15 @@
+{
+  "report_type": "agent_prompt_preview",
+  "version": "phase35c_agent_prompt_preview_report_only",
+  "prompt_preview_available": true,
+  "rule_only": true,
+  "llm_called": false,
+  "discord_message_sent": false,
+  "ready_for_llm_call": false,
+  "ready_for_discord_send": false,
+  "ready_for_embedding": false,
+  "ready_for_external_sources": false,
+  "full_prompt_executed": false,
+  "full_content_included": false,
+  "ready_for_unattended_auto_reply": false
+}
