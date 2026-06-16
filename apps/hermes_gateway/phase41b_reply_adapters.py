@@ -10,6 +10,8 @@ import asyncio
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
+from discord_logging_redaction import install_discord_logging_redaction
+
 
 DETERMINISTIC_REPLY_TEXT = "STOXL private-test deterministic reply."
 
@@ -81,6 +83,7 @@ class RealDiscordPhase41BReplyAdapter:
         self._send_timeout_seconds = max(1, int(send_timeout_seconds))
 
     def collect_events(self, *, timeout_seconds: int, max_events: int) -> list[Phase41BReplyEvent]:
+        install_discord_logging_redaction()
         import discord
 
         events: list[Phase41BReplyEvent] = []
@@ -116,6 +119,7 @@ class RealDiscordPhase41BReplyAdapter:
         return events
 
     def send_reply(self, event: Phase41BReplyEvent, content: str) -> Phase41BReplySendResult:
+        install_discord_logging_redaction()
         import discord
 
         target = event.source

@@ -80,9 +80,19 @@ def test_forbidden_behavior_sentinel_success_fixture() -> None:
     assert_true(report["phase41_public_team_reply_allowed"] is False, "41 public/team blocked")
     assert_true(report["phase41_unattended_auto_reply_allowed"] is False, "41 no unattended")
     assert_true(report["phase41b_one_shot_available"] is True, "41B available")
+    assert_true(report["phase41b_actual_runtime_path_available"] is True, "41B runtime path")
+    assert_true(report["phase41b_actual_runtime_executed"] is False, "41B no runtime")
+    assert_true(report["phase41b_real_discord_send_adapter_wired"] is True, "41B real adapter wired")
+    assert_true(report["phase41b_fake_adapter_contract_passed"] is True, "41B fake contract")
     assert_true(report["phase41b_default_blocked"] is True, "41B blocked")
     assert_true(report["phase41b_message_sent_count"] == 0, "41B no send")
     assert_true(report["phase41c_closeout_available"] is True, "41C closeout")
+    assert_true(report["phase41c_actual_private_test_reply_verified"] is True, "41C success")
+    assert_true(report["phase41c_message_sent_count"] == 1, "41C observed count")
+    assert_true(report["phase41c_sent_scope"] == "private_test_only", "41C scope")
+    assert_true(report["phase41c_repeat_send_blocked"] is True, "41C repeat locked")
+    assert_true(report["phase41c_discord_api_send_called_during_phase41c"] is False, "41C no API")
+    assert_true(report["phase41c_discord_message_sent_during_phase41c"] is False, "41C no message")
     assert_true(report["phase42_session_preflight_available"] is True, "42 preflight")
     assert_true(report["phase43_public_team_blocked"] is True, "43 public/team")
     assert_true(report["phase44_provider_preflight_available"] is True, "44 provider")
@@ -151,6 +161,7 @@ def test_forbidden_behavior_sentinel_actual_message_count_fixture() -> None:
 def test_forbidden_behavior_sentinel_phase41b_45a_negative_fixtures() -> None:
     for key in (
         "phase41b_ready_for_manual_private_test_reply_one_shot",
+        "phase41b_actual_runtime_executed",
         "phase41b_actual_reply_send_executed",
         "phase41b_discord_api_send_called",
         "phase41b_discord_message_sent",
@@ -158,6 +169,8 @@ def test_forbidden_behavior_sentinel_phase41b_45a_negative_fixtures() -> None:
         "phase41b_rag_called",
         "phase41b_embedding_api_called",
         "phase41b_external_execution",
+        "phase41c_discord_api_send_called_during_phase41c",
+        "phase41c_discord_message_sent_during_phase41c",
         "phase41c_ready_for_repeat_send",
         "phase42_actual_runtime_executed",
         "phase42_llm_called",
@@ -174,7 +187,9 @@ def test_forbidden_behavior_sentinel_phase41b_45a_negative_fixtures() -> None:
     ):
         assert_raises(lambda selected=key: build_forbidden_behavior_sentinel({selected: True}), f"{key} should fail")
     assert_raises(lambda: build_forbidden_behavior_sentinel({"phase41b_message_sent_count": 1}), "41B count 0")
-    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase41c_message_sent_count": 1}), "41C count 0")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase41c_message_sent_count": 0}), "41C count 1")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase41c_sent_scope": "none"}), "41C private scope")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase41c_repeat_send_blocked": False}), "41C repeat locked")
     assert_raises(lambda: build_forbidden_behavior_sentinel({"phase44_fake_output_schema_valid": False}), "44 fake schema valid")
 
 

@@ -80,7 +80,7 @@ def build_phase41b_private_test_reply_one_shot(
     timeout_seconds: int = 60,
     max_events: int = 10,
     event: Mapping[str, Any] | None = None,
-    one_shot_lock_consumed: bool = False,
+    one_shot_lock_consumed: bool = True,
 ) -> dict[str, Any]:
     env = _phase41b_env(env)
     guards = _event_guard(event)
@@ -133,7 +133,7 @@ def build_phase41b_private_test_reply_one_shot(
         "actual_runtime_executed": False,
         "real_discord_send_adapter_wired": True,
         "fake_adapter_contract_passed": True,
-        "manual_retry_required": True,
+        "manual_retry_required": not one_shot_lock_consumed,
         "ready_for_phase41b_actual_private_test_reply_retry_manual_gate": gates_ready,
         "allow_actual_private_test_reply_flag_present": bool(allow_actual_private_test_reply),
         "gates_ready_but_actual_flag_missing": gates_ready and not allow_actual_private_test_reply,
@@ -165,6 +165,9 @@ def build_phase41b_private_test_reply_one_shot(
         "bot_message_ignored": guards["bot_message_ignored"],
         "duplicate_message_ignored": guards["duplicate_message_ignored"],
         "one_shot_lock_consumed": bool(one_shot_lock_consumed),
+        "phase41b_success_closeout_recorded": True,
+        "phase41b_repeat_send_locked": True,
+        "ready_for_phase41b_repeat_send": False,
         "token_value_logged": False,
         "private_test_channel_id_value_logged": False,
         "approval_phrase_value_logged": False,
@@ -225,7 +228,7 @@ def assert_phase41b_report_safe(report: Mapping[str, Any]) -> None:
     text = json.dumps(report, ensure_ascii=False)
     if _SECRET_RE.search(text) or _LONG_ID_RE.search(text) or _EXPECTED_APPROVAL_PHRASE in text:
         raise ValueError("Phase 41B report contains a sensitive value.")
-    for key in ("actual_reply_send_executed", "discord_api_send_called", "discord_message_sent", "llm_api_called", "rag_called", "embedding_api_called", "vector_index_created", "external_execution", "send_result_error_value_logged"):
+    for key in ("actual_reply_send_executed", "discord_api_send_called", "discord_message_sent", "llm_api_called", "rag_called", "embedding_api_called", "vector_index_created", "external_execution", "send_result_error_value_logged", "ready_for_phase41b_repeat_send"):
         if report.get(key):
             raise ValueError(f"Phase 41B unsafe flag is true: {key}")
     if int(report.get("message_sent_count", 0) or 0) != 0:

@@ -474,3 +474,11 @@ send through a fresh private-test channel send path instead of reusing the
 closed collection message object. Tests remain fake-adapter only. Codex did not
 run `--allow-actual-private-test-reply`, did not call Discord API send, and did
 not send a Discord message.
+
+Phase 41C closes out the observed Phase 41B actual private-test reply success:
+one private-test-only message, previous failed attempt counted as zero sends,
+and Phase 41B repeat send locked. It also adds Discord library log redaction for
+session IDs emitted by `discord.gateway`. Codex does not run Discord live
+runtime, call Discord API send, or send a Discord message in Phase 41C. The next
+actual operation must be a separate Phase 42 supervised deterministic session
+manual gate.

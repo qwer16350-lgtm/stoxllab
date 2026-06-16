@@ -163,6 +163,8 @@ FORBIDDEN_TRUE_FIELDS = (
     "phase41b_rag_called",
     "phase41b_embedding_api_called",
     "phase41b_external_execution",
+    "phase41c_discord_api_send_called_during_phase41c",
+    "phase41c_discord_message_sent_during_phase41c",
     "phase41c_ready_for_repeat_send",
     "phase42_actual_runtime_executed",
     "phase42_llm_called",
@@ -394,7 +396,13 @@ def build_forbidden_behavior_sentinel(overrides: dict[str, Any] | None = None) -
         "phase41b_embedding_api_called": False,
         "phase41b_external_execution": False,
         "phase41c_closeout_available": True,
-        "phase41c_message_sent_count": 0,
+        "phase41c_actual_private_test_reply_verified": True,
+        "phase41c_message_sent_count": 1,
+        "phase41c_sent_scope": "private_test_only",
+        "phase41c_repeat_send_blocked": True,
+        "phase41c_discord_api_send_called_during_phase41c": False,
+        "phase41c_discord_message_sent_during_phase41c": False,
+        "phase41c_ready_for_phase42_supervised_deterministic_session_manual_gate": True,
         "phase41c_ready_for_repeat_send": False,
         "phase42_session_preflight_available": True,
         "phase42_actual_runtime_executed": False,
@@ -511,7 +519,11 @@ def _sentinel_passed(report: dict[str, Any]) -> bool:
         return False
     if int(report.get("phase41b_message_sent_count", 0) or 0) != 0:
         return False
-    if not bool(report.get("phase41c_closeout_available")) or int(report.get("phase41c_message_sent_count", 0) or 0) != 0:
+    if not bool(report.get("phase41c_closeout_available")) or not bool(report.get("phase41c_actual_private_test_reply_verified")):
+        return False
+    if int(report.get("phase41c_message_sent_count", 0) or 0) != 1 or report.get("phase41c_sent_scope") != "private_test_only":
+        return False
+    if not bool(report.get("phase41c_repeat_send_blocked")) or bool(report.get("phase41c_discord_api_send_called_during_phase41c")) or bool(report.get("phase41c_discord_message_sent_during_phase41c")):
         return False
     if not bool(report.get("phase42_session_preflight_available")):
         return False
@@ -606,8 +618,12 @@ def assert_forbidden_behavior_sentinel_safe(report: dict[str, Any]) -> None:
         raise ValueError("Forbidden behavior sentinel requires Phase 41 default block with message count 0.")
     if not report.get("phase41b_one_shot_available") or not report.get("phase41b_actual_runtime_path_available") or not report.get("phase41b_real_discord_send_adapter_wired") or not report.get("phase41b_fake_adapter_contract_passed") or not report.get("phase41b_default_blocked") or int(report.get("phase41b_message_sent_count", 0) or 0) != 0:
         raise ValueError("Forbidden behavior sentinel requires Phase 41B blocked no-send prep.")
-    if not report.get("phase41c_closeout_available") or int(report.get("phase41c_message_sent_count", 0) or 0) != 0:
-        raise ValueError("Forbidden behavior sentinel requires Phase 41C no-send closeout scaffold.")
+    if not report.get("phase41c_closeout_available") or not report.get("phase41c_actual_private_test_reply_verified"):
+        raise ValueError("Forbidden behavior sentinel requires Phase 41C closeout.")
+    if int(report.get("phase41c_message_sent_count", 0) or 0) != 1 or report.get("phase41c_sent_scope") != "private_test_only":
+        raise ValueError("Forbidden behavior sentinel requires Phase 41C exactly-once private-test observation.")
+    if not report.get("phase41c_repeat_send_blocked") or report.get("phase41c_discord_api_send_called_during_phase41c") or report.get("phase41c_discord_message_sent_during_phase41c"):
+        raise ValueError("Forbidden behavior sentinel requires Phase 41C no-repeat/no-new-send state.")
     if not report.get("phase42_session_preflight_available"):
         raise ValueError("Forbidden behavior sentinel requires Phase 42 session preflight.")
     if not report.get("phase43_policy_available") or not report.get("phase43_public_team_blocked"):
@@ -652,6 +668,8 @@ def render_forbidden_behavior_sentinel_markdown(report: dict[str, Any]) -> str:
             "- Phase 41B real Discord send adapter wired: true",
             "- Phase 41B fake adapter contract passed: true",
             "- Phase 41B Discord message sent: false",
+            "- Phase 41C observed message sent count: 1",
+            "- Phase 41C repeat send blocked: true",
             "- Phase 42 actual runtime executed: false",
             "- Phase 44 actual LLM API call: false",
             "- Phase 45 actual LLM API call: false",

@@ -22,3 +22,8 @@ message but failed with `RuntimeError`. The adapter no longer reuses a closed
 message object for sending; it uses a fresh manual-gated private-test channel
 send path. Codex does not run the actual flag, does not call Discord API send,
 and does not send a Discord message in this hotfix.
+
+Phase 41C records the subsequent Phase 41B actual private-test reply success as
+exactly one private-test-only message. It hardens Discord library log redaction
+for session IDs and locks Phase 41B against repeat send. Phase 41C itself does
+not run Discord live runtime, call Discord API send, or send a message.

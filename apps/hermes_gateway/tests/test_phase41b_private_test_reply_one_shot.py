@@ -52,6 +52,8 @@ def test_default_blocked() -> None:
     assert_true(report["actual_runtime_path_available"] is True, "Runtime path available")
     assert_true(report["real_discord_send_adapter_wired"] is True, "Real adapter wired")
     assert_true(report["fake_adapter_contract_passed"] is True, "Fake contract passed")
+    assert_true(report["one_shot_lock_consumed"] is True, "One-shot lock consumed")
+    assert_true(report["phase41b_repeat_send_locked"] is True, "Repeat locked")
     assert_no_send(report)
 
 
@@ -66,7 +68,7 @@ def test_gate_blocks() -> None:
         ({**ready_env(), "HERMES_DISCORD_REPLY_MODE": "team"}, "reply_mode_not_private_test_only"),
     ]
     for env, failed_reason in cases:
-        report = build_phase41b_private_test_reply_one_shot(env, allow_actual_private_test_reply=True)
+        report = build_phase41b_private_test_reply_one_shot(env, allow_actual_private_test_reply=True, one_shot_lock_consumed=False)
         assert_true(failed_reason in report["blocked_reasons"], failed_reason)
         assert_true("token_present" not in report["blocked_reasons"], "Positive reason absent")
         assert_true("manual_approval_true" not in report["blocked_reasons"], "Positive reason absent")
@@ -82,7 +84,7 @@ def test_public_self_bot_duplicate_and_lock_blocks() -> None:
         {"author_type": "bot"},
         {"duplicate": True},
     ):
-        report = build_phase41b_private_test_reply_one_shot(ready_env(), allow_actual_private_test_reply=True, event=event)
+        report = build_phase41b_private_test_reply_one_shot(ready_env(), allow_actual_private_test_reply=True, event=event, one_shot_lock_consumed=False)
         assert_true(report["blocked"] is True, "Guard blocks")
         assert_no_send(report)
     locked = build_phase41b_private_test_reply_one_shot(ready_env(), allow_actual_private_test_reply=True, one_shot_lock_consumed=True)
@@ -112,9 +114,10 @@ def test_process_env_gate_checks_true_without_actual_flag() -> None:
     ):
         assert_true(report["gate_checks"][key] is True, f"{key} true")
     assert_true(report["blocked"] is True, "Blocked without actual flag")
-    assert_true(report["blocked_reasons"] == ["allow_actual_private_test_reply_flag_missing"], "Only actual flag missing")
-    assert_true(report["gates_ready_but_actual_flag_missing"] is True, "Gates ready flag")
-    assert_true(report["ready_for_phase41b_actual_private_test_reply_retry_manual_gate"] is True, "Ready for retry manual gate")
+    assert_true(report["blocked_reasons"] == ["allow_actual_private_test_reply_flag_missing", "one_shot_lock_consumed"], "Actual flag and lock missing")
+    assert_true(report["gates_ready_but_actual_flag_missing"] is False, "Gates not ready after lock")
+    assert_true(report["ready_for_phase41b_actual_private_test_reply_retry_manual_gate"] is False, "No Phase 41B retry manual gate")
+    assert_true(report["phase41b_repeat_send_locked"] is True, "Repeat locked")
     assert_no_send(report)
 
 

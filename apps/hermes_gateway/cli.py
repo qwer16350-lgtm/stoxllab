@@ -356,7 +356,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--allow-actual-private-test-reply", action="store_true", help="Mark the Phase 41B actual private-test reply allow flag as present; this safe-prep bundle still does not send.")
     parser.add_argument("--phase41b-reply-timeout-seconds", type=int, default=60, help="Phase 41B actual private-test reply timeout. Defaults to 60.")
     parser.add_argument("--phase41b-max-events", type=int, default=10, help="Phase 41B actual private-test reply max events. Defaults to 10.")
-    parser.add_argument("--phase41-actual-reply-closeout", action="store_true", help="Print Phase 41C actual reply closeout scaffold from no-send fixture.")
+    parser.add_argument("--phase41-actual-reply-closeout", action="store_true", help="Print Phase 41C actual reply success closeout without live execution.")
+    parser.add_argument("--phase41c-actual-reply-closeout", action="store_true", help="Print Phase 41C actual reply success closeout without live execution.")
     parser.add_argument("--phase42-supervised-private-test-session-preflight", action="store_true", help="Print Phase 42 supervised deterministic private-test session preflight.")
     parser.add_argument("--phase43-routing-rate-limit-policy", action="store_true", help="Print Phase 43 routing/rate-limit/session lock policy.")
     parser.add_argument("--phase44-llm-provider-preflight", action="store_true", help="Print Phase 44 LLM provider preflight without API calls.")
@@ -2435,7 +2436,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- reply_mode_private_test_only: {output.get('reply_mode_private_test_only')}")
         return 0
 
-    if args.phase41_actual_reply_closeout:
+    if args.phase41_actual_reply_closeout or args.phase41c_actual_reply_closeout:
         output = build_phase41c_actual_reply_closeout()
         if args.markdown:
             print(render_phase41c_actual_reply_closeout_markdown(output))
@@ -2766,6 +2767,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.phase41b_reply_timeout_seconds != 60
         or args.phase41b_max_events != 10
         or args.phase41_actual_reply_closeout
+        or args.phase41c_actual_reply_closeout
         or args.phase42_supervised_private_test_session_preflight
         or args.phase43_routing_rate_limit_policy
         or args.phase44_llm_provider_preflight

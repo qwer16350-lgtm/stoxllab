@@ -25,3 +25,10 @@ old failure shape as `adapter_not_wired_or_contract_error` without logging the
 error value, token, channel ID, approval phrase, raw Discord IDs, session IDs,
 or raw content. This hotfix does not run the actual flag, does not call Discord
 API send, and does not send a Discord message; tests use fake adapters only.
+
+Phase 41B actual private-test reply has now succeeded exactly once with
+`message_sent_count=1` and `sent_scope=private_test_only`. Phase 41C records
+that success as the closeout SSOT, keeps the previous failed attempt at send
+count 0, and locks Phase 41B against repeat send. The next actual operation is
+not another Phase 41B retry; it must be a separate Phase 42 supervised
+deterministic session manual gate.

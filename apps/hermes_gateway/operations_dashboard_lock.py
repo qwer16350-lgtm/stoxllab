@@ -295,7 +295,13 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
         "phase41b_discord_message_sent": bool(phase41b_one_shot.get("discord_message_sent")),
         "phase41b_message_sent_count": int(phase41b_one_shot.get("message_sent_count", 0) or 0),
         "phase41c_closeout_available": True,
+        "phase41c_actual_private_test_reply_verified": bool(phase41c_closeout.get("actual_private_test_reply_verified")),
         "phase41c_message_sent_count": int(phase41c_closeout.get("message_sent_count", 0) or 0),
+        "phase41c_sent_scope": phase41c_closeout.get("sent_scope", ""),
+        "phase41c_repeat_send_blocked": bool(phase41c_closeout.get("repeat_send_blocked")),
+        "phase41c_discord_api_send_called_during_phase41c": bool(phase41c_closeout.get("discord_api_send_called_during_phase41c")),
+        "phase41c_discord_message_sent_during_phase41c": bool(phase41c_closeout.get("discord_message_sent_during_phase41c")),
+        "phase41c_ready_for_phase42_supervised_deterministic_session_manual_gate": bool(phase41c_closeout.get("ready_for_phase42_supervised_deterministic_session_manual_gate")),
         "phase41c_ready_for_repeat_send": bool(phase41c_closeout.get("ready_for_repeat_send")),
         "phase42_session_preflight_available": True,
         "phase42_actual_runtime_executed": bool(phase42_session.get("actual_runtime_executed")),
@@ -520,8 +526,10 @@ def assert_operations_dashboard_lock_safe(report: dict[str, Any]) -> None:
         raise ValueError("Operations dashboard lock requires Phase 40Z handoff and Phase 41A default block.")
     if not report.get("phase41b_one_shot_available") or not report.get("phase41b_actual_runtime_path_available") or not report.get("phase41b_real_discord_send_adapter_wired") or not report.get("phase41b_fake_adapter_contract_passed") or not report.get("phase41b_default_blocked") or int(report.get("phase41b_message_sent_count", 0) or 0) != 0:
         raise ValueError("Operations dashboard lock requires Phase 41B blocked no-send prep.")
-    if not report.get("phase41c_closeout_available") or int(report.get("phase41c_message_sent_count", 0) or 0) != 0:
-        raise ValueError("Operations dashboard lock requires Phase 41C no-send scaffold.")
+    if not report.get("phase41c_closeout_available") or not report.get("phase41c_actual_private_test_reply_verified") or int(report.get("phase41c_message_sent_count", 0) or 0) != 1 or report.get("phase41c_sent_scope") != "private_test_only":
+        raise ValueError("Operations dashboard lock requires Phase 41C exactly-once private-test closeout.")
+    if not report.get("phase41c_repeat_send_blocked") or report.get("phase41c_discord_api_send_called_during_phase41c") or report.get("phase41c_discord_message_sent_during_phase41c"):
+        raise ValueError("Operations dashboard lock requires Phase 41C no-repeat/no-new-send state.")
     if not report.get("phase42_session_preflight_available"):
         raise ValueError("Operations dashboard lock requires Phase 42 session preflight.")
     if not report.get("phase43_policy_available") or not report.get("phase43_public_team_blocked"):
@@ -567,6 +575,8 @@ def render_operations_dashboard_lock_markdown(report: dict[str, Any]) -> str:
             f"- Phase 41B real Discord send adapter wired: {str(report.get('phase41b_real_discord_send_adapter_wired')).lower()}",
             f"- Phase 41B fake adapter contract passed: {str(report.get('phase41b_fake_adapter_contract_passed')).lower()}",
             f"- Phase 41B message sent count: {report.get('phase41b_message_sent_count')}",
+            f"- Phase 41C observed message sent count: {report.get('phase41c_message_sent_count')}",
+            f"- Phase 41C repeat send blocked: {str(report.get('phase41c_repeat_send_blocked')).lower()}",
             f"- Phase 42 actual runtime executed: {str(report.get('phase42_actual_runtime_executed')).lower()}",
             f"- Phase 44 actual LLM API call: {str(report.get('phase44_actual_llm_api_call')).lower()}",
             f"- Phase 45 actual LLM API call: {str(report.get('phase45_actual_llm_api_call')).lower()}",

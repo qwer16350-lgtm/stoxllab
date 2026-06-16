@@ -45,6 +45,7 @@ def test_fake_private_test_human_message_sends_once() -> None:
         allow_actual_private_test_reply=True,
         execute_actual_runtime=True,
         reply_adapter=adapter,
+        one_shot_lock_consumed=False,
     )
     assert_true(report["version"] == "phase41b_actual_private_test_reply_one_shot", "Runtime version")
     assert_true(report["safe_prep_only"] is False, "Runtime separated from prep")
@@ -85,6 +86,7 @@ def test_ignored_events_and_timeout_do_not_send() -> None:
             allow_actual_private_test_reply=True,
             execute_actual_runtime=True,
             reply_adapter=adapter,
+            one_shot_lock_consumed=False,
         )
         assert_true(report["actual_reply_send_executed"] is False, "No reply")
         assert_true(report["discord_message_sent"] is False, "No message")
@@ -117,6 +119,7 @@ def test_failed_send_does_not_prepare_closeout() -> None:
         allow_actual_private_test_reply=True,
         execute_actual_runtime=True,
         reply_adapter=adapter,
+        one_shot_lock_consumed=False,
     )
     assert_true(report["actual_reply_send_executed"] is False, "No execution")
     assert_true(report["message_sent_count"] == 0, "No send count")
@@ -140,6 +143,7 @@ def test_runtime_error_failure_is_classified_without_error_value() -> None:
         allow_actual_private_test_reply=True,
         execute_actual_runtime=True,
         reply_adapter=adapter,
+        one_shot_lock_consumed=False,
     )
     assert_true(report["send_result_error_type"] == "RuntimeError", "RuntimeError retained")
     assert_true(report["send_result_error_category"] == "adapter_not_wired_or_contract_error", "RuntimeError classified")
@@ -156,6 +160,7 @@ def test_no_sensitive_values_or_external_calls() -> None:
         allow_actual_private_test_reply=True,
         execute_actual_runtime=True,
         reply_adapter=FakePhase41BReplyAdapter(events=[Phase41BReplyEvent()]),
+        one_shot_lock_consumed=False,
     )
     text = json.dumps(report, ensure_ascii=False).lower()
     assert_true("sensitive_token_value_do_not_log" not in text, "No token")
