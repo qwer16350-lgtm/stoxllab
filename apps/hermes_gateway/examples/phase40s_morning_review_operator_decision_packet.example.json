@@ -1,0 +1,18 @@
+{
+  "report_type": "phase40s_morning_review_operator_decision_packet",
+  "version": "phase40s_morning_review_operator_decision_packet",
+  "report_only": true,
+  "safe_to_review_next_morning": true,
+  "overnight_external_actions_executed_by_codex": false,
+  "live_runtime_started_by_codex": false,
+  "additional_discord_send_count": 0,
+  "phase39_actual_send_count_locked": 1,
+  "next_operator_choices": [
+    "Run Phase 40O manual read-only runtime",
+    "Review capture with Phase 40Q",
+    "Proceed to Phase 41 reply rehearsal",
+    "Stop before any reply/send"
+  ],
+  "recommended_next_phase": "Phase 40O manual read-only live runtime launch by user",
+  "requires_user_confirmation": true
+}

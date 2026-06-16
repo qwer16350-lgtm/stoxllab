@@ -24,3 +24,7 @@ CLI:
 ```powershell
 python apps\hermes_gateway\cli.py --phase40n-phase41-reply-runtime-entry-gate --json
 ```
+
+Phase 40R expands this into a reply-runtime preflight matrix. Phase 41 remains
+blocked until a user-run read-only capture is reviewed and a separate reply gate
+is approved.

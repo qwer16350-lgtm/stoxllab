@@ -1,0 +1,18 @@
+{
+  "report_type": "phase40o_manual_readonly_live_runtime_launcher",
+  "version": "phase40o_manual_readonly_live_runtime_launcher_report_only",
+  "report_only": true,
+  "manual_launch_only": true,
+  "codex_must_not_launch": true,
+  "phase39_actual_send_count_locked": 1,
+  "additional_send_count": 0,
+  "readonly_runtime_launch_command_available": true,
+  "planned_command": "python apps\\hermes_gateway\\cli.py --run-discord-private-test-readonly --json",
+  "live_runtime_started": false,
+  "discord_gateway_connected": false,
+  "discord_api_send_called": false,
+  "discord_message_sent": false,
+  "message_sent_count": 0,
+  "ready_for_manual_readonly_runtime_launch": false,
+  "ready_for_reply_send": false
+}

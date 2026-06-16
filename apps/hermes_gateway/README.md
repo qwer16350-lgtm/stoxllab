@@ -629,6 +629,12 @@ and a Phase 41 reply runtime entry gate blocked by default. Codex still does not
 start Discord Gateway, send Discord messages, call LLM/RAG, create embeddings,
 or execute external actions.
 
+Phase 40O-40S adds manual launch support, a redacted capture schema, capture
+review closeout, a Phase 41 reply preflight matrix, and a morning operator
+decision packet. It still performs no live runtime, no Gateway connection, no
+Discord API send, no reply send, no LLM/RAG call, no embedding/vector creation,
+and no external execution.
+
 If the registry file is missing, generate it from the repo root:
 
 ```powershell

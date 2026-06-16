@@ -134,6 +134,11 @@ from phase40k_readonly_runtime_launch_packet import build_phase40k_readonly_runt
 from phase40l_live_capture_closeout_packet import build_phase40l_live_capture_closeout_packet, render_phase40l_live_capture_closeout_packet_markdown
 from phase40m_runtime_abort_kill_switch_packet import build_phase40m_runtime_abort_kill_switch_packet, render_phase40m_runtime_abort_kill_switch_packet_markdown
 from phase40n_phase41_reply_runtime_entry_gate import build_phase40n_phase41_reply_runtime_entry_gate, render_phase40n_phase41_reply_runtime_entry_gate_markdown
+from phase40o_manual_readonly_live_runtime_launcher import build_phase40o_manual_readonly_live_runtime_launcher, render_phase40o_manual_readonly_live_runtime_launcher_markdown
+from phase40p_readonly_capture_schema import build_phase40p_readonly_capture_schema, render_phase40p_readonly_capture_schema_markdown
+from phase40q_capture_review_closeout import build_phase40q_capture_review_closeout, render_phase40q_capture_review_closeout_markdown
+from phase40r_phase41_reply_preflight_matrix import build_phase40r_phase41_reply_preflight_matrix, render_phase40r_phase41_reply_preflight_matrix_markdown
+from phase40s_morning_review_operator_decision_packet import build_phase40s_morning_review_operator_decision_packet, render_phase40s_morning_review_operator_decision_packet_markdown
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight, render_rag_evidence_private_test_send_preflight_markdown
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope, render_rag_evidence_prompt_envelope_markdown
 from rag_evidence_review_packet import build_rag_evidence_review_packet, render_rag_evidence_review_packet_markdown
@@ -419,6 +424,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--phase40l-live-capture-closeout-packet", action="store_true", help="Print Phase 40L live capture closeout packet before live capture.")
     parser.add_argument("--phase40m-runtime-abort-kill-switch-packet", action="store_true", help="Print Phase 40M runtime abort kill-switch packet.")
     parser.add_argument("--phase40n-phase41-reply-runtime-entry-gate", action="store_true", help="Print Phase 40N Phase 41 reply runtime entry gate.")
+    parser.add_argument("--phase40o-manual-readonly-live-runtime-launcher", action="store_true", help="Print Phase 40O manual read-only live runtime launcher support.")
+    parser.add_argument("--phase40p-readonly-capture-schema", action="store_true", help="Print Phase 40P read-only capture schema.")
+    parser.add_argument("--phase40q-capture-review-closeout", action="store_true", help="Print Phase 40Q capture review closeout.")
+    parser.add_argument("--phase40r-phase41-reply-preflight-matrix", action="store_true", help="Print Phase 40R Phase 41 reply preflight matrix.")
+    parser.add_argument("--phase40s-morning-review-operator-decision-packet", action="store_true", help="Print Phase 40S morning review operator decision packet.")
     parser.add_argument("--source", default="operation", help="RAG source for local retrieval reports.")
     parser.add_argument("--query", default="STOXL brand tone", help="RAG query preview for local retrieval reports.")
     parser.add_argument("--allow-llm-api-call", action="store_true", help="Allow Phase 32B to attempt one gated provider call when env gates pass.")
@@ -446,6 +456,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--review-packet", action="store_true", help="Build an approval review packet from replay results.")
     parser.add_argument("--export-review-packet", action="store_true", help="Export review packet JSON and Markdown.")
     parser.add_argument("--review-export-root", help="Export root for review packets. Defaults to exports/hermes_gateway/review_packets.")
+    parser.add_argument("--capture-file", help="Optional redacted capture file for Phase 40Q review closeout.")
     parser.add_argument("--dry-run-export", action="store_true", help="Build export plan without writing files.")
     parser.add_argument("--json", action="store_true", help="Print JSON output.")
     args = parser.parse_args(argv)
@@ -2143,6 +2154,71 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- ready_for_phase41_reply_runtime: {output.get('ready_for_phase41_reply_runtime')}")
         return 0
 
+    if args.phase40o_manual_readonly_live_runtime_launcher:
+        output = build_phase40o_manual_readonly_live_runtime_launcher()
+        if args.markdown:
+            print(render_phase40o_manual_readonly_live_runtime_launcher_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 40O manual read-only live runtime launcher")
+            print(f"- manual_launch_only: {output.get('manual_launch_only')}")
+            print(f"- codex_must_not_launch: {output.get('codex_must_not_launch')}")
+            print(f"- ready_for_manual_readonly_runtime_launch: {output.get('ready_for_manual_readonly_runtime_launch')}")
+        return 0
+
+    if args.phase40p_readonly_capture_schema:
+        output = build_phase40p_readonly_capture_schema()
+        if args.markdown:
+            print(render_phase40p_readonly_capture_schema_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 40P read-only capture schema")
+            print(f"- capture_schema_available: {output.get('capture_schema_available')}")
+            print(f"- raw_content_logged: {output.get('raw_content_logged')}")
+            print(f"- secret_values_logged: {output.get('secret_values_logged')}")
+        return 0
+
+    if args.phase40q_capture_review_closeout:
+        output = build_phase40q_capture_review_closeout(capture_file=args.capture_file)
+        if args.markdown:
+            print(render_phase40q_capture_review_closeout_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 40Q capture review closeout")
+            print(f"- capture_file_present: {output.get('capture_file_present')}")
+            print(f"- capture_review_completed: {output.get('capture_review_completed')}")
+            print(f"- captured_event_count: {output.get('captured_event_count')}")
+        return 0
+
+    if args.phase40r_phase41_reply_preflight_matrix:
+        output = build_phase40r_phase41_reply_preflight_matrix()
+        if args.markdown:
+            print(render_phase40r_phase41_reply_preflight_matrix_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 40R Phase 41 reply preflight matrix")
+            print(f"- phase41_reply_runtime_allowed: {output.get('phase41_reply_runtime_allowed')}")
+            print(f"- discord_reply_send_allowed: {output.get('discord_reply_send_allowed')}")
+            print(f"- ready_for_phase41_reply_runtime: {output.get('ready_for_phase41_reply_runtime')}")
+        return 0
+
+    if args.phase40s_morning_review_operator_decision_packet:
+        output = build_phase40s_morning_review_operator_decision_packet()
+        if args.markdown:
+            print(render_phase40s_morning_review_operator_decision_packet_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 40S morning review operator decision packet")
+            print(f"- safe_to_review_next_morning: {output.get('safe_to_review_next_morning')}")
+            print(f"- requires_user_confirmation: {output.get('requires_user_confirmation')}")
+            print(f"- recommended_next_phase: {output.get('recommended_next_phase')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -2375,6 +2451,11 @@ def main(argv: list[str] | None = None) -> int:
         or args.phase40l_live_capture_closeout_packet
         or args.phase40m_runtime_abort_kill_switch_packet
         or args.phase40n_phase41_reply_runtime_entry_gate
+        or args.phase40o_manual_readonly_live_runtime_launcher
+        or args.phase40p_readonly_capture_schema
+        or args.phase40q_capture_review_closeout
+        or args.phase40r_phase41_reply_preflight_matrix
+        or args.phase40s_morning_review_operator_decision_packet
         or args.allow_llm_api_call
         or args.allow_actual_one_shot_llm_draft_call
         or args.allow_rag_evidence_llm_api_call
@@ -2390,6 +2471,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.review_packet
         or args.export_review_packet
         or args.review_export_root
+        or args.capture_file
         or args.dry_run_export
         or args.markdown
         or args.limit != 20

@@ -27,3 +27,6 @@ CLI:
 ```powershell
 python apps\hermes_gateway\cli.py --phase40k-readonly-runtime-launch-packet --json
 ```
+
+Phase 40O reuses the same planned command as a manual launch support packet.
+The command remains for user execution only.

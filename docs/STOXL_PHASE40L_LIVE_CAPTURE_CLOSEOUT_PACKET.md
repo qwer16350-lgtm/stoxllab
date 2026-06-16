@@ -20,3 +20,7 @@ CLI:
 ```powershell
 python apps\hermes_gateway\cli.py --phase40l-live-capture-closeout-packet --json
 ```
+
+Phase 40P and Phase 40Q add the redacted capture schema and closeout parser.
+Capture files must not contain raw message content, raw Discord IDs, tokens, API
+keys, or approval phrase values.

@@ -401,3 +401,9 @@ runtime abort/kill-switch expectations, and a Phase 41 reply runtime entry gate
 blocked by default. Codex does not execute the planned read-only command, does
 not connect Discord Gateway, does not call Discord API send, and does not send a
 message.
+
+Phase 40O-40S adds the next support layer for a future user-run read-only
+runtime: manual launcher packet, redacted capture schema, capture review
+closeout, Phase 41 reply preflight matrix, and morning operator decision packet.
+Codex still does not run the live command, does not create capture/log files, and
+does not enable reply/send.

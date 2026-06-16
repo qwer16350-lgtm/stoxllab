@@ -32,6 +32,11 @@ from phase40k_readonly_runtime_launch_packet import build_phase40k_readonly_runt
 from phase40l_live_capture_closeout_packet import build_phase40l_live_capture_closeout_packet
 from phase40m_runtime_abort_kill_switch_packet import build_phase40m_runtime_abort_kill_switch_packet
 from phase40n_phase41_reply_runtime_entry_gate import build_phase40n_phase41_reply_runtime_entry_gate
+from phase40o_manual_readonly_live_runtime_launcher import build_phase40o_manual_readonly_live_runtime_launcher
+from phase40p_readonly_capture_schema import build_phase40p_readonly_capture_schema
+from phase40q_capture_review_closeout import build_phase40q_capture_review_closeout
+from phase40r_phase41_reply_preflight_matrix import build_phase40r_phase41_reply_preflight_matrix
+from phase40s_morning_review_operator_decision_packet import build_phase40s_morning_review_operator_decision_packet
 from private_test_live_send_entry_gate import build_private_test_live_send_entry_gate
 from rag_evidence_private_test_phase34_final_lock import build_rag_evidence_private_test_phase34_final_lock
 
@@ -88,6 +93,11 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
     phase40l_closeout = build_phase40l_live_capture_closeout_packet()
     phase40m_abort = build_phase40m_runtime_abort_kill_switch_packet()
     phase40n_gate = build_phase40n_phase41_reply_runtime_entry_gate()
+    phase40o_launcher = build_phase40o_manual_readonly_live_runtime_launcher()
+    phase40p_schema = build_phase40p_readonly_capture_schema()
+    phase40q_closeout = build_phase40q_capture_review_closeout()
+    phase40r_matrix = build_phase40r_phase41_reply_preflight_matrix()
+    phase40s_morning = build_phase40s_morning_review_operator_decision_packet()
     counts = audit.get("final_e2e_counts", {})
     report = {
         "report_type": "operations_dashboard_lock",
@@ -164,6 +174,22 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
         "phase40n_phase41_reply_runtime_allowed": bool(phase40n_gate.get("phase41_reply_runtime_allowed")),
         "phase40n_reply_send_allowed": bool(phase40n_gate.get("reply_send_allowed")),
         "phase40n_ready_for_phase41_reply_runtime": bool(phase40n_gate.get("ready_for_phase41_reply_runtime")),
+        "phase40o_manual_launch_only": bool(phase40o_launcher.get("manual_launch_only")),
+        "phase40o_codex_must_not_launch": bool(phase40o_launcher.get("codex_must_not_launch")),
+        "phase40o_ready_for_manual_readonly_runtime_launch": bool(phase40o_launcher.get("ready_for_manual_readonly_runtime_launch")),
+        "phase40p_capture_schema_available": bool(phase40p_schema.get("capture_schema_available")),
+        "phase40p_raw_content_logged": bool(phase40p_schema.get("raw_content_logged")),
+        "phase40p_secret_values_logged": bool(phase40p_schema.get("secret_values_logged")),
+        "phase40q_capture_file_present": bool(phase40q_closeout.get("capture_file_present")),
+        "phase40q_capture_review_completed": bool(phase40q_closeout.get("capture_review_completed")),
+        "phase40q_message_sent_count": int(phase40q_closeout.get("message_sent_count", 0) or 0),
+        "phase40r_phase41_reply_runtime_allowed": bool(phase40r_matrix.get("phase41_reply_runtime_allowed")),
+        "phase40r_discord_reply_send_allowed": bool(phase40r_matrix.get("discord_reply_send_allowed")),
+        "phase40r_llm_reply_allowed": bool(phase40r_matrix.get("llm_reply_allowed")),
+        "phase40r_rag_reply_allowed": bool(phase40r_matrix.get("rag_reply_allowed")),
+        "phase40s_safe_to_review_next_morning": bool(phase40s_morning.get("safe_to_review_next_morning")),
+        "phase40s_requires_user_confirmation": bool(phase40s_morning.get("requires_user_confirmation")),
+        "phase40s_additional_discord_send_count": int(phase40s_morning.get("additional_discord_send_count", 0) or 0),
         "ready_for_live_runtime": False,
         "ready_for_llm_call": False,
         "ready_for_discord_send": False,
@@ -187,6 +213,9 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
             "phase40j_ready_for_manual_readonly_runtime_launch": False,
             "phase40k_planned_command_executed_by_codex": False,
             "phase40n_phase41_reply_runtime_allowed": False,
+            "phase40o_ready_for_manual_readonly_runtime_launch": False,
+            "phase40r_phase41_reply_runtime_allowed": False,
+            "phase40r_discord_reply_send_allowed": False,
         },
     }
     assert_operations_dashboard_lock_safe(report)
@@ -227,6 +256,14 @@ def assert_operations_dashboard_lock_safe(report: dict[str, Any]) -> None:
         "phase40n_phase41_reply_runtime_allowed",
         "phase40n_reply_send_allowed",
         "phase40n_ready_for_phase41_reply_runtime",
+        "phase40o_ready_for_manual_readonly_runtime_launch",
+        "phase40p_raw_content_logged",
+        "phase40p_secret_values_logged",
+        "phase40q_capture_review_completed",
+        "phase40r_phase41_reply_runtime_allowed",
+        "phase40r_discord_reply_send_allowed",
+        "phase40r_llm_reply_allowed",
+        "phase40r_rag_reply_allowed",
     ):
         if report.get(key):
             raise ValueError(f"Operations dashboard lock unsafe flag is true: {key}")
@@ -252,6 +289,16 @@ def assert_operations_dashboard_lock_safe(report: dict[str, Any]) -> None:
         raise ValueError("Operations dashboard lock requires Phase 40M abort guards.")
     if not report.get("phase40n_phase41_reply_runtime_entry_gate_available"):
         raise ValueError("Operations dashboard lock requires Phase 40N entry gate.")
+    if not report.get("phase40o_manual_launch_only") or not report.get("phase40o_codex_must_not_launch"):
+        raise ValueError("Operations dashboard lock requires Phase 40O manual-only launch support.")
+    if not report.get("phase40p_capture_schema_available"):
+        raise ValueError("Operations dashboard lock requires Phase 40P capture schema.")
+    if int(report.get("phase40q_message_sent_count", 0) or 0) != 0:
+        raise ValueError("Operations dashboard lock forbids Phase 40Q sends.")
+    if not report.get("phase40s_safe_to_review_next_morning") or not report.get("phase40s_requires_user_confirmation"):
+        raise ValueError("Operations dashboard lock requires Phase 40S morning review confirmation.")
+    if int(report.get("phase40s_additional_discord_send_count", 0) or 0) != 0:
+        raise ValueError("Operations dashboard lock forbids Phase 40S additional sends.")
 
 
 def render_operations_dashboard_lock_markdown(report: dict[str, Any]) -> str:
@@ -277,5 +324,7 @@ def render_operations_dashboard_lock_markdown(report: dict[str, Any]) -> str:
             f"- Phase 40 safe to review next morning: {str(report.get('phase40_safe_to_review_next_morning')).lower()}",
             f"- Phase 40J ready for manual read-only runtime launch: {str(report.get('phase40j_ready_for_manual_readonly_runtime_launch')).lower()}",
             f"- Phase 40N Phase 41 reply runtime allowed: {str(report.get('phase40n_phase41_reply_runtime_allowed')).lower()}",
+            f"- Phase 40O manual launch only: {str(report.get('phase40o_manual_launch_only')).lower()}",
+            f"- Phase 40R Discord reply send allowed: {str(report.get('phase40r_discord_reply_send_allowed')).lower()}",
         ]
     ) + "\n"

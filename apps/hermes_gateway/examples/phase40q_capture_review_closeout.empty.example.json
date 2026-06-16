@@ -1,0 +1,18 @@
+{
+  "report_type": "phase40q_capture_review_closeout",
+  "version": "phase40q_capture_review_closeout_no_capture_yet",
+  "report_only": true,
+  "capture_file_present": false,
+  "capture_review_completed": false,
+  "live_capture_observed": false,
+  "captured_event_count": 0,
+  "private_test_human_message_count": 0,
+  "self_message_skipped_count": 0,
+  "bot_message_skipped_count": 0,
+  "duplicate_message_skipped_count": 0,
+  "public_team_blocked_count": 0,
+  "discord_api_send_called": false,
+  "discord_message_sent": false,
+  "message_sent_count": 0,
+  "ready_for_phase41_reply_runtime": false
+}

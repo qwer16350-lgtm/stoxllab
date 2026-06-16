@@ -1035,6 +1035,34 @@ def test_phase40j_n_readonly_runtime_entry_summaries() -> None:
     assert_true(gate["phase41_reply_runtime_allowed"] is False, "40N blocked")
 
 
+def test_phase40o_s_manual_runtime_review_pipeline_summaries() -> None:
+    setup_artifacts()
+    report = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")
+    launcher = report["phase40o_manual_readonly_live_runtime_launcher"]
+    schema = report["phase40p_readonly_capture_schema"]
+    closeout = report["phase40q_capture_review_closeout"]
+    matrix = report["phase40r_phase41_reply_preflight_matrix"]
+    morning = report["phase40s_morning_review_operator_decision_packet"]
+    assert_true(launcher["available"] is True, "40O available")
+    assert_true(launcher["manual_launch_only"] is True, "40O manual")
+    assert_true(launcher["codex_must_not_launch"] is True, "40O codex no launch")
+    assert_true(launcher["ready_for_manual_readonly_runtime_launch"] is False, "40O not ready")
+    assert_true(schema["available"] is True, "40P available")
+    assert_true(schema["capture_schema_available"] is True, "40P schema")
+    assert_true(schema["raw_content_logged"] is False, "40P no raw")
+    assert_true(schema["secret_values_logged"] is False, "40P no secrets")
+    assert_true(closeout["available"] is True, "40Q available")
+    assert_true(closeout["capture_file_present"] is False, "40Q no file")
+    assert_true(closeout["capture_review_completed"] is False, "40Q no review")
+    assert_true(closeout["message_sent_count"] == 0, "40Q no send")
+    assert_true(matrix["available"] is True, "40R available")
+    assert_true(matrix["phase41_reply_runtime_allowed"] is False, "40R blocked")
+    assert_true(matrix["discord_reply_send_allowed"] is False, "40R no send")
+    assert_true(morning["available"] is True, "40S available")
+    assert_true(morning["safe_to_review_next_morning"] is True, "40S safe")
+    assert_true(morning["requires_user_confirmation"] is True, "40S confirmation")
+
+
 def main() -> int:
     tests = [
         test_recent_events_returned,
@@ -1093,6 +1121,7 @@ def main() -> int:
         test_phase39c_closeout_summaries,
         test_phase40_runtime_readiness_summaries,
         test_phase40j_n_readonly_runtime_entry_summaries,
+        test_phase40o_s_manual_runtime_review_pipeline_summaries,
     ]
     for test in tests:
         test()

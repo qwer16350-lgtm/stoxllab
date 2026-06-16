@@ -1,0 +1,13 @@
+{
+  "report_type": "phase40r_phase41_reply_preflight_matrix",
+  "version": "phase40r_phase41_reply_preflight_matrix_blocked_by_default",
+  "report_only": true,
+  "phase41_reply_runtime_entry_available": true,
+  "phase41_reply_runtime_allowed": false,
+  "reply_text_generation_allowed": false,
+  "llm_reply_allowed": false,
+  "rag_reply_allowed": false,
+  "discord_reply_send_allowed": false,
+  "unattended_auto_reply_allowed": false,
+  "ready_for_phase41_reply_runtime": false
+}

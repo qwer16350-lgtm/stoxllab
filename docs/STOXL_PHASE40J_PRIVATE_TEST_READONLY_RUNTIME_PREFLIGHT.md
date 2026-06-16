@@ -30,3 +30,6 @@ CLI:
 ```powershell
 python apps\hermes_gateway\cli.py --phase40j-private-test-readonly-runtime-preflight --json
 ```
+
+Phase 40O follow-up turns this into a manual launcher support packet. Codex still
+does not run the read-only runtime command.

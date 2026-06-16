@@ -96,6 +96,11 @@ from phase40k_readonly_runtime_launch_packet import build_phase40k_readonly_runt
 from phase40l_live_capture_closeout_packet import build_phase40l_live_capture_closeout_packet
 from phase40m_runtime_abort_kill_switch_packet import build_phase40m_runtime_abort_kill_switch_packet
 from phase40n_phase41_reply_runtime_entry_gate import build_phase40n_phase41_reply_runtime_entry_gate
+from phase40o_manual_readonly_live_runtime_launcher import build_phase40o_manual_readonly_live_runtime_launcher
+from phase40p_readonly_capture_schema import build_phase40p_readonly_capture_schema
+from phase40q_capture_review_closeout import build_phase40q_capture_review_closeout
+from phase40r_phase41_reply_preflight_matrix import build_phase40r_phase41_reply_preflight_matrix
+from phase40s_morning_review_operator_decision_packet import build_phase40s_morning_review_operator_decision_packet
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope
 from rag_evidence_review_packet import build_rag_evidence_review_packet
@@ -598,6 +603,11 @@ def build_operations_packet_viewer_report(
     phase40l_closeout = build_phase40l_live_capture_closeout_packet()
     phase40m_abort = build_phase40m_runtime_abort_kill_switch_packet()
     phase40n_gate = build_phase40n_phase41_reply_runtime_entry_gate()
+    phase40o_launcher = build_phase40o_manual_readonly_live_runtime_launcher()
+    phase40p_schema = build_phase40p_readonly_capture_schema()
+    phase40q_closeout = build_phase40q_capture_review_closeout()
+    phase40r_matrix = build_phase40r_phase41_reply_preflight_matrix()
+    phase40s_morning = build_phase40s_morning_review_operator_decision_packet()
     report = {
         "report_type": "operations_packet_viewer",
         "version": VERSION,
@@ -1473,6 +1483,39 @@ def build_operations_packet_viewer_report(
             "available": True,
             "report_only": bool(phase40n_gate.get("report_only")),
             "phase41_reply_runtime_allowed": bool(phase40n_gate.get("phase41_reply_runtime_allowed")),
+        },
+        "phase40o_manual_readonly_live_runtime_launcher": {
+            "available": True,
+            "report_only": bool(phase40o_launcher.get("report_only")),
+            "manual_launch_only": bool(phase40o_launcher.get("manual_launch_only")),
+            "codex_must_not_launch": bool(phase40o_launcher.get("codex_must_not_launch")),
+            "ready_for_manual_readonly_runtime_launch": bool(phase40o_launcher.get("ready_for_manual_readonly_runtime_launch")),
+        },
+        "phase40p_readonly_capture_schema": {
+            "available": True,
+            "report_only": bool(phase40p_schema.get("report_only")),
+            "capture_schema_available": bool(phase40p_schema.get("capture_schema_available")),
+            "raw_content_logged": bool(phase40p_schema.get("raw_content_logged")),
+            "secret_values_logged": bool(phase40p_schema.get("secret_values_logged")),
+        },
+        "phase40q_capture_review_closeout": {
+            "available": True,
+            "report_only": bool(phase40q_closeout.get("report_only")),
+            "capture_file_present": bool(phase40q_closeout.get("capture_file_present")),
+            "capture_review_completed": bool(phase40q_closeout.get("capture_review_completed")),
+            "message_sent_count": int(phase40q_closeout.get("message_sent_count", 0) or 0),
+        },
+        "phase40r_phase41_reply_preflight_matrix": {
+            "available": True,
+            "report_only": bool(phase40r_matrix.get("report_only")),
+            "phase41_reply_runtime_allowed": bool(phase40r_matrix.get("phase41_reply_runtime_allowed")),
+            "discord_reply_send_allowed": bool(phase40r_matrix.get("discord_reply_send_allowed")),
+        },
+        "phase40s_morning_review_operator_decision_packet": {
+            "available": True,
+            "report_only": bool(phase40s_morning.get("report_only")),
+            "safe_to_review_next_morning": bool(phase40s_morning.get("safe_to_review_next_morning")),
+            "requires_user_confirmation": bool(phase40s_morning.get("requires_user_confirmation")),
         },
         "daily_manifest_summary": load_daily_manifest(root=root, date=date),
         "filters": {
