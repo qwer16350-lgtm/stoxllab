@@ -151,7 +151,12 @@ from phase40x_reply_decision_dry_run import build_phase40x_reply_decision_dry_ru
 from phase40y_phase41_reply_preflight_gate import build_phase40y_phase41_reply_preflight_gate, render_phase40y_phase41_reply_preflight_gate_markdown
 from phase40z_operations_handoff import build_phase40z_operations_handoff, render_phase40z_operations_handoff_markdown
 from phase41_private_test_reply_preflight import build_phase41_private_test_reply_preflight, render_phase41_private_test_reply_preflight_markdown
-from phase41b_private_test_reply_one_shot import build_phase41b_private_test_reply_one_shot, render_phase41b_private_test_reply_one_shot_markdown
+from phase41b_private_test_reply_one_shot import (
+    build_phase41b_env_diagnostics,
+    build_phase41b_private_test_reply_one_shot,
+    render_phase41b_env_diagnostics_markdown,
+    render_phase41b_private_test_reply_one_shot_markdown,
+)
 from phase41c_actual_reply_closeout import build_phase41c_actual_reply_closeout, render_phase41c_actual_reply_closeout_markdown
 from phase42_supervised_private_test_session import build_phase42_supervised_private_test_session_preflight, render_phase42_supervised_private_test_session_preflight_markdown
 from phase43_routing_rate_limit_policy import build_phase43_routing_rate_limit_policy, render_phase43_routing_rate_limit_policy_markdown
@@ -347,6 +352,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--phase40z-operations-handoff", action="store_true", help="Print Phase 40Z operations handoff summary.")
     parser.add_argument("--phase41-private-test-reply-preflight", action="store_true", help="Print Phase 41 private-test reply runtime preflight only.")
     parser.add_argument("--phase41-private-test-reply-one-shot", action="store_true", help="Print Phase 41B actual private-test reply one-shot safe-prep report.")
+    parser.add_argument("--phase41b-env-diagnostics", action="store_true", help="Print Phase 41B process-env diagnostics with booleans only.")
     parser.add_argument("--allow-actual-private-test-reply", action="store_true", help="Mark the Phase 41B actual private-test reply allow flag as present; this safe-prep bundle still does not send.")
     parser.add_argument("--phase41-actual-reply-closeout", action="store_true", help="Print Phase 41C actual reply closeout scaffold from no-send fixture.")
     parser.add_argument("--phase42-supervised-private-test-session-preflight", action="store_true", help="Print Phase 42 supervised deterministic private-test session preflight.")
@@ -2407,6 +2413,21 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- message_sent_count: {output.get('message_sent_count')}")
         return 0
 
+    if args.phase41b_env_diagnostics:
+        output = build_phase41b_env_diagnostics()
+        if args.markdown:
+            print(render_phase41b_env_diagnostics_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 41B env diagnostics")
+            print(f"- token_present: {output.get('token_present')}")
+            print(f"- private_test_channel_id_present: {output.get('private_test_channel_id_present')}")
+            print(f"- manual_approval_present: {output.get('manual_approval_present')}")
+            print(f"- approval_phrase_present: {output.get('approval_phrase_present')}")
+            print(f"- reply_mode_private_test_only: {output.get('reply_mode_private_test_only')}")
+        return 0
+
     if args.phase41_actual_reply_closeout:
         output = build_phase41c_actual_reply_closeout()
         if args.markdown:
@@ -2733,6 +2754,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.phase40z_operations_handoff
         or args.phase41_private_test_reply_preflight
         or args.phase41_private_test_reply_one_shot
+        or args.phase41b_env_diagnostics
         or args.allow_actual_private_test_reply
         or args.phase41_actual_reply_closeout
         or args.phase42_supervised_private_test_session_preflight

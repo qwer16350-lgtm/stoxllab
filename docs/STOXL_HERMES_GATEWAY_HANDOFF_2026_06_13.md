@@ -454,3 +454,8 @@ runtime, did not call Discord API send, did not send a Discord message, did not
 attempt OpenRouter/LLM, did not call RAG or embeddings, and did not execute
 external actions. The next sensitive manual gate is Phase 41B actual
 private-test deterministic reply one-shot in a separate approval phase.
+
+Phase 41B-0 hotfix keeps actual reply/send disabled while fixing the one-shot
+gate to read process env booleans from the Phase 41B manual reply keys. It also
+renames blocked reasons to failure-shaped names and adds a boolean-only
+`--phase41b-env-diagnostics` report.

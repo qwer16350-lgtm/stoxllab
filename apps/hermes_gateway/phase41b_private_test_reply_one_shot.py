@@ -7,6 +7,7 @@ values, never connects to Discord, and never sends a message.
 from __future__ import annotations
 
 import json
+import os
 import re
 from typing import Any, Mapping
 
@@ -15,6 +16,26 @@ VERSION = "phase41b_private_test_reply_one_shot_safe_prep"
 _EXPECTED_APPROVAL_PHRASE = "I_APPROVE_PHASE41B_PRIVATE_TEST_REPLY_ONE_SHOT"
 _SECRET_RE = re.compile(r"(?i)(sk-[a-z0-9_-]+|xoxb-[a-z0-9_-]+|mfa\.|bearer\s+\S+|token\s*[:=]\s*\S+|api[_ -]?key\s*[:=]\s*\S+|password\s*[:=]\s*\S+)")
 _LONG_ID_RE = re.compile(r"\b\d{15,25}\b")
+_BLOCK_REASON_BY_GATE = {
+    "token_present": "token_missing",
+    "private_test_channel_id_present": "private_test_channel_id_missing",
+    "manual_approval_true": "manual_approval_missing",
+    "approval_phrase_match": "approval_phrase_mismatch",
+    "send_messages_enabled": "send_messages_disabled",
+    "private_test_reply_enabled": "private_test_reply_disabled",
+    "reply_mode_private_test_only": "reply_mode_not_private_test_only",
+    "llm_disabled": "llm_enabled",
+    "rag_disabled": "rag_enabled",
+    "embedding_disabled": "embedding_or_vector_enabled",
+    "external_execution_disabled": "external_execution_enabled",
+    "one_shot_lock_not_consumed": "one_shot_lock_consumed",
+    "private_test_channel_only": "not_private_test_channel",
+    "public_team_blocked": "public_team_not_blocked",
+    "not_self_message": "self_message_blocked",
+    "not_bot_message": "bot_message_blocked",
+    "not_duplicate_message": "duplicate_message_blocked",
+    "human_private_test_message": "not_human_private_test_message",
+}
 
 
 def _truthy(env: Mapping[str, str], key: str) -> bool:
@@ -23,6 +44,10 @@ def _truthy(env: Mapping[str, str], key: str) -> bool:
 
 def _present(env: Mapping[str, str], key: str) -> bool:
     return bool(str(env.get(key, "")).strip())
+
+
+def _phase41b_env(env: Mapping[str, str] | None = None) -> Mapping[str, str]:
+    return os.environ if env is None else env
 
 
 def _event_guard(event: Mapping[str, Any] | None) -> dict[str, bool]:
@@ -50,18 +75,19 @@ def build_phase41b_private_test_reply_one_shot(
     event: Mapping[str, Any] | None = None,
     one_shot_lock_consumed: bool = False,
 ) -> dict[str, Any]:
-    env = env or {}
+    env = _phase41b_env(env)
     guards = _event_guard(event)
     token_present = _present(env, "DISCORD_BOT_TOKEN")
     channel_present = _present(env, "HERMES_DISCORD_PRIVATE_TEST_CHANNEL_ID")
-    manual_approval_true = _truthy(env, "HERMES_PHASE41B_MANUAL_APPROVAL")
-    approval_phrase_match = str(env.get("HERMES_PHASE41B_APPROVAL_PHRASE", "")) == _EXPECTED_APPROVAL_PHRASE
+    manual_approval_true = _truthy(env, "HERMES_PHASE41B_PRIVATE_TEST_REPLY_APPROVED")
+    approval_phrase_present = _present(env, "HERMES_PHASE41B_PRIVATE_TEST_REPLY_APPROVAL_PHRASE")
+    approval_phrase_match = str(env.get("HERMES_PHASE41B_PRIVATE_TEST_REPLY_APPROVAL_PHRASE", "")) == _EXPECTED_APPROVAL_PHRASE
     send_messages_enabled = _truthy(env, "HERMES_DISCORD_SEND_MESSAGES")
     private_test_reply_enabled = _truthy(env, "HERMES_DISCORD_PRIVATE_TEST_REPLY")
     reply_mode_private_test_only = str(env.get("HERMES_DISCORD_REPLY_MODE", "")).strip() == "private_test_only"
-    llm_disabled = not _truthy(env, "HERMES_DISCORD_LLM_ENABLED") and not _truthy(env, "HERMES_LLM_PRIVATE_TEST_REPLY_ENABLED")
-    rag_disabled = not _truthy(env, "HERMES_DISCORD_RAG_ENABLED") and not _truthy(env, "HERMES_LLM_RAG_ENABLED")
-    embedding_disabled = not _truthy(env, "HERMES_EMBEDDING_ENABLED") and not _truthy(env, "HERMES_VECTOR_ENABLED")
+    llm_disabled = not any(_truthy(env, key) for key in ("HERMES_LLM_DISCORD_SEND_ENABLED", "HERMES_LLM_PRIVATE_TEST_REPLY_ENABLED"))
+    rag_disabled = not any(_truthy(env, key) for key in ("HERMES_DISCORD_RAG_ENABLED", "HERMES_LLM_RAG_ENABLED", "HERMES_RAG_LLM_REPLY_ENABLED"))
+    embedding_disabled = not any(_truthy(env, key) for key in ("HERMES_EMBEDDING_ENABLED", "HERMES_VECTOR_ENABLED"))
     external_disabled = not _truthy(env, "HERMES_DISCORD_EXTERNAL_EXECUTION")
     gate_checks = {
         "token_present": token_present,
@@ -83,8 +109,9 @@ def build_phase41b_private_test_reply_one_shot(
         "not_duplicate_message": guards["not_duplicate_message"],
         "human_private_test_message": guards["human_private_test_message"],
     }
-    ready = bool(allow_actual_private_test_reply) and all(gate_checks.values())
-    blocked_reasons = [key for key, passed in gate_checks.items() if not passed]
+    gates_ready = all(gate_checks.values())
+    ready = bool(allow_actual_private_test_reply) and gates_ready
+    blocked_reasons = [_BLOCK_REASON_BY_GATE.get(key, key) for key, passed in gate_checks.items() if not passed]
     if not allow_actual_private_test_reply:
         blocked_reasons.insert(0, "allow_actual_private_test_reply_flag_missing")
     report = {
@@ -95,7 +122,17 @@ def build_phase41b_private_test_reply_one_shot(
         "blocked": not ready,
         "blocked_reasons": blocked_reasons,
         "allow_actual_private_test_reply_flag_present": bool(allow_actual_private_test_reply),
+        "gates_ready_but_actual_flag_missing": gates_ready and not allow_actual_private_test_reply,
         "ready_for_manual_private_test_reply_one_shot": ready,
+        "discord_token_present": token_present,
+        "private_test_channel_id_present": channel_present,
+        "manual_approval_required": True,
+        "manual_approval_actualized": manual_approval_true,
+        "approval_phrase_present": approval_phrase_present,
+        "approval_phrase_exact_match": approval_phrase_match,
+        "send_messages_enabled": send_messages_enabled,
+        "private_test_reply_enabled": private_test_reply_enabled,
+        "reply_mode_private_test_only": reply_mode_private_test_only,
         "actual_reply_send_executed": False,
         "discord_api_send_called": False,
         "discord_message_sent": False,
@@ -122,6 +159,35 @@ def build_phase41b_private_test_reply_one_shot(
     return report
 
 
+def build_phase41b_env_diagnostics(env: Mapping[str, str] | None = None) -> dict[str, Any]:
+    env = _phase41b_env(env)
+    report = {
+        "report_type": "phase41b_env_diagnostics",
+        "token_present": _present(env, "DISCORD_BOT_TOKEN"),
+        "private_test_channel_id_present": _present(env, "HERMES_DISCORD_PRIVATE_TEST_CHANNEL_ID"),
+        "manual_approval_present": _present(env, "HERMES_PHASE41B_PRIVATE_TEST_REPLY_APPROVED"),
+        "manual_approval_true": _truthy(env, "HERMES_PHASE41B_PRIVATE_TEST_REPLY_APPROVED"),
+        "approval_phrase_present": _present(env, "HERMES_PHASE41B_PRIVATE_TEST_REPLY_APPROVAL_PHRASE"),
+        "approval_phrase_exact_match": str(env.get("HERMES_PHASE41B_PRIVATE_TEST_REPLY_APPROVAL_PHRASE", "")) == _EXPECTED_APPROVAL_PHRASE,
+        "send_messages_enabled": _truthy(env, "HERMES_DISCORD_SEND_MESSAGES"),
+        "private_test_reply_enabled": _truthy(env, "HERMES_DISCORD_PRIVATE_TEST_REPLY"),
+        "reply_mode_private_test_only": str(env.get("HERMES_DISCORD_REPLY_MODE", "")).strip() == "private_test_only",
+        "llm_disabled": not any(_truthy(env, key) for key in ("HERMES_LLM_DISCORD_SEND_ENABLED", "HERMES_LLM_PRIVATE_TEST_REPLY_ENABLED")),
+        "rag_disabled": not any(_truthy(env, key) for key in ("HERMES_DISCORD_RAG_ENABLED", "HERMES_LLM_RAG_ENABLED", "HERMES_RAG_LLM_REPLY_ENABLED")),
+        "token_value_logged": False,
+        "private_test_channel_id_value_logged": False,
+        "approval_phrase_value_logged": False,
+        "api_key_value_logged": False,
+        "raw_discord_ids_logged": False,
+        "raw_content_logged": False,
+        "discord_api_send_called": False,
+        "discord_message_sent": False,
+        "message_sent_count": 0,
+    }
+    assert_phase41b_report_safe(report)
+    return report
+
+
 def assert_phase41b_report_safe(report: Mapping[str, Any]) -> None:
     text = json.dumps(report, ensure_ascii=False)
     if _SECRET_RE.search(text) or _LONG_ID_RE.search(text) or _EXPECTED_APPROVAL_PHRASE in text:
@@ -131,6 +197,24 @@ def assert_phase41b_report_safe(report: Mapping[str, Any]) -> None:
             raise ValueError(f"Phase 41B unsafe flag is true: {key}")
     if int(report.get("message_sent_count", 0) or 0) != 0:
         raise ValueError("Phase 41B safe prep must not send messages.")
+
+
+def render_phase41b_env_diagnostics_markdown(report: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            "# STOXL Phase 41B Env Diagnostics",
+            "",
+            f"- Token present: {str(report.get('token_present')).lower()}",
+            f"- Private-test channel ID present: {str(report.get('private_test_channel_id_present')).lower()}",
+            f"- Manual approval present: {str(report.get('manual_approval_present')).lower()}",
+            f"- Approval phrase present: {str(report.get('approval_phrase_present')).lower()}",
+            f"- Send messages enabled: {str(report.get('send_messages_enabled')).lower()}",
+            f"- Private-test reply enabled: {str(report.get('private_test_reply_enabled')).lower()}",
+            f"- Reply mode private-test only: {str(report.get('reply_mode_private_test_only')).lower()}",
+            "- Token/channel/approval values logged: false",
+            "- Discord message sent: false",
+        ]
+    ) + "\n"
 
 
 def render_phase41b_private_test_reply_one_shot_markdown(report: Mapping[str, Any]) -> str:

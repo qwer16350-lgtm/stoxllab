@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -24,11 +25,16 @@ def ready_env() -> dict[str, str]:
     return {
         "DISCORD_BOT_TOKEN": "SENSITIVE_TOKEN_VALUE_DO_NOT_LOG",
         "HERMES_DISCORD_PRIVATE_TEST_CHANNEL_ID": "SENSITIVE_CHANNEL_VALUE_DO_NOT_LOG",
-        "HERMES_PHASE41B_MANUAL_APPROVAL": "true",
-        "HERMES_PHASE41B_APPROVAL_PHRASE": "I_APPROVE_PHASE41B_PRIVATE_TEST_REPLY_ONE_SHOT",
+        "HERMES_PHASE41B_PRIVATE_TEST_REPLY_APPROVED": "true",
+        "HERMES_PHASE41B_PRIVATE_TEST_REPLY_APPROVAL_PHRASE": "I_APPROVE_PHASE41B_PRIVATE_TEST_REPLY_ONE_SHOT",
         "HERMES_DISCORD_SEND_MESSAGES": "true",
         "HERMES_DISCORD_PRIVATE_TEST_REPLY": "true",
         "HERMES_DISCORD_REPLY_MODE": "private_test_only",
+        "HERMES_LLM_DISCORD_SEND_ENABLED": "false",
+        "HERMES_LLM_PRIVATE_TEST_REPLY_ENABLED": "false",
+        "HERMES_DISCORD_RAG_ENABLED": "false",
+        "HERMES_LLM_RAG_ENABLED": "false",
+        "HERMES_RAG_LLM_REPLY_ENABLED": "false",
     }
 
 
@@ -48,17 +54,20 @@ def test_default_blocked() -> None:
 
 def test_gate_blocks() -> None:
     cases = [
-        ({}, "token_present"),
-        ({"DISCORD_BOT_TOKEN": "SENSITIVE_TOKEN_VALUE_DO_NOT_LOG"}, "private_test_channel_id_present"),
-        ({**ready_env(), "HERMES_PHASE41B_MANUAL_APPROVAL": "false"}, "manual_approval_true"),
-        ({**ready_env(), "HERMES_PHASE41B_APPROVAL_PHRASE": "wrong"}, "approval_phrase_match"),
-        ({**ready_env(), "HERMES_DISCORD_SEND_MESSAGES": "false"}, "send_messages_enabled"),
-        ({**ready_env(), "HERMES_DISCORD_PRIVATE_TEST_REPLY": "false"}, "private_test_reply_enabled"),
-        ({**ready_env(), "HERMES_DISCORD_REPLY_MODE": "team"}, "reply_mode_private_test_only"),
+        ({}, "token_missing"),
+        ({"DISCORD_BOT_TOKEN": "SENSITIVE_TOKEN_VALUE_DO_NOT_LOG"}, "private_test_channel_id_missing"),
+        ({**ready_env(), "HERMES_PHASE41B_PRIVATE_TEST_REPLY_APPROVED": "false"}, "manual_approval_missing"),
+        ({**ready_env(), "HERMES_PHASE41B_PRIVATE_TEST_REPLY_APPROVAL_PHRASE": "wrong"}, "approval_phrase_mismatch"),
+        ({**ready_env(), "HERMES_DISCORD_SEND_MESSAGES": "false"}, "send_messages_disabled"),
+        ({**ready_env(), "HERMES_DISCORD_PRIVATE_TEST_REPLY": "false"}, "private_test_reply_disabled"),
+        ({**ready_env(), "HERMES_DISCORD_REPLY_MODE": "team"}, "reply_mode_not_private_test_only"),
     ]
-    for env, failed_check in cases:
+    for env, failed_reason in cases:
         report = build_phase41b_private_test_reply_one_shot(env, allow_actual_private_test_reply=True)
-        assert_true(failed_check in report["blocked_reasons"], failed_check)
+        assert_true(failed_reason in report["blocked_reasons"], failed_reason)
+        assert_true("token_present" not in report["blocked_reasons"], "Positive reason absent")
+        assert_true("manual_approval_true" not in report["blocked_reasons"], "Positive reason absent")
+        assert_true("send_messages_enabled" not in report["blocked_reasons"], "Positive reason absent")
         assert_no_send(report)
 
 
@@ -74,7 +83,35 @@ def test_public_self_bot_duplicate_and_lock_blocks() -> None:
         assert_true(report["blocked"] is True, "Guard blocks")
         assert_no_send(report)
     locked = build_phase41b_private_test_reply_one_shot(ready_env(), allow_actual_private_test_reply=True, one_shot_lock_consumed=True)
-    assert_true("one_shot_lock_not_consumed" in locked["blocked_reasons"], "Lock consumed")
+    assert_true("one_shot_lock_consumed" in locked["blocked_reasons"], "Lock consumed")
+
+
+def test_process_env_gate_checks_true_without_actual_flag() -> None:
+    env = ready_env()
+    original = {key: os.environ.get(key) for key in env}
+    try:
+        os.environ.update(env)
+        report = build_phase41b_private_test_reply_one_shot()
+    finally:
+        for key, value in original.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
+    for key in (
+        "token_present",
+        "private_test_channel_id_present",
+        "manual_approval_true",
+        "approval_phrase_match",
+        "send_messages_enabled",
+        "private_test_reply_enabled",
+        "reply_mode_private_test_only",
+    ):
+        assert_true(report["gate_checks"][key] is True, f"{key} true")
+    assert_true(report["blocked"] is True, "Blocked without actual flag")
+    assert_true(report["blocked_reasons"] == ["allow_actual_private_test_reply_flag_missing"], "Only actual flag missing")
+    assert_true(report["gates_ready_but_actual_flag_missing"] is True, "Gates ready flag")
+    assert_no_send(report)
 
 
 def test_no_sensitive_values() -> None:
@@ -87,7 +124,7 @@ def test_no_sensitive_values() -> None:
 
 
 def main() -> int:
-    for test in (test_default_blocked, test_gate_blocks, test_public_self_bot_duplicate_and_lock_blocks, test_no_sensitive_values):
+    for test in (test_default_blocked, test_gate_blocks, test_public_self_bot_duplicate_and_lock_blocks, test_process_env_gate_checks_true_without_actual_flag, test_no_sensitive_values):
         test()
         print(f"PASS {test.__name__}")
     print("All Phase 41B tests passed.")
