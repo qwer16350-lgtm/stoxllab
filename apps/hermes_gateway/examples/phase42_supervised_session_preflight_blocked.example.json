@@ -1,0 +1,11 @@
+{
+  "report_type": "phase42_supervised_private_test_session_preflight",
+  "default_blocked": true,
+  "actual_runtime_executed": false,
+  "discord_api_send_called": false,
+  "discord_message_sent": false,
+  "message_sent_count": 0,
+  "llm_called": false,
+  "rag_called": false,
+  "external_execution": false
+}

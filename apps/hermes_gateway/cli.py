@@ -151,6 +151,13 @@ from phase40x_reply_decision_dry_run import build_phase40x_reply_decision_dry_ru
 from phase40y_phase41_reply_preflight_gate import build_phase40y_phase41_reply_preflight_gate, render_phase40y_phase41_reply_preflight_gate_markdown
 from phase40z_operations_handoff import build_phase40z_operations_handoff, render_phase40z_operations_handoff_markdown
 from phase41_private_test_reply_preflight import build_phase41_private_test_reply_preflight, render_phase41_private_test_reply_preflight_markdown
+from phase41b_private_test_reply_one_shot import build_phase41b_private_test_reply_one_shot, render_phase41b_private_test_reply_one_shot_markdown
+from phase41c_actual_reply_closeout import build_phase41c_actual_reply_closeout, render_phase41c_actual_reply_closeout_markdown
+from phase42_supervised_private_test_session import build_phase42_supervised_private_test_session_preflight, render_phase42_supervised_private_test_session_preflight_markdown
+from phase43_routing_rate_limit_policy import build_phase43_routing_rate_limit_policy, render_phase43_routing_rate_limit_policy_markdown
+from phase44_llm_preflight_contract import build_phase44_llm_provider_preflight, render_phase44_llm_provider_preflight_markdown
+from phase44_fake_llm_adapter import run_phase44_fake_llm_adapter, render_phase44_fake_llm_reply_dry_run_markdown
+from phase45_actual_llm_one_shot_preflight import build_phase45_actual_llm_one_shot_preflight, render_phase45_actual_llm_one_shot_preflight_markdown
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight, render_rag_evidence_private_test_send_preflight_markdown
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope, render_rag_evidence_prompt_envelope_markdown
 from rag_evidence_review_packet import build_rag_evidence_review_packet, render_rag_evidence_review_packet_markdown
@@ -339,6 +346,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--phase40y-phase41-reply-preflight-gate", action="store_true", help="Print Phase 40Y Phase 41 actual reply preflight gate.")
     parser.add_argument("--phase40z-operations-handoff", action="store_true", help="Print Phase 40Z operations handoff summary.")
     parser.add_argument("--phase41-private-test-reply-preflight", action="store_true", help="Print Phase 41 private-test reply runtime preflight only.")
+    parser.add_argument("--phase41-private-test-reply-one-shot", action="store_true", help="Print Phase 41B actual private-test reply one-shot safe-prep report.")
+    parser.add_argument("--allow-actual-private-test-reply", action="store_true", help="Mark the Phase 41B actual private-test reply allow flag as present; this safe-prep bundle still does not send.")
+    parser.add_argument("--phase41-actual-reply-closeout", action="store_true", help="Print Phase 41C actual reply closeout scaffold from no-send fixture.")
+    parser.add_argument("--phase42-supervised-private-test-session-preflight", action="store_true", help="Print Phase 42 supervised deterministic private-test session preflight.")
+    parser.add_argument("--phase43-routing-rate-limit-policy", action="store_true", help="Print Phase 43 routing/rate-limit/session lock policy.")
+    parser.add_argument("--phase44-llm-provider-preflight", action="store_true", help="Print Phase 44 LLM provider preflight without API calls.")
+    parser.add_argument("--phase44-llm-fake-reply-dry-run", action="store_true", help="Print Phase 44 deterministic fake LLM reply dry-run.")
+    parser.add_argument("--phase45-actual-llm-one-shot-preflight", action="store_true", help="Print Phase 45A actual LLM one-shot preflight without API calls.")
     parser.add_argument("--live-event-audit-report", action="store_true", help="Print Phase 30 live event audit record report.")
     parser.add_argument("--would-send-preview-report", action="store_true", help="Print Phase 30 would-send preview report.")
     parser.add_argument("--live-event-review-packet-report", action="store_true", help="Print Phase 30 live event review packet report.")
@@ -2377,6 +2392,99 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- message_sent_count: {output.get('message_sent_count')}")
         return 0
 
+    if args.phase41_private_test_reply_one_shot:
+        output = build_phase41b_private_test_reply_one_shot(allow_actual_private_test_reply=args.allow_actual_private_test_reply)
+        if args.markdown:
+            print(render_phase41b_private_test_reply_one_shot_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 41B private-test reply one-shot safe prep")
+            print(f"- default_blocked: {output.get('default_blocked')}")
+            print(f"- actual_reply_send_executed: {output.get('actual_reply_send_executed')}")
+            print(f"- discord_api_send_called: {output.get('discord_api_send_called')}")
+            print(f"- discord_message_sent: {output.get('discord_message_sent')}")
+            print(f"- message_sent_count: {output.get('message_sent_count')}")
+        return 0
+
+    if args.phase41_actual_reply_closeout:
+        output = build_phase41c_actual_reply_closeout()
+        if args.markdown:
+            print(render_phase41c_actual_reply_closeout_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 41C actual reply closeout scaffold")
+            print(f"- actual_private_test_reply_verified: {output.get('actual_private_test_reply_verified')}")
+            print(f"- message_sent_count: {output.get('message_sent_count')}")
+            print(f"- ready_for_supervised_session: {output.get('ready_for_supervised_session')}")
+        return 0
+
+    if args.phase42_supervised_private_test_session_preflight:
+        output = build_phase42_supervised_private_test_session_preflight()
+        if args.markdown:
+            print(render_phase42_supervised_private_test_session_preflight_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 42 supervised private-test session preflight")
+            print(f"- default_blocked: {output.get('default_blocked')}")
+            print(f"- actual_runtime_executed: {output.get('actual_runtime_executed')}")
+            print(f"- message_sent_count: {output.get('message_sent_count')}")
+        return 0
+
+    if args.phase43_routing_rate_limit_policy:
+        output = build_phase43_routing_rate_limit_policy()
+        if args.markdown:
+            print(render_phase43_routing_rate_limit_policy_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 43 routing/rate-limit/session policy")
+            print(f"- routing_policy_available: {output.get('routing_policy_available')}")
+            print(f"- public_team_blocked: {output.get('public_team_blocked')}")
+            print(f"- message_sent_count: {output.get('message_sent_count')}")
+        return 0
+
+    if args.phase44_llm_provider_preflight:
+        output = build_phase44_llm_provider_preflight()
+        if args.markdown:
+            print(render_phase44_llm_provider_preflight_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 44 LLM provider preflight")
+            print(f"- default_blocked: {output.get('default_blocked')}")
+            print(f"- openrouter_api_key_present: {output.get('openrouter_api_key_present')}")
+            print(f"- actual_llm_api_call: {output.get('actual_llm_api_call')}")
+        return 0
+
+    if args.phase44_llm_fake_reply_dry_run:
+        output = run_phase44_fake_llm_adapter()
+        if args.markdown:
+            print(render_phase44_fake_llm_reply_dry_run_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 44 fake LLM reply dry-run")
+            print(f"- fake_adapter_used: {output.get('fake_adapter_used')}")
+            print(f"- output_schema_valid: {output.get('output_schema_valid')}")
+            print(f"- actual_llm_api_call: {output.get('actual_llm_api_call')}")
+        return 0
+
+    if args.phase45_actual_llm_one_shot_preflight:
+        output = build_phase45_actual_llm_one_shot_preflight()
+        if args.markdown:
+            print(render_phase45_actual_llm_one_shot_preflight_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 45A actual LLM one-shot preflight")
+            print(f"- default_blocked: {output.get('default_blocked')}")
+            print(f"- actual_llm_api_call: {output.get('actual_llm_api_call')}")
+            print(f"- discord_message_sent: {output.get('discord_message_sent')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -2624,6 +2732,14 @@ def main(argv: list[str] | None = None) -> int:
         or args.phase40y_phase41_reply_preflight_gate
         or args.phase40z_operations_handoff
         or args.phase41_private_test_reply_preflight
+        or args.phase41_private_test_reply_one_shot
+        or args.allow_actual_private_test_reply
+        or args.phase41_actual_reply_closeout
+        or args.phase42_supervised_private_test_session_preflight
+        or args.phase43_routing_rate_limit_policy
+        or args.phase44_llm_provider_preflight
+        or args.phase44_llm_fake_reply_dry_run
+        or args.phase45_actual_llm_one_shot_preflight
         or args.execute_readonly_live_runtime
         or args.allow_llm_api_call
         or args.allow_actual_one_shot_llm_draft_call

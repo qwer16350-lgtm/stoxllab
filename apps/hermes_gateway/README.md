@@ -669,6 +669,15 @@ private-test replay fixtures, freezes a would-reply dry-run, and adds a Phase
 the live runtime, does not call Discord API send, does not send a message, does
 not call LLM/RAG or embeddings, and does not execute external actions.
 
+Phase 41B-45A adds the Safe Prep Mega Bundle for the production-bound path:
+actual private-test reply one-shot prep, actual reply closeout/no-repeat
+scaffold, supervised deterministic session preflight, routing/rate-limit/session
+policy, LLM provider preflight, deterministic fake LLM adapter, and the Phase
+45A actual LLM one-shot preflight gate. It remains blocked by default and does
+not run Discord live runtime, call Discord API send, send a Discord message,
+attempt OpenRouter/LLM, call RAG, create embeddings/vector indexes, or execute
+external actions.
+
 If the registry file is missing, generate it from the repo root:
 
 ```powershell

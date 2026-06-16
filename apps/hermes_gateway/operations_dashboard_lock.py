@@ -49,6 +49,13 @@ from phase40x_reply_decision_dry_run import build_phase40x_reply_decision_dry_ru
 from phase40y_phase41_reply_preflight_gate import build_phase40y_phase41_reply_preflight_gate
 from phase40z_operations_handoff import build_phase40z_operations_handoff
 from phase41_private_test_reply_preflight import build_phase41_private_test_reply_preflight
+from phase41b_private_test_reply_one_shot import build_phase41b_private_test_reply_one_shot
+from phase41c_actual_reply_closeout import build_phase41c_actual_reply_closeout
+from phase42_supervised_private_test_session import build_phase42_supervised_private_test_session_preflight
+from phase43_routing_rate_limit_policy import build_phase43_routing_rate_limit_policy
+from phase44_llm_preflight_contract import build_phase44_llm_provider_preflight
+from phase44_fake_llm_adapter import run_phase44_fake_llm_adapter
+from phase45_actual_llm_one_shot_preflight import build_phase45_actual_llm_one_shot_preflight
 from private_test_live_send_entry_gate import build_private_test_live_send_entry_gate
 from rag_evidence_private_test_phase34_final_lock import build_rag_evidence_private_test_phase34_final_lock
 
@@ -119,6 +126,13 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
     phase40y_gate = build_phase40y_phase41_reply_preflight_gate()
     phase40z_handoff = build_phase40z_operations_handoff()
     phase41_preflight = build_phase41_private_test_reply_preflight()
+    phase41b_one_shot = build_phase41b_private_test_reply_one_shot()
+    phase41c_closeout = build_phase41c_actual_reply_closeout()
+    phase42_session = build_phase42_supervised_private_test_session_preflight()
+    phase43_policy = build_phase43_routing_rate_limit_policy()
+    phase44_provider = build_phase44_llm_provider_preflight()
+    phase44_fake = run_phase44_fake_llm_adapter()
+    phase45_preflight = build_phase45_actual_llm_one_shot_preflight()
     counts = audit.get("final_e2e_counts", {})
     report = {
         "report_type": "operations_dashboard_lock",
@@ -267,6 +281,31 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
         "phase40z_handoff_ready": bool(phase40z_handoff.get("phase40u_closeout_ready")) and bool(phase40z_handoff.get("phase40x_reply_dry_run_ready")),
         "phase41a_preflight_default_blocked": bool(phase41_preflight.get("default_blocked")),
         "phase41a_ready_for_manual_private_test_reply": bool(phase41_preflight.get("ready_for_manual_private_test_reply")),
+        "phase41b_one_shot_available": True,
+        "phase41b_default_blocked": bool(phase41b_one_shot.get("default_blocked")),
+        "phase41b_ready_for_manual_private_test_reply_one_shot": bool(phase41b_one_shot.get("ready_for_manual_private_test_reply_one_shot")),
+        "phase41b_actual_reply_send_executed": bool(phase41b_one_shot.get("actual_reply_send_executed")),
+        "phase41b_discord_api_send_called": bool(phase41b_one_shot.get("discord_api_send_called")),
+        "phase41b_discord_message_sent": bool(phase41b_one_shot.get("discord_message_sent")),
+        "phase41b_message_sent_count": int(phase41b_one_shot.get("message_sent_count", 0) or 0),
+        "phase41c_closeout_available": True,
+        "phase41c_message_sent_count": int(phase41c_closeout.get("message_sent_count", 0) or 0),
+        "phase41c_ready_for_repeat_send": bool(phase41c_closeout.get("ready_for_repeat_send")),
+        "phase42_session_preflight_available": True,
+        "phase42_actual_runtime_executed": bool(phase42_session.get("actual_runtime_executed")),
+        "phase42_discord_message_sent": bool(phase42_session.get("discord_message_sent")),
+        "phase43_policy_available": bool(phase43_policy.get("routing_policy_available")),
+        "phase43_public_team_blocked": bool(phase43_policy.get("public_team_blocked")),
+        "phase44_provider_preflight_available": True,
+        "phase44_actual_llm_api_call": bool(phase44_provider.get("actual_llm_api_call")),
+        "phase44_llm_api_call_attempted": bool(phase44_provider.get("llm_api_call_attempted")),
+        "phase44_fake_adapter_available": bool(phase44_fake.get("fake_adapter_used")),
+        "phase44_fake_output_schema_valid": bool(phase44_fake.get("output_schema_valid")),
+        "phase45_preflight_available": True,
+        "phase45_ready_for_actual_llm_one_shot_call": bool(phase45_preflight.get("ready_for_actual_llm_one_shot_call")),
+        "phase45_actual_llm_api_call": bool(phase45_preflight.get("actual_llm_api_call")),
+        "phase45_llm_api_call_attempted": bool(phase45_preflight.get("llm_api_call_attempted")),
+        "phase45_discord_message_sent": bool(phase45_preflight.get("discord_message_sent")),
         "ready_for_live_runtime": False,
         "ready_for_llm_call": False,
         "ready_for_discord_send": False,
@@ -314,6 +353,15 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
             "phase41_discord_api_send_called": False,
             "phase41_discord_message_sent": False,
             "phase41a_ready_for_manual_private_test_reply": False,
+            "phase41b_actual_reply_send_executed": False,
+            "phase41b_discord_api_send_called": False,
+            "phase41b_discord_message_sent": False,
+            "phase42_actual_runtime_executed": False,
+            "phase44_actual_llm_api_call": False,
+            "phase44_llm_api_call_attempted": False,
+            "phase45_actual_llm_api_call": False,
+            "phase45_llm_api_call_attempted": False,
+            "phase45_discord_message_sent": False,
         },
     }
     assert_operations_dashboard_lock_safe(report)
@@ -390,6 +438,19 @@ def assert_operations_dashboard_lock_safe(report: dict[str, Any]) -> None:
         "phase41_discord_api_send_called",
         "phase41_discord_message_sent",
         "phase41a_ready_for_manual_private_test_reply",
+        "phase41b_ready_for_manual_private_test_reply_one_shot",
+        "phase41b_actual_reply_send_executed",
+        "phase41b_discord_api_send_called",
+        "phase41b_discord_message_sent",
+        "phase41c_ready_for_repeat_send",
+        "phase42_actual_runtime_executed",
+        "phase42_discord_message_sent",
+        "phase44_actual_llm_api_call",
+        "phase44_llm_api_call_attempted",
+        "phase45_ready_for_actual_llm_one_shot_call",
+        "phase45_actual_llm_api_call",
+        "phase45_llm_api_call_attempted",
+        "phase45_discord_message_sent",
     ):
         if report.get(key):
             raise ValueError(f"Operations dashboard lock unsafe flag is true: {key}")
@@ -449,6 +510,18 @@ def assert_operations_dashboard_lock_safe(report: dict[str, Any]) -> None:
         raise ValueError("Operations dashboard lock forbids Phase 41 messages.")
     if not report.get("phase40z_handoff_ready") or not report.get("phase41a_preflight_default_blocked"):
         raise ValueError("Operations dashboard lock requires Phase 40Z handoff and Phase 41A default block.")
+    if not report.get("phase41b_one_shot_available") or not report.get("phase41b_default_blocked") or int(report.get("phase41b_message_sent_count", 0) or 0) != 0:
+        raise ValueError("Operations dashboard lock requires Phase 41B blocked no-send prep.")
+    if not report.get("phase41c_closeout_available") or int(report.get("phase41c_message_sent_count", 0) or 0) != 0:
+        raise ValueError("Operations dashboard lock requires Phase 41C no-send scaffold.")
+    if not report.get("phase42_session_preflight_available"):
+        raise ValueError("Operations dashboard lock requires Phase 42 session preflight.")
+    if not report.get("phase43_policy_available") or not report.get("phase43_public_team_blocked"):
+        raise ValueError("Operations dashboard lock requires Phase 43 routing policy.")
+    if not report.get("phase44_provider_preflight_available") or not report.get("phase44_fake_adapter_available") or not report.get("phase44_fake_output_schema_valid"):
+        raise ValueError("Operations dashboard lock requires Phase 44 preflight/fake adapter.")
+    if not report.get("phase45_preflight_available"):
+        raise ValueError("Operations dashboard lock requires Phase 45A preflight.")
 
 
 def render_operations_dashboard_lock_markdown(report: dict[str, Any]) -> str:
@@ -480,5 +553,10 @@ def render_operations_dashboard_lock_markdown(report: dict[str, Any]) -> str:
             f"- Phase 40T blocked by default: {str(report.get('phase40t_blocked_by_default')).lower()}",
             f"- Phase 40T execute flag required: {str(report.get('phase40t_execute_flag_required')).lower()}",
             f"- Phase 40T redacted capture only: {str(report.get('phase40t_redacted_capture_only')).lower()}",
+            f"- Phase 41B one-shot default blocked: {str(report.get('phase41b_default_blocked')).lower()}",
+            f"- Phase 41B message sent count: {report.get('phase41b_message_sent_count')}",
+            f"- Phase 42 actual runtime executed: {str(report.get('phase42_actual_runtime_executed')).lower()}",
+            f"- Phase 44 actual LLM API call: {str(report.get('phase44_actual_llm_api_call')).lower()}",
+            f"- Phase 45 actual LLM API call: {str(report.get('phase45_actual_llm_api_call')).lower()}",
         ]
     ) + "\n"

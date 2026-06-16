@@ -1,0 +1,13 @@
+{
+  "report_type": "phase41b_private_test_reply_one_shot",
+  "default_blocked": true,
+  "actual_reply_send_executed": false,
+  "discord_api_send_called": false,
+  "discord_message_sent": false,
+  "message_sent_count": 0,
+  "ready_for_manual_private_test_reply_one_shot": false,
+  "llm_api_called": false,
+  "rag_called": false,
+  "embedding_api_called": false,
+  "external_execution": false
+}

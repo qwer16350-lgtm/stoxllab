@@ -444,3 +444,13 @@ sentinel state, and adds a Phase 41 private-test reply preflight that remains
 blocked by default. Codex did not run the live runtime, did not call Discord API
 send, did not send a message, did not call LLM/RAG or embeddings, and did not
 execute external actions.
+
+Phase 41B-45A is the Safe Prep Mega Bundle for the final production-bound path.
+It adds report-only preparation for the actual private-test reply one-shot,
+actual reply closeout/no-repeat lock, supervised deterministic session, routing
+and rate limits, LLM provider preflight, deterministic fake LLM adapter, and the
+Phase 45A actual LLM one-shot preflight gate. Codex did not run Discord live
+runtime, did not call Discord API send, did not send a Discord message, did not
+attempt OpenRouter/LLM, did not call RAG or embeddings, and did not execute
+external actions. The next sensitive manual gate is Phase 41B actual
+private-test deterministic reply one-shot in a separate approval phase.

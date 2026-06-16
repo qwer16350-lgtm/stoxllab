@@ -50,6 +50,20 @@ def test_operations_dashboard_lock_safety_false() -> None:
     assert_true(report["ready_for_live_runtime"] is False, "No live readiness")
 
 
+def test_operations_dashboard_lock_phase41b_45a_state() -> None:
+    report = build_operations_dashboard_lock()
+    assert_true(report["phase41b_one_shot_available"] is True, "41B available")
+    assert_true(report["phase41b_default_blocked"] is True, "41B blocked")
+    assert_true(report["phase41b_message_sent_count"] == 0, "41B no send")
+    assert_true(report["phase41c_closeout_available"] is True, "41C available")
+    assert_true(report["phase42_session_preflight_available"] is True, "42 available")
+    assert_true(report["phase42_actual_runtime_executed"] is False, "42 no runtime")
+    assert_true(report["phase43_public_team_blocked"] is True, "43 public/team blocked")
+    assert_true(report["phase44_actual_llm_api_call"] is False, "44 no LLM")
+    assert_true(report["phase44_fake_output_schema_valid"] is True, "44 fake valid")
+    assert_true(report["phase45_actual_llm_api_call"] is False, "45 no LLM")
+
+
 def test_operations_dashboard_lock_phase36_post_call_state() -> None:
     report = build_operations_dashboard_lock()
     assert_true(report["phase36f_no_send_final_lock_passed"] is True, "36F passed")
@@ -219,6 +233,7 @@ def main() -> int:
         test_operations_dashboard_lock_success_fixture,
         test_operations_dashboard_lock_final_counts,
         test_operations_dashboard_lock_safety_false,
+        test_operations_dashboard_lock_phase41b_45a_state,
         test_operations_dashboard_lock_phase36_post_call_state,
         test_operations_dashboard_lock_phase38_entry_state,
         test_operations_dashboard_lock_phase39a_blocked_state,

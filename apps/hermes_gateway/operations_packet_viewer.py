@@ -115,6 +115,13 @@ from phase40x_reply_decision_dry_run import build_phase40x_reply_decision_dry_ru
 from phase40y_phase41_reply_preflight_gate import build_phase40y_phase41_reply_preflight_gate
 from phase40z_operations_handoff import build_phase40z_operations_handoff
 from phase41_private_test_reply_preflight import build_phase41_private_test_reply_preflight
+from phase41b_private_test_reply_one_shot import build_phase41b_private_test_reply_one_shot
+from phase41c_actual_reply_closeout import build_phase41c_actual_reply_closeout
+from phase42_supervised_private_test_session import build_phase42_supervised_private_test_session_preflight
+from phase43_routing_rate_limit_policy import build_phase43_routing_rate_limit_policy
+from phase44_llm_preflight_contract import build_phase44_llm_provider_preflight
+from phase44_fake_llm_adapter import run_phase44_fake_llm_adapter
+from phase45_actual_llm_one_shot_preflight import build_phase45_actual_llm_one_shot_preflight
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope
 from rag_evidence_review_packet import build_rag_evidence_review_packet
@@ -633,6 +640,13 @@ def build_operations_packet_viewer_report(
     phase40y_gate = build_phase40y_phase41_reply_preflight_gate()
     phase40z_handoff = build_phase40z_operations_handoff()
     phase41_preflight = build_phase41_private_test_reply_preflight()
+    phase41b_one_shot = build_phase41b_private_test_reply_one_shot()
+    phase41c_closeout = build_phase41c_actual_reply_closeout()
+    phase42_session = build_phase42_supervised_private_test_session_preflight()
+    phase43_policy = build_phase43_routing_rate_limit_policy()
+    phase44_provider = build_phase44_llm_provider_preflight()
+    phase44_fake = run_phase44_fake_llm_adapter()
+    phase45_preflight = build_phase45_actual_llm_one_shot_preflight()
     report = {
         "report_type": "operations_packet_viewer",
         "version": VERSION,
@@ -1662,6 +1676,73 @@ def build_operations_packet_viewer_report(
             "message_sent_count": int(phase41_preflight.get("message_sent_count", 0) or 0),
             "ready_for_manual_private_test_reply": bool(phase41_preflight.get("ready_for_manual_private_test_reply")),
         },
+        "phase41b_private_test_reply_one_shot": {
+            "available": True,
+            "default_blocked": bool(phase41b_one_shot.get("default_blocked")),
+            "ready_for_manual_private_test_reply_one_shot": bool(phase41b_one_shot.get("ready_for_manual_private_test_reply_one_shot")),
+            "actual_reply_send_executed": bool(phase41b_one_shot.get("actual_reply_send_executed")),
+            "discord_api_send_called": bool(phase41b_one_shot.get("discord_api_send_called")),
+            "discord_message_sent": bool(phase41b_one_shot.get("discord_message_sent")),
+            "message_sent_count": int(phase41b_one_shot.get("message_sent_count", 0) or 0),
+            "llm_api_called": bool(phase41b_one_shot.get("llm_api_called")),
+            "rag_called": bool(phase41b_one_shot.get("rag_called")),
+            "embedding_api_called": bool(phase41b_one_shot.get("embedding_api_called")),
+            "external_execution": bool(phase41b_one_shot.get("external_execution")),
+        },
+        "phase41c_actual_reply_closeout": {
+            "available": True,
+            "actual_private_test_reply_verified": bool(phase41c_closeout.get("actual_private_test_reply_verified")),
+            "message_sent_count": int(phase41c_closeout.get("message_sent_count", 0) or 0),
+            "ready_for_repeat_send": bool(phase41c_closeout.get("ready_for_repeat_send")),
+            "ready_for_supervised_session": bool(phase41c_closeout.get("ready_for_supervised_session")),
+            "repeat_send_blocked": bool(phase41c_closeout.get("repeat_send_blocked")),
+        },
+        "phase42_supervised_private_test_session_preflight": {
+            "available": True,
+            "default_blocked": bool(phase42_session.get("default_blocked")),
+            "actual_runtime_executed": bool(phase42_session.get("actual_runtime_executed")),
+            "llm_called": bool(phase42_session.get("llm_called")),
+            "rag_called": bool(phase42_session.get("rag_called")),
+            "external_execution": bool(phase42_session.get("external_execution")),
+            "discord_message_sent": bool(phase42_session.get("discord_message_sent")),
+            "message_sent_count": int(phase42_session.get("message_sent_count", 0) or 0),
+        },
+        "phase43_routing_rate_limit_policy": {
+            "available": True,
+            "routing_policy_available": bool(phase43_policy.get("routing_policy_available")),
+            "rate_limit_policy_available": bool(phase43_policy.get("rate_limit_policy_available")),
+            "session_lock_policy_available": bool(phase43_policy.get("session_lock_policy_available")),
+            "public_team_blocked": bool(phase43_policy.get("public_team_blocked")),
+            "self_bot_duplicate_blocked": bool(phase43_policy.get("self_bot_duplicate_blocked")),
+            "discord_message_sent": bool(phase43_policy.get("discord_message_sent")),
+            "external_execution": bool(phase43_policy.get("external_execution")),
+        },
+        "phase44_llm_provider_preflight": {
+            "available": True,
+            "default_blocked": bool(phase44_provider.get("default_blocked")),
+            "openrouter_api_key_present": bool(phase44_provider.get("openrouter_api_key_present")),
+            "api_key_value_logged": bool(phase44_provider.get("api_key_value_logged")),
+            "actual_llm_api_call": bool(phase44_provider.get("actual_llm_api_call")),
+            "llm_api_call_attempted": bool(phase44_provider.get("llm_api_call_attempted")),
+            "discord_message_sent": bool(phase44_provider.get("discord_message_sent")),
+        },
+        "phase44_fake_llm_reply_dry_run": {
+            "available": True,
+            "fake_adapter_used": bool(phase44_fake.get("fake_adapter_used")),
+            "deterministic_fake_response": bool(phase44_fake.get("deterministic_fake_response")),
+            "output_schema_valid": bool(phase44_fake.get("output_schema_valid")),
+            "actual_llm_api_call": bool(phase44_fake.get("actual_llm_api_call")),
+            "discord_message_sent": bool(phase44_fake.get("discord_message_sent")),
+        },
+        "phase45_actual_llm_one_shot_preflight": {
+            "available": True,
+            "default_blocked": bool(phase45_preflight.get("default_blocked")),
+            "ready_for_actual_llm_one_shot_call": bool(phase45_preflight.get("ready_for_actual_llm_one_shot_call")),
+            "actual_llm_api_call": bool(phase45_preflight.get("actual_llm_api_call")),
+            "llm_api_call_attempted": bool(phase45_preflight.get("llm_api_call_attempted")),
+            "discord_send_allowed": bool(phase45_preflight.get("discord_send_allowed")),
+            "discord_message_sent": bool(phase45_preflight.get("discord_message_sent")),
+        },
         "daily_manifest_summary": load_daily_manifest(root=root, date=date),
         "filters": {
             "channel_name": channel_name,
@@ -2035,6 +2116,27 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
             f"- Message sent count: {rag_evidence_e2e_live_reply.get('message_sent_count', 0)}",
             f"- Ready for Phase 34L-2 closeout: {str(rag_evidence_e2e_live_reply.get('ready_for_phase34l2_e2e_live_reply_closeout', False)).lower()}",
             f"- Ready for unattended auto reply: {str(rag_evidence_e2e_live_reply.get('ready_for_unattended_auto_reply', False)).lower()}",
+        ]
+    )
+    phase41b = report.get("phase41b_private_test_reply_one_shot", {})
+    phase41c = report.get("phase41c_actual_reply_closeout", {})
+    phase42 = report.get("phase42_supervised_private_test_session_preflight", {})
+    phase43 = report.get("phase43_routing_rate_limit_policy", {})
+    phase44 = report.get("phase44_llm_provider_preflight", {})
+    phase44_fake = report.get("phase44_fake_llm_reply_dry_run", {})
+    phase45 = report.get("phase45_actual_llm_one_shot_preflight", {})
+    lines.extend(
+        [
+            "",
+            "## Phase 41B-45A Safe Prep",
+            f"- Phase 41B default blocked: {str(phase41b.get('default_blocked', True)).lower()}",
+            f"- Phase 41B message sent count: {phase41b.get('message_sent_count', 0)}",
+            f"- Phase 41C ready for supervised session: {str(phase41c.get('ready_for_supervised_session', False)).lower()}",
+            f"- Phase 42 actual runtime executed: {str(phase42.get('actual_runtime_executed', False)).lower()}",
+            f"- Phase 43 public/team blocked: {str(phase43.get('public_team_blocked', True)).lower()}",
+            f"- Phase 44 actual LLM API call: {str(phase44.get('actual_llm_api_call', False)).lower()}",
+            f"- Phase 44 fake output schema valid: {str(phase44_fake.get('output_schema_valid', False)).lower()}",
+            f"- Phase 45 actual LLM API call: {str(phase45.get('actual_llm_api_call', False)).lower()}",
         ]
     )
     safety = report.get("safety_assertions", {})

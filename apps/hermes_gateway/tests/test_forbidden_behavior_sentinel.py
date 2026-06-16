@@ -79,6 +79,15 @@ def test_forbidden_behavior_sentinel_success_fixture() -> None:
     assert_true(report["phase41_message_sent_count"] == 0, "41 no send")
     assert_true(report["phase41_public_team_reply_allowed"] is False, "41 public/team blocked")
     assert_true(report["phase41_unattended_auto_reply_allowed"] is False, "41 no unattended")
+    assert_true(report["phase41b_one_shot_available"] is True, "41B available")
+    assert_true(report["phase41b_default_blocked"] is True, "41B blocked")
+    assert_true(report["phase41b_message_sent_count"] == 0, "41B no send")
+    assert_true(report["phase41c_closeout_available"] is True, "41C closeout")
+    assert_true(report["phase42_session_preflight_available"] is True, "42 preflight")
+    assert_true(report["phase43_public_team_blocked"] is True, "43 public/team")
+    assert_true(report["phase44_provider_preflight_available"] is True, "44 provider")
+    assert_true(report["phase44_fake_output_schema_valid"] is True, "44 fake valid")
+    assert_true(report["phase45_preflight_available"] is True, "45 preflight")
 
 
 def test_forbidden_behavior_sentinel_flags_false() -> None:
@@ -139,6 +148,36 @@ def test_forbidden_behavior_sentinel_actual_message_count_fixture() -> None:
     assert_raises(lambda: build_forbidden_behavior_sentinel({"phase41_message_sent_count": 1}), "Phase 41 count 0 required")
 
 
+def test_forbidden_behavior_sentinel_phase41b_45a_negative_fixtures() -> None:
+    for key in (
+        "phase41b_ready_for_manual_private_test_reply_one_shot",
+        "phase41b_actual_reply_send_executed",
+        "phase41b_discord_api_send_called",
+        "phase41b_discord_message_sent",
+        "phase41b_llm_api_called",
+        "phase41b_rag_called",
+        "phase41b_embedding_api_called",
+        "phase41b_external_execution",
+        "phase41c_ready_for_repeat_send",
+        "phase42_actual_runtime_executed",
+        "phase42_llm_called",
+        "phase42_rag_called",
+        "phase42_external_execution",
+        "phase42_discord_message_sent",
+        "phase44_actual_llm_api_call",
+        "phase44_llm_api_call_attempted",
+        "phase44_discord_message_sent",
+        "phase45_ready_for_actual_llm_one_shot_call",
+        "phase45_actual_llm_api_call",
+        "phase45_llm_api_call_attempted",
+        "phase45_discord_message_sent",
+    ):
+        assert_raises(lambda selected=key: build_forbidden_behavior_sentinel({selected: True}), f"{key} should fail")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase41b_message_sent_count": 1}), "41B count 0")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase41c_message_sent_count": 1}), "41C count 0")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase44_fake_output_schema_valid": False}), "44 fake schema valid")
+
+
 def test_forbidden_behavior_sentinel_post_llm_call_fixtures() -> None:
     ok = build_forbidden_behavior_sentinel({"post_llm_call_sentinel": True})
     assert_true(ok["total_phase36_llm_call_count"] == 1, "Post LLM count")
@@ -165,6 +204,7 @@ def main() -> int:
         test_forbidden_behavior_sentinel_flags_false,
         test_forbidden_behavior_sentinel_negative_fixtures,
         test_forbidden_behavior_sentinel_actual_message_count_fixture,
+        test_forbidden_behavior_sentinel_phase41b_45a_negative_fixtures,
         test_forbidden_behavior_sentinel_post_llm_call_fixtures,
         test_forbidden_behavior_sentinel_no_sensitive_values,
         test_forbidden_behavior_sentinel_markdown,

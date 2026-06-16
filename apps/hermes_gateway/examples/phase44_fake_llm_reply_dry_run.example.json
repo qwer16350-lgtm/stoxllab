@@ -1,0 +1,9 @@
+{
+  "report_type": "phase44_fake_llm_reply_dry_run",
+  "fake_adapter_used": true,
+  "deterministic_fake_response": true,
+  "output_schema_valid": true,
+  "actual_llm_api_call": false,
+  "discord_message_sent": false,
+  "message_sent_count": 0
+}

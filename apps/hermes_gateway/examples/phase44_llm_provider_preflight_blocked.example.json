@@ -1,0 +1,10 @@
+{
+  "report_type": "phase44_llm_provider_preflight",
+  "default_blocked": true,
+  "provider_preflight_only": true,
+  "openrouter_api_key_present": false,
+  "api_key_value_logged": false,
+  "actual_llm_api_call": false,
+  "llm_api_call_attempted": false,
+  "discord_message_sent": false
+}

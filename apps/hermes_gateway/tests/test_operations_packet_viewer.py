@@ -167,6 +167,18 @@ def test_safety_flags_false() -> None:
     assert_true(safety["rag_called"] is False, "RAG should not be called")
 
 
+def test_phase41b_45a_safe_prep_summary() -> None:
+    setup_artifacts()
+    report = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")
+    assert_true(report["phase41b_private_test_reply_one_shot"]["default_blocked"] is True, "41B blocked")
+    assert_true(report["phase41b_private_test_reply_one_shot"]["message_sent_count"] == 0, "41B no send")
+    assert_true(report["phase42_supervised_private_test_session_preflight"]["actual_runtime_executed"] is False, "42 no runtime")
+    assert_true(report["phase43_routing_rate_limit_policy"]["public_team_blocked"] is True, "43 public/team blocked")
+    assert_true(report["phase44_llm_provider_preflight"]["actual_llm_api_call"] is False, "44 no LLM API")
+    assert_true(report["phase44_fake_llm_reply_dry_run"]["output_schema_valid"] is True, "44 fake valid")
+    assert_true(report["phase45_actual_llm_one_shot_preflight"]["actual_llm_api_call"] is False, "45 no LLM API")
+
+
 def test_phase40t_login_failure_closeout_summary() -> None:
     setup_artifacts()
     summary = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")["phase40t_discord_login_failure_closeout"]
@@ -1136,6 +1148,7 @@ def main() -> int:
         test_no_raw_token_or_id,
         test_no_env_or_local_mapping_read_flags,
         test_safety_flags_false,
+        test_phase41b_45a_safe_prep_summary,
         test_phase40t_login_failure_closeout_summary,
         test_rag_llm_scaffold_summary,
         test_rag_llm_live_readiness_summary,

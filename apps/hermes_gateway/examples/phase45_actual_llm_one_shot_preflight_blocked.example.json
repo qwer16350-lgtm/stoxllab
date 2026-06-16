@@ -1,0 +1,10 @@
+{
+  "report_type": "phase45_actual_llm_one_shot_preflight",
+  "default_blocked": true,
+  "ready_for_actual_llm_one_shot_call": false,
+  "actual_llm_api_call": false,
+  "llm_api_call_attempted": false,
+  "llm_api_call_count": 0,
+  "discord_send_allowed": false,
+  "discord_message_sent": false
+}

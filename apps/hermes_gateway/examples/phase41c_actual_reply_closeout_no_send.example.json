@@ -1,0 +1,9 @@
+{
+  "report_type": "phase41c_actual_private_test_reply_closeout",
+  "actual_private_test_reply_verified": false,
+  "no_send_closeout": true,
+  "message_sent_count": 0,
+  "ready_for_repeat_send": false,
+  "ready_for_supervised_session": false,
+  "repeat_send_blocked": true
+}
