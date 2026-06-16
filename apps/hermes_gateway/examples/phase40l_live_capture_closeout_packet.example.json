@@ -1,0 +1,16 @@
+{
+  "report_type": "phase40l_live_capture_closeout_packet",
+  "version": "phase40l_live_capture_closeout_packet_before_live_capture",
+  "report_only": true,
+  "capture_closeout_available": true,
+  "live_capture_observed": false,
+  "captured_event_count": 0,
+  "captured_private_test_human_message_count": 0,
+  "captured_self_message_count": 0,
+  "captured_bot_message_count": 0,
+  "captured_public_team_message_count": 0,
+  "discord_api_send_called": false,
+  "discord_message_sent": false,
+  "message_sent_count": 0,
+  "ready_for_capture_closeout_after_manual_runtime": false
+}

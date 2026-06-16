@@ -1,0 +1,19 @@
+{
+  "report_type": "phase40n_phase41_reply_runtime_entry_gate",
+  "version": "phase40n_phase41_reply_runtime_entry_gate_blocked_by_default",
+  "report_only": true,
+  "phase41_reply_runtime_entry_gate_available": true,
+  "phase41_reply_runtime_allowed": false,
+  "required_before_phase41": [
+    "phase40j manual readonly runtime completed",
+    "phase40l live capture closeout completed",
+    "no additional send during readonly runtime",
+    "captured event audit passed",
+    "operator approves one private-test reply runtime"
+  ],
+  "reply_send_allowed": false,
+  "llm_reply_allowed": false,
+  "rag_reply_allowed": false,
+  "unattended_auto_reply_allowed": false,
+  "ready_for_phase41_reply_runtime": false
+}

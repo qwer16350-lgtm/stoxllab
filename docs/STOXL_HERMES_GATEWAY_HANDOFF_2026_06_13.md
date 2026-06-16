@@ -394,3 +394,10 @@ reply decision audit, outbound queue lock, session/idempotency lock, operator
 handoff packet, and a live runtime entry gate blocked by default. The next
 sensitive step is Phase 40J private-test live runtime manual entry after
 separate human confirmation.
+
+Phase 40J-40N prepares that entry without running it. The bundle adds read-only
+runtime preflight, a manual-only launch packet, a pre-capture closeout packet,
+runtime abort/kill-switch expectations, and a Phase 41 reply runtime entry gate
+blocked by default. Codex does not execute the planned read-only command, does
+not connect Discord Gateway, does not call Discord API send, and does not send a
+message.

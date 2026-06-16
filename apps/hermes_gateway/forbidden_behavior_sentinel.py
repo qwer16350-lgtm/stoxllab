@@ -76,6 +76,20 @@ FORBIDDEN_TRUE_FIELDS = (
     "phase40_external_execution",
     "phase40_secret_values_logged",
     "phase40_ready_for_live_runtime_execution",
+    "phase40j_live_runtime_started",
+    "phase40j_discord_gateway_connected",
+    "phase40j_ready_for_manual_readonly_runtime_launch",
+    "phase40k_planned_command_executed_by_codex",
+    "phase40k_live_runtime_started",
+    "phase40k_discord_gateway_connected",
+    "phase40l_live_capture_observed",
+    "phase40m_discord_api_send_called",
+    "phase40m_discord_message_sent",
+    "phase40n_phase41_reply_runtime_allowed",
+    "phase40n_reply_send_allowed",
+    "phase40n_llm_reply_allowed",
+    "phase40n_rag_reply_allowed",
+    "phase40n_ready_for_phase41_reply_runtime",
 )
 
 
@@ -159,6 +173,28 @@ def build_forbidden_behavior_sentinel(overrides: dict[str, Any] | None = None) -
         "phase40_synthetic_replay_only": True,
         "phase40_duplicate_message_id_guard": True,
         "phase40_ready_for_live_runtime_execution": False,
+        "phase40j_readonly_preflight_available": True,
+        "phase40j_live_runtime_started": False,
+        "phase40j_discord_gateway_connected": False,
+        "phase40j_ready_for_manual_readonly_runtime_launch": False,
+        "phase40k_manual_launch_only": True,
+        "phase40k_codex_must_not_launch": True,
+        "phase40k_planned_command_executed_by_codex": False,
+        "phase40k_live_runtime_started": False,
+        "phase40k_discord_gateway_connected": False,
+        "phase40l_capture_closeout_available": True,
+        "phase40l_live_capture_observed": False,
+        "phase40l_captured_event_count": 0,
+        "phase40m_manual_abort_available": True,
+        "phase40m_abort_on_any_send_attempt": True,
+        "phase40m_discord_api_send_called": False,
+        "phase40m_discord_message_sent": False,
+        "phase40n_phase41_reply_runtime_entry_gate_available": True,
+        "phase40n_phase41_reply_runtime_allowed": False,
+        "phase40n_reply_send_allowed": False,
+        "phase40n_llm_reply_allowed": False,
+        "phase40n_rag_reply_allowed": False,
+        "phase40n_ready_for_phase41_reply_runtime": False,
         "post_llm_call_sentinel": False,
         "total_phase36_llm_call_count": 1,
         "total_phase36_discord_message_sent_count": 0,
@@ -205,6 +241,18 @@ def _sentinel_passed(report: dict[str, Any]) -> bool:
         return False
     if not bool(report.get("phase40_duplicate_message_id_guard")):
         return False
+    if not bool(report.get("phase40j_readonly_preflight_available")):
+        return False
+    if not bool(report.get("phase40k_manual_launch_only")) or not bool(report.get("phase40k_codex_must_not_launch")):
+        return False
+    if not bool(report.get("phase40l_capture_closeout_available")):
+        return False
+    if int(report.get("phase40l_captured_event_count", 0) or 0) != 0:
+        return False
+    if not bool(report.get("phase40m_manual_abort_available")) or not bool(report.get("phase40m_abort_on_any_send_attempt")):
+        return False
+    if not bool(report.get("phase40n_phase41_reply_runtime_entry_gate_available")):
+        return False
     return True
 
 
@@ -238,6 +286,16 @@ def assert_forbidden_behavior_sentinel_safe(report: dict[str, Any]) -> None:
         raise ValueError("Forbidden behavior sentinel requires Phase 40 message sent count 0.")
     if not report.get("phase40_synthetic_replay_only") or not report.get("phase40_duplicate_message_id_guard"):
         raise ValueError("Forbidden behavior sentinel requires Phase 40 replay/idempotency guards.")
+    if not report.get("phase40j_readonly_preflight_available"):
+        raise ValueError("Forbidden behavior sentinel requires Phase 40J preflight.")
+    if not report.get("phase40k_manual_launch_only") or not report.get("phase40k_codex_must_not_launch"):
+        raise ValueError("Forbidden behavior sentinel requires Phase 40K manual-only launch guard.")
+    if not report.get("phase40l_capture_closeout_available") or int(report.get("phase40l_captured_event_count", 0) or 0) != 0:
+        raise ValueError("Forbidden behavior sentinel requires Phase 40L pre-capture closeout.")
+    if not report.get("phase40m_manual_abort_available") or not report.get("phase40m_abort_on_any_send_attempt"):
+        raise ValueError("Forbidden behavior sentinel requires Phase 40M abort guard.")
+    if not report.get("phase40n_phase41_reply_runtime_entry_gate_available"):
+        raise ValueError("Forbidden behavior sentinel requires Phase 40N entry gate.")
 
 
 def render_forbidden_behavior_sentinel_markdown(report: dict[str, Any]) -> str:
@@ -257,6 +315,8 @@ def render_forbidden_behavior_sentinel_markdown(report: dict[str, Any]) -> str:
             "- Phase 40 live runtime started: false",
             "- Phase 40 Discord gateway connected: false",
             "- Phase 40 additional send count: 0",
+            "- Phase 40J ready for manual read-only runtime launch: false",
+            "- Phase 40N Phase 41 reply runtime allowed: false",
             "- Forbidden behavior sentinel passed: true",
         ]
     ) + "\n"

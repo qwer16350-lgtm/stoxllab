@@ -91,6 +91,11 @@ from phase40_session_idempotency_lock import build_phase40_session_idempotency_l
 from phase40_operator_handoff_packet import build_phase40_operator_handoff_packet
 from phase40_live_runtime_entry_gate import build_phase40_live_runtime_entry_gate
 from phase40_safe_overnight_summary import build_phase40_safe_overnight_summary
+from phase40j_private_test_readonly_runtime_preflight import build_phase40j_private_test_readonly_runtime_preflight
+from phase40k_readonly_runtime_launch_packet import build_phase40k_readonly_runtime_launch_packet
+from phase40l_live_capture_closeout_packet import build_phase40l_live_capture_closeout_packet
+from phase40m_runtime_abort_kill_switch_packet import build_phase40m_runtime_abort_kill_switch_packet
+from phase40n_phase41_reply_runtime_entry_gate import build_phase40n_phase41_reply_runtime_entry_gate
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope
 from rag_evidence_review_packet import build_rag_evidence_review_packet
@@ -588,6 +593,11 @@ def build_operations_packet_viewer_report(
     phase40_handoff = build_phase40_operator_handoff_packet()
     phase40_entry_gate = build_phase40_live_runtime_entry_gate()
     phase40_summary = build_phase40_safe_overnight_summary()
+    phase40j_preflight = build_phase40j_private_test_readonly_runtime_preflight()
+    phase40k_launch = build_phase40k_readonly_runtime_launch_packet()
+    phase40l_closeout = build_phase40l_live_capture_closeout_packet()
+    phase40m_abort = build_phase40m_runtime_abort_kill_switch_packet()
+    phase40n_gate = build_phase40n_phase41_reply_runtime_entry_gate()
     report = {
         "report_type": "operations_packet_viewer",
         "version": VERSION,
@@ -1435,6 +1445,34 @@ def build_operations_packet_viewer_report(
             "available": True,
             "report_only": bool(phase40_summary.get("report_only")),
             "safe_to_review_next_morning": bool(phase40_summary.get("safe_to_review_next_morning")),
+        },
+        "phase40j_private_test_readonly_runtime_preflight": {
+            "available": True,
+            "report_only": bool(phase40j_preflight.get("report_only")),
+            "live_runtime_started": bool(phase40j_preflight.get("live_runtime_started")),
+            "ready_for_manual_readonly_runtime_launch": bool(phase40j_preflight.get("ready_for_manual_readonly_runtime_launch")),
+        },
+        "phase40k_readonly_runtime_launch_packet": {
+            "available": True,
+            "report_only": bool(phase40k_launch.get("report_only")),
+            "manual_launch_only": bool(phase40k_launch.get("manual_launch_only")),
+            "codex_must_not_launch": bool(phase40k_launch.get("codex_must_not_launch")),
+        },
+        "phase40l_live_capture_closeout_packet": {
+            "available": True,
+            "report_only": bool(phase40l_closeout.get("report_only")),
+            "live_capture_observed": bool(phase40l_closeout.get("live_capture_observed")),
+            "captured_event_count": int(phase40l_closeout.get("captured_event_count", 0) or 0),
+        },
+        "phase40m_runtime_abort_kill_switch_packet": {
+            "available": True,
+            "report_only": bool(phase40m_abort.get("report_only")),
+            "manual_abort_available": bool(phase40m_abort.get("manual_abort_available")),
+        },
+        "phase40n_phase41_reply_runtime_entry_gate": {
+            "available": True,
+            "report_only": bool(phase40n_gate.get("report_only")),
+            "phase41_reply_runtime_allowed": bool(phase40n_gate.get("phase41_reply_runtime_allowed")),
         },
         "daily_manifest_summary": load_daily_manifest(root=root, date=date),
         "filters": {

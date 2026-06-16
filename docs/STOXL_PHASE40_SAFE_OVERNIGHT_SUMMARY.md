@@ -29,3 +29,11 @@ CLI:
 ```powershell
 python apps\hermes_gateway\cli.py --phase40-safe-overnight-summary --json
 ```
+
+Phase 40J-40N follow-up:
+
+- Prepares private-test read-only runtime entry without running it.
+- Documents a future manual launch command without executing it.
+- Prepares capture closeout before any capture has occurred.
+- Adds abort and kill-switch conditions.
+- Keeps Phase 41 reply runtime blocked by default.

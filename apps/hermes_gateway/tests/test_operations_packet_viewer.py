@@ -1011,6 +1011,30 @@ def test_phase40_runtime_readiness_summaries() -> None:
     assert_true(summary["safe_to_review_next_morning"] is True, "40I safe")
 
 
+def test_phase40j_n_readonly_runtime_entry_summaries() -> None:
+    setup_artifacts()
+    report = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")
+    preflight = report["phase40j_private_test_readonly_runtime_preflight"]
+    launch = report["phase40k_readonly_runtime_launch_packet"]
+    closeout = report["phase40l_live_capture_closeout_packet"]
+    abort = report["phase40m_runtime_abort_kill_switch_packet"]
+    gate = report["phase40n_phase41_reply_runtime_entry_gate"]
+    assert_true(preflight["available"] is True, "40J available")
+    assert_true(preflight["report_only"] is True, "40J report")
+    assert_true(preflight["live_runtime_started"] is False, "40J no runtime")
+    assert_true(preflight["ready_for_manual_readonly_runtime_launch"] is False, "40J not launch ready")
+    assert_true(launch["available"] is True, "40K available")
+    assert_true(launch["manual_launch_only"] is True, "40K manual")
+    assert_true(launch["codex_must_not_launch"] is True, "40K codex no launch")
+    assert_true(closeout["available"] is True, "40L available")
+    assert_true(closeout["live_capture_observed"] is False, "40L no capture")
+    assert_true(closeout["captured_event_count"] == 0, "40L no events")
+    assert_true(abort["available"] is True, "40M available")
+    assert_true(abort["manual_abort_available"] is True, "40M abort")
+    assert_true(gate["available"] is True, "40N available")
+    assert_true(gate["phase41_reply_runtime_allowed"] is False, "40N blocked")
+
+
 def main() -> int:
     tests = [
         test_recent_events_returned,
@@ -1068,6 +1092,7 @@ def main() -> int:
         test_phase39b_zero_send_summaries,
         test_phase39c_closeout_summaries,
         test_phase40_runtime_readiness_summaries,
+        test_phase40j_n_readonly_runtime_entry_summaries,
     ]
     for test in tests:
         test()

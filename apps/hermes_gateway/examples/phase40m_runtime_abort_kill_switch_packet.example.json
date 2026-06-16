@@ -1,0 +1,20 @@
+{
+  "report_type": "phase40m_runtime_abort_kill_switch_packet",
+  "version": "phase40m_runtime_abort_kill_switch_packet",
+  "report_only": true,
+  "manual_abort_available": true,
+  "abort_on_any_send_attempt": true,
+  "abort_on_public_team_channel_event": true,
+  "abort_on_unexpected_reply_mode": true,
+  "abort_on_llm_enabled": true,
+  "abort_on_rag_enabled": true,
+  "abort_on_external_execution_enabled": true,
+  "kill_switch_envs": [
+    "HERMES_PHASE40J_READONLY_LIVE_RUNTIME_APPROVED=false",
+    "HERMES_DISCORD_SEND_MESSAGES=false",
+    "HERMES_DISCORD_PRIVATE_TEST_REPLY=false",
+    "HERMES_DISCORD_REPLY_MODE="
+  ],
+  "discord_api_send_called": false,
+  "discord_message_sent": false
+}

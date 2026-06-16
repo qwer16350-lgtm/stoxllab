@@ -114,6 +114,24 @@ def test_operations_dashboard_lock_phase40_runtime_readiness_state() -> None:
     assert_true(report["phase40_safe_to_review_next_morning"] is True, "40 safe overnight")
 
 
+def test_operations_dashboard_lock_phase40j_n_readonly_entry_state() -> None:
+    report = build_operations_dashboard_lock()
+    assert_true(report["phase40j_readonly_preflight_available"] is True, "40J preflight")
+    assert_true(report["phase40j_ready_for_manual_readonly_runtime_launch"] is False, "40J not ready")
+    assert_true(report["phase40k_manual_launch_only"] is True, "40K manual only")
+    assert_true(report["phase40k_codex_must_not_launch"] is True, "40K codex no launch")
+    assert_true(report["phase40k_planned_command_executed_by_codex"] is False, "40K command not executed")
+    assert_true(report["phase40l_capture_closeout_available"] is True, "40L closeout")
+    assert_true(report["phase40l_live_capture_observed"] is False, "40L no capture")
+    assert_true(report["phase40l_captured_event_count"] == 0, "40L no events")
+    assert_true(report["phase40m_manual_abort_available"] is True, "40M abort")
+    assert_true(report["phase40m_abort_on_any_send_attempt"] is True, "40M send abort")
+    assert_true(report["phase40n_phase41_reply_runtime_entry_gate_available"] is True, "40N gate")
+    assert_true(report["phase40n_phase41_reply_runtime_allowed"] is False, "40N blocked")
+    assert_true(report["phase40n_reply_send_allowed"] is False, "40N no reply")
+    assert_true(report["phase40n_ready_for_phase41_reply_runtime"] is False, "40N not ready")
+
+
 def test_operations_dashboard_lock_no_sensitive_values() -> None:
     text = json.dumps(build_operations_dashboard_lock(), ensure_ascii=False).lower()
     assert_true("sk-" not in text and "xoxb-" not in text and "token=" not in text, "No secrets")
@@ -136,6 +154,7 @@ def main() -> int:
         test_operations_dashboard_lock_phase39b_no_send_state,
         test_operations_dashboard_lock_phase39c_closeout_state,
         test_operations_dashboard_lock_phase40_runtime_readiness_state,
+        test_operations_dashboard_lock_phase40j_n_readonly_entry_state,
         test_operations_dashboard_lock_no_sensitive_values,
         test_operations_dashboard_lock_markdown,
     ]

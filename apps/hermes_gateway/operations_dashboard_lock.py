@@ -27,6 +27,11 @@ from phase40_outbound_queue_lock import build_phase40_outbound_queue_lock
 from phase40_post_phase39_state_audit import build_phase40_post_phase39_state_audit
 from phase40_safe_overnight_summary import build_phase40_safe_overnight_summary
 from phase40_session_idempotency_lock import build_phase40_session_idempotency_lock
+from phase40j_private_test_readonly_runtime_preflight import build_phase40j_private_test_readonly_runtime_preflight
+from phase40k_readonly_runtime_launch_packet import build_phase40k_readonly_runtime_launch_packet
+from phase40l_live_capture_closeout_packet import build_phase40l_live_capture_closeout_packet
+from phase40m_runtime_abort_kill_switch_packet import build_phase40m_runtime_abort_kill_switch_packet
+from phase40n_phase41_reply_runtime_entry_gate import build_phase40n_phase41_reply_runtime_entry_gate
 from private_test_live_send_entry_gate import build_private_test_live_send_entry_gate
 from rag_evidence_private_test_phase34_final_lock import build_rag_evidence_private_test_phase34_final_lock
 
@@ -78,6 +83,11 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
     phase40_idempotency = build_phase40_session_idempotency_lock()
     phase40_entry_gate = build_phase40_live_runtime_entry_gate()
     phase40_summary = build_phase40_safe_overnight_summary()
+    phase40j_preflight = build_phase40j_private_test_readonly_runtime_preflight()
+    phase40k_launch = build_phase40k_readonly_runtime_launch_packet()
+    phase40l_closeout = build_phase40l_live_capture_closeout_packet()
+    phase40m_abort = build_phase40m_runtime_abort_kill_switch_packet()
+    phase40n_gate = build_phase40n_phase41_reply_runtime_entry_gate()
     counts = audit.get("final_e2e_counts", {})
     report = {
         "report_type": "operations_dashboard_lock",
@@ -140,6 +150,20 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
         "phase40_live_runtime_start_allowed": bool(phase40_entry_gate.get("live_runtime_start_allowed")),
         "phase40_ready_for_live_runtime_execution": bool(phase40_summary.get("ready_for_live_runtime_execution")),
         "phase40_safe_to_review_next_morning": bool(phase40_summary.get("safe_to_review_next_morning")),
+        "phase40j_readonly_preflight_available": bool(phase40j_preflight.get("readonly_runtime_preflight_available")),
+        "phase40j_ready_for_manual_readonly_runtime_launch": bool(phase40j_preflight.get("ready_for_manual_readonly_runtime_launch")),
+        "phase40k_manual_launch_only": bool(phase40k_launch.get("manual_launch_only")),
+        "phase40k_codex_must_not_launch": bool(phase40k_launch.get("codex_must_not_launch")),
+        "phase40k_planned_command_executed_by_codex": bool(phase40k_launch.get("planned_command_executed_by_codex")),
+        "phase40l_capture_closeout_available": bool(phase40l_closeout.get("capture_closeout_available")),
+        "phase40l_live_capture_observed": bool(phase40l_closeout.get("live_capture_observed")),
+        "phase40l_captured_event_count": int(phase40l_closeout.get("captured_event_count", 0) or 0),
+        "phase40m_manual_abort_available": bool(phase40m_abort.get("manual_abort_available")),
+        "phase40m_abort_on_any_send_attempt": bool(phase40m_abort.get("abort_on_any_send_attempt")),
+        "phase40n_phase41_reply_runtime_entry_gate_available": bool(phase40n_gate.get("phase41_reply_runtime_entry_gate_available")),
+        "phase40n_phase41_reply_runtime_allowed": bool(phase40n_gate.get("phase41_reply_runtime_allowed")),
+        "phase40n_reply_send_allowed": bool(phase40n_gate.get("reply_send_allowed")),
+        "phase40n_ready_for_phase41_reply_runtime": bool(phase40n_gate.get("ready_for_phase41_reply_runtime")),
         "ready_for_live_runtime": False,
         "ready_for_llm_call": False,
         "ready_for_discord_send": False,
@@ -160,6 +184,9 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
             "phase40_discord_gateway_connected": False,
             "phase40_discord_api_send_called": False,
             "phase40_discord_message_sent": False,
+            "phase40j_ready_for_manual_readonly_runtime_launch": False,
+            "phase40k_planned_command_executed_by_codex": False,
+            "phase40n_phase41_reply_runtime_allowed": False,
         },
     }
     assert_operations_dashboard_lock_safe(report)
@@ -194,6 +221,12 @@ def assert_operations_dashboard_lock_safe(report: dict[str, Any]) -> None:
         "phase40_send_worker_enabled",
         "phase40_live_runtime_start_allowed",
         "phase40_ready_for_live_runtime_execution",
+        "phase40j_ready_for_manual_readonly_runtime_launch",
+        "phase40k_planned_command_executed_by_codex",
+        "phase40l_live_capture_observed",
+        "phase40n_phase41_reply_runtime_allowed",
+        "phase40n_reply_send_allowed",
+        "phase40n_ready_for_phase41_reply_runtime",
     ):
         if report.get(key):
             raise ValueError(f"Operations dashboard lock unsafe flag is true: {key}")
@@ -211,6 +244,14 @@ def assert_operations_dashboard_lock_safe(report: dict[str, Any]) -> None:
         raise ValueError("Operations dashboard lock forbids Phase 40 sends.")
     if not report.get("phase40_runtime_readiness_available") or not report.get("phase40_synthetic_replay_only") or not report.get("phase40_duplicate_message_id_guard"):
         raise ValueError("Operations dashboard lock requires Phase 40 readiness guards.")
+    if not report.get("phase40j_readonly_preflight_available") or not report.get("phase40k_manual_launch_only") or not report.get("phase40k_codex_must_not_launch"):
+        raise ValueError("Operations dashboard lock requires Phase 40J/K read-only launch guards.")
+    if not report.get("phase40l_capture_closeout_available") or int(report.get("phase40l_captured_event_count", 0) or 0) != 0:
+        raise ValueError("Operations dashboard lock requires Phase 40L pre-capture closeout state.")
+    if not report.get("phase40m_manual_abort_available") or not report.get("phase40m_abort_on_any_send_attempt"):
+        raise ValueError("Operations dashboard lock requires Phase 40M abort guards.")
+    if not report.get("phase40n_phase41_reply_runtime_entry_gate_available"):
+        raise ValueError("Operations dashboard lock requires Phase 40N entry gate.")
 
 
 def render_operations_dashboard_lock_markdown(report: dict[str, Any]) -> str:
@@ -234,5 +275,7 @@ def render_operations_dashboard_lock_markdown(report: dict[str, Any]) -> str:
             f"- Phase 40 runtime readiness available: {str(report.get('phase40_runtime_readiness_available')).lower()}",
             f"- Phase 40 additional Discord send count: {report.get('phase40_additional_discord_send_count')}",
             f"- Phase 40 safe to review next morning: {str(report.get('phase40_safe_to_review_next_morning')).lower()}",
+            f"- Phase 40J ready for manual read-only runtime launch: {str(report.get('phase40j_ready_for_manual_readonly_runtime_launch')).lower()}",
+            f"- Phase 40N Phase 41 reply runtime allowed: {str(report.get('phase40n_phase41_reply_runtime_allowed')).lower()}",
         ]
     ) + "\n"

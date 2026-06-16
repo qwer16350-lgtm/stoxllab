@@ -622,6 +622,13 @@ operator handoff requirements, and a live runtime entry gate blocked by default.
 The next sensitive step is a separate human-confirmed Phase 40J private-test live
 runtime manual entry.
 
+Phase 40J-40N extends that readiness into read-only runtime entry preparation
+without live execution. It adds a private-test read-only preflight, a manual-only
+launch packet, a live capture closeout packet, abort/kill-switch expectations,
+and a Phase 41 reply runtime entry gate blocked by default. Codex still does not
+start Discord Gateway, send Discord messages, call LLM/RAG, create embeddings,
+or execute external actions.
+
 If the registry file is missing, generate it from the repo root:
 
 ```powershell

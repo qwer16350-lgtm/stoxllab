@@ -129,6 +129,11 @@ from phase40_session_idempotency_lock import build_phase40_session_idempotency_l
 from phase40_operator_handoff_packet import build_phase40_operator_handoff_packet, render_phase40_operator_handoff_packet_markdown
 from phase40_live_runtime_entry_gate import build_phase40_live_runtime_entry_gate, render_phase40_live_runtime_entry_gate_markdown
 from phase40_safe_overnight_summary import build_phase40_safe_overnight_summary, render_phase40_safe_overnight_summary_markdown
+from phase40j_private_test_readonly_runtime_preflight import build_phase40j_private_test_readonly_runtime_preflight, render_phase40j_private_test_readonly_runtime_preflight_markdown
+from phase40k_readonly_runtime_launch_packet import build_phase40k_readonly_runtime_launch_packet, render_phase40k_readonly_runtime_launch_packet_markdown
+from phase40l_live_capture_closeout_packet import build_phase40l_live_capture_closeout_packet, render_phase40l_live_capture_closeout_packet_markdown
+from phase40m_runtime_abort_kill_switch_packet import build_phase40m_runtime_abort_kill_switch_packet, render_phase40m_runtime_abort_kill_switch_packet_markdown
+from phase40n_phase41_reply_runtime_entry_gate import build_phase40n_phase41_reply_runtime_entry_gate, render_phase40n_phase41_reply_runtime_entry_gate_markdown
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight, render_rag_evidence_private_test_send_preflight_markdown
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope, render_rag_evidence_prompt_envelope_markdown
 from rag_evidence_review_packet import build_rag_evidence_review_packet, render_rag_evidence_review_packet_markdown
@@ -409,6 +414,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--phase40-operator-handoff-packet", action="store_true", help="Print Phase 40G operator handoff packet.")
     parser.add_argument("--phase40-live-runtime-entry-gate", action="store_true", help="Print Phase 40H live runtime entry gate blocked by default.")
     parser.add_argument("--phase40-safe-overnight-summary", action="store_true", help="Print Phase 40I safe overnight summary.")
+    parser.add_argument("--phase40j-private-test-readonly-runtime-preflight", action="store_true", help="Print Phase 40J private-test read-only runtime preflight without live execution.")
+    parser.add_argument("--phase40k-readonly-runtime-launch-packet", action="store_true", help="Print Phase 40K manual-only read-only runtime launch packet.")
+    parser.add_argument("--phase40l-live-capture-closeout-packet", action="store_true", help="Print Phase 40L live capture closeout packet before live capture.")
+    parser.add_argument("--phase40m-runtime-abort-kill-switch-packet", action="store_true", help="Print Phase 40M runtime abort kill-switch packet.")
+    parser.add_argument("--phase40n-phase41-reply-runtime-entry-gate", action="store_true", help="Print Phase 40N Phase 41 reply runtime entry gate.")
     parser.add_argument("--source", default="operation", help="RAG source for local retrieval reports.")
     parser.add_argument("--query", default="STOXL brand tone", help="RAG query preview for local retrieval reports.")
     parser.add_argument("--allow-llm-api-call", action="store_true", help="Allow Phase 32B to attempt one gated provider call when env gates pass.")
@@ -2068,6 +2078,71 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- recommended_next_phase: {output.get('recommended_next_phase')}")
         return 0
 
+    if args.phase40j_private_test_readonly_runtime_preflight:
+        output = build_phase40j_private_test_readonly_runtime_preflight()
+        if args.markdown:
+            print(render_phase40j_private_test_readonly_runtime_preflight_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 40J private-test read-only runtime preflight")
+            print(f"- readonly_runtime_preflight_available: {output.get('readonly_runtime_preflight_available')}")
+            print(f"- live_runtime_started: {output.get('live_runtime_started')}")
+            print(f"- ready_for_manual_readonly_runtime_launch: {output.get('ready_for_manual_readonly_runtime_launch')}")
+        return 0
+
+    if args.phase40k_readonly_runtime_launch_packet:
+        output = build_phase40k_readonly_runtime_launch_packet()
+        if args.markdown:
+            print(render_phase40k_readonly_runtime_launch_packet_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 40K read-only runtime launch packet")
+            print(f"- manual_launch_only: {output.get('manual_launch_only')}")
+            print(f"- codex_must_not_launch: {output.get('codex_must_not_launch')}")
+            print(f"- planned_command_executed_by_codex: {output.get('planned_command_executed_by_codex')}")
+        return 0
+
+    if args.phase40l_live_capture_closeout_packet:
+        output = build_phase40l_live_capture_closeout_packet()
+        if args.markdown:
+            print(render_phase40l_live_capture_closeout_packet_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 40L live capture closeout packet")
+            print(f"- capture_closeout_available: {output.get('capture_closeout_available')}")
+            print(f"- live_capture_observed: {output.get('live_capture_observed')}")
+            print(f"- captured_event_count: {output.get('captured_event_count')}")
+        return 0
+
+    if args.phase40m_runtime_abort_kill_switch_packet:
+        output = build_phase40m_runtime_abort_kill_switch_packet()
+        if args.markdown:
+            print(render_phase40m_runtime_abort_kill_switch_packet_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 40M runtime abort kill-switch packet")
+            print(f"- manual_abort_available: {output.get('manual_abort_available')}")
+            print(f"- abort_on_any_send_attempt: {output.get('abort_on_any_send_attempt')}")
+            print(f"- discord_message_sent: {output.get('discord_message_sent')}")
+        return 0
+
+    if args.phase40n_phase41_reply_runtime_entry_gate:
+        output = build_phase40n_phase41_reply_runtime_entry_gate()
+        if args.markdown:
+            print(render_phase40n_phase41_reply_runtime_entry_gate_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 40N Phase 41 reply runtime entry gate")
+            print(f"- phase41_reply_runtime_entry_gate_available: {output.get('phase41_reply_runtime_entry_gate_available')}")
+            print(f"- phase41_reply_runtime_allowed: {output.get('phase41_reply_runtime_allowed')}")
+            print(f"- ready_for_phase41_reply_runtime: {output.get('ready_for_phase41_reply_runtime')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -2295,6 +2370,11 @@ def main(argv: list[str] | None = None) -> int:
         or args.phase40_operator_handoff_packet
         or args.phase40_live_runtime_entry_gate
         or args.phase40_safe_overnight_summary
+        or args.phase40j_private_test_readonly_runtime_preflight
+        or args.phase40k_readonly_runtime_launch_packet
+        or args.phase40l_live_capture_closeout_packet
+        or args.phase40m_runtime_abort_kill_switch_packet
+        or args.phase40n_phase41_reply_runtime_entry_gate
         or args.allow_llm_api_call
         or args.allow_actual_one_shot_llm_draft_call
         or args.allow_rag_evidence_llm_api_call

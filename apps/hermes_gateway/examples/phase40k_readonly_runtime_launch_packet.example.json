@@ -1,0 +1,14 @@
+{
+  "report_type": "phase40k_readonly_runtime_launch_packet",
+  "version": "phase40k_readonly_runtime_launch_packet_report_only",
+  "report_only": true,
+  "manual_launch_only": true,
+  "codex_must_not_launch": true,
+  "runtime_scope": "private_test_readonly",
+  "send_messages_required_false": true,
+  "private_test_reply_required_false": true,
+  "reply_mode": "readonly_private_test_only",
+  "planned_command": "python apps\\hermes_gateway\\cli.py --run-discord-private-test-readonly --json",
+  "planned_command_executed_by_codex": false,
+  "ready_for_manual_readonly_runtime_launch": false
+}

@@ -1,0 +1,15 @@
+{
+  "report_type": "phase40j_private_test_readonly_runtime_preflight",
+  "version": "phase40j_private_test_readonly_runtime_preflight_report_only",
+  "report_only": true,
+  "phase39_actual_send_count_locked": 1,
+  "phase40_readiness_completed": true,
+  "readonly_runtime_preflight_available": true,
+  "live_runtime_started": false,
+  "discord_gateway_connected": false,
+  "discord_api_send_called": false,
+  "discord_message_sent": false,
+  "message_sent_count": 0,
+  "ready_for_manual_readonly_runtime_launch": false,
+  "ready_for_reply_send": false
+}

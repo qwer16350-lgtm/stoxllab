@@ -25,3 +25,8 @@ CLI:
 ```powershell
 python apps\hermes_gateway\cli.py --phase40-live-runtime-entry-gate --json
 ```
+
+Phase 40J-40N follow-up keeps this gate blocked by default while preparing a
+manual-only read-only launch packet, live capture closeout packet, abort
+kill-switch packet, and Phase 41 reply runtime gate. Codex still does not start
+Discord live runtime.
