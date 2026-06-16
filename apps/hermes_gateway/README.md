@@ -642,6 +642,11 @@ connect the Gateway, call Discord API send, send messages, call LLM/RAG, create
 embeddings/vector indexes, or execute external actions. Message sent count
 remains 0 and the Phase 39 actual send count remains locked at 1.
 
+Phase 40T-1 adds a user-only `--execute-readonly-live-runtime` flag, timeout and
+max-events controls, a redacted local capture writer, and read-only runtime
+closeout reports. Codex does not run the execute command. The default command
+remains preflight-only, and all implementation tests use fake adapters only.
+
 If the registry file is missing, generate it from the repo root:
 
 ```powershell

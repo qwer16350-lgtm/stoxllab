@@ -1044,6 +1044,9 @@ def test_phase40o_s_manual_runtime_review_pipeline_summaries() -> None:
     matrix = report["phase40r_phase41_reply_preflight_matrix"]
     morning = report["phase40s_morning_review_operator_decision_packet"]
     command = report["phase40t_private_test_readonly_runtime_command"]
+    gate = report["phase40t_readonly_live_execution_gate"]
+    writer = report["phase40t_readonly_capture_writer"]
+    runtime_closeout = report["phase40t_readonly_runtime_closeout"]
     assert_true(launcher["available"] is True, "40O available")
     assert_true(launcher["manual_launch_only"] is True, "40O manual")
     assert_true(launcher["codex_must_not_launch"] is True, "40O codex no launch")
@@ -1069,6 +1072,16 @@ def test_phase40o_s_manual_runtime_review_pipeline_summaries() -> None:
     assert_true(command["discord_api_send_called"] is False, "40T no API send")
     assert_true(command["discord_message_sent"] is False, "40T no message")
     assert_true(command["message_sent_count"] == 0, "40T no send count")
+    assert_true(gate["available"] is True, "40T-1 gate available")
+    assert_true(gate["blocked_by_default"] is True, "40T-1 gate blocked")
+    assert_true(gate["execute_flag_required"] is True, "40T-1 execute flag")
+    assert_true(gate["discord_api_send_called"] is False, "40T-1 no API")
+    assert_true(writer["available"] is True, "40T-1 writer")
+    assert_true(writer["redacted_capture_only"] is True, "40T-1 redacted")
+    assert_true(writer["raw_content_allowed"] is False, "40T-1 raw content blocked")
+    assert_true(runtime_closeout["available"] is True, "40T-1 closeout")
+    assert_true(runtime_closeout["requires_manual_user_execution"] is True, "40T-1 manual")
+    assert_true(runtime_closeout["message_sent_count"] == 0, "40T-1 closeout no send")
 
 
 def main() -> int:

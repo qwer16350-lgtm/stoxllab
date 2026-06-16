@@ -319,6 +319,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--run-discord-private-test-rag-llm-reply", action="store_true", help="Run the Phase 33D-1 guarded private-test-only RAG+LLM reply runtime after separate manual approval.")
     parser.add_argument("--run-discord-private-test-readonly", action="store_true", help="Print Phase 40T private-test read-only runtime command preflight; Codex does not connect.")
     parser.add_argument("--run-discord-private-test-readonly-preflight", action="store_true", help="Print Phase 40T private-test read-only runtime preflight without live execution.")
+    parser.add_argument("--execute-readonly-live-runtime", action="store_true", help="User-only Phase 40T read-only live runtime execute flag.")
     parser.add_argument("--live-event-audit-report", action="store_true", help="Print Phase 30 live event audit record report.")
     parser.add_argument("--would-send-preview-report", action="store_true", help="Print Phase 30 would-send preview report.")
     parser.add_argument("--live-event-review-packet-report", action="store_true", help="Print Phase 30 live event review packet report.")
@@ -460,6 +461,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--export-review-packet", action="store_true", help="Export review packet JSON and Markdown.")
     parser.add_argument("--review-export-root", help="Export root for review packets. Defaults to exports/hermes_gateway/review_packets.")
     parser.add_argument("--capture-file", help="Optional redacted capture file for Phase 40Q review closeout.")
+    parser.add_argument("--readonly-runtime-timeout-seconds", type=int, default=60, help="Phase 40T read-only runtime timeout. Defaults to 60.")
+    parser.add_argument("--readonly-runtime-max-events", type=int, default=10, help="Phase 40T read-only runtime max events. Defaults to 10.")
+    parser.add_argument("--readonly-capture-root", default="apps/hermes_gateway/local/captures", help="Phase 40T local ignored capture root.")
     parser.add_argument("--dry-run-export", action="store_true", help="Build export plan without writing files.")
     parser.add_argument("--json", action="store_true", help="Print JSON output.")
     args = parser.parse_args(argv)
@@ -2224,7 +2228,12 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.run_discord_private_test_readonly or args.run_discord_private_test_readonly_preflight:
         output = build_phase40t_private_test_readonly_runtime_command(
-            report_only=bool(args.run_discord_private_test_readonly_preflight)
+            report_only=bool(args.run_discord_private_test_readonly_preflight),
+            execute_flag_present=bool(args.execute_readonly_live_runtime),
+            timeout_seconds=int(args.readonly_runtime_timeout_seconds),
+            max_events=int(args.readonly_runtime_max_events),
+            capture_root=args.readonly_capture_root,
+            root=str(Path.cwd()),
         )
         if args.markdown:
             print(render_phase40t_private_test_readonly_runtime_command_markdown(output))
@@ -2480,6 +2489,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.phase40s_morning_review_operator_decision_packet
         or args.run_discord_private_test_readonly
         or args.run_discord_private_test_readonly_preflight
+        or args.execute_readonly_live_runtime
         or args.allow_llm_api_call
         or args.allow_actual_one_shot_llm_draft_call
         or args.allow_rag_evidence_llm_api_call
@@ -2496,6 +2506,9 @@ def main(argv: list[str] | None = None) -> int:
         or args.export_review_packet
         or args.review_export_root
         or args.capture_file
+        or args.readonly_runtime_timeout_seconds != 60
+        or args.readonly_runtime_max_events != 10
+        or args.readonly_capture_root != "apps/hermes_gateway/local/captures"
         or args.dry_run_export
         or args.markdown
         or args.limit != 20

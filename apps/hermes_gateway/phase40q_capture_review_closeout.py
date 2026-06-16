@@ -12,26 +12,37 @@ from phase40p_readonly_capture_schema import ALLOWED_CAPTURE_FIELDS, FORBIDDEN_C
 
 VERSION_EMPTY = "phase40q_capture_review_closeout_no_capture_yet"
 VERSION_PARSED = "phase40q_capture_review_closeout_redacted_capture_file"
+CAPTURE_SCHEMA_VERSION = "phase40t_redacted_readonly_capture_v1"
+PHASE40T_FORBIDDEN_CAPTURE_FIELDS = set(FORBIDDEN_CAPTURE_FIELDS) | {
+    "raw_message_content",
+    "content",
+    "author_id",
+    "channel_id",
+    "guild_id",
+    "discord_token",
+    "api_key",
+    "approval_phrase",
+}
 LONG_ID_RE = re.compile(r"\b\d{15,25}\b")
 SECRET_RE = re.compile(r"(?i)(sk-[a-z0-9_-]+|xoxb-[a-z0-9_-]+|mfa\.|bearer\s+\S+|api[_ -]?key\s*[:=]\s*\S+|token\s*[:=]\s*\S+|password\s*[:=]\s*\S+)")
 APPROVAL_RE = re.compile(r"I_APPROVE_[A-Z0-9_]+")
 
 
-def _load_capture_events(capture_file: str | Path | None) -> tuple[bool, list[dict[str, Any]]]:
+def _load_capture_events(capture_file: str | Path | None) -> tuple[bool, list[dict[str, Any]], dict[str, Any]]:
     if not capture_file:
-        return False, []
+        return False, [], {}
     path = Path(capture_file)
     if not path.exists() or not path.is_file():
-        return False, []
+        return False, [], {}
     data = json.loads(path.read_text(encoding="utf-8-sig"))
     if isinstance(data, list):
-        return True, [item for item in data if isinstance(item, dict)]
+        return True, [item for item in data if isinstance(item, dict)], {"events": data}
     if isinstance(data, dict):
         events = data.get("events", [])
         if isinstance(events, list):
-            return True, [item for item in events if isinstance(item, dict)]
-        return True, [data]
-    return True, []
+            return True, [item for item in events if isinstance(item, dict)], data
+        return True, [data], data
+    return True, [], {"events": []}
 
 
 def _safe_event(event: dict[str, Any]) -> dict[str, Any]:
@@ -39,7 +50,26 @@ def _safe_event(event: dict[str, Any]) -> dict[str, Any]:
 
 
 def build_phase40q_capture_review_closeout(capture_file: str | Path | None = None) -> dict[str, Any]:
-    present, events = _load_capture_events(capture_file)
+    present, events, payload = _load_capture_events(capture_file)
+    schema_version = str(payload.get("capture_schema_version", "") or "")
+    safety = payload.get("safety", {}) if isinstance(payload, dict) else {}
+    forbidden_fields_present = any(any(field in event for field in PHASE40T_FORBIDDEN_CAPTURE_FIELDS) for event in events)
+    invalid_safety = bool(
+        safety.get("raw_content_included")
+        or safety.get("raw_discord_ids_included")
+        or safety.get("secret_values_included")
+        or safety.get("discord_send_called")
+        or int(safety.get("message_sent_count", 0) or 0) != 0
+    )
+    invalid_schema = bool(present and schema_version and schema_version != CAPTURE_SCHEMA_VERSION)
+    blocked = bool(forbidden_fields_present or invalid_safety or invalid_schema)
+    blocked_reason = ""
+    if forbidden_fields_present:
+        blocked_reason = "forbidden_capture_fields_present"
+    elif invalid_safety:
+        blocked_reason = "unsafe_capture_safety_flags"
+    elif invalid_schema:
+        blocked_reason = "invalid_capture_schema_version"
     safe_events = [_safe_event(event) for event in events]
     private_human = sum(1 for item in safe_events if item.get("channel_scope") == "private_test" and item.get("author_kind") == "human" and not item.get("is_self") and not item.get("is_bot"))
     self_count = sum(1 for item in safe_events if bool(item.get("is_self")))
@@ -50,8 +80,11 @@ def build_phase40q_capture_review_closeout(capture_file: str | Path | None = Non
         "report_type": "phase40q_capture_review_closeout",
         "version": VERSION_PARSED if present else VERSION_EMPTY,
         "report_only": True,
+        "blocked": blocked,
+        "blocked_reason": blocked_reason,
+        "valid_redacted_schema": bool(present and not blocked),
         "capture_file_present": present,
-        "capture_review_completed": bool(present and safe_events),
+        "capture_review_completed": bool(present and safe_events and not blocked),
         "live_capture_observed": bool(present and safe_events),
         "captured_event_count": len(safe_events),
         "private_test_human_message_count": private_human,
@@ -59,7 +92,7 @@ def build_phase40q_capture_review_closeout(capture_file: str | Path | None = Non
         "bot_message_skipped_count": bot_count,
         "duplicate_message_skipped_count": duplicate_count,
         "public_team_blocked_count": public_team_count,
-        "forbidden_fields_present": any(any(field in event for field in FORBIDDEN_CAPTURE_FIELDS) for event in events),
+        "forbidden_fields_present": forbidden_fields_present,
         "raw_content_logged": False,
         "raw_discord_ids_logged": False,
         "secret_values_logged": False,

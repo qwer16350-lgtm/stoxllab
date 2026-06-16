@@ -38,6 +38,9 @@ from phase40q_capture_review_closeout import build_phase40q_capture_review_close
 from phase40r_phase41_reply_preflight_matrix import build_phase40r_phase41_reply_preflight_matrix
 from phase40s_morning_review_operator_decision_packet import build_phase40s_morning_review_operator_decision_packet
 from phase40t_private_test_readonly_runtime_command import build_phase40t_private_test_readonly_runtime_command
+from phase40t_readonly_capture_writer import CAPTURE_SCHEMA_VERSION
+from phase40t_readonly_live_execution_gate import build_phase40t_readonly_live_execution_gate
+from phase40t_readonly_runtime_closeout import build_phase40t_readonly_runtime_closeout
 from private_test_live_send_entry_gate import build_private_test_live_send_entry_gate
 from rag_evidence_private_test_phase34_final_lock import build_rag_evidence_private_test_phase34_final_lock
 
@@ -99,7 +102,9 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
     phase40q_closeout = build_phase40q_capture_review_closeout()
     phase40r_matrix = build_phase40r_phase41_reply_preflight_matrix()
     phase40s_morning = build_phase40s_morning_review_operator_decision_packet()
-    phase40t_command = build_phase40t_private_test_readonly_runtime_command(report_only=False)
+    phase40t_command = build_phase40t_private_test_readonly_runtime_command(env={}, report_only=False)
+    phase40t_gate = build_phase40t_readonly_live_execution_gate(env={}, execute_flag_present=False, root=root)
+    phase40t_closeout = build_phase40t_readonly_runtime_closeout()
     counts = audit.get("final_e2e_counts", {})
     report = {
         "report_type": "operations_dashboard_lock",
@@ -204,6 +209,19 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
         "phase40t_send_messages_enabled": bool(phase40t_command.get("send_messages_enabled")),
         "phase40t_private_test_reply_enabled": bool(phase40t_command.get("private_test_reply_enabled")),
         "phase40t_ready_for_phase41_reply_runtime": bool(phase40t_command.get("ready_for_phase41_reply_runtime")),
+        "phase40t_execution_gate_available": True,
+        "phase40t_execute_flag_required": bool(phase40t_gate.get("execute_flag_required")),
+        "phase40t_execute_flag_present": bool(phase40t_gate.get("execute_flag_present")),
+        "phase40t_execution_gate_blocked_by_default": bool(phase40t_gate.get("blocked")),
+        "phase40t_capture_schema_version": CAPTURE_SCHEMA_VERSION,
+        "phase40t_redacted_capture_only": True,
+        "phase40t_capture_raw_content_allowed": False,
+        "phase40t_capture_raw_discord_ids_allowed": False,
+        "phase40t_capture_secret_values_allowed": False,
+        "phase40t_closeout_available": True,
+        "phase40t_closeout_started": bool(phase40t_closeout.get("started")),
+        "phase40t_closeout_gateway_connected": bool(phase40t_closeout.get("discord_gateway_connected")),
+        "phase40t_closeout_message_sent_count": int(phase40t_closeout.get("message_sent_count", 0) or 0),
         "ready_for_live_runtime": False,
         "ready_for_llm_call": False,
         "ready_for_discord_send": False,
@@ -234,6 +252,9 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
             "phase40t_discord_gateway_connected": False,
             "phase40t_discord_api_send_called": False,
             "phase40t_discord_message_sent": False,
+            "phase40t_execute_flag_present": False,
+            "phase40t_closeout_started": False,
+            "phase40t_closeout_gateway_connected": False,
         },
     }
     assert_operations_dashboard_lock_safe(report)
@@ -290,6 +311,12 @@ def assert_operations_dashboard_lock_safe(report: dict[str, Any]) -> None:
         "phase40t_send_messages_enabled",
         "phase40t_private_test_reply_enabled",
         "phase40t_ready_for_phase41_reply_runtime",
+        "phase40t_execute_flag_present",
+        "phase40t_capture_raw_content_allowed",
+        "phase40t_capture_raw_discord_ids_allowed",
+        "phase40t_capture_secret_values_allowed",
+        "phase40t_closeout_started",
+        "phase40t_closeout_gateway_connected",
     ):
         if report.get(key):
             raise ValueError(f"Operations dashboard lock unsafe flag is true: {key}")
@@ -329,6 +356,10 @@ def assert_operations_dashboard_lock_safe(report: dict[str, Any]) -> None:
         raise ValueError("Operations dashboard lock requires Phase 40T blocked command guard.")
     if int(report.get("phase40t_message_sent_count", 0) or 0) != 0:
         raise ValueError("Operations dashboard lock forbids Phase 40T sends.")
+    if not report.get("phase40t_execution_gate_available") or not report.get("phase40t_execute_flag_required") or not report.get("phase40t_execution_gate_blocked_by_default"):
+        raise ValueError("Operations dashboard lock requires Phase 40T execution gate blocked by default.")
+    if not report.get("phase40t_redacted_capture_only") or int(report.get("phase40t_closeout_message_sent_count", 0) or 0) != 0:
+        raise ValueError("Operations dashboard lock requires Phase 40T redacted/no-send closeout posture.")
 
 
 def render_operations_dashboard_lock_markdown(report: dict[str, Any]) -> str:
@@ -358,5 +389,7 @@ def render_operations_dashboard_lock_markdown(report: dict[str, Any]) -> str:
             f"- Phase 40R Discord reply send allowed: {str(report.get('phase40r_discord_reply_send_allowed')).lower()}",
             f"- Phase 40T command available: {str(report.get('phase40t_command_available')).lower()}",
             f"- Phase 40T blocked by default: {str(report.get('phase40t_blocked_by_default')).lower()}",
+            f"- Phase 40T execute flag required: {str(report.get('phase40t_execute_flag_required')).lower()}",
+            f"- Phase 40T redacted capture only: {str(report.get('phase40t_redacted_capture_only')).lower()}",
         ]
     ) + "\n"

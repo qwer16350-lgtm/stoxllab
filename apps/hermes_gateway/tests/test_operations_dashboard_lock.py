@@ -159,6 +159,15 @@ def test_operations_dashboard_lock_phase40o_s_review_pipeline_state() -> None:
     assert_true(report["phase40t_discord_api_send_called"] is False, "40T no API")
     assert_true(report["phase40t_discord_message_sent"] is False, "40T no message")
     assert_true(report["phase40t_message_sent_count"] == 0, "40T count 0")
+    assert_true(report["phase40t_execution_gate_available"] is True, "40T-1 gate")
+    assert_true(report["phase40t_execute_flag_required"] is True, "40T-1 execute required")
+    assert_true(report["phase40t_execute_flag_present"] is False, "40T-1 execute absent")
+    assert_true(report["phase40t_execution_gate_blocked_by_default"] is True, "40T-1 blocked")
+    assert_true(report["phase40t_redacted_capture_only"] is True, "40T-1 redacted")
+    assert_true(report["phase40t_capture_raw_content_allowed"] is False, "40T-1 no raw")
+    assert_true(report["phase40t_closeout_started"] is False, "40T-1 closeout not started")
+    assert_true(report["phase40t_closeout_gateway_connected"] is False, "40T-1 closeout no gateway")
+    assert_true(report["phase40t_closeout_message_sent_count"] == 0, "40T-1 closeout no send")
 
 
 def test_operations_dashboard_lock_no_sensitive_values() -> None:

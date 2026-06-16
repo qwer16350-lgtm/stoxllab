@@ -19,3 +19,9 @@ python apps\hermes_gateway\cli.py --phase40q-capture-review-closeout --json --ca
 ```
 
 The closeout must not print raw message content, raw author ID, raw channel ID, token, API key, or approval phrase values.
+
+Phase 40T-1 capture files must use
+`phase40t_redacted_readonly_capture_v1`. Phase 40Q blocks capture files that
+include raw content fields, raw Discord id fields, secret fields, unsafe capture
+safety flags, or nonzero message send counts. Even after a valid capture review,
+Phase 41 reply runtime readiness remains false.

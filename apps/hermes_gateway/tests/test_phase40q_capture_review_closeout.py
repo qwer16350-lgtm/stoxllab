@@ -35,9 +35,17 @@ def test_phase40q_redacted_capture_file_summary_only() -> None:
     path.write_text(
         json.dumps(
             {
+                "capture_schema_version": "phase40t_redacted_readonly_capture_v1",
                 "events": [
                     {"event_id_hash": "hash_event", "message_id_hash": "hash_msg", "channel_scope": "private_test", "author_kind": "human", "is_self": False, "is_bot": False, "is_duplicate": False, "decision": "accepted", "timestamp_iso": "2026-06-16T00:00:00Z"}
-                ]
+                ],
+                "safety": {
+                    "raw_content_included": False,
+                    "raw_discord_ids_included": False,
+                    "secret_values_included": False,
+                    "discord_send_called": False,
+                    "message_sent_count": 0
+                }
             },
             ensure_ascii=False,
         ),
@@ -46,11 +54,42 @@ def test_phase40q_redacted_capture_file_summary_only() -> None:
     report = build_phase40q_capture_review_closeout(path)
     text = json.dumps(report, ensure_ascii=False).lower()
     assert_true(report["capture_file_present"] is True, "File present")
+    assert_true(report["blocked"] is False, "Not blocked")
+    assert_true(report["valid_redacted_schema"] is True, "Valid schema")
     assert_true(report["capture_review_completed"] is True, "Review completed")
     assert_true(report["captured_event_count"] == 1, "One event")
     assert_true(report["private_test_human_message_count"] == 1, "One private human")
     assert_true("raw_message_content" not in text, "No raw content field output")
     assert_true(not LONG_NUMBER_RE.search(text), "No raw IDs")
+
+
+def test_phase40q_blocks_invalid_capture_file() -> None:
+    path = Path(tempfile.gettempdir()) / "stoxl_phase40q_invalid_capture.json"
+    path.write_text(
+        json.dumps(
+            {
+                "capture_schema_version": "phase40t_redacted_readonly_capture_v1",
+                "events": [
+                    {"event_id_hash": "hash_event", "message_id_hash": "hash_msg", "channel_scope": "private_test", "author_kind": "human", "raw_message_content": "hidden"}
+                ],
+                "safety": {
+                    "raw_content_included": False,
+                    "raw_discord_ids_included": False,
+                    "secret_values_included": False,
+                    "discord_send_called": False,
+                    "message_sent_count": 0
+                },
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    report = build_phase40q_capture_review_closeout(path)
+    text = json.dumps(report, ensure_ascii=False)
+    assert_true(report["blocked"] is True, "Blocked")
+    assert_true(report["blocked_reason"] == "forbidden_capture_fields_present", "Forbidden field reason")
+    assert_true(report["capture_review_completed"] is False, "No completed review")
+    assert_true("hidden" not in text, "Raw content value not output")
 
 
 def test_phase40q_no_send_or_side_effects() -> None:
@@ -62,7 +101,7 @@ def test_phase40q_no_send_or_side_effects() -> None:
 
 
 def main() -> int:
-    for test in (test_phase40q_missing_capture_file_graceful, test_phase40q_redacted_capture_file_summary_only, test_phase40q_no_send_or_side_effects):
+    for test in (test_phase40q_missing_capture_file_graceful, test_phase40q_redacted_capture_file_summary_only, test_phase40q_blocks_invalid_capture_file, test_phase40q_no_send_or_side_effects):
         test()
         print(f"PASS {test.__name__}")
     print("All Phase 40Q capture closeout tests passed.")

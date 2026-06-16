@@ -124,6 +124,12 @@ FORBIDDEN_TRUE_FIELDS = (
     "phase40t_raw_discord_ids_logged",
     "phase40t_approval_phrase_value_logged",
     "phase40t_ready_for_phase41_reply_runtime",
+    "phase40t_execute_flag_present",
+    "phase40t_capture_file_contains_raw_content",
+    "phase40t_capture_file_contains_raw_discord_ids",
+    "phase40t_capture_file_contains_secret_values",
+    "phase40t_closeout_started",
+    "phase40t_closeout_gateway_connected",
 )
 
 
@@ -268,6 +274,9 @@ def build_forbidden_behavior_sentinel(overrides: dict[str, Any] | None = None) -
         "phase40t_send_messages_enabled": False,
         "phase40t_private_test_reply_enabled": False,
         "phase40t_reply_mode_readonly_private_test_only": False,
+        "phase40t_execute_flag_required": True,
+        "phase40t_execute_flag_present": False,
+        "phase40t_execution_gate_blocked_by_default": True,
         "phase40t_llm_called": False,
         "phase40t_rag_called": False,
         "phase40t_embedding_api_called": False,
@@ -277,6 +286,12 @@ def build_forbidden_behavior_sentinel(overrides: dict[str, Any] | None = None) -
         "phase40t_raw_discord_ids_logged": False,
         "phase40t_approval_phrase_value_logged": False,
         "phase40t_ready_for_phase41_reply_runtime": False,
+        "phase40t_capture_file_contains_raw_content": False,
+        "phase40t_capture_file_contains_raw_discord_ids": False,
+        "phase40t_capture_file_contains_secret_values": False,
+        "phase40t_closeout_started": False,
+        "phase40t_closeout_gateway_connected": False,
+        "phase40t_closeout_message_sent_count": 0,
         "post_llm_call_sentinel": False,
         "total_phase36_llm_call_count": 1,
         "total_phase36_discord_message_sent_count": 0,
@@ -349,7 +364,15 @@ def _sentinel_passed(report: dict[str, Any]) -> bool:
         return False
     if not bool(report.get("phase40t_command_available")) or not bool(report.get("phase40t_blocked_by_default")) or not bool(report.get("phase40t_codex_runtime_launch_forbidden")):
         return False
+    if not bool(report.get("phase40t_execute_flag_required")) or not bool(report.get("phase40t_execution_gate_blocked_by_default")):
+        return False
     if int(report.get("phase40t_message_sent_count", 0) or 0) != 0:
+        return False
+    if int(report.get("phase40t_closeout_message_sent_count", 0) or 0) != 0:
+        return False
+    if not bool(report.get("phase40t_execute_flag_present")) and (
+        bool(report.get("phase40t_live_runtime_started")) or bool(report.get("phase40t_closeout_started"))
+    ):
         return False
     if bool(report.get("phase40t_ready_for_manual_readonly_runtime_launch")) and not bool(report.get("phase40t_reply_mode_readonly_private_test_only")):
         return False
@@ -410,8 +433,14 @@ def assert_forbidden_behavior_sentinel_safe(report: dict[str, Any]) -> None:
         raise ValueError("Forbidden behavior sentinel requires Phase 40S additional send count 0.")
     if not report.get("phase40t_command_available") or not report.get("phase40t_blocked_by_default") or not report.get("phase40t_codex_runtime_launch_forbidden"):
         raise ValueError("Forbidden behavior sentinel requires Phase 40T blocked command guard.")
+    if not report.get("phase40t_execute_flag_required") or not report.get("phase40t_execution_gate_blocked_by_default"):
+        raise ValueError("Forbidden behavior sentinel requires Phase 40T execute gate blocked by default.")
     if int(report.get("phase40t_message_sent_count", 0) or 0) != 0:
         raise ValueError("Forbidden behavior sentinel requires Phase 40T message count 0.")
+    if int(report.get("phase40t_closeout_message_sent_count", 0) or 0) != 0:
+        raise ValueError("Forbidden behavior sentinel requires Phase 40T closeout message count 0.")
+    if not report.get("phase40t_execute_flag_present") and (report.get("phase40t_live_runtime_started") or report.get("phase40t_closeout_started")):
+        raise ValueError("Forbidden behavior sentinel forbids Phase 40T started without execute flag.")
     if report.get("phase40t_ready_for_manual_readonly_runtime_launch") and not report.get("phase40t_reply_mode_readonly_private_test_only"):
         raise ValueError("Forbidden behavior sentinel requires Phase 40T readonly reply mode when ready.")
 
@@ -439,6 +468,7 @@ def render_forbidden_behavior_sentinel_markdown(report: dict[str, Any]) -> str:
             "- Phase 40R Discord reply send allowed: false",
             "- Phase 40T command available: true",
             "- Phase 40T blocked by default: true",
+            "- Phase 40T execute flag required: true",
             "- Forbidden behavior sentinel passed: true",
         ]
     ) + "\n"

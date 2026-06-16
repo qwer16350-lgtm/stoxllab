@@ -59,3 +59,27 @@ remains false.
 Phase 40T only restores the missing argparse command and its safe preflight
 report. The actual read-only runtime launch remains a separate manual operator
 action after reviewing the blocked/ready report.
+
+## Phase 40T-1 Execute Flag
+
+Phase 40T-1 adds a separate user-only execute flag:
+
+```powershell
+python apps\hermes_gateway\cli.py --run-discord-private-test-readonly --json --execute-readonly-live-runtime
+```
+
+Codex must not run this command. Without the execute flag,
+`--run-discord-private-test-readonly` remains preflight/report-only and keeps
+`started=false`, `live_runtime_started=false`, and
+`discord_gateway_connected=false`.
+
+Optional runtime controls:
+
+```powershell
+--readonly-runtime-timeout-seconds 60
+--readonly-runtime-max-events 10
+--readonly-capture-root apps/hermes_gateway/local/captures
+```
+
+The execute path is read-only: no send, no reply, no LLM, no RAG, no embedding,
+and no external execution.

@@ -413,3 +413,9 @@ entry and adds a companion preflight report. The command is blocked by default,
 prints only sanitized booleans, and keeps `started=false`,
 `discord_gateway_connected=false`, `discord_api_send_called=false`,
 `discord_message_sent=false`, and `message_sent_count=0` in Codex verification.
+
+Phase 40T-1 adds a user-only `--execute-readonly-live-runtime` flag for the
+private-test read-only runtime, plus timeout/max-events controls, redacted
+capture writer, and closeout reports. Codex does not run the execute command;
+tests use fake adapters only. Send/reply/LLM/RAG/embedding/external execution
+remain false.

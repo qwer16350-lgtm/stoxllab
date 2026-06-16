@@ -1,0 +1,18 @@
+{
+  "report_type": "phase40t_readonly_live_execution_gate",
+  "version": "phase40t_readonly_live_execution_gate",
+  "mode": "private_test_readonly_live_execution",
+  "execute_flag_present": true,
+  "execute_flag_required": true,
+  "blocked": true,
+  "started": false,
+  "reason": "readonly_live_execution_preflight_failed:approval_missing_or_mismatch",
+  "live_runtime_started": false,
+  "discord_gateway_connected": false,
+  "discord_api_send_called": false,
+  "discord_message_sent": false,
+  "message_sent_count": 0,
+  "capture_file_written": false,
+  "ready_for_capture_closeout": false,
+  "ready_for_phase41_reply_runtime": false
+}
