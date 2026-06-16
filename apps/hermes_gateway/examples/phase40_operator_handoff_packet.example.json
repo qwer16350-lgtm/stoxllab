@@ -1,0 +1,16 @@
+{
+  "report_type": "phase40_operator_handoff_packet",
+  "version": "phase40_operator_handoff_packet_before_live_runtime",
+  "report_only": true,
+  "operator_must_confirm_before_live_runtime": true,
+  "operator_must_confirm_before_any_reply_send": true,
+  "required_future_confirmations": [
+    "start_private_test_live_runtime",
+    "allow_one_private_test_reply",
+    "enable_llm_for_private_test_reply",
+    "enable_rag_for_private_test_reply"
+  ],
+  "safe_current_state": true,
+  "ready_for_phase40_live_runtime_entry_gate": true,
+  "ready_for_live_runtime_execution": false
+}

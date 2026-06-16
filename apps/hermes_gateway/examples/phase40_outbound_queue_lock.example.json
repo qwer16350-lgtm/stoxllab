@@ -1,0 +1,14 @@
+{
+  "report_type": "phase40_outbound_queue_lock",
+  "version": "phase40_outbound_queue_lock_no_send",
+  "report_only": true,
+  "outbound_queue_enabled": false,
+  "queued_message_count": 0,
+  "send_worker_enabled": false,
+  "send_worker_started": false,
+  "discord_api_send_called": false,
+  "discord_message_sent": false,
+  "repeat_send_allowed": false,
+  "automatic_retry_allowed": false,
+  "manual_retry_requires_new_phase": true
+}

@@ -1,0 +1,17 @@
+{
+  "report_type": "phase40_live_runtime_entry_gate",
+  "version": "phase40_live_runtime_entry_gate_blocked_by_default",
+  "report_only": true,
+  "live_runtime_entry_gate_available": true,
+  "live_runtime_start_allowed": false,
+  "required_future_flags": [
+    "HERMES_PHASE40_PRIVATE_TEST_LIVE_RUNTIME_APPROVED=true",
+    "HERMES_PHASE40_PRIVATE_TEST_LIVE_RUNTIME_APPROVAL_PHRASE exact",
+    "HERMES_DISCORD_SEND_MESSAGES=false for read-only runtime",
+    "HERMES_DISCORD_PRIVATE_TEST_REPLY=false until reply phase"
+  ],
+  "discord_gateway_connected": false,
+  "discord_api_send_called": false,
+  "discord_message_sent": false,
+  "ready_for_live_runtime_execution": false
+}

@@ -21,6 +21,12 @@ from phase39b_manual_send_no_send_lock import build_phase39b_manual_send_no_send
 from phase39c_actual_send_closeout import build_phase39c_actual_send_closeout
 from phase39c_no_repeat_send_lock import build_phase39c_no_repeat_send_lock
 from phase39c_post_send_safety_audit import build_phase39c_post_send_safety_audit
+from phase40_inbound_event_replay_dry_run import build_phase40_inbound_event_replay_dry_run
+from phase40_live_runtime_entry_gate import build_phase40_live_runtime_entry_gate
+from phase40_outbound_queue_lock import build_phase40_outbound_queue_lock
+from phase40_post_phase39_state_audit import build_phase40_post_phase39_state_audit
+from phase40_safe_overnight_summary import build_phase40_safe_overnight_summary
+from phase40_session_idempotency_lock import build_phase40_session_idempotency_lock
 from private_test_live_send_entry_gate import build_private_test_live_send_entry_gate
 from rag_evidence_private_test_phase34_final_lock import build_rag_evidence_private_test_phase34_final_lock
 
@@ -66,6 +72,12 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
         closeout=phase39c_closeout,
         no_repeat_lock=phase39c_no_repeat,
     )
+    phase40_state = build_phase40_post_phase39_state_audit(phase39c_closeout, phase39c_no_repeat)
+    phase40_replay = build_phase40_inbound_event_replay_dry_run()
+    phase40_queue = build_phase40_outbound_queue_lock()
+    phase40_idempotency = build_phase40_session_idempotency_lock()
+    phase40_entry_gate = build_phase40_live_runtime_entry_gate()
+    phase40_summary = build_phase40_safe_overnight_summary()
     counts = audit.get("final_e2e_counts", {})
     report = {
         "report_type": "operations_dashboard_lock",
@@ -113,6 +125,21 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
         "phase39c_ready_for_repeat_send": bool(phase39c_no_repeat.get("ready_for_repeat_send")),
         "phase39c_gate_off_verified": bool(phase39c_safety.get("gate_off_verified")),
         "phase39c_additional_send_count": int(phase39c_safety.get("phase39c_additional_send_count", 0) or 0),
+        "phase40_runtime_readiness_available": bool(phase40_summary.get("phase40_reports_completed")),
+        "phase40_actual_discord_send_count_locked": int(phase40_state.get("actual_discord_send_count_locked", 0) or 0),
+        "phase40_additional_discord_send_count": int(phase40_summary.get("additional_discord_send_count", 0) or 0),
+        "phase40_live_runtime_started": bool(phase40_summary.get("live_runtime_started")),
+        "phase40_discord_gateway_connected": bool(phase40_summary.get("discord_gateway_connected")),
+        "phase40_discord_api_send_called": bool(phase40_summary.get("discord_api_send_called")),
+        "phase40_discord_message_sent": bool(phase40_summary.get("discord_message_sent")),
+        "phase40_message_sent_count": int(phase40_summary.get("message_sent_count", 0) or 0),
+        "phase40_synthetic_replay_only": bool(phase40_replay.get("uses_recorded_or_synthetic_events_only")),
+        "phase40_outbound_queue_enabled": bool(phase40_queue.get("outbound_queue_enabled")),
+        "phase40_send_worker_enabled": bool(phase40_queue.get("send_worker_enabled")),
+        "phase40_duplicate_message_id_guard": bool(phase40_idempotency.get("duplicate_message_id_guard")),
+        "phase40_live_runtime_start_allowed": bool(phase40_entry_gate.get("live_runtime_start_allowed")),
+        "phase40_ready_for_live_runtime_execution": bool(phase40_summary.get("ready_for_live_runtime_execution")),
+        "phase40_safe_to_review_next_morning": bool(phase40_summary.get("safe_to_review_next_morning")),
         "ready_for_live_runtime": False,
         "ready_for_llm_call": False,
         "ready_for_discord_send": False,
@@ -129,6 +156,10 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
             "external_execution": False,
             "llm_called": False,
             "discord_message_sent": False,
+            "phase40_live_runtime_started": False,
+            "phase40_discord_gateway_connected": False,
+            "phase40_discord_api_send_called": False,
+            "phase40_discord_message_sent": False,
         },
     }
     assert_operations_dashboard_lock_safe(report)
@@ -155,6 +186,14 @@ def assert_operations_dashboard_lock_safe(report: dict[str, Any]) -> None:
         "phase39c_repeat_send_allowed",
         "phase39c_automatic_retry_allowed",
         "phase39c_ready_for_repeat_send",
+        "phase40_live_runtime_started",
+        "phase40_discord_gateway_connected",
+        "phase40_discord_api_send_called",
+        "phase40_discord_message_sent",
+        "phase40_outbound_queue_enabled",
+        "phase40_send_worker_enabled",
+        "phase40_live_runtime_start_allowed",
+        "phase40_ready_for_live_runtime_execution",
     ):
         if report.get(key):
             raise ValueError(f"Operations dashboard lock unsafe flag is true: {key}")
@@ -166,6 +205,12 @@ def assert_operations_dashboard_lock_safe(report: dict[str, Any]) -> None:
         raise ValueError("Operations dashboard lock forbids Phase 39C additional sends.")
     if not report.get("phase39c_closeout_completed") or not report.get("phase39c_gate_off_verified"):
         raise ValueError("Operations dashboard lock requires Phase 39C closeout and gate-off audit.")
+    if int(report.get("phase40_actual_discord_send_count_locked", 0) or 0) != 1:
+        raise ValueError("Operations dashboard lock requires Phase 40 count locked to 1.")
+    if int(report.get("phase40_additional_discord_send_count", 0) or 0) != 0 or int(report.get("phase40_message_sent_count", 0) or 0) != 0:
+        raise ValueError("Operations dashboard lock forbids Phase 40 sends.")
+    if not report.get("phase40_runtime_readiness_available") or not report.get("phase40_synthetic_replay_only") or not report.get("phase40_duplicate_message_id_guard"):
+        raise ValueError("Operations dashboard lock requires Phase 40 readiness guards.")
 
 
 def render_operations_dashboard_lock_markdown(report: dict[str, Any]) -> str:
@@ -186,5 +231,8 @@ def render_operations_dashboard_lock_markdown(report: dict[str, Any]) -> str:
             "- Embedding/vector disabled: true",
             "- External execution: false",
             "- Ready for live runtime: false",
+            f"- Phase 40 runtime readiness available: {str(report.get('phase40_runtime_readiness_available')).lower()}",
+            f"- Phase 40 additional Discord send count: {report.get('phase40_additional_discord_send_count')}",
+            f"- Phase 40 safe to review next morning: {str(report.get('phase40_safe_to_review_next_morning')).lower()}",
         ]
     ) + "\n"

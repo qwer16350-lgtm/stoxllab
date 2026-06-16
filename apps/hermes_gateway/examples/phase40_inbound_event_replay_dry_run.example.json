@@ -1,0 +1,17 @@
+{
+  "report_type": "phase40_inbound_event_replay_dry_run",
+  "version": "phase40_inbound_event_replay_dry_run_report_only",
+  "report_only": true,
+  "uses_recorded_or_synthetic_events_only": true,
+  "discord_gateway_connected": false,
+  "live_runtime_started": false,
+  "synthetic_human_message_processed": true,
+  "synthetic_self_message_skipped": true,
+  "synthetic_bot_message_skipped": true,
+  "synthetic_duplicate_message_skipped": true,
+  "synthetic_public_channel_message_blocked": true,
+  "synthetic_team_channel_message_blocked": true,
+  "discord_api_send_called": false,
+  "discord_message_sent": false,
+  "message_sent_count": 0
+}

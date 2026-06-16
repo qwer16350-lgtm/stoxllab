@@ -1,0 +1,25 @@
+{
+  "report_type": "phase40_private_test_runtime_plan",
+  "version": "phase40_private_test_runtime_plan_no_live_execution",
+  "report_only": true,
+  "runtime_scope": "private_test_only",
+  "live_runtime_started": false,
+  "discord_gateway_connected": false,
+  "discord_api_send_called": false,
+  "discord_message_sent": false,
+  "message_sent_count": 0,
+  "planned_runtime_guards": [
+    "private_test_channel_id_only",
+    "self_message_guard",
+    "bot_message_guard",
+    "duplicate_message_id_guard",
+    "one_reply_per_human_message",
+    "manual_operator_abort",
+    "no_public_team_send",
+    "no_unattended_auto_reply",
+    "no_llm_by_default",
+    "no_rag_by_default"
+  ],
+  "ready_for_runtime_dry_replay": true,
+  "ready_for_live_runtime_execution": false
+}

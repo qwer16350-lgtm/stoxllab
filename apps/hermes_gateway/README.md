@@ -612,6 +612,16 @@ send, no LLM/RAG/embedding call, and no external execution. Push readiness is
 report-only and leaves `git push origin feature/stoxl-hermes-agent-org` for the
 operator.
 
+Phase 40 adds the safe overnight private-test runtime readiness bundle. It does
+not start Discord runtime, connect the Gateway, call Discord API send, send a
+message, call OpenRouter/LLM, call RAG, create embeddings/vector indexes, or run
+external execution. The bundle records Phase 39 actual send count locked at 1,
+Phase 40 additional send count 0, synthetic/replay-only inbound event checks,
+reply decision audit, outbound queue disabled, message-id idempotency guard,
+operator handoff requirements, and a live runtime entry gate blocked by default.
+The next sensitive step is a separate human-confirmed Phase 40J private-test live
+runtime manual entry.
+
 If the registry file is missing, generate it from the repo root:
 
 ```powershell

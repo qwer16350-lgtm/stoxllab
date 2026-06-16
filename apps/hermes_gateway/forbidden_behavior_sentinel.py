@@ -57,6 +57,25 @@ FORBIDDEN_TRUE_FIELDS = (
     "phase39c_automatic_retry_allowed",
     "phase39c_manual_retry_allowed",
     "phase39c_ready_for_repeat_send",
+    "phase40_live_runtime_started",
+    "phase40_discord_gateway_connected",
+    "phase40_discord_api_send_called",
+    "phase40_discord_message_sent",
+    "phase40_repeat_send_allowed",
+    "phase40_automatic_retry_allowed",
+    "phase40_unattended_auto_reply_allowed",
+    "phase40_public_channel_send_allowed",
+    "phase40_team_channel_send_allowed",
+    "phase40_public_channel_reply_allowed",
+    "phase40_team_channel_reply_allowed",
+    "phase40_llm_api_call_attempted",
+    "phase40_llm_api_called",
+    "phase40_rag_called",
+    "phase40_embedding_api_called",
+    "phase40_vector_index_created",
+    "phase40_external_execution",
+    "phase40_secret_values_logged",
+    "phase40_ready_for_live_runtime_execution",
 )
 
 
@@ -116,6 +135,30 @@ def build_forbidden_behavior_sentinel(overrides: dict[str, Any] | None = None) -
         "phase39c_ready_for_repeat_send": False,
         "phase39c_closeout_completed": True,
         "phase39c_no_repeat_lock_active": True,
+        "phase40_actual_discord_send_count_locked": 1,
+        "phase40_additional_discord_send_count": 0,
+        "phase40_message_sent_count": 0,
+        "phase40_live_runtime_started": False,
+        "phase40_discord_gateway_connected": False,
+        "phase40_discord_api_send_called": False,
+        "phase40_discord_message_sent": False,
+        "phase40_repeat_send_allowed": False,
+        "phase40_automatic_retry_allowed": False,
+        "phase40_unattended_auto_reply_allowed": False,
+        "phase40_public_channel_send_allowed": False,
+        "phase40_team_channel_send_allowed": False,
+        "phase40_public_channel_reply_allowed": False,
+        "phase40_team_channel_reply_allowed": False,
+        "phase40_llm_api_call_attempted": False,
+        "phase40_llm_api_called": False,
+        "phase40_rag_called": False,
+        "phase40_embedding_api_called": False,
+        "phase40_vector_index_created": False,
+        "phase40_external_execution": False,
+        "phase40_secret_values_logged": False,
+        "phase40_synthetic_replay_only": True,
+        "phase40_duplicate_message_id_guard": True,
+        "phase40_ready_for_live_runtime_execution": False,
         "post_llm_call_sentinel": False,
         "total_phase36_llm_call_count": 1,
         "total_phase36_discord_message_sent_count": 0,
@@ -152,6 +195,16 @@ def _sentinel_passed(report: dict[str, Any]) -> bool:
         return False
     if int(report.get("additional_message_sent_count_in_phase39c", 0) or 0) != 0:
         return False
+    if int(report.get("phase40_actual_discord_send_count_locked", 0) or 0) != 1:
+        return False
+    if int(report.get("phase40_additional_discord_send_count", 0) or 0) != 0:
+        return False
+    if int(report.get("phase40_message_sent_count", 0) or 0) != 0:
+        return False
+    if not bool(report.get("phase40_synthetic_replay_only")):
+        return False
+    if not bool(report.get("phase40_duplicate_message_id_guard")):
+        return False
     return True
 
 
@@ -177,6 +230,14 @@ def assert_forbidden_behavior_sentinel_safe(report: dict[str, Any]) -> None:
         raise ValueError("Forbidden behavior sentinel requires actual Discord send count 0.")
     if int(report.get("additional_message_sent_count_in_phase39c", 0) or 0) != 0:
         raise ValueError("Forbidden behavior sentinel requires Phase 39C additional send count 0.")
+    if int(report.get("phase40_actual_discord_send_count_locked", 0) or 0) != 1:
+        raise ValueError("Forbidden behavior sentinel requires Phase 40 locked send count 1.")
+    if int(report.get("phase40_additional_discord_send_count", 0) or 0) != 0:
+        raise ValueError("Forbidden behavior sentinel requires Phase 40 additional send count 0.")
+    if int(report.get("phase40_message_sent_count", 0) or 0) != 0:
+        raise ValueError("Forbidden behavior sentinel requires Phase 40 message sent count 0.")
+    if not report.get("phase40_synthetic_replay_only") or not report.get("phase40_duplicate_message_id_guard"):
+        raise ValueError("Forbidden behavior sentinel requires Phase 40 replay/idempotency guards.")
 
 
 def render_forbidden_behavior_sentinel_markdown(report: dict[str, Any]) -> str:
@@ -193,6 +254,9 @@ def render_forbidden_behavior_sentinel_markdown(report: dict[str, Any]) -> str:
             "- External execution: false",
             "- Full content included: false",
             "- Approval phrase generated: false",
+            "- Phase 40 live runtime started: false",
+            "- Phase 40 Discord gateway connected: false",
+            "- Phase 40 additional send count: 0",
             "- Forbidden behavior sentinel passed: true",
         ]
     ) + "\n"

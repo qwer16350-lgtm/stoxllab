@@ -82,6 +82,15 @@ from phase39c_actual_send_closeout import build_phase39c_actual_send_closeout
 from phase39c_no_repeat_send_lock import build_phase39c_no_repeat_send_lock
 from phase39c_post_send_safety_audit import build_phase39c_post_send_safety_audit
 from phase39c_push_readiness import build_phase39c_push_readiness
+from phase40_post_phase39_state_audit import build_phase40_post_phase39_state_audit
+from phase40_private_test_runtime_plan import build_phase40_private_test_runtime_plan
+from phase40_inbound_event_replay_dry_run import build_phase40_inbound_event_replay_dry_run
+from phase40_reply_decision_audit import build_phase40_reply_decision_audit
+from phase40_outbound_queue_lock import build_phase40_outbound_queue_lock
+from phase40_session_idempotency_lock import build_phase40_session_idempotency_lock
+from phase40_operator_handoff_packet import build_phase40_operator_handoff_packet
+from phase40_live_runtime_entry_gate import build_phase40_live_runtime_entry_gate
+from phase40_safe_overnight_summary import build_phase40_safe_overnight_summary
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope
 from rag_evidence_review_packet import build_rag_evidence_review_packet
@@ -570,6 +579,15 @@ def build_operations_packet_viewer_report(
     }
     phase39c_safety = build_phase39c_post_send_safety_audit(env=phase39c_gate_off_env, closeout=phase39c_closeout, no_repeat_lock=phase39c_no_repeat)
     phase39c_push = build_phase39c_push_readiness(closeout=phase39c_closeout, no_repeat_lock=phase39c_no_repeat, safety_audit=phase39c_safety)
+    phase40_state = build_phase40_post_phase39_state_audit(closeout=phase39c_closeout, no_repeat_lock=phase39c_no_repeat)
+    phase40_plan = build_phase40_private_test_runtime_plan()
+    phase40_replay = build_phase40_inbound_event_replay_dry_run()
+    phase40_decision = build_phase40_reply_decision_audit()
+    phase40_queue = build_phase40_outbound_queue_lock()
+    phase40_idempotency = build_phase40_session_idempotency_lock()
+    phase40_handoff = build_phase40_operator_handoff_packet()
+    phase40_entry_gate = build_phase40_live_runtime_entry_gate()
+    phase40_summary = build_phase40_safe_overnight_summary()
     report = {
         "report_type": "operations_packet_viewer",
         "version": VERSION,
@@ -1366,6 +1384,57 @@ def build_operations_packet_viewer_report(
             "report_only": bool(phase39c_push.get("report_only")),
             "remote_push_required": bool(phase39c_push.get("remote_push_required")),
             "push_executed_by_codex": bool(phase39c_push.get("push_executed_by_codex")),
+        },
+        "phase40_post_phase39_state_audit": {
+            "available": True,
+            "report_only": bool(phase40_state.get("report_only")),
+            "actual_discord_send_count_locked": int(phase40_state.get("actual_discord_send_count_locked", 0) or 0),
+            "ready_for_live_runtime_execution": bool(phase40_state.get("ready_for_live_runtime_execution")),
+        },
+        "phase40_private_test_runtime_plan": {
+            "available": True,
+            "report_only": bool(phase40_plan.get("report_only")),
+            "runtime_scope": phase40_plan.get("runtime_scope", ""),
+            "live_runtime_started": bool(phase40_plan.get("live_runtime_started")),
+        },
+        "phase40_inbound_event_replay_dry_run": {
+            "available": True,
+            "report_only": bool(phase40_replay.get("report_only")),
+            "uses_recorded_or_synthetic_events_only": bool(phase40_replay.get("uses_recorded_or_synthetic_events_only")),
+            "message_sent_count": int(phase40_replay.get("message_sent_count", 0) or 0),
+        },
+        "phase40_reply_decision_audit": {
+            "available": True,
+            "report_only": bool(phase40_decision.get("report_only")),
+            "reply_text_generated": bool(phase40_decision.get("reply_text_generated")),
+            "discord_message_sent": bool(phase40_decision.get("discord_message_sent")),
+        },
+        "phase40_outbound_queue_lock": {
+            "available": True,
+            "report_only": bool(phase40_queue.get("report_only")),
+            "send_worker_enabled": bool(phase40_queue.get("send_worker_enabled")),
+            "repeat_send_allowed": bool(phase40_queue.get("repeat_send_allowed")),
+        },
+        "phase40_session_idempotency_lock": {
+            "available": True,
+            "report_only": bool(phase40_idempotency.get("report_only")),
+            "one_reply_per_human_message": bool(phase40_idempotency.get("one_reply_per_human_message")),
+            "duplicate_message_id_guard": bool(phase40_idempotency.get("duplicate_message_id_guard")),
+        },
+        "phase40_operator_handoff_packet": {
+            "available": True,
+            "report_only": bool(phase40_handoff.get("report_only")),
+            "operator_must_confirm_before_live_runtime": bool(phase40_handoff.get("operator_must_confirm_before_live_runtime")),
+        },
+        "phase40_live_runtime_entry_gate": {
+            "available": True,
+            "report_only": bool(phase40_entry_gate.get("report_only")),
+            "live_runtime_start_allowed": bool(phase40_entry_gate.get("live_runtime_start_allowed")),
+        },
+        "phase40_safe_overnight_summary": {
+            "available": True,
+            "report_only": bool(phase40_summary.get("report_only")),
+            "safe_to_review_next_morning": bool(phase40_summary.get("safe_to_review_next_morning")),
         },
         "daily_manifest_summary": load_daily_manifest(root=root, date=date),
         "filters": {

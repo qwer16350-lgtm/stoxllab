@@ -95,6 +95,25 @@ def test_operations_dashboard_lock_phase39c_closeout_state() -> None:
     assert_true(report["phase39c_additional_send_count"] == 0, "39C no additional send")
 
 
+def test_operations_dashboard_lock_phase40_runtime_readiness_state() -> None:
+    report = build_operations_dashboard_lock()
+    assert_true(report["phase40_runtime_readiness_available"] is True, "40 readiness available")
+    assert_true(report["phase40_actual_discord_send_count_locked"] == 1, "40 locked count")
+    assert_true(report["phase40_additional_discord_send_count"] == 0, "40 no additional send")
+    assert_true(report["phase40_live_runtime_started"] is False, "40 no runtime")
+    assert_true(report["phase40_discord_gateway_connected"] is False, "40 no gateway")
+    assert_true(report["phase40_discord_api_send_called"] is False, "40 no API send")
+    assert_true(report["phase40_discord_message_sent"] is False, "40 no message")
+    assert_true(report["phase40_message_sent_count"] == 0, "40 message count 0")
+    assert_true(report["phase40_synthetic_replay_only"] is True, "40 synthetic replay")
+    assert_true(report["phase40_outbound_queue_enabled"] is False, "40 queue off")
+    assert_true(report["phase40_send_worker_enabled"] is False, "40 worker off")
+    assert_true(report["phase40_duplicate_message_id_guard"] is True, "40 dedupe")
+    assert_true(report["phase40_live_runtime_start_allowed"] is False, "40 live blocked")
+    assert_true(report["phase40_ready_for_live_runtime_execution"] is False, "40 no live execution")
+    assert_true(report["phase40_safe_to_review_next_morning"] is True, "40 safe overnight")
+
+
 def test_operations_dashboard_lock_no_sensitive_values() -> None:
     text = json.dumps(build_operations_dashboard_lock(), ensure_ascii=False).lower()
     assert_true("sk-" not in text and "xoxb-" not in text and "token=" not in text, "No secrets")
@@ -116,6 +135,7 @@ def main() -> int:
         test_operations_dashboard_lock_phase39a_blocked_state,
         test_operations_dashboard_lock_phase39b_no_send_state,
         test_operations_dashboard_lock_phase39c_closeout_state,
+        test_operations_dashboard_lock_phase40_runtime_readiness_state,
         test_operations_dashboard_lock_no_sensitive_values,
         test_operations_dashboard_lock_markdown,
     ]

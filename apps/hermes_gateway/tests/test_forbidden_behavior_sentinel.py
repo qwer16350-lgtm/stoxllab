@@ -37,6 +37,11 @@ def test_forbidden_behavior_sentinel_success_fixture() -> None:
     assert_true(report["embedding_vector_disabled"] is True, "Embedding/vector disabled")
     assert_true(report["phase39c_actual_discord_send_count_locked"] == 1, "39C locked count")
     assert_true(report["phase39c_no_repeat_lock_active"] is True, "39C no-repeat active")
+    assert_true(report["phase40_actual_discord_send_count_locked"] == 1, "40 locked count")
+    assert_true(report["phase40_additional_discord_send_count"] == 0, "40 no additional send")
+    assert_true(report["phase40_message_sent_count"] == 0, "40 no message count")
+    assert_true(report["phase40_synthetic_replay_only"] is True, "40 synthetic replay")
+    assert_true(report["phase40_duplicate_message_id_guard"] is True, "40 duplicate guard")
 
 
 def test_forbidden_behavior_sentinel_flags_false() -> None:
@@ -46,7 +51,7 @@ def test_forbidden_behavior_sentinel_flags_false() -> None:
 
 
 def test_forbidden_behavior_sentinel_negative_fixtures() -> None:
-    for key in ("public_channel_reply_allowed", "team_channel_reply_allowed", "public_channel_send_allowed", "team_channel_send_allowed", "unattended_auto_reply_allowed", "scheduler_auto_reply_allowed", "embedding_api_called", "vector_index_created", "external_execution", "full_content_included", "approval_phrase_generated", "discord_api_send_called", "actual_private_test_send_executed", "actual_send_implementation_executed", "new_llm_api_call_attempted", "new_llm_api_called", "llm_api_call_attempted", "llm_api_called", "discord_live_runtime_executed", "ready_for_discord_send", "ready_for_actual_private_test_send", "ready_for_phase37d_actual_private_test_send", "ready_for_phase38_actual_private_test_send_path", "ready_for_phase39_live_execution", "ready_for_phase39b_manual_one_shot_send", "ready_for_phase39b_actual_send_manual_attempt", "ready_for_phase39c_send_closeout", "actual_discord_api_send_called", "actual_discord_message_sent", "api_key_value_logged", "token_value_logged", "discord_token_value_logged", "private_test_channel_id_value_logged", "raw_discord_ids_logged", "approval_phrase_value_logged", "additional_discord_send_called_in_phase39c", "additional_discord_message_sent_in_phase39c", "phase39c_repeat_send_allowed", "phase39c_automatic_retry_allowed", "phase39c_manual_retry_allowed", "phase39c_ready_for_repeat_send"):
+    for key in ("public_channel_reply_allowed", "team_channel_reply_allowed", "public_channel_send_allowed", "team_channel_send_allowed", "unattended_auto_reply_allowed", "scheduler_auto_reply_allowed", "embedding_api_called", "vector_index_created", "external_execution", "full_content_included", "approval_phrase_generated", "discord_api_send_called", "actual_private_test_send_executed", "actual_send_implementation_executed", "new_llm_api_call_attempted", "new_llm_api_called", "llm_api_call_attempted", "llm_api_called", "discord_live_runtime_executed", "ready_for_discord_send", "ready_for_actual_private_test_send", "ready_for_phase37d_actual_private_test_send", "ready_for_phase38_actual_private_test_send_path", "ready_for_phase39_live_execution", "ready_for_phase39b_manual_one_shot_send", "ready_for_phase39b_actual_send_manual_attempt", "ready_for_phase39c_send_closeout", "actual_discord_api_send_called", "actual_discord_message_sent", "api_key_value_logged", "token_value_logged", "discord_token_value_logged", "private_test_channel_id_value_logged", "raw_discord_ids_logged", "approval_phrase_value_logged", "additional_discord_send_called_in_phase39c", "additional_discord_message_sent_in_phase39c", "phase39c_repeat_send_allowed", "phase39c_automatic_retry_allowed", "phase39c_manual_retry_allowed", "phase39c_ready_for_repeat_send", "phase40_live_runtime_started", "phase40_discord_gateway_connected", "phase40_discord_api_send_called", "phase40_discord_message_sent", "phase40_repeat_send_allowed", "phase40_automatic_retry_allowed", "phase40_unattended_auto_reply_allowed", "phase40_public_channel_send_allowed", "phase40_team_channel_send_allowed", "phase40_public_channel_reply_allowed", "phase40_team_channel_reply_allowed", "phase40_llm_api_call_attempted", "phase40_llm_api_called", "phase40_rag_called", "phase40_embedding_api_called", "phase40_vector_index_created", "phase40_external_execution", "phase40_secret_values_logged", "phase40_ready_for_live_runtime_execution"):
         assert_raises(lambda selected=key: build_forbidden_behavior_sentinel({selected: True}), f"{key} should fail")
 
 
@@ -54,6 +59,11 @@ def test_forbidden_behavior_sentinel_actual_message_count_fixture() -> None:
     assert_raises(lambda: build_forbidden_behavior_sentinel({"actual_message_sent_count": 1}), "Actual message count should fail")
     assert_raises(lambda: build_forbidden_behavior_sentinel({"actual_discord_send_count": 1}), "Actual Discord send count should fail")
     assert_raises(lambda: build_forbidden_behavior_sentinel({"additional_message_sent_count_in_phase39c": 1}), "Phase 39C additional count should fail")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase40_actual_discord_send_count_locked": 2}), "Phase 40 count should stay 1")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase40_additional_discord_send_count": 1}), "Phase 40 additional count should fail")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase40_message_sent_count": 1}), "Phase 40 message count should fail")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase40_synthetic_replay_only": False}), "Phase 40 synthetic replay required")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase40_duplicate_message_id_guard": False}), "Phase 40 duplicate guard required")
 
 
 def test_forbidden_behavior_sentinel_post_llm_call_fixtures() -> None:

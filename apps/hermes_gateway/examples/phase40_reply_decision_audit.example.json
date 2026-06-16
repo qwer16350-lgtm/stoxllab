@@ -1,0 +1,16 @@
+{
+  "report_type": "phase40_reply_decision_audit",
+  "version": "phase40_reply_decision_audit_no_send",
+  "report_only": true,
+  "private_test_human_message_decision": "eligible_for_future_manual_reply",
+  "self_message_decision": "skip_self_message",
+  "bot_message_decision": "skip_bot_message",
+  "duplicate_message_decision": "skip_duplicate_message",
+  "public_channel_decision": "block_public_channel",
+  "team_channel_decision": "block_team_channel",
+  "reply_text_generated": false,
+  "llm_called": false,
+  "rag_called": false,
+  "discord_api_send_called": false,
+  "discord_message_sent": false
+}

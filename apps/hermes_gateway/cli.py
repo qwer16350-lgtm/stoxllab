@@ -120,6 +120,15 @@ from phase39c_actual_send_closeout import build_phase39c_actual_send_closeout, r
 from phase39c_no_repeat_send_lock import build_phase39c_no_repeat_send_lock, render_phase39c_no_repeat_send_lock_markdown
 from phase39c_post_send_safety_audit import build_phase39c_post_send_safety_audit, render_phase39c_post_send_safety_audit_markdown
 from phase39c_push_readiness import build_phase39c_push_readiness, render_phase39c_push_readiness_markdown
+from phase40_post_phase39_state_audit import build_phase40_post_phase39_state_audit, render_phase40_post_phase39_state_audit_markdown
+from phase40_private_test_runtime_plan import build_phase40_private_test_runtime_plan, render_phase40_private_test_runtime_plan_markdown
+from phase40_inbound_event_replay_dry_run import build_phase40_inbound_event_replay_dry_run, render_phase40_inbound_event_replay_dry_run_markdown
+from phase40_reply_decision_audit import build_phase40_reply_decision_audit, render_phase40_reply_decision_audit_markdown
+from phase40_outbound_queue_lock import build_phase40_outbound_queue_lock, render_phase40_outbound_queue_lock_markdown
+from phase40_session_idempotency_lock import build_phase40_session_idempotency_lock, render_phase40_session_idempotency_lock_markdown
+from phase40_operator_handoff_packet import build_phase40_operator_handoff_packet, render_phase40_operator_handoff_packet_markdown
+from phase40_live_runtime_entry_gate import build_phase40_live_runtime_entry_gate, render_phase40_live_runtime_entry_gate_markdown
+from phase40_safe_overnight_summary import build_phase40_safe_overnight_summary, render_phase40_safe_overnight_summary_markdown
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight, render_rag_evidence_private_test_send_preflight_markdown
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope, render_rag_evidence_prompt_envelope_markdown
 from rag_evidence_review_packet import build_rag_evidence_review_packet, render_rag_evidence_review_packet_markdown
@@ -391,6 +400,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--phase39c-no-repeat-send-lock", action="store_true", help="Print Phase 39C no-repeat send lock report.")
     parser.add_argument("--phase39c-post-send-safety-audit", action="store_true", help="Print Phase 39C post-send safety audit report.")
     parser.add_argument("--phase39c-push-readiness", action="store_true", help="Print Phase 39C push readiness report.")
+    parser.add_argument("--phase40-post-phase39-state-audit", action="store_true", help="Print Phase 40A post-Phase39 state audit without live execution.")
+    parser.add_argument("--phase40-private-test-runtime-plan", action="store_true", help="Print Phase 40B private-test runtime plan without live execution.")
+    parser.add_argument("--phase40-inbound-event-replay-dry-run", action="store_true", help="Print Phase 40C synthetic inbound event replay dry-run.")
+    parser.add_argument("--phase40-reply-decision-audit", action="store_true", help="Print Phase 40D reply decision audit without send.")
+    parser.add_argument("--phase40-outbound-queue-lock", action="store_true", help="Print Phase 40E outbound queue lock.")
+    parser.add_argument("--phase40-session-idempotency-lock", action="store_true", help="Print Phase 40F session idempotency lock.")
+    parser.add_argument("--phase40-operator-handoff-packet", action="store_true", help="Print Phase 40G operator handoff packet.")
+    parser.add_argument("--phase40-live-runtime-entry-gate", action="store_true", help="Print Phase 40H live runtime entry gate blocked by default.")
+    parser.add_argument("--phase40-safe-overnight-summary", action="store_true", help="Print Phase 40I safe overnight summary.")
     parser.add_argument("--source", default="operation", help="RAG source for local retrieval reports.")
     parser.add_argument("--query", default="STOXL brand tone", help="RAG query preview for local retrieval reports.")
     parser.add_argument("--allow-llm-api-call", action="store_true", help="Allow Phase 32B to attempt one gated provider call when env gates pass.")
@@ -1933,6 +1951,123 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- push_command: {output.get('push_command')}")
         return 0
 
+    if args.phase40_post_phase39_state_audit:
+        output = build_phase40_post_phase39_state_audit()
+        if args.markdown:
+            print(render_phase40_post_phase39_state_audit_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 40A post-Phase39 state audit")
+            print(f"- actual_discord_send_count_locked: {output.get('actual_discord_send_count_locked')}")
+            print(f"- additional_message_sent_count: {output.get('additional_message_sent_count')}")
+            print(f"- ready_for_live_runtime_execution: {output.get('ready_for_live_runtime_execution')}")
+        return 0
+
+    if args.phase40_private_test_runtime_plan:
+        output = build_phase40_private_test_runtime_plan()
+        if args.markdown:
+            print(render_phase40_private_test_runtime_plan_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 40B private-test runtime plan")
+            print(f"- runtime_scope: {output.get('runtime_scope')}")
+            print(f"- live_runtime_started: {output.get('live_runtime_started')}")
+            print(f"- ready_for_runtime_dry_replay: {output.get('ready_for_runtime_dry_replay')}")
+        return 0
+
+    if args.phase40_inbound_event_replay_dry_run:
+        output = build_phase40_inbound_event_replay_dry_run()
+        if args.markdown:
+            print(render_phase40_inbound_event_replay_dry_run_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 40C inbound event replay dry-run")
+            print(f"- uses_recorded_or_synthetic_events_only: {output.get('uses_recorded_or_synthetic_events_only')}")
+            print(f"- synthetic_duplicate_message_skipped: {output.get('synthetic_duplicate_message_skipped')}")
+            print(f"- message_sent_count: {output.get('message_sent_count')}")
+        return 0
+
+    if args.phase40_reply_decision_audit:
+        output = build_phase40_reply_decision_audit()
+        if args.markdown:
+            print(render_phase40_reply_decision_audit_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 40D reply decision audit")
+            print(f"- private_test_human_message_decision: {output.get('private_test_human_message_decision')}")
+            print(f"- public_channel_decision: {output.get('public_channel_decision')}")
+            print(f"- discord_message_sent: {output.get('discord_message_sent')}")
+        return 0
+
+    if args.phase40_outbound_queue_lock:
+        output = build_phase40_outbound_queue_lock()
+        if args.markdown:
+            print(render_phase40_outbound_queue_lock_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 40E outbound queue lock")
+            print(f"- outbound_queue_enabled: {output.get('outbound_queue_enabled')}")
+            print(f"- send_worker_enabled: {output.get('send_worker_enabled')}")
+            print(f"- manual_retry_requires_new_phase: {output.get('manual_retry_requires_new_phase')}")
+        return 0
+
+    if args.phase40_session_idempotency_lock:
+        output = build_phase40_session_idempotency_lock()
+        if args.markdown:
+            print(render_phase40_session_idempotency_lock_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 40F session idempotency lock")
+            print(f"- dedupe_key_strategy: {output.get('dedupe_key_strategy')}")
+            print(f"- duplicate_message_id_guard: {output.get('duplicate_message_id_guard')}")
+            print(f"- repeat_send_allowed: {output.get('repeat_send_allowed')}")
+        return 0
+
+    if args.phase40_operator_handoff_packet:
+        output = build_phase40_operator_handoff_packet()
+        if args.markdown:
+            print(render_phase40_operator_handoff_packet_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 40G operator handoff packet")
+            print(f"- operator_must_confirm_before_live_runtime: {output.get('operator_must_confirm_before_live_runtime')}")
+            print(f"- operator_must_confirm_before_any_reply_send: {output.get('operator_must_confirm_before_any_reply_send')}")
+            print(f"- ready_for_live_runtime_execution: {output.get('ready_for_live_runtime_execution')}")
+        return 0
+
+    if args.phase40_live_runtime_entry_gate:
+        output = build_phase40_live_runtime_entry_gate()
+        if args.markdown:
+            print(render_phase40_live_runtime_entry_gate_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 40H live runtime entry gate")
+            print(f"- live_runtime_entry_gate_available: {output.get('live_runtime_entry_gate_available')}")
+            print(f"- live_runtime_start_allowed: {output.get('live_runtime_start_allowed')}")
+            print(f"- ready_for_live_runtime_execution: {output.get('ready_for_live_runtime_execution')}")
+        return 0
+
+    if args.phase40_safe_overnight_summary:
+        output = build_phase40_safe_overnight_summary()
+        if args.markdown:
+            print(render_phase40_safe_overnight_summary_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 40I safe overnight summary")
+            print(f"- phase40_reports_completed: {output.get('phase40_reports_completed')}")
+            print(f"- additional_discord_send_count: {output.get('additional_discord_send_count')}")
+            print(f"- recommended_next_phase: {output.get('recommended_next_phase')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -2151,6 +2286,15 @@ def main(argv: list[str] | None = None) -> int:
         or args.phase39c_no_repeat_send_lock
         or args.phase39c_post_send_safety_audit
         or args.phase39c_push_readiness
+        or args.phase40_post_phase39_state_audit
+        or args.phase40_private_test_runtime_plan
+        or args.phase40_inbound_event_replay_dry_run
+        or args.phase40_reply_decision_audit
+        or args.phase40_outbound_queue_lock
+        or args.phase40_session_idempotency_lock
+        or args.phase40_operator_handoff_packet
+        or args.phase40_live_runtime_entry_gate
+        or args.phase40_safe_overnight_summary
         or args.allow_llm_api_call
         or args.allow_actual_one_shot_llm_draft_call
         or args.allow_rag_evidence_llm_api_call

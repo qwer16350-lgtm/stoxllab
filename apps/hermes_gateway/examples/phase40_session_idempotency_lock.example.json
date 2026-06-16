@@ -1,0 +1,14 @@
+{
+  "report_type": "phase40_session_idempotency_lock",
+  "version": "phase40_session_idempotency_lock_report_only",
+  "report_only": true,
+  "dedupe_key_strategy": "message_id",
+  "one_reply_per_human_message": true,
+  "duplicate_message_id_guard": true,
+  "self_message_guard": true,
+  "bot_message_guard": true,
+  "duplicate_send_prevented": true,
+  "repeat_send_allowed": false,
+  "discord_api_send_called": false,
+  "discord_message_sent": false
+}

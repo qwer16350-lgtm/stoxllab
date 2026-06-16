@@ -981,6 +981,36 @@ def test_phase39c_closeout_summaries() -> None:
     assert_true(push["push_executed_by_codex"] is False, "Codex no push")
 
 
+def test_phase40_runtime_readiness_summaries() -> None:
+    setup_artifacts()
+    report = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")
+    state = report["phase40_post_phase39_state_audit"]
+    plan = report["phase40_private_test_runtime_plan"]
+    replay = report["phase40_inbound_event_replay_dry_run"]
+    decision = report["phase40_reply_decision_audit"]
+    queue = report["phase40_outbound_queue_lock"]
+    idempotency = report["phase40_session_idempotency_lock"]
+    handoff = report["phase40_operator_handoff_packet"]
+    entry_gate = report["phase40_live_runtime_entry_gate"]
+    summary = report["phase40_safe_overnight_summary"]
+    assert_true(state["available"] is True, "40A available")
+    assert_true(state["actual_discord_send_count_locked"] == 1, "40A locked count")
+    assert_true(state["ready_for_live_runtime_execution"] is False, "40A not live")
+    assert_true(plan["runtime_scope"] == "private_test_only", "40B scope")
+    assert_true(plan["live_runtime_started"] is False, "40B no runtime")
+    assert_true(replay["uses_recorded_or_synthetic_events_only"] is True, "40C synthetic")
+    assert_true(replay["message_sent_count"] == 0, "40C no send")
+    assert_true(decision["reply_text_generated"] is False, "40D no generation")
+    assert_true(decision["discord_message_sent"] is False, "40D no send")
+    assert_true(queue["send_worker_enabled"] is False, "40E worker off")
+    assert_true(queue["repeat_send_allowed"] is False, "40E repeat off")
+    assert_true(idempotency["one_reply_per_human_message"] is True, "40F one reply")
+    assert_true(idempotency["duplicate_message_id_guard"] is True, "40F dedupe")
+    assert_true(handoff["operator_must_confirm_before_live_runtime"] is True, "40G operator confirm")
+    assert_true(entry_gate["live_runtime_start_allowed"] is False, "40H blocked")
+    assert_true(summary["safe_to_review_next_morning"] is True, "40I safe")
+
+
 def main() -> int:
     tests = [
         test_recent_events_returned,
@@ -1037,6 +1067,7 @@ def main() -> int:
         test_phase39a_summaries,
         test_phase39b_zero_send_summaries,
         test_phase39c_closeout_summaries,
+        test_phase40_runtime_readiness_summaries,
     ]
     for test in tests:
         test()

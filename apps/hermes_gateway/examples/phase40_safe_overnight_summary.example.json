@@ -1,0 +1,12 @@
+{
+  "report_type": "phase40_safe_overnight_summary",
+  "version": "phase40_safe_overnight_summary",
+  "report_only": true,
+  "phase40_reports_completed": true,
+  "live_runtime_started": false,
+  "additional_discord_send_count": 0,
+  "actual_discord_send_count_locked_from_phase39": 1,
+  "safe_to_review_next_morning": true,
+  "next_human_confirmation_required": true,
+  "recommended_next_phase": "Phase 40J private-test live runtime manual entry"
+}
