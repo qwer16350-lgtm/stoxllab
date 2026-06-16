@@ -11,6 +11,9 @@ import os
 import re
 from typing import Any, Mapping
 
+from phase41b_actual_reply_runtime import run_phase41b_actual_reply_runtime
+from phase41b_reply_adapters import Phase41BReplyAdapter, RealDiscordPhase41BReplyAdapter
+
 
 VERSION = "phase41b_private_test_reply_one_shot_safe_prep"
 _EXPECTED_APPROVAL_PHRASE = "I_APPROVE_PHASE41B_PRIVATE_TEST_REPLY_ONE_SHOT"
@@ -72,6 +75,10 @@ def build_phase41b_private_test_reply_one_shot(
     env: Mapping[str, str] | None = None,
     *,
     allow_actual_private_test_reply: bool = False,
+    execute_actual_runtime: bool = False,
+    reply_adapter: Phase41BReplyAdapter | None = None,
+    timeout_seconds: int = 60,
+    max_events: int = 10,
     event: Mapping[str, Any] | None = None,
     one_shot_lock_consumed: bool = False,
 ) -> dict[str, Any]:
@@ -121,6 +128,8 @@ def build_phase41b_private_test_reply_one_shot(
         "default_blocked": not ready,
         "blocked": not ready,
         "blocked_reasons": blocked_reasons,
+        "actual_runtime_path_available": True,
+        "actual_runtime_execution_requested": bool(execute_actual_runtime),
         "allow_actual_private_test_reply_flag_present": bool(allow_actual_private_test_reply),
         "gates_ready_but_actual_flag_missing": gates_ready and not allow_actual_private_test_reply,
         "ready_for_manual_private_test_reply_one_shot": ready,
@@ -156,6 +165,17 @@ def build_phase41b_private_test_reply_one_shot(
         "gate_checks": gate_checks,
     }
     assert_phase41b_report_safe(report)
+    if ready and execute_actual_runtime:
+        adapter = reply_adapter or RealDiscordPhase41BReplyAdapter(
+            token=str(env.get("DISCORD_BOT_TOKEN", "") or ""),
+            private_test_channel_id=str(env.get("HERMES_DISCORD_PRIVATE_TEST_CHANNEL_ID", "") or ""),
+        )
+        return run_phase41b_actual_reply_runtime(
+            gate_report=report,
+            adapter=adapter,
+            timeout_seconds=timeout_seconds,
+            max_events=max_events,
+        )
     return report
 
 

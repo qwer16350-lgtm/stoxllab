@@ -283,6 +283,8 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
         "phase41a_ready_for_manual_private_test_reply": bool(phase41_preflight.get("ready_for_manual_private_test_reply")),
         "phase41b_one_shot_available": True,
         "phase41b_default_blocked": bool(phase41b_one_shot.get("default_blocked")),
+        "phase41b_actual_runtime_path_available": bool(phase41b_one_shot.get("actual_runtime_path_available")),
+        "phase41b_actual_runtime_executed": bool(phase41b_one_shot.get("actual_runtime_executed")),
         "phase41b_ready_for_manual_private_test_reply_one_shot": bool(phase41b_one_shot.get("ready_for_manual_private_test_reply_one_shot")),
         "phase41b_actual_reply_send_executed": bool(phase41b_one_shot.get("actual_reply_send_executed")),
         "phase41b_discord_api_send_called": bool(phase41b_one_shot.get("discord_api_send_called")),
@@ -354,6 +356,7 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
             "phase41_discord_message_sent": False,
             "phase41a_ready_for_manual_private_test_reply": False,
             "phase41b_actual_reply_send_executed": False,
+            "phase41b_actual_runtime_executed": False,
             "phase41b_discord_api_send_called": False,
             "phase41b_discord_message_sent": False,
             "phase42_actual_runtime_executed": False,
@@ -440,6 +443,7 @@ def assert_operations_dashboard_lock_safe(report: dict[str, Any]) -> None:
         "phase41a_ready_for_manual_private_test_reply",
         "phase41b_ready_for_manual_private_test_reply_one_shot",
         "phase41b_actual_reply_send_executed",
+        "phase41b_actual_runtime_executed",
         "phase41b_discord_api_send_called",
         "phase41b_discord_message_sent",
         "phase41c_ready_for_repeat_send",
@@ -510,7 +514,7 @@ def assert_operations_dashboard_lock_safe(report: dict[str, Any]) -> None:
         raise ValueError("Operations dashboard lock forbids Phase 41 messages.")
     if not report.get("phase40z_handoff_ready") or not report.get("phase41a_preflight_default_blocked"):
         raise ValueError("Operations dashboard lock requires Phase 40Z handoff and Phase 41A default block.")
-    if not report.get("phase41b_one_shot_available") or not report.get("phase41b_default_blocked") or int(report.get("phase41b_message_sent_count", 0) or 0) != 0:
+    if not report.get("phase41b_one_shot_available") or not report.get("phase41b_actual_runtime_path_available") or not report.get("phase41b_default_blocked") or int(report.get("phase41b_message_sent_count", 0) or 0) != 0:
         raise ValueError("Operations dashboard lock requires Phase 41B blocked no-send prep.")
     if not report.get("phase41c_closeout_available") or int(report.get("phase41c_message_sent_count", 0) or 0) != 0:
         raise ValueError("Operations dashboard lock requires Phase 41C no-send scaffold.")
@@ -554,6 +558,8 @@ def render_operations_dashboard_lock_markdown(report: dict[str, Any]) -> str:
             f"- Phase 40T execute flag required: {str(report.get('phase40t_execute_flag_required')).lower()}",
             f"- Phase 40T redacted capture only: {str(report.get('phase40t_redacted_capture_only')).lower()}",
             f"- Phase 41B one-shot default blocked: {str(report.get('phase41b_default_blocked')).lower()}",
+            f"- Phase 41B actual runtime path available: {str(report.get('phase41b_actual_runtime_path_available')).lower()}",
+            f"- Phase 41B actual runtime executed: {str(report.get('phase41b_actual_runtime_executed')).lower()}",
             f"- Phase 41B message sent count: {report.get('phase41b_message_sent_count')}",
             f"- Phase 42 actual runtime executed: {str(report.get('phase42_actual_runtime_executed')).lower()}",
             f"- Phase 44 actual LLM API call: {str(report.get('phase44_actual_llm_api_call')).lower()}",

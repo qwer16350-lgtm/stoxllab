@@ -1679,6 +1679,8 @@ def build_operations_packet_viewer_report(
         "phase41b_private_test_reply_one_shot": {
             "available": True,
             "default_blocked": bool(phase41b_one_shot.get("default_blocked")),
+            "actual_runtime_path_available": bool(phase41b_one_shot.get("actual_runtime_path_available")),
+            "actual_runtime_executed": bool(phase41b_one_shot.get("actual_runtime_executed")),
             "ready_for_manual_private_test_reply_one_shot": bool(phase41b_one_shot.get("ready_for_manual_private_test_reply_one_shot")),
             "actual_reply_send_executed": bool(phase41b_one_shot.get("actual_reply_send_executed")),
             "discord_api_send_called": bool(phase41b_one_shot.get("discord_api_send_called")),
@@ -2130,6 +2132,8 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
             "",
             "## Phase 41B-45A Safe Prep",
             f"- Phase 41B default blocked: {str(phase41b.get('default_blocked', True)).lower()}",
+            f"- Phase 41B actual runtime path available: {str(phase41b.get('actual_runtime_path_available', False)).lower()}",
+            f"- Phase 41B actual runtime executed: {str(phase41b.get('actual_runtime_executed', False)).lower()}",
             f"- Phase 41B message sent count: {phase41b.get('message_sent_count', 0)}",
             f"- Phase 41C ready for supervised session: {str(phase41c.get('ready_for_supervised_session', False)).lower()}",
             f"- Phase 42 actual runtime executed: {str(phase42.get('actual_runtime_executed', False)).lower()}",

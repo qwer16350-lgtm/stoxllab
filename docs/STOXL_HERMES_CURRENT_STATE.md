@@ -13,3 +13,5 @@ Repository state for this bundle:
 Current bundle: Phase 41B~45A Safe Prep Mega Bundle. It prepares final production-bound gates without executing Discord live runtime, Discord reply/send, LLM provider calls, RAG, embedding/vector generation, or external execution.
 
 Phase 41B-0 hotfix updates the one-shot gate to read the current process environment for manual reply readiness and to report failure-shaped blocked reasons. It adds boolean-only env diagnostics and still performs no actual reply/send.
+
+Phase 41B-1 adds the actual private-test deterministic reply runtime path behind the manual allow flag and all existing gates. This phase implements adapter/runtime code and fake-adapter tests only. Codex still does not execute the actual Discord runtime or send path.

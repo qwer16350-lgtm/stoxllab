@@ -459,3 +459,10 @@ Phase 41B-0 hotfix keeps actual reply/send disabled while fixing the one-shot
 gate to read process env booleans from the Phase 41B manual reply keys. It also
 renames blocked reasons to failure-shaped names and adds a boolean-only
 `--phase41b-env-diagnostics` report.
+
+Phase 41B-1 implements the actual private-test deterministic reply runtime path
+behind `--allow-actual-private-test-reply`, all manual gates, private-test-only
+routing, human-message-only eligibility, one-shot lock, and no LLM/RAG/external
+guards. The implementation adds adapter boundaries and fake-adapter tests.
+Codex did not run the actual command, did not connect Discord Gateway, did not
+call Discord API send, and did not send a Discord message.

@@ -155,6 +155,7 @@ FORBIDDEN_TRUE_FIELDS = (
     "phase41_secret_values_logged",
     "phase41_actual_reply_without_one_shot_manual_gate",
     "phase41b_ready_for_manual_private_test_reply_one_shot",
+    "phase41b_actual_runtime_executed",
     "phase41b_actual_reply_send_executed",
     "phase41b_discord_api_send_called",
     "phase41b_discord_message_sent",
@@ -377,6 +378,8 @@ def build_forbidden_behavior_sentinel(overrides: dict[str, Any] | None = None) -
         "phase41_actual_reply_without_one_shot_manual_gate": False,
         "phase41b_one_shot_available": True,
         "phase41b_default_blocked": True,
+        "phase41b_actual_runtime_path_available": True,
+        "phase41b_actual_runtime_executed": False,
         "phase41b_ready_for_manual_private_test_reply_one_shot": False,
         "phase41b_actual_reply_send_executed": False,
         "phase41b_discord_api_send_called": False,
@@ -500,7 +503,7 @@ def _sentinel_passed(report: dict[str, Any]) -> bool:
         return False
     if not bool(report.get("phase41_actual_reply_default_blocked")) or int(report.get("phase41_message_sent_count", 0) or 0) != 0:
         return False
-    if not bool(report.get("phase41b_one_shot_available")) or not bool(report.get("phase41b_default_blocked")):
+    if not bool(report.get("phase41b_one_shot_available")) or not bool(report.get("phase41b_actual_runtime_path_available")) or not bool(report.get("phase41b_default_blocked")):
         return False
     if int(report.get("phase41b_message_sent_count", 0) or 0) != 0:
         return False
@@ -597,7 +600,7 @@ def assert_forbidden_behavior_sentinel_safe(report: dict[str, Any]) -> None:
         raise ValueError("Forbidden behavior sentinel requires Phase 40X dry-run with message count 0.")
     if not report.get("phase41_actual_reply_default_blocked") or int(report.get("phase41_message_sent_count", 0) or 0) != 0:
         raise ValueError("Forbidden behavior sentinel requires Phase 41 default block with message count 0.")
-    if not report.get("phase41b_one_shot_available") or not report.get("phase41b_default_blocked") or int(report.get("phase41b_message_sent_count", 0) or 0) != 0:
+    if not report.get("phase41b_one_shot_available") or not report.get("phase41b_actual_runtime_path_available") or not report.get("phase41b_default_blocked") or int(report.get("phase41b_message_sent_count", 0) or 0) != 0:
         raise ValueError("Forbidden behavior sentinel requires Phase 41B blocked no-send prep.")
     if not report.get("phase41c_closeout_available") or int(report.get("phase41c_message_sent_count", 0) or 0) != 0:
         raise ValueError("Forbidden behavior sentinel requires Phase 41C no-send closeout scaffold.")
@@ -640,6 +643,8 @@ def render_forbidden_behavior_sentinel_markdown(report: dict[str, Any]) -> str:
             "- Phase 40T blocked by default: true",
             "- Phase 40T execute flag required: true",
             "- Phase 41B one-shot default blocked: true",
+            "- Phase 41B actual runtime path available: true",
+            "- Phase 41B actual runtime executed: false",
             "- Phase 41B Discord message sent: false",
             "- Phase 42 actual runtime executed: false",
             "- Phase 44 actual LLM API call: false",
