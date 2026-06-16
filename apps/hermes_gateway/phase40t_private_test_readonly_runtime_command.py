@@ -11,6 +11,10 @@ from private_test_readonly_runtime import (
 )
 from phase40t_readonly_runtime_closeout import render_phase40t_readonly_runtime_closeout_markdown
 from phase40t_readonly_live_execution_gate import render_phase40t_readonly_live_execution_gate_markdown
+from phase40t_discord_login_failure_closeout import (
+    build_phase40t_discord_login_failure_closeout,
+    render_phase40t_discord_login_failure_closeout_markdown,
+)
 
 
 VERSION = "phase40t_private_test_readonly_runtime_command"
@@ -43,9 +47,15 @@ def build_phase40t_private_test_readonly_runtime_command(
     return report
 
 
+def build_phase40t_discord_login_failure_closeout_command(env: Mapping[str, str] | None = None) -> dict[str, Any]:
+    return build_phase40t_discord_login_failure_closeout(env=env, execute_flag_present=True)
+
+
 def render_phase40t_private_test_readonly_runtime_command_markdown(report: dict[str, Any]) -> str:
     if report.get("report_type") == "phase40t_readonly_runtime_closeout":
         return render_phase40t_readonly_runtime_closeout_markdown(report)
+    if report.get("report_type") == "phase40t_discord_login_failure_closeout":
+        return render_phase40t_discord_login_failure_closeout_markdown(report)
     if report.get("report_type") == "phase40t_readonly_live_execution_gate":
         return render_phase40t_readonly_live_execution_gate_markdown(report)
     return render_private_test_readonly_runtime_preflight_markdown(report)

@@ -105,6 +105,7 @@ from phase40t_private_test_readonly_runtime_command import build_phase40t_privat
 from phase40t_readonly_capture_writer import CAPTURE_SCHEMA_VERSION
 from phase40t_readonly_live_execution_gate import build_phase40t_readonly_live_execution_gate
 from phase40t_readonly_runtime_closeout import build_phase40t_readonly_runtime_closeout
+from phase40t_discord_login_failure_closeout import build_phase40t_discord_login_failure_closeout
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope
 from rag_evidence_review_packet import build_rag_evidence_review_packet
@@ -615,6 +616,7 @@ def build_operations_packet_viewer_report(
     phase40t_command = build_phase40t_private_test_readonly_runtime_command(env={}, report_only=False)
     phase40t_gate = build_phase40t_readonly_live_execution_gate(env={}, execute_flag_present=False, root=root)
     phase40t_closeout = build_phase40t_readonly_runtime_closeout()
+    phase40t_login_failure = build_phase40t_discord_login_failure_closeout(env={})
     report = {
         "report_type": "operations_packet_viewer",
         "version": VERSION,
@@ -1557,6 +1559,20 @@ def build_operations_packet_viewer_report(
             "started": bool(phase40t_closeout.get("started")),
             "discord_gateway_connected": bool(phase40t_closeout.get("discord_gateway_connected")),
             "message_sent_count": int(phase40t_closeout.get("message_sent_count", 0) or 0),
+        },
+        "phase40t_discord_login_failure_closeout": {
+            "available": True,
+            "blocked": bool(phase40t_login_failure.get("blocked")),
+            "discord_login_failure": bool(phase40t_login_failure.get("discord_login_failure")),
+            "discord_gateway_connected": bool(phase40t_login_failure.get("discord_gateway_connected")),
+            "discord_token_value_logged": bool(phase40t_login_failure.get("discord_token_value_logged")),
+            "private_test_channel_id_value_logged": bool(phase40t_login_failure.get("private_test_channel_id_value_logged")),
+            "traceback_included": bool(phase40t_login_failure.get("traceback_included")),
+            "discord_api_send_called": bool(phase40t_login_failure.get("discord_api_send_called")),
+            "discord_message_sent": bool(phase40t_login_failure.get("discord_message_sent")),
+            "message_sent_count": int(phase40t_login_failure.get("message_sent_count", 0) or 0),
+            "retry_attempted": bool(phase40t_login_failure.get("retry_attempted")),
+            "operator_action_required": phase40t_login_failure.get("operator_action_required", ""),
         },
         "daily_manifest_summary": load_daily_manifest(root=root, date=date),
         "filters": {

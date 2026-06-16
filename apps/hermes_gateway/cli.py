@@ -139,7 +139,11 @@ from phase40p_readonly_capture_schema import build_phase40p_readonly_capture_sch
 from phase40q_capture_review_closeout import build_phase40q_capture_review_closeout, render_phase40q_capture_review_closeout_markdown
 from phase40r_phase41_reply_preflight_matrix import build_phase40r_phase41_reply_preflight_matrix, render_phase40r_phase41_reply_preflight_matrix_markdown
 from phase40s_morning_review_operator_decision_packet import build_phase40s_morning_review_operator_decision_packet, render_phase40s_morning_review_operator_decision_packet_markdown
-from phase40t_private_test_readonly_runtime_command import build_phase40t_private_test_readonly_runtime_command, render_phase40t_private_test_readonly_runtime_command_markdown
+from phase40t_private_test_readonly_runtime_command import (
+    build_phase40t_discord_login_failure_closeout_command,
+    build_phase40t_private_test_readonly_runtime_command,
+    render_phase40t_private_test_readonly_runtime_command_markdown,
+)
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight, render_rag_evidence_private_test_send_preflight_markdown
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope, render_rag_evidence_prompt_envelope_markdown
 from rag_evidence_review_packet import build_rag_evidence_review_packet, render_rag_evidence_review_packet_markdown
@@ -320,6 +324,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--run-discord-private-test-readonly", action="store_true", help="Print Phase 40T private-test read-only runtime command preflight; Codex does not connect.")
     parser.add_argument("--run-discord-private-test-readonly-preflight", action="store_true", help="Print Phase 40T private-test read-only runtime preflight without live execution.")
     parser.add_argument("--execute-readonly-live-runtime", action="store_true", help="User-only Phase 40T read-only live runtime execute flag.")
+    parser.add_argument("--phase40t-discord-login-failure-closeout", action="store_true", help="Print Phase 40T-2 Discord login failure closeout without attempting Discord login.")
     parser.add_argument("--live-event-audit-report", action="store_true", help="Print Phase 30 live event audit record report.")
     parser.add_argument("--would-send-preview-report", action="store_true", help="Print Phase 30 would-send preview report.")
     parser.add_argument("--live-event-review-packet-report", action="store_true", help="Print Phase 30 live event review packet report.")
@@ -2250,6 +2255,23 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- message_sent_count: {output.get('message_sent_count')}")
         return 0
 
+    if args.phase40t_discord_login_failure_closeout:
+        output = build_phase40t_discord_login_failure_closeout_command()
+        if args.markdown:
+            print(render_phase40t_private_test_readonly_runtime_command_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 40T Discord login failure closeout")
+            print(f"- login_attempted: {output.get('login_attempted')}")
+            print(f"- discord_login_succeeded: {output.get('discord_login_succeeded')}")
+            print(f"- discord_login_failure_reason: {output.get('discord_login_failure_reason')}")
+            print(f"- discord_token_present: {output.get('discord_token_present')}")
+            print(f"- discord_token_valid: {output.get('discord_token_valid')}")
+            print(f"- discord_message_sent: {output.get('discord_message_sent')}")
+            print(f"- message_sent_count: {output.get('message_sent_count')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -2489,6 +2511,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.phase40s_morning_review_operator_decision_packet
         or args.run_discord_private_test_readonly
         or args.run_discord_private_test_readonly_preflight
+        or args.phase40t_discord_login_failure_closeout
         or args.execute_readonly_live_runtime
         or args.allow_llm_api_call
         or args.allow_actual_one_shot_llm_draft_call

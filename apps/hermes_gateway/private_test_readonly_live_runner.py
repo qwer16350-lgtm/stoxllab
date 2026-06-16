@@ -13,6 +13,7 @@ from typing import Any, Mapping, Protocol
 from phase40t_readonly_capture_writer import write_redacted_capture_file
 from phase40t_readonly_live_execution_gate import build_phase40t_readonly_live_execution_gate
 from phase40t_readonly_runtime_closeout import build_phase40t_readonly_runtime_closeout
+from phase40t_discord_login_failure_closeout import build_phase40t_discord_login_failure_closeout_from_exception
 
 
 class ReadOnlyLiveAdapter(Protocol):
@@ -78,12 +79,18 @@ class DiscordReadOnlyLiveAdapter:
         events: list[dict[str, Any]] = []
         state = {"connected": False, "exit_reason": "timeout"}
 
+        async def close_client_safely() -> None:
+            try:
+                await client.close()
+            except Exception:
+                return
+
         @client.event
         async def on_ready() -> None:
             state["connected"] = True
             if max_events == 0:
                 state["exit_reason"] = "max_events"
-                await client.close()
+                await close_client_safely()
 
         @client.event
         async def on_message(message: Any) -> None:
@@ -119,13 +126,23 @@ class DiscordReadOnlyLiveAdapter:
             )
             if len(events) >= max_events:
                 state["exit_reason"] = "max_events"
-                await client.close()
+                await close_client_safely()
 
         try:
             await asyncio.wait_for(client.start(token), timeout=max(1, int(timeout_seconds)))
         except asyncio.TimeoutError:
-            state["exit_reason"] = "timeout"
-            await client.close()
+            if state["connected"]:
+                state["exit_reason"] = "timeout"
+                await close_client_safely()
+            else:
+                await close_client_safely()
+                return build_phase40t_discord_login_failure_closeout_from_exception(self.env, asyncio.TimeoutError())
+        except KeyboardInterrupt as exc:
+            await close_client_safely()
+            return build_phase40t_discord_login_failure_closeout_from_exception(self.env, exc)
+        except Exception as exc:
+            await close_client_safely()
+            return build_phase40t_discord_login_failure_closeout_from_exception(self.env, exc)
         return {
             "started": True,
             "live_runtime_started": True,
@@ -159,7 +176,12 @@ def run_phase40t_readonly_live_runtime(
     if gate.get("blocked"):
         return gate
     runner = adapter or DiscordReadOnlyLiveAdapter(env or {})
-    result = runner.run(timeout_seconds=int(timeout_seconds), max_events=int(max_events))
+    try:
+        result = runner.run(timeout_seconds=int(timeout_seconds), max_events=int(max_events))
+    except (KeyboardInterrupt, Exception) as exc:
+        return build_phase40t_discord_login_failure_closeout_from_exception(env or {}, exc)
+    if result.get("report_type") == "phase40t_discord_login_failure_closeout":
+        return result
     capture = write_redacted_capture_file(
         result.get("events", []),
         capture_root=capture_root,

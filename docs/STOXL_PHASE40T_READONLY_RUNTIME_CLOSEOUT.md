@@ -31,3 +31,24 @@ It must still show:
 
 Raw content, raw Discord ids, token, channel id, API key, and approval phrase
 values must not be printed or stored.
+
+## Login Failure Closeout
+
+If the runtime fails before Gateway connection because Discord rejects the
+token, the closeout type is `phase40t_discord_login_failure_closeout` instead
+of a capture closeout. In that state:
+
+- `started=false`
+- `live_runtime_started=false`
+- `discord_gateway_connected=false`
+- `discord_login_failure=true`
+- `discord_token_valid=false`
+- `traceback_included=false`
+- `capture_file_written=false`
+- `discord_api_send_called=false`
+- `discord_message_sent=false`
+- `message_sent_count=0`
+- `retry_attempted=false`
+
+The operator must correct the Discord bot token manually before any future
+read-only live runtime attempt.

@@ -419,3 +419,12 @@ private-test read-only runtime, plus timeout/max-events controls, redacted
 capture writer, and closeout reports. Codex does not run the execute command;
 tests use fake adapters only. Send/reply/LLM/RAG/embedding/external execution
 remain false.
+
+Phase 40T-2 adds graceful closeout for Discord login failure. A user-observed
+invalid token/LoginFailure or HTTP 401 is converted to safe JSON with
+`discord_gateway_connected=false`, `discord_api_send_called=false`,
+`discord_message_sent=false`, `message_sent_count=0`, `retry_attempted=false`,
+and token/channel/approval/API/raw content values not logged. Codex does not
+retry Discord login or run the live runtime; the operator must refresh or
+correct the Discord bot token manually before the next user-run read-only
+runtime attempt.

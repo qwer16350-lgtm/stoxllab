@@ -37,3 +37,12 @@ In Codex verification:
 - Discord message sent: false.
 - Message sent count: 0.
 - LLM/RAG/embedding/external: false.
+
+## Phase 40T-2 Login Failure Handling
+
+If a user-run command reaches Discord login and fails with LoginFailure or HTTP
+401, the runtime must return a safe
+`phase40t_discord_login_failure_closeout` JSON report instead of printing a raw
+traceback. The report records token presence and token validity booleans only,
+keeps Gateway connected false, keeps all send/retry/LLM/RAG/external flags
+false, and points the operator to refresh or correct the Discord bot token.

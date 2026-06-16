@@ -167,6 +167,19 @@ def test_safety_flags_false() -> None:
     assert_true(safety["rag_called"] is False, "RAG should not be called")
 
 
+def test_phase40t_login_failure_closeout_summary() -> None:
+    setup_artifacts()
+    summary = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")["phase40t_discord_login_failure_closeout"]
+    assert_true(summary["available"] is True, "Login failure closeout available")
+    assert_true(summary["discord_login_failure"] is True, "Login failure represented")
+    assert_true(summary["discord_gateway_connected"] is False, "No gateway")
+    assert_true(summary["discord_api_send_called"] is False, "No API send")
+    assert_true(summary["discord_message_sent"] is False, "No message")
+    assert_true(summary["message_sent_count"] == 0, "No send count")
+    assert_true(summary["retry_attempted"] is False, "No retry")
+    assert_true(summary["traceback_included"] is False, "No traceback")
+
+
 def test_rag_llm_scaffold_summary() -> None:
     setup_artifacts()
     scaffold = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")["rag_llm_private_test_scaffold"]
@@ -1100,6 +1113,7 @@ def main() -> int:
         test_no_raw_token_or_id,
         test_no_env_or_local_mapping_read_flags,
         test_safety_flags_false,
+        test_phase40t_login_failure_closeout_summary,
         test_rag_llm_scaffold_summary,
         test_rag_llm_live_readiness_summary,
         test_rag_llm_private_test_runtime_summary,

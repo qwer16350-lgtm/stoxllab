@@ -130,6 +130,12 @@ FORBIDDEN_TRUE_FIELDS = (
     "phase40t_capture_file_contains_secret_values",
     "phase40t_closeout_started",
     "phase40t_closeout_gateway_connected",
+    "phase40t_login_failure_gateway_connected",
+    "phase40t_login_failure_discord_api_send_called",
+    "phase40t_login_failure_discord_message_sent",
+    "phase40t_login_failure_retry_attempted",
+    "phase40t_login_failure_traceback_included",
+    "phase40t_login_failure_token_value_logged",
 )
 
 
@@ -292,6 +298,14 @@ def build_forbidden_behavior_sentinel(overrides: dict[str, Any] | None = None) -
         "phase40t_closeout_started": False,
         "phase40t_closeout_gateway_connected": False,
         "phase40t_closeout_message_sent_count": 0,
+        "phase40t_login_failure_closeout_available": True,
+        "phase40t_login_failure_gateway_connected": False,
+        "phase40t_login_failure_discord_api_send_called": False,
+        "phase40t_login_failure_discord_message_sent": False,
+        "phase40t_login_failure_message_sent_count": 0,
+        "phase40t_login_failure_retry_attempted": False,
+        "phase40t_login_failure_traceback_included": False,
+        "phase40t_login_failure_token_value_logged": False,
         "post_llm_call_sentinel": False,
         "total_phase36_llm_call_count": 1,
         "total_phase36_discord_message_sent_count": 0,
@@ -370,6 +384,8 @@ def _sentinel_passed(report: dict[str, Any]) -> bool:
         return False
     if int(report.get("phase40t_closeout_message_sent_count", 0) or 0) != 0:
         return False
+    if not bool(report.get("phase40t_login_failure_closeout_available")) or int(report.get("phase40t_login_failure_message_sent_count", 0) or 0) != 0:
+        return False
     if not bool(report.get("phase40t_execute_flag_present")) and (
         bool(report.get("phase40t_live_runtime_started")) or bool(report.get("phase40t_closeout_started"))
     ):
@@ -439,6 +455,8 @@ def assert_forbidden_behavior_sentinel_safe(report: dict[str, Any]) -> None:
         raise ValueError("Forbidden behavior sentinel requires Phase 40T message count 0.")
     if int(report.get("phase40t_closeout_message_sent_count", 0) or 0) != 0:
         raise ValueError("Forbidden behavior sentinel requires Phase 40T closeout message count 0.")
+    if not report.get("phase40t_login_failure_closeout_available") or int(report.get("phase40t_login_failure_message_sent_count", 0) or 0) != 0:
+        raise ValueError("Forbidden behavior sentinel requires Phase 40T login failure closeout with message count 0.")
     if not report.get("phase40t_execute_flag_present") and (report.get("phase40t_live_runtime_started") or report.get("phase40t_closeout_started")):
         raise ValueError("Forbidden behavior sentinel forbids Phase 40T started without execute flag.")
     if report.get("phase40t_ready_for_manual_readonly_runtime_launch") and not report.get("phase40t_reply_mode_readonly_private_test_only"):

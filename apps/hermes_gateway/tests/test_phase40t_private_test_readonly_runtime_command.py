@@ -130,6 +130,17 @@ def test_command_builder_execute_uses_fake_adapter_only_in_test() -> None:
         assert_true(report["message_sent_count"] == 0, "Count 0")
 
 
+def test_cli_login_failure_closeout_report_only() -> None:
+    report = run_cli("--phase40t-discord-login-failure-closeout", "--json", env=ready_env())
+    assert_true(report["report_type"] == "phase40t_discord_login_failure_closeout", "Login failure closeout")
+    assert_true(report["discord_login_failure"] is True, "Login failure")
+    assert_true(report["discord_gateway_connected"] is False, "No gateway")
+    assert_true(report["discord_api_send_called"] is False, "No API")
+    assert_true(report["discord_message_sent"] is False, "No send")
+    assert_true(report["message_sent_count"] == 0, "Count 0")
+    assert_true(report["retry_attempted"] is False, "No retry")
+
+
 def main() -> int:
     for test in (
         test_command_builder_default_blocked,
@@ -137,6 +148,7 @@ def main() -> int:
         test_cli_accepts_preflight_command,
         test_cli_ready_report_still_no_gateway_or_send,
         test_command_builder_execute_uses_fake_adapter_only_in_test,
+        test_cli_login_failure_closeout_report_only,
     ):
         test()
         print(f"PASS {test.__name__}")

@@ -647,6 +647,14 @@ max-events controls, a redacted local capture writer, and read-only runtime
 closeout reports. Codex does not run the execute command. The default command
 remains preflight-only, and all implementation tests use fake adapters only.
 
+Phase 40T-2 adds a safe Discord login failure closeout. If a user-run read-only
+runtime fails with LoginFailure or HTTP 401 before Gateway connection, the
+runtime returns `phase40t_discord_login_failure_closeout` JSON instead of a raw
+traceback. It reports token presence and token validity booleans only, keeps
+Discord API send false, Discord message sent false, message sent count 0, retry
+false, and LLM/RAG/embedding/external false. The next action is manual token
+refresh/correction by the operator.
+
 If the registry file is missing, generate it from the repo root:
 
 ```powershell

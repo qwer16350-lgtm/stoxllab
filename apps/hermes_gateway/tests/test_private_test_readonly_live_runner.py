@@ -22,6 +22,21 @@ def assert_true(condition: bool, message: str) -> None:
         raise AssertionError(message)
 
 
+class LoginFailureLike(Exception):
+    pass
+
+
+LoginFailureLike.__name__ = "LoginFailure"
+
+
+class RaisingAdapter:
+    called = False
+
+    def run(self, *, timeout_seconds: int, max_events: int) -> dict[str, object]:
+        self.called = True
+        raise LoginFailureLike("Improper token has been passed. 401 Unauthorized")
+
+
 def ready_env() -> dict[str, str]:
     return {
         "DISCORD_BOT_TOKEN": "present",
@@ -99,11 +114,27 @@ def test_fake_adapter_max_events() -> None:
         assert_true(report["exit_reason"] == "max_events", "Exit reason")
 
 
+def test_adapter_login_failure_returns_safe_closeout() -> None:
+    adapter = RaisingAdapter()
+    report = run_phase40t_readonly_live_runtime(env=ready_env(), execute_flag_present=True, adapter=adapter)
+    text = json.dumps(report, ensure_ascii=False).lower()
+    assert_true(adapter.called is True, "Adapter called")
+    assert_true(report["report_type"] == "phase40t_discord_login_failure_closeout", "Login failure closeout")
+    assert_true(report["discord_login_failure"] is True, "Login failure")
+    assert_true(report["discord_gateway_connected"] is False, "No gateway")
+    assert_true(report["discord_api_send_called"] is False, "No API send")
+    assert_true(report["discord_message_sent"] is False, "No message")
+    assert_true(report["message_sent_count"] == 0, "No count")
+    assert_true(report["retry_attempted"] is False, "No retry")
+    assert_true("traceback (most recent call last)" not in text, "No traceback")
+
+
 def main() -> int:
     for test in (
         test_runner_blocks_without_execute_flag,
         test_fake_adapter_ready_closeout_no_send,
         test_fake_adapter_max_events,
+        test_adapter_login_failure_returns_safe_closeout,
     ):
         test()
         print(f"PASS {test.__name__}")
