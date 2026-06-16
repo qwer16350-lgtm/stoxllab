@@ -24,3 +24,7 @@ Audit state:
 
 The audit is report-only and does not read or print `.env` contents.
 
+Phase 40 continues this gate-off posture. Its readiness reports keep
+`HERMES_DISCORD_SEND_MESSAGES`, private-test reply, Phase 39B real execution,
+LLM, RAG, and external execution gates off while preparing a later manual live
+runtime entry gate.

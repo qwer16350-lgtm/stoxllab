@@ -27,3 +27,8 @@ Safety notes:
 - No external execution is made.
 - Token, channel ID, API key, raw Discord ID, and approval phrase values are not printed.
 
+Phase 40 follow-up:
+
+- Phase 40 keeps the Phase 39 actual Discord send count locked at 1.
+- Phase 40 additional Discord send count remains 0.
+- Any live runtime entry must be a later, separately approved phase.

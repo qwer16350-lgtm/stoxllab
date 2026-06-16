@@ -383,3 +383,14 @@ send success. Closeout locks the actual Discord send count to 1, records zero
 additional Phase 39C sends, verifies gates off, forbids repeat/retry/unattended
 send, and prepares push readiness. Codex does not run Discord live runtime,
 does not call Discord API send, and does not push.
+
+Phase 40 adds a safe overnight readiness bundle after Phase 39C. It keeps the
+Phase 39 actual send count locked at 1 and records Phase 40 additional send
+count 0. All Phase 40 reports are report-only: no Discord live runtime, no
+Gateway connection, no Discord API send, no Discord message sent, no
+OpenRouter/LLM attempt, no RAG call, no embedding/vector creation, and no
+external execution. It adds synthetic/replay-only inbound event dry-run checks,
+reply decision audit, outbound queue lock, session/idempotency lock, operator
+handoff packet, and a live runtime entry gate blocked by default. The next
+sensitive step is Phase 40J private-test live runtime manual entry after
+separate human confirmation.

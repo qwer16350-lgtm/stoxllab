@@ -22,3 +22,7 @@ git push origin feature/stoxl-hermes-agent-org
 
 Codex does not push in this phase.
 
+Phase 40 adds runtime readiness reports before the next sensitive manual entry.
+Push should only happen after tests pass, validator reports Errors 0, forbidden
+paths remain unstaged, and the working tree is clean after commit. If push fails,
+do not retry automatically.

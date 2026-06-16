@@ -21,3 +21,7 @@ Lock state:
 Phase 39C performs no additional Discord API send and records
 `message_sent_count_in_phase39c=0`.
 
+Phase 40 inherits this lock. It may create report-only runtime readiness files,
+but it must not perform another actual private-test send, repeat send, retry
+send, unattended auto reply, Discord API send, LLM call, RAG call, embedding
+creation, or external execution.
