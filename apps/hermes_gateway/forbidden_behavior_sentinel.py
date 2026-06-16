@@ -137,6 +137,23 @@ FORBIDDEN_TRUE_FIELDS = (
     "phase40t_login_failure_traceback_included",
     "phase40t_login_failure_token_value_logged",
     "phase40t_missing_env_login_attempted",
+    "phase40u_discord_api_send_called",
+    "phase40u_discord_message_sent",
+    "phase40x_discord_api_send_called",
+    "phase40x_discord_message_sent",
+    "phase41_actual_reply_send_executed",
+    "phase41_discord_api_send_called",
+    "phase41_discord_message_sent",
+    "phase41_public_team_reply_allowed",
+    "phase41_unattended_auto_reply_allowed",
+    "phase41_llm_called",
+    "phase41_rag_called",
+    "phase41_embedding_api_called",
+    "phase41_external_execution",
+    "phase41_raw_content_logged",
+    "phase41_raw_discord_ids_logged",
+    "phase41_secret_values_logged",
+    "phase41_actual_reply_without_one_shot_manual_gate",
 )
 
 
@@ -314,6 +331,29 @@ def build_forbidden_behavior_sentinel(overrides: dict[str, Any] | None = None) -
         "phase40t_login_failure_presence_consistency_verified": True,
         "phase40t_missing_env_before_login_guard": True,
         "phase40t_missing_env_login_attempted": False,
+        "phase40u_closeout_ready": True,
+        "phase40u_discord_api_send_called": False,
+        "phase40u_discord_message_sent": False,
+        "phase40u_message_sent_count": 0,
+        "phase40x_reply_dry_run_ready": True,
+        "phase40x_discord_api_send_called": False,
+        "phase40x_discord_message_sent": False,
+        "phase40x_message_sent_count": 0,
+        "phase41_actual_reply_default_blocked": True,
+        "phase41_actual_reply_send_executed": False,
+        "phase41_discord_api_send_called": False,
+        "phase41_discord_message_sent": False,
+        "phase41_message_sent_count": 0,
+        "phase41_public_team_reply_allowed": False,
+        "phase41_unattended_auto_reply_allowed": False,
+        "phase41_llm_called": False,
+        "phase41_rag_called": False,
+        "phase41_embedding_api_called": False,
+        "phase41_external_execution": False,
+        "phase41_raw_content_logged": False,
+        "phase41_raw_discord_ids_logged": False,
+        "phase41_secret_values_logged": False,
+        "phase41_actual_reply_without_one_shot_manual_gate": False,
         "post_llm_call_sentinel": False,
         "total_phase36_llm_call_count": 1,
         "total_phase36_discord_message_sent_count": 0,
@@ -400,6 +440,12 @@ def _sentinel_passed(report: dict[str, Any]) -> bool:
         return False
     if not bool(report.get("phase40t_missing_env_before_login_guard")):
         return False
+    if not bool(report.get("phase40u_closeout_ready")) or int(report.get("phase40u_message_sent_count", 0) or 0) != 0:
+        return False
+    if not bool(report.get("phase40x_reply_dry_run_ready")) or int(report.get("phase40x_message_sent_count", 0) or 0) != 0:
+        return False
+    if not bool(report.get("phase41_actual_reply_default_blocked")) or int(report.get("phase41_message_sent_count", 0) or 0) != 0:
+        return False
     if not bool(report.get("phase40t_execute_flag_present")) and (
         bool(report.get("phase40t_live_runtime_started")) or bool(report.get("phase40t_closeout_started"))
     ):
@@ -477,6 +523,12 @@ def assert_forbidden_behavior_sentinel_safe(report: dict[str, Any]) -> None:
         raise ValueError("Forbidden behavior sentinel requires Phase 40T login failure snapshot consistency.")
     if not report.get("phase40t_missing_env_before_login_guard"):
         raise ValueError("Forbidden behavior sentinel requires Phase 40T missing-env-before-login guard.")
+    if not report.get("phase40u_closeout_ready") or int(report.get("phase40u_message_sent_count", 0) or 0) != 0:
+        raise ValueError("Forbidden behavior sentinel requires Phase 40U closeout with message count 0.")
+    if not report.get("phase40x_reply_dry_run_ready") or int(report.get("phase40x_message_sent_count", 0) or 0) != 0:
+        raise ValueError("Forbidden behavior sentinel requires Phase 40X dry-run with message count 0.")
+    if not report.get("phase41_actual_reply_default_blocked") or int(report.get("phase41_message_sent_count", 0) or 0) != 0:
+        raise ValueError("Forbidden behavior sentinel requires Phase 41 default block with message count 0.")
     if not report.get("phase40t_execute_flag_present") and (report.get("phase40t_live_runtime_started") or report.get("phase40t_closeout_started")):
         raise ValueError("Forbidden behavior sentinel forbids Phase 40T started without execute flag.")
     if report.get("phase40t_ready_for_manual_readonly_runtime_launch") and not report.get("phase40t_reply_mode_readonly_private_test_only"):

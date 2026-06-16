@@ -434,3 +434,13 @@ token/channel presence consistent between a passed preflight and a later
 LoginFailure closeout. Missing token or channel presence blocks before login
 with `login_attempted=false`; token/channel present plus LoginFailure or HTTP
 401 reports `invalid_or_unauthorized_token` while preserving presence true.
+
+Phase 40U-41A closes out the operator-observed Phase 40T read-only live success
+without reconnecting. The closeout records Gateway connection success, timeout
+exit, zero captured events, a written redacted capture artifact, and zero
+messages sent. It also hardens capture review, adds synthetic private-test
+fixtures, freezes a would-reply dry-run, syncs operations viewer/dashboard and
+sentinel state, and adds a Phase 41 private-test reply preflight that remains
+blocked by default. Codex did not run the live runtime, did not call Discord API
+send, did not send a message, did not call LLM/RAG or embeddings, and did not
+execute external actions.

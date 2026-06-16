@@ -1,0 +1,11 @@
+{
+  "report_type": "phase41_private_test_reply_preflight",
+  "version": "phase41_private_test_reply_preflight",
+  "default_blocked": true,
+  "actual_reply_send_executed": false,
+  "discord_api_send_called": false,
+  "discord_message_sent": false,
+  "message_sent_count": 0,
+  "ready_for_manual_private_test_reply": false,
+  "ready_for_actual_reply_send": false
+}

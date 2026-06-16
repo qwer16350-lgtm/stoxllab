@@ -1,0 +1,17 @@
+{
+  "report_type": "phase40x_reply_decision_dry_run",
+  "version": "phase40x_reply_decision_dry_run",
+  "input_source": "synthetic_redacted_fixture",
+  "would_reply": true,
+  "send_scope": "private_test_only",
+  "actual_send_allowed": false,
+  "discord_api_send_called": false,
+  "discord_message_sent": false,
+  "message_sent_count": 0,
+  "llm_called": false,
+  "rag_called": false,
+  "external_execution": false,
+  "reply_payload_frozen": true,
+  "ready_for_phase41_preflight_gate": true,
+  "ready_for_actual_reply_send": false
+}

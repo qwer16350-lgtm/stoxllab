@@ -1,0 +1,14 @@
+{
+  "report_type": "phase40y_phase41_reply_preflight_gate",
+  "version": "phase40y_phase41_reply_preflight_gate",
+  "phase41_actual_reply_runtime_available": true,
+  "default_blocked": true,
+  "blocked": true,
+  "block_reason": "approval_missing",
+  "actual_reply_send_executed": false,
+  "discord_api_send_called": false,
+  "discord_message_sent": false,
+  "message_sent_count": 0,
+  "ready_for_phase41_manual_private_test_reply": false,
+  "ready_for_actual_reply_send": false
+}

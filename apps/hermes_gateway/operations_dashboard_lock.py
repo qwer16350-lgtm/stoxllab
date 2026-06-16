@@ -44,6 +44,11 @@ from phase40t_private_test_readonly_runtime_command import (
 from phase40t_readonly_capture_writer import CAPTURE_SCHEMA_VERSION
 from phase40t_readonly_live_execution_gate import build_phase40t_readonly_live_execution_gate
 from phase40t_readonly_runtime_closeout import build_phase40t_readonly_runtime_closeout
+from phase40u_readonly_live_connection_closeout import build_phase40u_readonly_live_connection_closeout
+from phase40x_reply_decision_dry_run import build_phase40x_reply_decision_dry_run
+from phase40y_phase41_reply_preflight_gate import build_phase40y_phase41_reply_preflight_gate
+from phase40z_operations_handoff import build_phase40z_operations_handoff
+from phase41_private_test_reply_preflight import build_phase41_private_test_reply_preflight
 from private_test_live_send_entry_gate import build_private_test_live_send_entry_gate
 from rag_evidence_private_test_phase34_final_lock import build_rag_evidence_private_test_phase34_final_lock
 
@@ -109,6 +114,11 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
     phase40t_gate = build_phase40t_readonly_live_execution_gate(env={}, execute_flag_present=False, root=root)
     phase40t_closeout = build_phase40t_readonly_runtime_closeout()
     phase40t_login_failure = build_phase40t_discord_login_failure_closeout_command(env={})
+    phase40u_closeout = build_phase40u_readonly_live_connection_closeout()
+    phase40x_reply = build_phase40x_reply_decision_dry_run()
+    phase40y_gate = build_phase40y_phase41_reply_preflight_gate()
+    phase40z_handoff = build_phase40z_operations_handoff()
+    phase41_preflight = build_phase41_private_test_reply_preflight()
     counts = audit.get("final_e2e_counts", {})
     report = {
         "report_type": "operations_dashboard_lock",
@@ -240,6 +250,23 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
         "phase40t_login_failure_token_value_logged": bool(phase40t_login_failure.get("discord_token_value_logged")),
         "phase40t_login_failure_preflight_snapshot_preserved": bool(phase40t_login_failure.get("preflight_snapshot_preserved")),
         "phase40t_login_failure_presence_consistency_verified": bool(phase40t_login_failure.get("presence_consistency_verified")),
+        "phase40t_gateway_connect_verified": bool(phase40u_closeout.get("gateway_connect_verified")),
+        "phase40u_closeout_ready": bool(phase40u_closeout.get("ready_for_phase41_dry_run_preparation")),
+        "phase40u_discord_api_send_called": bool(phase40u_closeout.get("discord_api_send_called")),
+        "phase40u_discord_message_sent": bool(phase40u_closeout.get("discord_message_sent")),
+        "phase40u_message_sent_count": int(phase40u_closeout.get("message_sent_count", 0) or 0),
+        "phase40x_reply_dry_run_ready": bool(phase40x_reply.get("ready_for_phase41_preflight_gate")),
+        "phase40x_discord_api_send_called": bool(phase40x_reply.get("discord_api_send_called")),
+        "phase40x_discord_message_sent": bool(phase40x_reply.get("discord_message_sent")),
+        "phase40x_message_sent_count": int(phase40x_reply.get("message_sent_count", 0) or 0),
+        "phase41_actual_reply_default_blocked": bool(phase40y_gate.get("default_blocked")),
+        "phase41_actual_reply_send_executed": bool(phase40y_gate.get("actual_reply_send_executed")),
+        "phase41_discord_api_send_called": bool(phase40y_gate.get("discord_api_send_called")),
+        "phase41_discord_message_sent": bool(phase40y_gate.get("discord_message_sent")),
+        "phase41_message_sent_count": int(phase40y_gate.get("message_sent_count", 0) or 0),
+        "phase40z_handoff_ready": bool(phase40z_handoff.get("phase40u_closeout_ready")) and bool(phase40z_handoff.get("phase40x_reply_dry_run_ready")),
+        "phase41a_preflight_default_blocked": bool(phase41_preflight.get("default_blocked")),
+        "phase41a_ready_for_manual_private_test_reply": bool(phase41_preflight.get("ready_for_manual_private_test_reply")),
         "ready_for_live_runtime": False,
         "ready_for_llm_call": False,
         "ready_for_discord_send": False,
@@ -279,6 +306,14 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
             "phase40t_login_failure_retry_attempted": False,
             "phase40t_login_failure_traceback_included": False,
             "phase40t_login_failure_token_value_logged": False,
+            "phase40u_discord_api_send_called": False,
+            "phase40u_discord_message_sent": False,
+            "phase40x_discord_api_send_called": False,
+            "phase40x_discord_message_sent": False,
+            "phase41_actual_reply_send_executed": False,
+            "phase41_discord_api_send_called": False,
+            "phase41_discord_message_sent": False,
+            "phase41a_ready_for_manual_private_test_reply": False,
         },
     }
     assert_operations_dashboard_lock_safe(report)
@@ -347,6 +382,14 @@ def assert_operations_dashboard_lock_safe(report: dict[str, Any]) -> None:
         "phase40t_login_failure_retry_attempted",
         "phase40t_login_failure_traceback_included",
         "phase40t_login_failure_token_value_logged",
+        "phase40u_discord_api_send_called",
+        "phase40u_discord_message_sent",
+        "phase40x_discord_api_send_called",
+        "phase40x_discord_message_sent",
+        "phase41_actual_reply_send_executed",
+        "phase41_discord_api_send_called",
+        "phase41_discord_message_sent",
+        "phase41a_ready_for_manual_private_test_reply",
     ):
         if report.get(key):
             raise ValueError(f"Operations dashboard lock unsafe flag is true: {key}")
@@ -396,6 +439,16 @@ def assert_operations_dashboard_lock_safe(report: dict[str, Any]) -> None:
         raise ValueError("Operations dashboard lock requires Phase 40T login failure closeout with send count 0.")
     if not report.get("phase40t_login_failure_preflight_snapshot_preserved") or not report.get("phase40t_login_failure_presence_consistency_verified"):
         raise ValueError("Operations dashboard lock requires Phase 40T login failure snapshot consistency.")
+    if not report.get("phase40t_gateway_connect_verified") or not report.get("phase40u_closeout_ready"):
+        raise ValueError("Operations dashboard lock requires Phase 40U read-only connection closeout readiness.")
+    if int(report.get("phase40u_message_sent_count", 0) or 0) != 0 or int(report.get("phase40x_message_sent_count", 0) or 0) != 0:
+        raise ValueError("Operations dashboard lock forbids Phase 40U/X messages.")
+    if not report.get("phase40x_reply_dry_run_ready") or not report.get("phase41_actual_reply_default_blocked"):
+        raise ValueError("Operations dashboard lock requires Phase 40X dry-run and Phase 41 default block.")
+    if int(report.get("phase41_message_sent_count", 0) or 0) != 0:
+        raise ValueError("Operations dashboard lock forbids Phase 41 messages.")
+    if not report.get("phase40z_handoff_ready") or not report.get("phase41a_preflight_default_blocked"):
+        raise ValueError("Operations dashboard lock requires Phase 40Z handoff and Phase 41A default block.")
 
 
 def render_operations_dashboard_lock_markdown(report: dict[str, Any]) -> str:

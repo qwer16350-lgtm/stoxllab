@@ -182,6 +182,27 @@ def test_operations_dashboard_lock_phase40o_s_review_pipeline_state() -> None:
     assert_true(report["phase40t_login_failure_presence_consistency_verified"] is True, "40T-3 failure consistency")
 
 
+def test_operations_dashboard_lock_phase40u_41a_state() -> None:
+    report = build_operations_dashboard_lock()
+    assert_true(report["phase40t_gateway_connect_verified"] is True, "40U Gateway verified")
+    assert_true(report["phase40u_closeout_ready"] is True, "40U closeout ready")
+    assert_true(report["phase40u_discord_api_send_called"] is False, "40U no API send")
+    assert_true(report["phase40u_discord_message_sent"] is False, "40U no message")
+    assert_true(report["phase40u_message_sent_count"] == 0, "40U count 0")
+    assert_true(report["phase40x_reply_dry_run_ready"] is True, "40X dry-run ready")
+    assert_true(report["phase40x_discord_api_send_called"] is False, "40X no API send")
+    assert_true(report["phase40x_discord_message_sent"] is False, "40X no message")
+    assert_true(report["phase40x_message_sent_count"] == 0, "40X count 0")
+    assert_true(report["phase41_actual_reply_default_blocked"] is True, "41 default blocked")
+    assert_true(report["phase41_actual_reply_send_executed"] is False, "41 no actual reply")
+    assert_true(report["phase41_discord_api_send_called"] is False, "41 no API send")
+    assert_true(report["phase41_discord_message_sent"] is False, "41 no message")
+    assert_true(report["phase41_message_sent_count"] == 0, "41 count 0")
+    assert_true(report["phase40z_handoff_ready"] is True, "40Z handoff ready")
+    assert_true(report["phase41a_preflight_default_blocked"] is True, "41A default blocked")
+    assert_true(report["phase41a_ready_for_manual_private_test_reply"] is False, "41A not ready")
+
+
 def test_operations_dashboard_lock_no_sensitive_values() -> None:
     text = json.dumps(build_operations_dashboard_lock(), ensure_ascii=False).lower()
     assert_true("sk-" not in text and "xoxb-" not in text and "token=" not in text, "No secrets")
@@ -206,6 +227,7 @@ def main() -> int:
         test_operations_dashboard_lock_phase40_runtime_readiness_state,
         test_operations_dashboard_lock_phase40j_n_readonly_entry_state,
         test_operations_dashboard_lock_phase40o_s_review_pipeline_state,
+        test_operations_dashboard_lock_phase40u_41a_state,
         test_operations_dashboard_lock_no_sensitive_values,
         test_operations_dashboard_lock_markdown,
     ]

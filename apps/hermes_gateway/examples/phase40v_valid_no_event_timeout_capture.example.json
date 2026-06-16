@@ -1,0 +1,14 @@
+{
+  "report_type": "phase40v_capture_review_closeout",
+  "version": "phase40v_capture_review_closeout",
+  "capture_review_completed": true,
+  "capture_classification": "valid_no_event_timeout_capture",
+  "capture_valid": true,
+  "captured_event_count": 0,
+  "capture_file_written": true,
+  "raw_content_logged": false,
+  "raw_discord_ids_logged": false,
+  "secret_values_logged": false,
+  "discord_message_sent": false,
+  "message_sent_count": 0
+}

@@ -660,6 +660,15 @@ closeouts. Missing token/channel presence blocks before Discord login with
 `login_attempted=false`; token/channel present plus LoginFailure/HTTP 401 keeps
 presence true and reports `discord_token_valid=false`.
 
+Phase 40U-41A records the operator-observed Phase 40T read-only live success as
+a no-send closeout and prepares the next reply boundary without running it.
+The bundle treats Gateway connect plus timeout with zero captured events as a
+valid read-only success, hardens redacted capture review, adds symbolic
+private-test replay fixtures, freezes a would-reply dry-run, and adds a Phase
+41 private-test reply preflight that is blocked by default. Codex does not run
+the live runtime, does not call Discord API send, does not send a message, does
+not call LLM/RAG or embeddings, and does not execute external actions.
+
 If the registry file is missing, generate it from the repo root:
 
 ```powershell

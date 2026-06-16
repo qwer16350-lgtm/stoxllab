@@ -1100,6 +1100,26 @@ def test_phase40o_s_manual_runtime_review_pipeline_summaries() -> None:
     assert_true(runtime_closeout["message_sent_count"] == 0, "40T-1 closeout no send")
 
 
+def test_phase40u_41a_safe_bundle_summaries() -> None:
+    setup_artifacts()
+    report = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")
+    phase40u = report["phase40u_readonly_live_connection_closeout"]
+    phase40x = report["phase40x_reply_decision_dry_run"]
+    phase40y = report["phase40y_phase41_reply_preflight_gate"]
+    phase40z = report["phase40z_operations_handoff"]
+    phase41 = report["phase41_private_test_reply_preflight"]
+    assert_true(phase40u["phase40t_live_connection_verified"] is True, "40U verified")
+    assert_true(phase40u["message_sent_count"] == 0, "40U no send")
+    assert_true(phase40x["would_reply"] is True, "40X would reply dry-run")
+    assert_true(phase40x["discord_message_sent"] is False, "40X no send")
+    assert_true(phase40y["default_blocked"] is True, "40Y default blocked")
+    assert_true(phase40y["actual_reply_send_executed"] is False, "40Y no actual reply")
+    assert_true(phase40z["phase40u_closeout_ready"] is True, "40Z closeout ready")
+    assert_true(phase40z["ready_for_actual_reply_send"] is False, "40Z no actual send")
+    assert_true(phase41["default_blocked"] is True, "41A default blocked")
+    assert_true(phase41["message_sent_count"] == 0, "41A no send")
+
+
 def main() -> int:
     tests = [
         test_recent_events_returned,
@@ -1160,6 +1180,7 @@ def main() -> int:
         test_phase40_runtime_readiness_summaries,
         test_phase40j_n_readonly_runtime_entry_summaries,
         test_phase40o_s_manual_runtime_review_pipeline_summaries,
+        test_phase40u_41a_safe_bundle_summaries,
     ]
     for test in tests:
         test()

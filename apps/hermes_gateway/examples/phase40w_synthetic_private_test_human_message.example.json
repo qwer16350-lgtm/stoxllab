@@ -1,0 +1,15 @@
+{
+  "event_type": "redacted_private_test_human_message",
+  "event_id_hash": "evt_hash_example",
+  "message_id_hash": "msg_hash_example",
+  "channel_scope": "private_test_only",
+  "author_type": "human",
+  "is_self": false,
+  "is_bot": false,
+  "is_duplicate": false,
+  "content_present": true,
+  "content_length_bucket": "nonzero_redacted",
+  "raw_content_logged": false,
+  "raw_discord_ids_logged": false,
+  "secret_values_logged": false
+}

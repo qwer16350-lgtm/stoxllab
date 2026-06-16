@@ -108,6 +108,13 @@ from phase40t_private_test_readonly_runtime_command import (
 from phase40t_readonly_capture_writer import CAPTURE_SCHEMA_VERSION
 from phase40t_readonly_live_execution_gate import build_phase40t_readonly_live_execution_gate
 from phase40t_readonly_runtime_closeout import build_phase40t_readonly_runtime_closeout
+from phase40u_readonly_live_connection_closeout import build_phase40u_readonly_live_connection_closeout
+from phase40v_capture_review_closeout import build_phase40v_capture_review_closeout
+from phase40w_synthetic_private_test_replay import build_phase40w_synthetic_private_test_replay
+from phase40x_reply_decision_dry_run import build_phase40x_reply_decision_dry_run
+from phase40y_phase41_reply_preflight_gate import build_phase40y_phase41_reply_preflight_gate
+from phase40z_operations_handoff import build_phase40z_operations_handoff
+from phase41_private_test_reply_preflight import build_phase41_private_test_reply_preflight
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope
 from rag_evidence_review_packet import build_rag_evidence_review_packet
@@ -619,6 +626,13 @@ def build_operations_packet_viewer_report(
     phase40t_gate = build_phase40t_readonly_live_execution_gate(env={}, execute_flag_present=False, root=root)
     phase40t_closeout = build_phase40t_readonly_runtime_closeout()
     phase40t_login_failure = build_phase40t_discord_login_failure_closeout_command(env={})
+    phase40u_closeout = build_phase40u_readonly_live_connection_closeout()
+    phase40v_capture = build_phase40v_capture_review_closeout()
+    phase40w_synthetic = build_phase40w_synthetic_private_test_replay()
+    phase40x_reply = build_phase40x_reply_decision_dry_run()
+    phase40y_gate = build_phase40y_phase41_reply_preflight_gate()
+    phase40z_handoff = build_phase40z_operations_handoff()
+    phase41_preflight = build_phase41_private_test_reply_preflight()
     report = {
         "report_type": "operations_packet_viewer",
         "version": VERSION,
@@ -1586,6 +1600,67 @@ def build_operations_packet_viewer_report(
             "presence_consistency_verified": bool(phase40t_login_failure.get("presence_consistency_verified")),
             "login_attempt_requires_token_and_channel": bool(phase40t_login_failure.get("login_attempt_requires_token_and_channel")),
             "operator_action_required": phase40t_login_failure.get("operator_action_required", ""),
+        },
+        "phase40u_readonly_live_connection_closeout": {
+            "available": True,
+            "phase40t_live_connection_verified": bool(phase40u_closeout.get("phase40t_live_connection_verified")),
+            "gateway_connect_verified": bool(phase40u_closeout.get("gateway_connect_verified")),
+            "read_only_timeout_success": bool(phase40u_closeout.get("read_only_timeout_success")),
+            "captured_event_count": int(phase40u_closeout.get("captured_event_count", 0) or 0),
+            "capture_file_written": bool(phase40u_closeout.get("capture_file_written")),
+            "discord_message_sent": bool(phase40u_closeout.get("discord_message_sent")),
+            "message_sent_count": int(phase40u_closeout.get("message_sent_count", 0) or 0),
+        },
+        "phase40v_capture_review_closeout": {
+            "available": True,
+            "capture_classification": phase40v_capture.get("capture_classification"),
+            "capture_valid": bool(phase40v_capture.get("capture_valid")),
+            "raw_content_logged": bool(phase40v_capture.get("raw_content_logged")),
+            "raw_discord_ids_logged": bool(phase40v_capture.get("raw_discord_ids_logged")),
+            "secret_values_logged": bool(phase40v_capture.get("secret_values_logged")),
+        },
+        "phase40w_synthetic_private_test_replay": {
+            "available": True,
+            "synthetic_fixture_available": bool(phase40w_synthetic.get("synthetic_fixture_available")),
+            "raw_content_logged": bool(phase40w_synthetic.get("raw_content_logged")),
+            "raw_discord_ids_logged": bool(phase40w_synthetic.get("raw_discord_ids_logged")),
+        },
+        "phase40x_reply_decision_dry_run": {
+            "available": True,
+            "would_reply": bool(phase40x_reply.get("would_reply")),
+            "reply_payload_frozen": bool(phase40x_reply.get("reply_payload_frozen")),
+            "discord_api_send_called": bool(phase40x_reply.get("discord_api_send_called")),
+            "discord_message_sent": bool(phase40x_reply.get("discord_message_sent")),
+            "message_sent_count": int(phase40x_reply.get("message_sent_count", 0) or 0),
+            "ready_for_phase41_preflight_gate": bool(phase40x_reply.get("ready_for_phase41_preflight_gate")),
+            "ready_for_actual_reply_send": bool(phase40x_reply.get("ready_for_actual_reply_send")),
+        },
+        "phase40y_phase41_reply_preflight_gate": {
+            "available": True,
+            "default_blocked": bool(phase40y_gate.get("default_blocked")),
+            "blocked": bool(phase40y_gate.get("blocked")),
+            "actual_reply_send_executed": bool(phase40y_gate.get("actual_reply_send_executed")),
+            "discord_api_send_called": bool(phase40y_gate.get("discord_api_send_called")),
+            "discord_message_sent": bool(phase40y_gate.get("discord_message_sent")),
+            "message_sent_count": int(phase40y_gate.get("message_sent_count", 0) or 0),
+            "ready_for_actual_reply_send": bool(phase40y_gate.get("ready_for_actual_reply_send")),
+        },
+        "phase40z_operations_handoff": {
+            "available": True,
+            "phase40t_gateway_connect_verified": bool(phase40z_handoff.get("phase40t_gateway_connect_verified")),
+            "phase40u_closeout_ready": bool(phase40z_handoff.get("phase40u_closeout_ready")),
+            "phase40x_reply_dry_run_ready": bool(phase40z_handoff.get("phase40x_reply_dry_run_ready")),
+            "phase41_actual_reply_default_blocked": bool(phase40z_handoff.get("phase41_actual_reply_default_blocked")),
+            "ready_for_actual_reply_send": bool(phase40z_handoff.get("ready_for_actual_reply_send")),
+        },
+        "phase41_private_test_reply_preflight": {
+            "available": True,
+            "default_blocked": bool(phase41_preflight.get("default_blocked")),
+            "actual_reply_send_executed": bool(phase41_preflight.get("actual_reply_send_executed")),
+            "discord_api_send_called": bool(phase41_preflight.get("discord_api_send_called")),
+            "discord_message_sent": bool(phase41_preflight.get("discord_message_sent")),
+            "message_sent_count": int(phase41_preflight.get("message_sent_count", 0) or 0),
+            "ready_for_manual_private_test_reply": bool(phase41_preflight.get("ready_for_manual_private_test_reply")),
         },
         "daily_manifest_summary": load_daily_manifest(root=root, date=date),
         "filters": {

@@ -144,6 +144,13 @@ from phase40t_private_test_readonly_runtime_command import (
     build_phase40t_private_test_readonly_runtime_command,
     render_phase40t_private_test_readonly_runtime_command_markdown,
 )
+from phase40u_readonly_live_connection_closeout import build_phase40u_readonly_live_connection_closeout, render_phase40u_readonly_live_connection_closeout_markdown
+from phase40v_capture_review_closeout import build_phase40v_capture_review_closeout, render_phase40v_capture_review_closeout_markdown
+from phase40w_synthetic_private_test_replay import build_phase40w_synthetic_private_test_replay, render_phase40w_synthetic_private_test_replay_markdown
+from phase40x_reply_decision_dry_run import build_phase40x_reply_decision_dry_run, render_phase40x_reply_decision_dry_run_markdown
+from phase40y_phase41_reply_preflight_gate import build_phase40y_phase41_reply_preflight_gate, render_phase40y_phase41_reply_preflight_gate_markdown
+from phase40z_operations_handoff import build_phase40z_operations_handoff, render_phase40z_operations_handoff_markdown
+from phase41_private_test_reply_preflight import build_phase41_private_test_reply_preflight, render_phase41_private_test_reply_preflight_markdown
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight, render_rag_evidence_private_test_send_preflight_markdown
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope, render_rag_evidence_prompt_envelope_markdown
 from rag_evidence_review_packet import build_rag_evidence_review_packet, render_rag_evidence_review_packet_markdown
@@ -325,6 +332,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--run-discord-private-test-readonly-preflight", action="store_true", help="Print Phase 40T private-test read-only runtime preflight without live execution.")
     parser.add_argument("--execute-readonly-live-runtime", action="store_true", help="User-only Phase 40T read-only live runtime execute flag.")
     parser.add_argument("--phase40t-discord-login-failure-closeout", action="store_true", help="Print Phase 40T-2 Discord login failure closeout without attempting Discord login.")
+    parser.add_argument("--phase40u-readonly-live-connection-closeout", action="store_true", help="Print Phase 40U read-only live connection closeout without live execution.")
+    parser.add_argument("--phase40v-capture-review-closeout", action="store_true", help="Print Phase 40V capture review closeout without reading live logs.")
+    parser.add_argument("--phase40w-synthetic-private-test-replay", action="store_true", help="Print Phase 40W synthetic redacted private-test replay fixtures.")
+    parser.add_argument("--phase40x-reply-decision-dry-run", action="store_true", help="Print Phase 40X no-send reply decision dry-run.")
+    parser.add_argument("--phase40y-phase41-reply-preflight-gate", action="store_true", help="Print Phase 40Y Phase 41 actual reply preflight gate.")
+    parser.add_argument("--phase40z-operations-handoff", action="store_true", help="Print Phase 40Z operations handoff summary.")
+    parser.add_argument("--phase41-private-test-reply-preflight", action="store_true", help="Print Phase 41 private-test reply runtime preflight only.")
     parser.add_argument("--live-event-audit-report", action="store_true", help="Print Phase 30 live event audit record report.")
     parser.add_argument("--would-send-preview-report", action="store_true", help="Print Phase 30 would-send preview report.")
     parser.add_argument("--live-event-review-packet-report", action="store_true", help="Print Phase 30 live event review packet report.")
@@ -2272,6 +2286,97 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- message_sent_count: {output.get('message_sent_count')}")
         return 0
 
+    if args.phase40u_readonly_live_connection_closeout:
+        output = build_phase40u_readonly_live_connection_closeout()
+        if args.markdown:
+            print(render_phase40u_readonly_live_connection_closeout_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 40U read-only live connection closeout")
+            print(f"- gateway_connect_verified: {output.get('gateway_connect_verified')}")
+            print(f"- read_only_timeout_success: {output.get('read_only_timeout_success')}")
+            print(f"- discord_message_sent: {output.get('discord_message_sent')}")
+            print(f"- message_sent_count: {output.get('message_sent_count')}")
+        return 0
+
+    if args.phase40v_capture_review_closeout:
+        output = build_phase40v_capture_review_closeout()
+        if args.markdown:
+            print(render_phase40v_capture_review_closeout_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 40V capture review closeout")
+            print(f"- capture_classification: {output.get('capture_classification')}")
+            print(f"- capture_valid: {output.get('capture_valid')}")
+            print(f"- discord_message_sent: {output.get('discord_message_sent')}")
+        return 0
+
+    if args.phase40w_synthetic_private_test_replay:
+        output = build_phase40w_synthetic_private_test_replay()
+        if args.markdown:
+            print(render_phase40w_synthetic_private_test_replay_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 40W synthetic private-test replay")
+            print(f"- synthetic_fixture_available: {output.get('synthetic_fixture_available')}")
+            print(f"- message_sent_count: {output.get('message_sent_count')}")
+        return 0
+
+    if args.phase40x_reply_decision_dry_run:
+        output = build_phase40x_reply_decision_dry_run()
+        if args.markdown:
+            print(render_phase40x_reply_decision_dry_run_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 40X reply decision dry-run")
+            print(f"- would_reply: {output.get('would_reply')}")
+            print(f"- discord_message_sent: {output.get('discord_message_sent')}")
+            print(f"- message_sent_count: {output.get('message_sent_count')}")
+        return 0
+
+    if args.phase40y_phase41_reply_preflight_gate:
+        output = build_phase40y_phase41_reply_preflight_gate()
+        if args.markdown:
+            print(render_phase40y_phase41_reply_preflight_gate_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 40Y Phase 41 reply preflight gate")
+            print(f"- blocked: {output.get('blocked')}")
+            print(f"- block_reason: {output.get('block_reason')}")
+            print(f"- discord_message_sent: {output.get('discord_message_sent')}")
+        return 0
+
+    if args.phase40z_operations_handoff:
+        output = build_phase40z_operations_handoff()
+        if args.markdown:
+            print(render_phase40z_operations_handoff_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 40Z operations handoff")
+            print(f"- phase40u_closeout_ready: {output.get('phase40u_closeout_ready')}")
+            print(f"- phase40x_reply_dry_run_ready: {output.get('phase40x_reply_dry_run_ready')}")
+            print(f"- ready_for_actual_reply_send: {output.get('ready_for_actual_reply_send')}")
+        return 0
+
+    if args.phase41_private_test_reply_preflight:
+        output = build_phase41_private_test_reply_preflight()
+        if args.markdown:
+            print(render_phase41_private_test_reply_preflight_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase 41 private-test reply preflight")
+            print(f"- default_blocked: {output.get('default_blocked')}")
+            print(f"- discord_message_sent: {output.get('discord_message_sent')}")
+            print(f"- message_sent_count: {output.get('message_sent_count')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -2512,6 +2617,13 @@ def main(argv: list[str] | None = None) -> int:
         or args.run_discord_private_test_readonly
         or args.run_discord_private_test_readonly_preflight
         or args.phase40t_discord_login_failure_closeout
+        or args.phase40u_readonly_live_connection_closeout
+        or args.phase40v_capture_review_closeout
+        or args.phase40w_synthetic_private_test_replay
+        or args.phase40x_reply_decision_dry_run
+        or args.phase40y_phase41_reply_preflight_gate
+        or args.phase40z_operations_handoff
+        or args.phase41_private_test_reply_preflight
         or args.execute_readonly_live_runtime
         or args.allow_llm_api_call
         or args.allow_actual_one_shot_llm_draft_call
