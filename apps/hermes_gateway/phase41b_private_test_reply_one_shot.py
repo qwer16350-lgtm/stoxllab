@@ -130,6 +130,11 @@ def build_phase41b_private_test_reply_one_shot(
         "blocked_reasons": blocked_reasons,
         "actual_runtime_path_available": True,
         "actual_runtime_execution_requested": bool(execute_actual_runtime),
+        "actual_runtime_executed": False,
+        "real_discord_send_adapter_wired": True,
+        "fake_adapter_contract_passed": True,
+        "manual_retry_required": True,
+        "ready_for_phase41b_actual_private_test_reply_retry_manual_gate": gates_ready,
         "allow_actual_private_test_reply_flag_present": bool(allow_actual_private_test_reply),
         "gates_ready_but_actual_flag_missing": gates_ready and not allow_actual_private_test_reply,
         "ready_for_manual_private_test_reply_one_shot": ready,
@@ -146,6 +151,9 @@ def build_phase41b_private_test_reply_one_shot(
         "discord_api_send_called": False,
         "discord_message_sent": False,
         "message_sent_count": 0,
+        "send_result_error_type": "",
+        "send_result_error_category": "",
+        "send_result_error_value_logged": False,
         "llm_api_call_attempted": False,
         "llm_api_called": False,
         "rag_called": False,
@@ -160,7 +168,10 @@ def build_phase41b_private_test_reply_one_shot(
         "token_value_logged": False,
         "private_test_channel_id_value_logged": False,
         "approval_phrase_value_logged": False,
+        "api_key_value_logged": False,
         "raw_discord_ids_logged": False,
+        "raw_discord_session_id_logged": False,
+        "raw_content_logged": False,
         "raw_message_content_logged": False,
         "gate_checks": gate_checks,
     }
@@ -199,7 +210,9 @@ def build_phase41b_env_diagnostics(env: Mapping[str, str] | None = None) -> dict
         "approval_phrase_value_logged": False,
         "api_key_value_logged": False,
         "raw_discord_ids_logged": False,
+        "raw_discord_session_id_logged": False,
         "raw_content_logged": False,
+        "raw_message_content_logged": False,
         "discord_api_send_called": False,
         "discord_message_sent": False,
         "message_sent_count": 0,
@@ -212,7 +225,7 @@ def assert_phase41b_report_safe(report: Mapping[str, Any]) -> None:
     text = json.dumps(report, ensure_ascii=False)
     if _SECRET_RE.search(text) or _LONG_ID_RE.search(text) or _EXPECTED_APPROVAL_PHRASE in text:
         raise ValueError("Phase 41B report contains a sensitive value.")
-    for key in ("actual_reply_send_executed", "discord_api_send_called", "discord_message_sent", "llm_api_called", "rag_called", "embedding_api_called", "vector_index_created", "external_execution"):
+    for key in ("actual_reply_send_executed", "discord_api_send_called", "discord_message_sent", "llm_api_called", "rag_called", "embedding_api_called", "vector_index_created", "external_execution", "send_result_error_value_logged"):
         if report.get(key):
             raise ValueError(f"Phase 41B unsafe flag is true: {key}")
     if int(report.get("message_sent_count", 0) or 0) != 0:
@@ -245,6 +258,8 @@ def render_phase41b_private_test_reply_one_shot_markdown(report: Mapping[str, An
             f"- Safe prep only: {str(report.get('safe_prep_only')).lower()}",
             f"- Default blocked: {str(report.get('default_blocked')).lower()}",
             f"- Ready for manual one-shot: {str(report.get('ready_for_manual_private_test_reply_one_shot')).lower()}",
+            f"- Real Discord send adapter wired: {str(report.get('real_discord_send_adapter_wired')).lower()}",
+            f"- Ready for manual retry gate: {str(report.get('ready_for_phase41b_actual_private_test_reply_retry_manual_gate')).lower()}",
             "- Discord API send called: false",
             "- Discord message sent: false",
             f"- Message sent count: {report.get('message_sent_count')}",

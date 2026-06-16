@@ -15,3 +15,10 @@ Current bundle: Phase 41B~45A Safe Prep Mega Bundle. It prepares final productio
 Phase 41B-0 hotfix updates the one-shot gate to read the current process environment for manual reply readiness and to report failure-shaped blocked reasons. It adds boolean-only env diagnostics and still performs no actual reply/send.
 
 Phase 41B-1 adds the actual private-test deterministic reply runtime path behind the manual allow flag and all existing gates. This phase implements adapter/runtime code and fake-adapter tests only. Codex still does not execute the actual Discord runtime or send path.
+
+Phase 41B-2 hotfix wires the real Discord send adapter for the next manual
+retry after a sanitized manual attempt reached an eligible private-test human
+message but failed with `RuntimeError`. The adapter no longer reuses a closed
+message object for sending; it uses a fresh manual-gated private-test channel
+send path. Codex does not run the actual flag, does not call Discord API send,
+and does not send a Discord message in this hotfix.

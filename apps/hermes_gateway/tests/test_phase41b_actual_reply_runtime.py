@@ -123,6 +123,33 @@ def test_failed_send_does_not_prepare_closeout() -> None:
     assert_true(report["ready_for_phase41c_actual_reply_closeout"] is False, "No closeout")
 
 
+def test_runtime_error_failure_is_classified_without_error_value() -> None:
+    adapter = FakePhase41BReplyAdapter(
+        events=[Phase41BReplyEvent()],
+        send_result=Phase41BReplySendResult(
+            api_send_called=False,
+            message_sent=False,
+            message_sent_count=0,
+            sent_scope="none",
+            adapter_type="fake",
+            error_type="RuntimeError",
+        ),
+    )
+    report = build_phase41b_private_test_reply_one_shot(
+        ready_env(),
+        allow_actual_private_test_reply=True,
+        execute_actual_runtime=True,
+        reply_adapter=adapter,
+    )
+    assert_true(report["send_result_error_type"] == "RuntimeError", "RuntimeError retained")
+    assert_true(report["send_result_error_category"] == "adapter_not_wired_or_contract_error", "RuntimeError classified")
+    assert_true(report["send_result_error_value_logged"] is False, "No error value")
+    assert_true(report["actual_reply_send_executed"] is False, "No execution")
+    assert_true(report["discord_api_send_called"] is False, "No API send")
+    assert_true(report["discord_message_sent"] is False, "No Discord message")
+    assert_true(report["message_sent_count"] == 0, "No send count")
+
+
 def test_no_sensitive_values_or_external_calls() -> None:
     report = build_phase41b_private_test_reply_one_shot(
         ready_env(),
@@ -146,6 +173,7 @@ def main() -> int:
         test_ignored_events_and_timeout_do_not_send,
         test_one_shot_lock_consumed_blocks_runtime,
         test_failed_send_does_not_prepare_closeout,
+        test_runtime_error_failure_is_classified_without_error_value,
         test_no_sensitive_values_or_external_calls,
     ]
     for test in tests:

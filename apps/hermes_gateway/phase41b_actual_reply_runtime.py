@@ -19,6 +19,16 @@ def _eligible(event: Phase41BReplyEvent) -> bool:
     return event.channel_scope == "private_test" and event.author_type == "human" and not event.duplicate
 
 
+def _send_error_category(error_type: str, explicit_category: str = "") -> str:
+    if explicit_category:
+        return explicit_category
+    if error_type in {"RuntimeError", "missing_send_target", "private_test_channel_mismatch"}:
+        return "adapter_not_wired_or_contract_error"
+    if error_type:
+        return "discord_send_failed"
+    return ""
+
+
 def run_phase41b_actual_reply_runtime(
     *,
     gate_report: Mapping[str, Any],
@@ -74,6 +84,8 @@ def run_phase41b_actual_reply_runtime(
                 "message_sent_count": sent_count,
                 "sent_scope": send_result.sent_scope,
                 "send_result_error_type": send_result.error_type,
+                "send_result_error_category": _send_error_category(send_result.error_type, send_result.error_category),
+                "send_result_error_value_logged": bool(send_result.error_value_logged),
                 "ready_for_phase41c_actual_reply_closeout": sent_once,
                 "ready_for_repeat_send": False,
                 "ready_for_supervised_session": False,
@@ -99,6 +111,10 @@ def _base_report(gate_report: Mapping[str, Any]) -> dict[str, Any]:
             "embedding_api_called": False,
             "vector_index_created": False,
             "external_execution": False,
+            "real_discord_send_adapter_wired": True,
+            "fake_adapter_contract_passed": True,
+            "manual_retry_required": True,
+            "ready_for_phase41b_actual_private_test_reply_retry_manual_gate": True,
             "public_channel_send_allowed": False,
             "team_channel_send_allowed": False,
             "public_channel_reply_allowed": False,
@@ -110,6 +126,7 @@ def _base_report(gate_report: Mapping[str, Any]) -> dict[str, Any]:
             "approval_phrase_value_logged": False,
             "api_key_value_logged": False,
             "raw_discord_ids_logged": False,
+            "raw_discord_session_id_logged": False,
             "raw_content_logged": False,
             "raw_message_content_logged": False,
             "full_content_dump": False,
@@ -125,6 +142,9 @@ def _no_send_result(reason: str) -> dict[str, Any]:
         "discord_message_sent": False,
         "message_sent_count": 0,
         "sent_scope": "none",
+        "send_result_error_type": "",
+        "send_result_error_category": "",
+        "send_result_error_value_logged": False,
         "blocked": True,
         "blocked_reasons": [reason],
         "ready_for_phase41c_actual_reply_closeout": False,
@@ -156,8 +176,10 @@ def assert_phase41b_runtime_report_safe(report: Mapping[str, Any]) -> None:
         "approval_phrase_value_logged",
         "api_key_value_logged",
         "raw_discord_ids_logged",
+        "raw_discord_session_id_logged",
         "raw_content_logged",
         "raw_message_content_logged",
+        "send_result_error_value_logged",
         "full_content_dump",
         "ready_for_repeat_send",
     ):

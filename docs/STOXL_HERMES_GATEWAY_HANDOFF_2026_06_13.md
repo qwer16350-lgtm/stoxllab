@@ -466,3 +466,11 @@ routing, human-message-only eligibility, one-shot lock, and no LLM/RAG/external
 guards. The implementation adds adapter boundaries and fake-adapter tests.
 Codex did not run the actual command, did not connect Discord Gateway, did not
 call Discord API send, and did not send a Discord message.
+
+Phase 41B-2 hotfix prepares the next manual retry after the first actual
+private-test reply attempt detected an eligible human message but failed the
+send step with a sanitized `RuntimeError`. The real adapter is now wired to
+send through a fresh private-test channel send path instead of reusing the
+closed collection message object. Tests remain fake-adapter only. Codex did not
+run `--allow-actual-private-test-reply`, did not call Discord API send, and did
+not send a Discord message.

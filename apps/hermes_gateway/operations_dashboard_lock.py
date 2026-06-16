@@ -285,6 +285,10 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
         "phase41b_default_blocked": bool(phase41b_one_shot.get("default_blocked")),
         "phase41b_actual_runtime_path_available": bool(phase41b_one_shot.get("actual_runtime_path_available")),
         "phase41b_actual_runtime_executed": bool(phase41b_one_shot.get("actual_runtime_executed")),
+        "phase41b_real_discord_send_adapter_wired": bool(phase41b_one_shot.get("real_discord_send_adapter_wired")),
+        "phase41b_fake_adapter_contract_passed": bool(phase41b_one_shot.get("fake_adapter_contract_passed")),
+        "phase41b_manual_retry_required": bool(phase41b_one_shot.get("manual_retry_required")),
+        "phase41b_ready_for_actual_private_test_reply_retry_manual_gate": bool(phase41b_one_shot.get("ready_for_phase41b_actual_private_test_reply_retry_manual_gate")),
         "phase41b_ready_for_manual_private_test_reply_one_shot": bool(phase41b_one_shot.get("ready_for_manual_private_test_reply_one_shot")),
         "phase41b_actual_reply_send_executed": bool(phase41b_one_shot.get("actual_reply_send_executed")),
         "phase41b_discord_api_send_called": bool(phase41b_one_shot.get("discord_api_send_called")),
@@ -514,7 +518,7 @@ def assert_operations_dashboard_lock_safe(report: dict[str, Any]) -> None:
         raise ValueError("Operations dashboard lock forbids Phase 41 messages.")
     if not report.get("phase40z_handoff_ready") or not report.get("phase41a_preflight_default_blocked"):
         raise ValueError("Operations dashboard lock requires Phase 40Z handoff and Phase 41A default block.")
-    if not report.get("phase41b_one_shot_available") or not report.get("phase41b_actual_runtime_path_available") or not report.get("phase41b_default_blocked") or int(report.get("phase41b_message_sent_count", 0) or 0) != 0:
+    if not report.get("phase41b_one_shot_available") or not report.get("phase41b_actual_runtime_path_available") or not report.get("phase41b_real_discord_send_adapter_wired") or not report.get("phase41b_fake_adapter_contract_passed") or not report.get("phase41b_default_blocked") or int(report.get("phase41b_message_sent_count", 0) or 0) != 0:
         raise ValueError("Operations dashboard lock requires Phase 41B blocked no-send prep.")
     if not report.get("phase41c_closeout_available") or int(report.get("phase41c_message_sent_count", 0) or 0) != 0:
         raise ValueError("Operations dashboard lock requires Phase 41C no-send scaffold.")
@@ -560,6 +564,8 @@ def render_operations_dashboard_lock_markdown(report: dict[str, Any]) -> str:
             f"- Phase 41B one-shot default blocked: {str(report.get('phase41b_default_blocked')).lower()}",
             f"- Phase 41B actual runtime path available: {str(report.get('phase41b_actual_runtime_path_available')).lower()}",
             f"- Phase 41B actual runtime executed: {str(report.get('phase41b_actual_runtime_executed')).lower()}",
+            f"- Phase 41B real Discord send adapter wired: {str(report.get('phase41b_real_discord_send_adapter_wired')).lower()}",
+            f"- Phase 41B fake adapter contract passed: {str(report.get('phase41b_fake_adapter_contract_passed')).lower()}",
             f"- Phase 41B message sent count: {report.get('phase41b_message_sent_count')}",
             f"- Phase 42 actual runtime executed: {str(report.get('phase42_actual_runtime_executed')).lower()}",
             f"- Phase 44 actual LLM API call: {str(report.get('phase44_actual_llm_api_call')).lower()}",

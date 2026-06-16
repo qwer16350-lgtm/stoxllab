@@ -49,6 +49,9 @@ def test_default_blocked() -> None:
     report = build_phase41b_private_test_reply_one_shot()
     assert_true(report["default_blocked"] is True, "Default blocked")
     assert_true(report["ready_for_manual_private_test_reply_one_shot"] is False, "Not ready")
+    assert_true(report["actual_runtime_path_available"] is True, "Runtime path available")
+    assert_true(report["real_discord_send_adapter_wired"] is True, "Real adapter wired")
+    assert_true(report["fake_adapter_contract_passed"] is True, "Fake contract passed")
     assert_no_send(report)
 
 
@@ -111,6 +114,7 @@ def test_process_env_gate_checks_true_without_actual_flag() -> None:
     assert_true(report["blocked"] is True, "Blocked without actual flag")
     assert_true(report["blocked_reasons"] == ["allow_actual_private_test_reply_flag_missing"], "Only actual flag missing")
     assert_true(report["gates_ready_but_actual_flag_missing"] is True, "Gates ready flag")
+    assert_true(report["ready_for_phase41b_actual_private_test_reply_retry_manual_gate"] is True, "Ready for retry manual gate")
     assert_no_send(report)
 
 
@@ -121,6 +125,9 @@ def test_no_sensitive_values() -> None:
     assert_true("sensitive_channel_value_do_not_log" not in text, "No channel value")
     assert_true("i_approve_" not in text, "No approval phrase")
     assert_true(not LONG_NUMBER_RE.search(text), "No raw IDs")
+    assert_true(report["raw_discord_session_id_logged"] is False, "No raw session ID")
+    assert_true(report["raw_content_logged"] is False, "No raw content")
+    assert_true(report["send_result_error_value_logged"] is False, "No error value")
 
 
 def main() -> int:
