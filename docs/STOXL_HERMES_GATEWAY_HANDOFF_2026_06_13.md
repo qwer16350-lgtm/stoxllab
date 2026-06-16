@@ -428,3 +428,9 @@ and token/channel/approval/API/raw content values not logged. Codex does not
 retry Discord login or run the live runtime; the operator must refresh or
 correct the Discord bot token manually before the next user-run read-only
 runtime attempt.
+
+Phase 40T-3 preserves the preflight snapshot into execute closeouts. This keeps
+token/channel presence consistent between a passed preflight and a later
+LoginFailure closeout. Missing token or channel presence blocks before login
+with `login_attempted=false`; token/channel present plus LoginFailure or HTTP
+401 reports `invalid_or_unauthorized_token` while preserving presence true.

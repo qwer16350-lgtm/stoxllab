@@ -6,6 +6,8 @@ import json
 import re
 from typing import Any
 
+from phase40t_readonly_preflight_snapshot import add_phase40t_snapshot_consistency_fields
+
 
 VERSION_EMPTY = "phase40t_readonly_runtime_closeout_empty"
 VERSION_ACTUAL = "phase40t_actual_readonly_runtime_closeout"
@@ -31,6 +33,7 @@ def build_phase40t_readonly_runtime_closeout(
     captured_public_team_blocked_count: int = 0,
     capture_file_written: bool = False,
     capture_file_path_logged: bool = False,
+    preflight_snapshot: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     report = {
         "report_type": "phase40t_readonly_runtime_closeout",
@@ -56,6 +59,13 @@ def build_phase40t_readonly_runtime_closeout(
         "capture_file_contains_raw_content": False,
         "capture_file_contains_raw_discord_ids": False,
         "capture_file_contains_secret_values": False,
+        "discord_token_present": bool(preflight_snapshot.get("discord_token_present")) if preflight_snapshot else False,
+        "discord_token_value_logged": False,
+        "private_test_channel_id_present": bool(preflight_snapshot.get("private_test_channel_id_present")) if preflight_snapshot else False,
+        "private_test_channel_id_value_logged": False,
+        "approval_actualized": bool(preflight_snapshot.get("approval_actualized")) if preflight_snapshot else False,
+        "approval_phrase_present": bool(preflight_snapshot.get("approval_phrase_present")) if preflight_snapshot else False,
+        "approval_phrase_exact_match": bool(preflight_snapshot.get("approval_phrase_exact_match")) if preflight_snapshot else False,
         "discord_api_send_called": False,
         "discord_message_sent": False,
         "message_sent_count": 0,
@@ -84,6 +94,7 @@ def build_phase40t_readonly_runtime_closeout(
         "ready_for_phase41_reply_runtime": False,
         "ready_for_reply_send": False,
     }
+    add_phase40t_snapshot_consistency_fields(report, preflight_snapshot)
     assert_phase40t_readonly_runtime_closeout_safe(report)
     return report
 

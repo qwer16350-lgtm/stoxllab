@@ -101,11 +101,13 @@ from phase40p_readonly_capture_schema import build_phase40p_readonly_capture_sch
 from phase40q_capture_review_closeout import build_phase40q_capture_review_closeout
 from phase40r_phase41_reply_preflight_matrix import build_phase40r_phase41_reply_preflight_matrix
 from phase40s_morning_review_operator_decision_packet import build_phase40s_morning_review_operator_decision_packet
-from phase40t_private_test_readonly_runtime_command import build_phase40t_private_test_readonly_runtime_command
+from phase40t_private_test_readonly_runtime_command import (
+    build_phase40t_discord_login_failure_closeout_command,
+    build_phase40t_private_test_readonly_runtime_command,
+)
 from phase40t_readonly_capture_writer import CAPTURE_SCHEMA_VERSION
 from phase40t_readonly_live_execution_gate import build_phase40t_readonly_live_execution_gate
 from phase40t_readonly_runtime_closeout import build_phase40t_readonly_runtime_closeout
-from phase40t_discord_login_failure_closeout import build_phase40t_discord_login_failure_closeout
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope
 from rag_evidence_review_packet import build_rag_evidence_review_packet
@@ -616,7 +618,7 @@ def build_operations_packet_viewer_report(
     phase40t_command = build_phase40t_private_test_readonly_runtime_command(env={}, report_only=False)
     phase40t_gate = build_phase40t_readonly_live_execution_gate(env={}, execute_flag_present=False, root=root)
     phase40t_closeout = build_phase40t_readonly_runtime_closeout()
-    phase40t_login_failure = build_phase40t_discord_login_failure_closeout(env={})
+    phase40t_login_failure = build_phase40t_discord_login_failure_closeout_command(env={})
     report = {
         "report_type": "operations_packet_viewer",
         "version": VERSION,
@@ -1534,6 +1536,9 @@ def build_operations_packet_viewer_report(
             "discord_api_send_called": bool(phase40t_command.get("discord_api_send_called")),
             "discord_message_sent": bool(phase40t_command.get("discord_message_sent")),
             "message_sent_count": int(phase40t_command.get("message_sent_count", 0) or 0),
+            "preflight_snapshot_preserved": bool(phase40t_command.get("preflight_snapshot_preserved")),
+            "presence_consistency_verified": bool(phase40t_command.get("presence_consistency_verified")),
+            "login_attempt_requires_token_and_channel": bool(phase40t_command.get("login_attempt_requires_token_and_channel")),
         },
         "phase40t_readonly_live_execution_gate": {
             "available": True,
@@ -1543,6 +1548,9 @@ def build_operations_packet_viewer_report(
             "discord_api_send_called": bool(phase40t_gate.get("discord_api_send_called")),
             "discord_message_sent": bool(phase40t_gate.get("discord_message_sent")),
             "message_sent_count": int(phase40t_gate.get("message_sent_count", 0) or 0),
+            "preflight_snapshot_preserved": bool(phase40t_gate.get("preflight_snapshot_preserved")),
+            "presence_consistency_verified": bool(phase40t_gate.get("presence_consistency_verified")),
+            "login_attempt_requires_token_and_channel": bool(phase40t_gate.get("login_attempt_requires_token_and_channel")),
         },
         "phase40t_readonly_capture_writer": {
             "available": True,
@@ -1559,6 +1567,8 @@ def build_operations_packet_viewer_report(
             "started": bool(phase40t_closeout.get("started")),
             "discord_gateway_connected": bool(phase40t_closeout.get("discord_gateway_connected")),
             "message_sent_count": int(phase40t_closeout.get("message_sent_count", 0) or 0),
+            "preflight_snapshot_preserved": bool(phase40t_closeout.get("preflight_snapshot_preserved")),
+            "presence_consistency_verified": bool(phase40t_closeout.get("presence_consistency_verified")),
         },
         "phase40t_discord_login_failure_closeout": {
             "available": True,
@@ -1572,6 +1582,9 @@ def build_operations_packet_viewer_report(
             "discord_message_sent": bool(phase40t_login_failure.get("discord_message_sent")),
             "message_sent_count": int(phase40t_login_failure.get("message_sent_count", 0) or 0),
             "retry_attempted": bool(phase40t_login_failure.get("retry_attempted")),
+            "preflight_snapshot_preserved": bool(phase40t_login_failure.get("preflight_snapshot_preserved")),
+            "presence_consistency_verified": bool(phase40t_login_failure.get("presence_consistency_verified")),
+            "login_attempt_requires_token_and_channel": bool(phase40t_login_failure.get("login_attempt_requires_token_and_channel")),
             "operator_action_required": phase40t_login_failure.get("operator_action_required", ""),
         },
         "daily_manifest_summary": load_daily_manifest(root=root, date=date),

@@ -16,6 +16,7 @@ from phase40t_discord_login_failure_closeout import (
     assert_phase40t_discord_login_failure_closeout_safe,
     build_phase40t_discord_login_failure_closeout,
     build_phase40t_discord_login_failure_closeout_from_exception,
+    build_phase40t_missing_env_before_login_closeout,
     classify_discord_login_failure,
     render_phase40t_discord_login_failure_closeout_markdown,
 )
@@ -56,6 +57,35 @@ def env() -> dict[str, str]:
     return values
 
 
+def ready_snapshot(**overrides: object) -> dict[str, object]:
+    snapshot: dict[str, object] = {
+        "snapshot_type": "phase40t_readonly_preflight_snapshot",
+        "version": "phase40t_readonly_preflight_snapshot",
+        "preflight_passed": True,
+        "discord_token_present": True,
+        "private_test_channel_id_present": True,
+        "approval_actualized": True,
+        "approval_phrase_present": True,
+        "approval_phrase_exact_match": True,
+        "send_messages_enabled": False,
+        "private_test_reply_enabled": False,
+        "reply_mode_readonly_private_test_only": True,
+        "llm_disabled": True,
+        "rag_disabled": True,
+        "embedding_disabled": True,
+        "external_execution": False,
+        "discord_token_value_logged": False,
+        "private_test_channel_id_value_logged": False,
+        "approval_phrase_value_logged": False,
+        "api_key_value_logged": False,
+        "raw_discord_ids_logged": False,
+        "raw_content_logged": False,
+        "secret_values_logged": False,
+    }
+    snapshot.update(overrides)
+    return snapshot
+
+
 def assert_common_safe(report: dict[str, object]) -> None:
     text = json.dumps(report, ensure_ascii=False)
     lowered = text.lower()
@@ -93,6 +123,42 @@ def test_http_401_converted_to_invalid_token_closeout() -> None:
     assert_common_safe(report)
 
 
+def test_login_failure_preserves_preflight_snapshot_presence() -> None:
+    report = build_phase40t_discord_login_failure_closeout_from_exception(
+        {},
+        FakeLoginFailure("Improper token has been passed."),
+        preflight_snapshot=ready_snapshot(),
+    )
+    assert_true(report["preflight_passed"] is True, "Preflight passed preserved")
+    assert_true(report["preflight_snapshot_preserved"] is True, "Snapshot preserved")
+    assert_true(report["presence_consistency_verified"] is True, "Presence consistent")
+    assert_true(report["discord_token_present"] is True, "Token presence preserved")
+    assert_true(report["private_test_channel_id_present"] is True, "Channel presence preserved")
+    assert_true(report["approval_phrase_exact_match"] is True, "Approval exact preserved")
+    assert_true(report["reply_mode_readonly_private_test_only"] is True, "Reply mode preserved")
+    assert_true(report["login_attempted"] is True, "Login attempted")
+    assert_true(report["discord_login_failure_reason"] == "invalid_or_unauthorized_token", "Invalid token")
+    assert_common_safe(report)
+
+
+def test_missing_token_or_channel_blocks_before_login() -> None:
+    report = build_phase40t_missing_env_before_login_closeout(
+        {},
+        preflight_snapshot=ready_snapshot(
+            preflight_passed=False,
+            discord_token_present=False,
+            private_test_channel_id_present=False,
+        ),
+    )
+    assert_true(report["preflight_passed"] is False, "Preflight failed")
+    assert_true(report["login_attempted"] is False, "Login not attempted")
+    assert_true(report["discord_login_failure"] is False, "No Discord login failure")
+    assert_true(report["discord_login_failure_reason"] == "missing_token_or_channel", "Missing reason")
+    assert_true(report["discord_token_present"] is False, "Token missing")
+    assert_true(report["private_test_channel_id_present"] is False, "Channel missing")
+    assert_common_safe(report)
+
+
 def test_timeout_and_manual_abort_classification() -> None:
     timeout_type, timeout_reason = classify_discord_login_failure(TimeoutError())
     abort_type, abort_reason = classify_discord_login_failure(KeyboardInterrupt())
@@ -126,6 +192,8 @@ def main() -> int:
     for test in (
         test_login_failure_converted_to_safe_json,
         test_http_401_converted_to_invalid_token_closeout,
+        test_login_failure_preserves_preflight_snapshot_presence,
+        test_missing_token_or_channel_blocks_before_login,
         test_timeout_and_manual_abort_classification,
         test_report_only_cli_no_login_and_no_traceback,
         test_markdown_render,

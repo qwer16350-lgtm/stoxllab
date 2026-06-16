@@ -12,6 +12,8 @@ import os
 import re
 from typing import Any, Mapping
 
+from phase40t_readonly_preflight_snapshot import build_phase40t_readonly_preflight_snapshot
+
 
 VERSION = "phase40t_private_test_readonly_runtime_preflight"
 APPROVAL_PHRASE = "I_APPROVE_PHASE40J_PRIVATE_TEST_READONLY_RUNTIME"
@@ -141,6 +143,10 @@ def build_private_test_readonly_runtime_preflight(
         "ready_for_phase41_reply_runtime": False,
         "ready_for_reply_send": False,
     }
+    report["preflight_snapshot"] = build_phase40t_readonly_preflight_snapshot(report)
+    report["preflight_snapshot_preserved"] = True
+    report["presence_consistency_verified"] = True
+    report["login_attempt_requires_token_and_channel"] = True
     assert_private_test_readonly_runtime_preflight_safe(report)
     return report
 

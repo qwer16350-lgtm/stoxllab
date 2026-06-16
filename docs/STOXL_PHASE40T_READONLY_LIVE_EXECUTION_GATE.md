@@ -46,3 +46,8 @@ If a user-run command reaches Discord login and fails with LoginFailure or HTTP
 traceback. The report records token presence and token validity booleans only,
 keeps Gateway connected false, keeps all send/retry/LLM/RAG/external flags
 false, and points the operator to refresh or correct the Discord bot token.
+
+Phase 40T-3 preserves the preflight snapshot into that closeout. Missing token
+or channel presence blocks before login with `login_attempted=false`; invalid
+or unauthorized token after a passed preflight keeps token/channel presence true
+and reports `discord_token_valid=false`.

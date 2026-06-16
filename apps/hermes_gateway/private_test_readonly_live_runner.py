@@ -7,13 +7,18 @@ available for a human-run command path and never sends/replies.
 from __future__ import annotations
 
 import asyncio
+import os
 from pathlib import Path
 from typing import Any, Mapping, Protocol
 
 from phase40t_readonly_capture_writer import write_redacted_capture_file
 from phase40t_readonly_live_execution_gate import build_phase40t_readonly_live_execution_gate
 from phase40t_readonly_runtime_closeout import build_phase40t_readonly_runtime_closeout
-from phase40t_discord_login_failure_closeout import build_phase40t_discord_login_failure_closeout_from_exception
+from phase40t_discord_login_failure_closeout import (
+    build_phase40t_discord_login_failure_closeout_from_exception,
+    build_phase40t_missing_env_before_login_closeout,
+)
+from phase40t_readonly_preflight_snapshot import snapshot_has_login_prerequisites
 
 
 class ReadOnlyLiveAdapter(Protocol):
@@ -49,8 +54,9 @@ class FakeReadOnlyLiveAdapter:
 
 
 class DiscordReadOnlyLiveAdapter:
-    def __init__(self, env: Mapping[str, str]) -> None:
+    def __init__(self, env: Mapping[str, str], preflight_snapshot: Mapping[str, Any] | None = None) -> None:
         self.env = env
+        self.preflight_snapshot = preflight_snapshot
 
     def run(self, *, timeout_seconds: int, max_events: int) -> dict[str, Any]:
         return asyncio.run(self._run_async(timeout_seconds=timeout_seconds, max_events=max_events))
@@ -136,13 +142,25 @@ class DiscordReadOnlyLiveAdapter:
                 await close_client_safely()
             else:
                 await close_client_safely()
-                return build_phase40t_discord_login_failure_closeout_from_exception(self.env, asyncio.TimeoutError())
+                return build_phase40t_discord_login_failure_closeout_from_exception(
+                    self.env,
+                    asyncio.TimeoutError(),
+                    preflight_snapshot=self.preflight_snapshot,
+                )
         except KeyboardInterrupt as exc:
             await close_client_safely()
-            return build_phase40t_discord_login_failure_closeout_from_exception(self.env, exc)
+            return build_phase40t_discord_login_failure_closeout_from_exception(
+                self.env,
+                exc,
+                preflight_snapshot=self.preflight_snapshot,
+            )
         except Exception as exc:
             await close_client_safely()
-            return build_phase40t_discord_login_failure_closeout_from_exception(self.env, exc)
+            return build_phase40t_discord_login_failure_closeout_from_exception(
+                self.env,
+                exc,
+                preflight_snapshot=self.preflight_snapshot,
+            )
         return {
             "started": True,
             "live_runtime_started": True,
@@ -165,21 +183,42 @@ def run_phase40t_readonly_live_runtime(
     root: str | Path | None = None,
     adapter: ReadOnlyLiveAdapter | None = None,
 ) -> dict[str, Any]:
+    env_source = env if env is not None else os.environ
     gate = build_phase40t_readonly_live_execution_gate(
-        env=env,
+        env=env_source,
         execute_flag_present=execute_flag_present,
         timeout_seconds=timeout_seconds,
         max_events=max_events,
         capture_root=capture_root,
         root=root,
     )
+    preflight_snapshot = gate.get("preflight_snapshot")
     if gate.get("blocked"):
+        reason = str(gate.get("reason", ""))
+        if execute_flag_present and (
+            "discord_token_missing" in reason or "private_test_channel_id_missing" in reason
+        ):
+            return build_phase40t_missing_env_before_login_closeout(
+                env=env_source,
+                preflight_snapshot=preflight_snapshot if isinstance(preflight_snapshot, dict) else None,
+                execute_flag_present=execute_flag_present,
+            )
         return gate
-    runner = adapter or DiscordReadOnlyLiveAdapter(env or {})
+    if not snapshot_has_login_prerequisites(preflight_snapshot):
+        return build_phase40t_missing_env_before_login_closeout(
+            env=env_source,
+            preflight_snapshot=preflight_snapshot,
+            execute_flag_present=execute_flag_present,
+        )
+    runner = adapter or DiscordReadOnlyLiveAdapter(env_source, preflight_snapshot=preflight_snapshot)
     try:
         result = runner.run(timeout_seconds=int(timeout_seconds), max_events=int(max_events))
     except (KeyboardInterrupt, Exception) as exc:
-        return build_phase40t_discord_login_failure_closeout_from_exception(env or {}, exc)
+        return build_phase40t_discord_login_failure_closeout_from_exception(
+            env_source,
+            exc,
+            preflight_snapshot=preflight_snapshot,
+        )
     if result.get("report_type") == "phase40t_discord_login_failure_closeout":
         return result
     capture = write_redacted_capture_file(
@@ -204,6 +243,7 @@ def run_phase40t_readonly_live_runtime(
         captured_public_team_blocked_count=sum(1 for item in events if item.get("channel_scope") in {"public_blocked", "team_blocked"}),
         capture_file_written=bool(capture.get("capture_file_written")),
         capture_file_path_logged=bool(capture.get("capture_file_path_logged")),
+        preflight_snapshot=preflight_snapshot if isinstance(preflight_snapshot, dict) else None,
     )
     closeout["execute_flag_present"] = True
     return closeout

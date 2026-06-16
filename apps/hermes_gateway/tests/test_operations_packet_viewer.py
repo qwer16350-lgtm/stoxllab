@@ -171,13 +171,16 @@ def test_phase40t_login_failure_closeout_summary() -> None:
     setup_artifacts()
     summary = build_operations_packet_viewer_report(TEST_ROOT, date="20260613")["phase40t_discord_login_failure_closeout"]
     assert_true(summary["available"] is True, "Login failure closeout available")
-    assert_true(summary["discord_login_failure"] is True, "Login failure represented")
+    assert_true(summary["discord_login_failure"] is False, "Missing env blocks before login")
     assert_true(summary["discord_gateway_connected"] is False, "No gateway")
     assert_true(summary["discord_api_send_called"] is False, "No API send")
     assert_true(summary["discord_message_sent"] is False, "No message")
     assert_true(summary["message_sent_count"] == 0, "No send count")
     assert_true(summary["retry_attempted"] is False, "No retry")
     assert_true(summary["traceback_included"] is False, "No traceback")
+    assert_true(summary["preflight_snapshot_preserved"] is True, "Snapshot preserved")
+    assert_true(summary["presence_consistency_verified"] is True, "Presence consistent")
+    assert_true(summary["login_attempt_requires_token_and_channel"] is True, "Login requires token/channel")
 
 
 def test_rag_llm_scaffold_summary() -> None:

@@ -52,3 +52,13 @@ of a capture closeout. In that state:
 
 The operator must correct the Discord bot token manually before any future
 read-only live runtime attempt.
+
+Phase 40T-3 adds snapshot consistency fields to both successful read-only
+capture closeouts and login failure closeouts:
+
+- `preflight_snapshot_preserved`
+- `presence_consistency_verified`
+- `login_attempt_requires_token_and_channel`
+
+These fields must stay true when an execute path was started from a valid
+preflight snapshot.

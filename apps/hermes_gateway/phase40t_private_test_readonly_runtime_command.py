@@ -13,8 +13,10 @@ from phase40t_readonly_runtime_closeout import render_phase40t_readonly_runtime_
 from phase40t_readonly_live_execution_gate import render_phase40t_readonly_live_execution_gate_markdown
 from phase40t_discord_login_failure_closeout import (
     build_phase40t_discord_login_failure_closeout,
+    build_phase40t_missing_env_before_login_closeout,
     render_phase40t_discord_login_failure_closeout_markdown,
 )
+from phase40t_readonly_preflight_snapshot import snapshot_has_login_prerequisites
 
 
 VERSION = "phase40t_private_test_readonly_runtime_command"
@@ -48,7 +50,20 @@ def build_phase40t_private_test_readonly_runtime_command(
 
 
 def build_phase40t_discord_login_failure_closeout_command(env: Mapping[str, str] | None = None) -> dict[str, Any]:
-    return build_phase40t_discord_login_failure_closeout(env=env, execute_flag_present=True)
+    preflight = build_private_test_readonly_runtime_preflight(env=env, report_only=True)
+    snapshot = preflight.get("preflight_snapshot")
+    if not snapshot_has_login_prerequisites(snapshot if isinstance(snapshot, dict) else None):
+        return build_phase40t_missing_env_before_login_closeout(
+            env=env,
+            preflight_snapshot=snapshot if isinstance(snapshot, dict) else None,
+            execute_flag_present=True,
+        )
+    return build_phase40t_discord_login_failure_closeout(
+        env=env,
+        preflight_snapshot=snapshot if isinstance(snapshot, dict) else None,
+        execute_flag_present=True,
+        preflight_passed=bool(preflight.get("preflight_passed")),
+    )
 
 
 def render_phase40t_private_test_readonly_runtime_command_markdown(report: dict[str, Any]) -> str:

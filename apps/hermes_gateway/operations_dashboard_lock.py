@@ -37,11 +37,13 @@ from phase40p_readonly_capture_schema import build_phase40p_readonly_capture_sch
 from phase40q_capture_review_closeout import build_phase40q_capture_review_closeout
 from phase40r_phase41_reply_preflight_matrix import build_phase40r_phase41_reply_preflight_matrix
 from phase40s_morning_review_operator_decision_packet import build_phase40s_morning_review_operator_decision_packet
-from phase40t_private_test_readonly_runtime_command import build_phase40t_private_test_readonly_runtime_command
+from phase40t_private_test_readonly_runtime_command import (
+    build_phase40t_discord_login_failure_closeout_command,
+    build_phase40t_private_test_readonly_runtime_command,
+)
 from phase40t_readonly_capture_writer import CAPTURE_SCHEMA_VERSION
 from phase40t_readonly_live_execution_gate import build_phase40t_readonly_live_execution_gate
 from phase40t_readonly_runtime_closeout import build_phase40t_readonly_runtime_closeout
-from phase40t_discord_login_failure_closeout import build_phase40t_discord_login_failure_closeout
 from private_test_live_send_entry_gate import build_private_test_live_send_entry_gate
 from rag_evidence_private_test_phase34_final_lock import build_rag_evidence_private_test_phase34_final_lock
 
@@ -106,7 +108,7 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
     phase40t_command = build_phase40t_private_test_readonly_runtime_command(env={}, report_only=False)
     phase40t_gate = build_phase40t_readonly_live_execution_gate(env={}, execute_flag_present=False, root=root)
     phase40t_closeout = build_phase40t_readonly_runtime_closeout()
-    phase40t_login_failure = build_phase40t_discord_login_failure_closeout(env={})
+    phase40t_login_failure = build_phase40t_discord_login_failure_closeout_command(env={})
     counts = audit.get("final_e2e_counts", {})
     report = {
         "report_type": "operations_dashboard_lock",
@@ -211,6 +213,9 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
         "phase40t_send_messages_enabled": bool(phase40t_command.get("send_messages_enabled")),
         "phase40t_private_test_reply_enabled": bool(phase40t_command.get("private_test_reply_enabled")),
         "phase40t_ready_for_phase41_reply_runtime": bool(phase40t_command.get("ready_for_phase41_reply_runtime")),
+        "phase40t_preflight_snapshot_preserved": bool(phase40t_command.get("preflight_snapshot_preserved")),
+        "phase40t_presence_consistency_verified": bool(phase40t_command.get("presence_consistency_verified")),
+        "phase40t_login_attempt_requires_token_and_channel": bool(phase40t_command.get("login_attempt_requires_token_and_channel")),
         "phase40t_execution_gate_available": True,
         "phase40t_execute_flag_required": bool(phase40t_gate.get("execute_flag_required")),
         "phase40t_execute_flag_present": bool(phase40t_gate.get("execute_flag_present")),
@@ -233,6 +238,8 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
         "phase40t_login_failure_retry_attempted": bool(phase40t_login_failure.get("retry_attempted")),
         "phase40t_login_failure_traceback_included": bool(phase40t_login_failure.get("traceback_included")),
         "phase40t_login_failure_token_value_logged": bool(phase40t_login_failure.get("discord_token_value_logged")),
+        "phase40t_login_failure_preflight_snapshot_preserved": bool(phase40t_login_failure.get("preflight_snapshot_preserved")),
+        "phase40t_login_failure_presence_consistency_verified": bool(phase40t_login_failure.get("presence_consistency_verified")),
         "ready_for_live_runtime": False,
         "ready_for_llm_call": False,
         "ready_for_discord_send": False,
@@ -379,12 +386,16 @@ def assert_operations_dashboard_lock_safe(report: dict[str, Any]) -> None:
         raise ValueError("Operations dashboard lock requires Phase 40T blocked command guard.")
     if int(report.get("phase40t_message_sent_count", 0) or 0) != 0:
         raise ValueError("Operations dashboard lock forbids Phase 40T sends.")
+    if not report.get("phase40t_preflight_snapshot_preserved") or not report.get("phase40t_presence_consistency_verified") or not report.get("phase40t_login_attempt_requires_token_and_channel"):
+        raise ValueError("Operations dashboard lock requires Phase 40T preflight snapshot consistency.")
     if not report.get("phase40t_execution_gate_available") or not report.get("phase40t_execute_flag_required") or not report.get("phase40t_execution_gate_blocked_by_default"):
         raise ValueError("Operations dashboard lock requires Phase 40T execution gate blocked by default.")
     if not report.get("phase40t_redacted_capture_only") or int(report.get("phase40t_closeout_message_sent_count", 0) or 0) != 0:
         raise ValueError("Operations dashboard lock requires Phase 40T redacted/no-send closeout posture.")
     if not report.get("phase40t_login_failure_closeout_available") or int(report.get("phase40t_login_failure_message_sent_count", 0) or 0) != 0:
         raise ValueError("Operations dashboard lock requires Phase 40T login failure closeout with send count 0.")
+    if not report.get("phase40t_login_failure_preflight_snapshot_preserved") or not report.get("phase40t_login_failure_presence_consistency_verified"):
+        raise ValueError("Operations dashboard lock requires Phase 40T login failure snapshot consistency.")
 
 
 def render_operations_dashboard_lock_markdown(report: dict[str, Any]) -> str:

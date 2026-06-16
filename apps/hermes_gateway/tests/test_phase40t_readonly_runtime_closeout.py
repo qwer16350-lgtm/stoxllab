@@ -23,6 +23,33 @@ def assert_true(condition: bool, message: str) -> None:
         raise AssertionError(message)
 
 
+def snapshot() -> dict[str, object]:
+    return {
+        "snapshot_type": "phase40t_readonly_preflight_snapshot",
+        "version": "phase40t_readonly_preflight_snapshot",
+        "preflight_passed": True,
+        "discord_token_present": True,
+        "private_test_channel_id_present": True,
+        "approval_actualized": True,
+        "approval_phrase_present": True,
+        "approval_phrase_exact_match": True,
+        "send_messages_enabled": False,
+        "private_test_reply_enabled": False,
+        "reply_mode_readonly_private_test_only": True,
+        "llm_disabled": True,
+        "rag_disabled": True,
+        "embedding_disabled": True,
+        "external_execution": False,
+        "discord_token_value_logged": False,
+        "private_test_channel_id_value_logged": False,
+        "approval_phrase_value_logged": False,
+        "api_key_value_logged": False,
+        "raw_discord_ids_logged": False,
+        "raw_content_logged": False,
+        "secret_values_logged": False,
+    }
+
+
 def test_empty_closeout_not_executed() -> None:
     report = build_phase40t_readonly_runtime_closeout()
     assert_true(report["started"] is False, "Not started")
@@ -41,6 +68,7 @@ def test_fake_success_closeout_no_send_or_raw_values() -> None:
         captured_private_test_human_message_count=1,
         capture_file_written=True,
         capture_file_path_logged=True,
+        preflight_snapshot=snapshot(),
     )
     text = json.dumps(report, ensure_ascii=False)
     assert_true(report["started"] is True, "Started")
@@ -48,6 +76,8 @@ def test_fake_success_closeout_no_send_or_raw_values() -> None:
     assert_true(report["ready_for_capture_closeout"] is True, "Ready closeout")
     assert_true(report["discord_api_send_called"] is False, "No API send")
     assert_true(report["discord_message_sent"] is False, "No message")
+    assert_true(report["preflight_snapshot_preserved"] is True, "Snapshot preserved")
+    assert_true(report["presence_consistency_verified"] is True, "Presence consistent")
     assert_true(report["llm_called"] is False and report["rag_called"] is False, "No LLM/RAG")
     assert_true(not LONG_NUMBER_RE.search(text), "No raw IDs")
 

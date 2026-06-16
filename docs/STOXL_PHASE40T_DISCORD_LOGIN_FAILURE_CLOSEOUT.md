@@ -36,6 +36,14 @@ The report includes:
 - `embedding_api_called=false`.
 - `external_execution=false`.
 
+Phase 40T-3 adds:
+
+- `preflight_snapshot_preserved=true` when the execute path had a preflight
+  snapshot.
+- `presence_consistency_verified=true` when closeout token/channel presence
+  matches the snapshot.
+- `login_attempt_requires_token_and_channel=true`.
+
 ## Never Logged
 
 The closeout must not print:
@@ -54,3 +62,8 @@ The closeout must not print:
 If this closeout appears after a user-run command, the next action is to refresh
 or correct the Discord bot token manually, then rerun the user-only read-only
 runtime from the operator's PowerShell session. No automatic retry is allowed.
+
+If token or private-test channel presence is missing, the runtime must not
+attempt Discord login. In that case the closeout reports
+`discord_login_failure_reason=missing_token_or_channel` and
+`login_attempted=false`.

@@ -84,6 +84,12 @@ def test_execute_ready_gate_still_no_runtime_or_send() -> None:
     report = build_phase40t_readonly_live_execution_gate(env=ready_env(), execute_flag_present=True)
     assert_true(report["blocked"] is False, "Gate ready")
     assert_true(report["preflight_passed"] is True, "Preflight passed")
+    assert_true(report["preflight_snapshot_preserved"] is True, "Snapshot preserved")
+    assert_true(report["presence_consistency_verified"] is True, "Presence consistent")
+    assert_true(report["login_attempt_requires_token_and_channel"] is True, "Login requires token/channel")
+    assert_true(report["preflight_snapshot"]["discord_token_present"] is True, "Snapshot token")
+    assert_true(report["preflight_snapshot"]["private_test_channel_id_present"] is True, "Snapshot channel")
+    assert_true(report["login_attempted"] is False, "Gate does not login")
     for key in ("started", "live_runtime_started", "discord_gateway_connected", "discord_api_send_called", "discord_message_sent", "llm_called", "rag_called", "external_execution"):
         assert_true(report[key] is False, f"{key} false")
     assert_true(report["message_sent_count"] == 0, "Count 0")

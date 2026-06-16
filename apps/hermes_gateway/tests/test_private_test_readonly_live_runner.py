@@ -65,6 +65,20 @@ def test_runner_blocks_without_execute_flag() -> None:
     assert_true(report["started"] is False, "Not started")
 
 
+def test_missing_token_or_channel_blocks_before_adapter() -> None:
+    adapter = FakeReadOnlyLiveAdapter()
+    env = ready_env()
+    env["DISCORD_BOT_TOKEN"] = ""
+    report = run_phase40t_readonly_live_runtime(env=env, execute_flag_present=True, adapter=adapter)
+    assert_true(adapter.called is False, "Adapter not called")
+    assert_true(report["blocked"] is True, "Blocked")
+    assert_true(report["login_attempted"] is False, "Login not attempted")
+    assert_true(report["discord_login_failure"] is False, "No Discord login failure")
+    assert_true(report["discord_login_failure_reason"] == "missing_token_or_channel", "Missing env")
+    assert_true(report["discord_gateway_connected"] is False, "No gateway")
+    assert_true(report["message_sent_count"] == 0, "No count")
+
+
 def test_fake_adapter_ready_closeout_no_send() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         adapter = FakeReadOnlyLiveAdapter(
@@ -121,6 +135,10 @@ def test_adapter_login_failure_returns_safe_closeout() -> None:
     assert_true(adapter.called is True, "Adapter called")
     assert_true(report["report_type"] == "phase40t_discord_login_failure_closeout", "Login failure closeout")
     assert_true(report["discord_login_failure"] is True, "Login failure")
+    assert_true(report["preflight_snapshot_preserved"] is True, "Snapshot preserved")
+    assert_true(report["presence_consistency_verified"] is True, "Presence consistent")
+    assert_true(report["discord_token_present"] is True, "Token presence preserved")
+    assert_true(report["private_test_channel_id_present"] is True, "Channel presence preserved")
     assert_true(report["discord_gateway_connected"] is False, "No gateway")
     assert_true(report["discord_api_send_called"] is False, "No API send")
     assert_true(report["discord_message_sent"] is False, "No message")
@@ -132,6 +150,7 @@ def test_adapter_login_failure_returns_safe_closeout() -> None:
 def main() -> int:
     for test in (
         test_runner_blocks_without_execute_flag,
+        test_missing_token_or_channel_blocks_before_adapter,
         test_fake_adapter_ready_closeout_no_send,
         test_fake_adapter_max_events,
         test_adapter_login_failure_returns_safe_closeout,

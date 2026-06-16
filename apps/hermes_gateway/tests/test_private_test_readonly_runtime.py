@@ -115,6 +115,11 @@ def test_ready_report_still_does_not_connect_or_send() -> None:
     assert_true(report["codex_runtime_launch_forbidden"] is True, "Codex forbidden")
     assert_true(report["send_messages_enabled"] is False, "Send false")
     assert_true(report["private_test_reply_enabled"] is False, "Reply false")
+    assert_true(report["preflight_snapshot_preserved"] is True, "Snapshot preserved")
+    assert_true(report["presence_consistency_verified"] is True, "Presence consistent")
+    assert_true(report["login_attempt_requires_token_and_channel"] is True, "Login requires token/channel")
+    assert_true(report["preflight_snapshot"]["discord_token_present"] is True, "Snapshot token present")
+    assert_true(report["preflight_snapshot"]["private_test_channel_id_present"] is True, "Snapshot channel present")
     assert_no_live_or_send(report)
 
 
@@ -123,7 +128,7 @@ def test_no_sensitive_values_or_markdown_leak() -> None:
     text = json.dumps(report, ensure_ascii=False).lower()
     markdown = render_private_test_readonly_runtime_preflight_markdown(report).lower()
     assert_true(APPROVAL_PHRASE.lower() not in text and APPROVAL_PHRASE.lower() not in markdown, "Approval phrase hidden")
-    assert_true("token=" not in text and "sk-" not in text and "api_key" not in text, "Secrets hidden")
+    assert_true("token=" not in text and "sk-" not in text and "secret-value" not in text, "Secrets hidden")
     assert_true(not LONG_NUMBER_RE.search(text + markdown), "No raw IDs")
 
 

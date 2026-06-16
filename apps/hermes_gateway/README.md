@@ -655,6 +655,11 @@ Discord API send false, Discord message sent false, message sent count 0, retry
 false, and LLM/RAG/embedding/external false. The next action is manual token
 refresh/correction by the operator.
 
+Phase 40T-3 preserves the boolean-only preflight snapshot into execute
+closeouts. Missing token/channel presence blocks before Discord login with
+`login_attempted=false`; token/channel present plus LoginFailure/HTTP 401 keeps
+presence true and reports `discord_token_valid=false`.
+
 If the registry file is missing, generate it from the repo root:
 
 ```powershell

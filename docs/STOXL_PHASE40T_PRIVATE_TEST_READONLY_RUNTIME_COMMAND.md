@@ -83,3 +83,17 @@ Optional runtime controls:
 
 The execute path is read-only: no send, no reply, no LLM, no RAG, no embedding,
 and no external execution.
+
+## Phase 40T-3 Preflight Snapshot
+
+Phase 40T-3 preserves a sanitized boolean-only preflight snapshot into the
+execute path. This prevents a successful preflight from later producing a
+contradictory failure closeout with token/channel presence set to false.
+
+If token or channel presence is false, the execute path blocks before Discord
+login and reports `login_attempted=false`.
+
+If token and channel presence are true but Discord returns LoginFailure or HTTP
+401, the failure closeout preserves `discord_token_present=true` and
+`private_test_channel_id_present=true`, reports `discord_token_valid=false`,
+and uses `discord_login_failure_reason=invalid_or_unauthorized_token`.

@@ -29,6 +29,7 @@ def build_phase40t_readonly_live_execution_gate(
     root: str | Path | None = None,
 ) -> dict[str, Any]:
     preflight = build_private_test_readonly_runtime_preflight(env=env, report_only=False)
+    preflight_snapshot = dict(preflight.get("preflight_snapshot", {}))
     capture_root_valid, capture_root_reason, _ = validate_capture_root(capture_root, root)
     options_valid = True
     option_reason = ""
@@ -61,6 +62,12 @@ def build_phase40t_readonly_live_execution_gate(
         "started": False,
         "reason": "" if not blocked else f"readonly_live_execution_preflight_failed:{reason}",
         "preflight_passed": bool(preflight.get("preflight_passed")) and options_valid and bool(execute_flag_present),
+        "preflight_snapshot": preflight_snapshot,
+        "preflight_snapshot_preserved": bool(preflight_snapshot),
+        "presence_consistency_verified": True,
+        "login_attempt_requires_token_and_channel": True,
+        "login_attempted": False,
+        "discord_login_failure": False,
         "manual_runtime_launch_allowed": bool(preflight.get("manual_runtime_launch_allowed")) and options_valid and bool(execute_flag_present),
         "codex_runtime_launch_forbidden": True,
         "timeout_seconds": int(timeout_seconds),

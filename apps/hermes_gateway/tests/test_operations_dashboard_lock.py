@@ -159,6 +159,9 @@ def test_operations_dashboard_lock_phase40o_s_review_pipeline_state() -> None:
     assert_true(report["phase40t_discord_api_send_called"] is False, "40T no API")
     assert_true(report["phase40t_discord_message_sent"] is False, "40T no message")
     assert_true(report["phase40t_message_sent_count"] == 0, "40T count 0")
+    assert_true(report["phase40t_preflight_snapshot_preserved"] is True, "40T snapshot")
+    assert_true(report["phase40t_presence_consistency_verified"] is True, "40T consistency")
+    assert_true(report["phase40t_login_attempt_requires_token_and_channel"] is True, "40T login requires token/channel")
     assert_true(report["phase40t_execution_gate_available"] is True, "40T-1 gate")
     assert_true(report["phase40t_execute_flag_required"] is True, "40T-1 execute required")
     assert_true(report["phase40t_execute_flag_present"] is False, "40T-1 execute absent")
@@ -175,6 +178,8 @@ def test_operations_dashboard_lock_phase40o_s_review_pipeline_state() -> None:
     assert_true(report["phase40t_login_failure_message_sent_count"] == 0, "40T-2 count 0")
     assert_true(report["phase40t_login_failure_retry_attempted"] is False, "40T-2 no retry")
     assert_true(report["phase40t_login_failure_traceback_included"] is False, "40T-2 no traceback")
+    assert_true(report["phase40t_login_failure_preflight_snapshot_preserved"] is True, "40T-3 failure snapshot")
+    assert_true(report["phase40t_login_failure_presence_consistency_verified"] is True, "40T-3 failure consistency")
 
 
 def test_operations_dashboard_lock_no_sensitive_values() -> None:

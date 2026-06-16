@@ -8,8 +8,11 @@ phrases, raw Discord IDs, message content, or tracebacks.
 from __future__ import annotations
 
 import json
+import os
 import re
 from typing import Any, Mapping
+
+from phase40t_readonly_preflight_snapshot import add_phase40t_snapshot_consistency_fields
 
 
 VERSION = "phase40t_discord_login_failure_closeout"
@@ -22,9 +25,14 @@ TRACEBACK_RE = re.compile(r"Traceback \(most recent call last\)|File \".+\", lin
 
 
 def _env_value_present(env: Mapping[str, str] | None, key: str) -> bool:
-    if not env:
-        return False
-    return bool(str(env.get(key, "") or "").strip())
+    source = env if env is not None else os.environ
+    return bool(str(source.get(key, "") or "").strip())
+
+
+def _presence_from_snapshot_or_env(snapshot: Mapping[str, Any] | None, env: Mapping[str, str] | None, key: str, snapshot_key: str) -> bool:
+    if snapshot is not None and snapshot_key in snapshot:
+        return bool(snapshot.get(snapshot_key))
+    return _env_value_present(env, key)
 
 
 def classify_discord_login_failure(exc: BaseException | None = None, *, status: int | None = None) -> tuple[str, str]:
@@ -50,10 +58,15 @@ def classify_discord_login_failure(exc: BaseException | None = None, *, status: 
 def build_phase40t_discord_login_failure_closeout(
     env: Mapping[str, str] | None = None,
     *,
+    preflight_snapshot: Mapping[str, Any] | None = None,
     failure_type: str = "LoginFailure",
     failure_reason: str = "invalid_or_unauthorized_token",
     execute_flag_present: bool = True,
+    preflight_passed: bool | None = None,
+    login_attempted: bool = True,
+    discord_login_failure: bool = True,
 ) -> dict[str, Any]:
+    snapshot_passed = bool(preflight_snapshot.get("preflight_passed")) if preflight_snapshot else False
     report = {
         "report_type": "phase40t_discord_login_failure_closeout",
         "version": VERSION,
@@ -63,16 +76,30 @@ def build_phase40t_discord_login_failure_closeout(
         "started": False,
         "live_runtime_started": False,
         "discord_gateway_connected": False,
-        "login_attempted": True,
+        "preflight_passed": snapshot_passed if preflight_passed is None else bool(preflight_passed),
+        "login_attempted": bool(login_attempted),
         "discord_login_succeeded": False,
-        "discord_login_failure": True,
+        "discord_login_failure": bool(discord_login_failure),
         "discord_login_failure_type": str(failure_type),
         "discord_login_failure_reason": str(failure_reason),
-        "discord_token_present": _env_value_present(env, "DISCORD_BOT_TOKEN"),
+        "discord_token_present": _presence_from_snapshot_or_env(
+            preflight_snapshot,
+            env,
+            "DISCORD_BOT_TOKEN",
+            "discord_token_present",
+        ),
         "discord_token_value_logged": False,
         "discord_token_valid": False,
-        "private_test_channel_id_present": _env_value_present(env, "HERMES_DISCORD_PRIVATE_TEST_CHANNEL_ID"),
+        "private_test_channel_id_present": _presence_from_snapshot_or_env(
+            preflight_snapshot,
+            env,
+            "HERMES_DISCORD_PRIVATE_TEST_CHANNEL_ID",
+            "private_test_channel_id_present",
+        ),
         "private_test_channel_id_value_logged": False,
+        "approval_actualized": bool(preflight_snapshot.get("approval_actualized")) if preflight_snapshot else False,
+        "approval_phrase_present": bool(preflight_snapshot.get("approval_phrase_present")) if preflight_snapshot else False,
+        "approval_phrase_exact_match": bool(preflight_snapshot.get("approval_phrase_exact_match")) if preflight_snapshot else False,
         "approval_phrase_value_logged": False,
         "api_key_value_logged": False,
         "raw_discord_ids_logged": False,
@@ -103,6 +130,9 @@ def build_phase40t_discord_login_failure_closeout(
         "ready_for_reply_send": False,
         "operator_action_required": "refresh_or_correct_discord_bot_token",
     }
+    if failure_reason == "missing_token_or_channel":
+        report["operator_action_required"] = "provide_discord_bot_token_and_private_test_channel_id"
+    add_phase40t_snapshot_consistency_fields(report, preflight_snapshot)
     assert_phase40t_discord_login_failure_closeout_safe(report)
     return report
 
@@ -111,14 +141,36 @@ def build_phase40t_discord_login_failure_closeout_from_exception(
     env: Mapping[str, str] | None,
     exc: BaseException,
     *,
+    preflight_snapshot: Mapping[str, Any] | None = None,
     execute_flag_present: bool = True,
 ) -> dict[str, Any]:
     failure_type, failure_reason = classify_discord_login_failure(exc)
     return build_phase40t_discord_login_failure_closeout(
         env=env,
+        preflight_snapshot=preflight_snapshot,
         failure_type=failure_type,
         failure_reason=failure_reason,
         execute_flag_present=execute_flag_present,
+        login_attempted=True,
+        discord_login_failure=True,
+    )
+
+
+def build_phase40t_missing_env_before_login_closeout(
+    env: Mapping[str, str] | None = None,
+    *,
+    preflight_snapshot: Mapping[str, Any] | None = None,
+    execute_flag_present: bool = True,
+) -> dict[str, Any]:
+    return build_phase40t_discord_login_failure_closeout(
+        env=env,
+        preflight_snapshot=preflight_snapshot,
+        failure_type="MissingEnv",
+        failure_reason="missing_token_or_channel",
+        execute_flag_present=execute_flag_present,
+        preflight_passed=False,
+        login_attempted=False,
+        discord_login_failure=False,
     )
 
 
