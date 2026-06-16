@@ -30,3 +30,9 @@ python apps\hermes_gateway\cli.py --phase40k-readonly-runtime-launch-packet --js
 
 Phase 40O reuses the same planned command as a manual launch support packet.
 The command remains for user execution only.
+
+Phase 40T-0 registers this command in argparse with a blocked-by-default
+preflight. In Codex verification it returns a sanitized report only:
+`started=false`, `discord_gateway_connected=false`,
+`discord_api_send_called=false`, `discord_message_sent=false`, and
+`message_sent_count=0`.

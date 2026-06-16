@@ -635,6 +635,13 @@ decision packet. It still performs no live runtime, no Gateway connection, no
 Discord API send, no reply send, no LLM/RAG call, no embedding/vector creation,
 and no external execution.
 
+Phase 40T-0 adds the missing `--run-discord-private-test-readonly` CLI command
+and a companion preflight option. The command is blocked by default and reports
+only sanitized readiness booleans. Codex still does not start Discord runtime,
+connect the Gateway, call Discord API send, send messages, call LLM/RAG, create
+embeddings/vector indexes, or execute external actions. Message sent count
+remains 0 and the Phase 39 actual send count remains locked at 1.
+
 If the registry file is missing, generate it from the repo root:
 
 ```powershell

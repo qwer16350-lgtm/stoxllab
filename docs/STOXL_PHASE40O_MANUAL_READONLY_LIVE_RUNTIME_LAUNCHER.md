@@ -22,3 +22,12 @@ CLI:
 ```powershell
 python apps\hermes_gateway\cli.py --phase40o-manual-readonly-live-runtime-launcher --json
 ```
+
+Phase 40T-0 adds the missing runtime command parser entry:
+
+```powershell
+python apps\hermes_gateway\cli.py --run-discord-private-test-readonly --json
+```
+
+It is blocked by default and does not connect the Gateway or send messages in
+Codex verification.

@@ -150,6 +150,15 @@ def test_operations_dashboard_lock_phase40o_s_review_pipeline_state() -> None:
     assert_true(report["phase40s_safe_to_review_next_morning"] is True, "40S safe")
     assert_true(report["phase40s_requires_user_confirmation"] is True, "40S confirmation")
     assert_true(report["phase40s_additional_discord_send_count"] == 0, "40S no send")
+    assert_true(report["phase40t_command_available"] is True, "40T command")
+    assert_true(report["phase40t_blocked_by_default"] is True, "40T blocked")
+    assert_true(report["phase40t_manual_runtime_launch_allowed"] is False, "40T no launch by default")
+    assert_true(report["phase40t_codex_runtime_launch_forbidden"] is True, "40T codex forbidden")
+    assert_true(report["phase40t_live_runtime_started"] is False, "40T no live")
+    assert_true(report["phase40t_discord_gateway_connected"] is False, "40T no gateway")
+    assert_true(report["phase40t_discord_api_send_called"] is False, "40T no API")
+    assert_true(report["phase40t_discord_message_sent"] is False, "40T no message")
+    assert_true(report["phase40t_message_sent_count"] == 0, "40T count 0")
 
 
 def test_operations_dashboard_lock_no_sensitive_values() -> None:

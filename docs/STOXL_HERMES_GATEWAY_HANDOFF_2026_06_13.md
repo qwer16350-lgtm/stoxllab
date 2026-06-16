@@ -407,3 +407,9 @@ runtime: manual launcher packet, redacted capture schema, capture review
 closeout, Phase 41 reply preflight matrix, and morning operator decision packet.
 Codex still does not run the live command, does not create capture/log files, and
 does not enable reply/send.
+
+Phase 40T-0 fixes the missing `--run-discord-private-test-readonly` CLI parser
+entry and adds a companion preflight report. The command is blocked by default,
+prints only sanitized booleans, and keeps `started=false`,
+`discord_gateway_connected=false`, `discord_api_send_called=false`,
+`discord_message_sent=false`, and `message_sent_count=0` in Codex verification.

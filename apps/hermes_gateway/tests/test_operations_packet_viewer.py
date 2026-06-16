@@ -1043,6 +1043,7 @@ def test_phase40o_s_manual_runtime_review_pipeline_summaries() -> None:
     closeout = report["phase40q_capture_review_closeout"]
     matrix = report["phase40r_phase41_reply_preflight_matrix"]
     morning = report["phase40s_morning_review_operator_decision_packet"]
+    command = report["phase40t_private_test_readonly_runtime_command"]
     assert_true(launcher["available"] is True, "40O available")
     assert_true(launcher["manual_launch_only"] is True, "40O manual")
     assert_true(launcher["codex_must_not_launch"] is True, "40O codex no launch")
@@ -1061,6 +1062,13 @@ def test_phase40o_s_manual_runtime_review_pipeline_summaries() -> None:
     assert_true(morning["available"] is True, "40S available")
     assert_true(morning["safe_to_review_next_morning"] is True, "40S safe")
     assert_true(morning["requires_user_confirmation"] is True, "40S confirmation")
+    assert_true(command["available"] is True, "40T available")
+    assert_true(command["blocked_by_default"] is True, "40T blocked")
+    assert_true(command["manual_runtime_launch_allowed"] is False, "40T no manual launch by default")
+    assert_true(command["codex_runtime_launch_forbidden"] is True, "40T codex forbidden")
+    assert_true(command["discord_api_send_called"] is False, "40T no API send")
+    assert_true(command["discord_message_sent"] is False, "40T no message")
+    assert_true(command["message_sent_count"] == 0, "40T no send count")
 
 
 def main() -> int:

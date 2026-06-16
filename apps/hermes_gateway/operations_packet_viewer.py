@@ -101,6 +101,7 @@ from phase40p_readonly_capture_schema import build_phase40p_readonly_capture_sch
 from phase40q_capture_review_closeout import build_phase40q_capture_review_closeout
 from phase40r_phase41_reply_preflight_matrix import build_phase40r_phase41_reply_preflight_matrix
 from phase40s_morning_review_operator_decision_packet import build_phase40s_morning_review_operator_decision_packet
+from phase40t_private_test_readonly_runtime_command import build_phase40t_private_test_readonly_runtime_command
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope
 from rag_evidence_review_packet import build_rag_evidence_review_packet
@@ -608,6 +609,7 @@ def build_operations_packet_viewer_report(
     phase40q_closeout = build_phase40q_capture_review_closeout()
     phase40r_matrix = build_phase40r_phase41_reply_preflight_matrix()
     phase40s_morning = build_phase40s_morning_review_operator_decision_packet()
+    phase40t_command = build_phase40t_private_test_readonly_runtime_command(report_only=False)
     report = {
         "report_type": "operations_packet_viewer",
         "version": VERSION,
@@ -1516,6 +1518,15 @@ def build_operations_packet_viewer_report(
             "report_only": bool(phase40s_morning.get("report_only")),
             "safe_to_review_next_morning": bool(phase40s_morning.get("safe_to_review_next_morning")),
             "requires_user_confirmation": bool(phase40s_morning.get("requires_user_confirmation")),
+        },
+        "phase40t_private_test_readonly_runtime_command": {
+            "available": True,
+            "blocked_by_default": bool(phase40t_command.get("blocked")),
+            "manual_runtime_launch_allowed": bool(phase40t_command.get("manual_runtime_launch_allowed")),
+            "codex_runtime_launch_forbidden": bool(phase40t_command.get("codex_runtime_launch_forbidden")),
+            "discord_api_send_called": bool(phase40t_command.get("discord_api_send_called")),
+            "discord_message_sent": bool(phase40t_command.get("discord_message_sent")),
+            "message_sent_count": int(phase40t_command.get("message_sent_count", 0) or 0),
         },
         "daily_manifest_summary": load_daily_manifest(root=root, date=date),
         "filters": {
