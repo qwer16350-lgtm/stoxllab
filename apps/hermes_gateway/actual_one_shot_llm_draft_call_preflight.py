@@ -18,7 +18,7 @@ from private_test_one_shot_llm_draft_preflight import build_private_test_one_sho
 
 
 VERSION = "phase36c_actual_one_shot_llm_draft_call_preflight_no_api_no_send"
-OPENROUTER_KEY_ALIASES = ["OPENROUTER_API_KEY", "HERMES_OPENROUTER_API_KEY"]
+OPENROUTER_KEY_ALIASES = ["HERMES_LLM_API_KEY", "OPENROUTER_API_KEY", "HERMES_OPENROUTER_API_KEY"]
 PROVIDER = "openrouter"
 MODEL = "openai/gpt-5.4-mini"
 LONG_ID_RE = re.compile(r"\b\d{15,25}\b")

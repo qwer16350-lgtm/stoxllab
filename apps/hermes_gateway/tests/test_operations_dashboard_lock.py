@@ -9,7 +9,7 @@ APP_DIR = Path(__file__).resolve().parents[1]
 if str(APP_DIR) not in sys.path:
     sys.path.insert(0, str(APP_DIR))
 
-from operations_dashboard_lock import build_operations_dashboard_lock, render_operations_dashboard_lock_markdown
+from operations_dashboard_lock import assert_operations_dashboard_lock_safe, build_operations_dashboard_lock, render_operations_dashboard_lock_markdown
 
 
 LONG_NUMBER_RE = re.compile(r"\b\d{15,25}\b")
@@ -18,6 +18,14 @@ LONG_NUMBER_RE = re.compile(r"\b\d{15,25}\b")
 def assert_true(condition: bool, message: str) -> None:
     if not condition:
         raise AssertionError(message)
+
+
+def assert_raises(fn, message: str) -> None:
+    try:
+        fn()
+    except ValueError:
+        return
+    raise AssertionError(message)
 
 
 def test_operations_dashboard_lock_success_fixture() -> None:
@@ -67,6 +75,22 @@ def test_operations_dashboard_lock_phase41b_45a_state() -> None:
     assert_true(report["phase41c_discord_api_send_called_during_phase41c"] is False, "41C no API")
     assert_true(report["phase41c_discord_message_sent_during_phase41c"] is False, "41C no message")
     assert_true(report["phase42_session_preflight_available"] is True, "42 available")
+    assert_true(report["phase42_actual_runtime_cli_available"] is True, "42 actual CLI")
+    assert_true(report["phase42_allow_flag_available"] is True, "42 allow flag")
+    assert_true(report["phase42_runtime_default_blocked"] is True, "42 runtime default blocked")
+    assert_true(report["phase42_runtime_allow_flag_present"] is False, "42 allow absent")
+    assert_true(report["phase42_runtime_message_sent_count"] == 0, "42 runtime no send")
+    assert_true(report["phase42_actual_session_closeout_available"] is True, "42 closeout")
+    assert_true(report["phase42_actual_supervised_private_test_session_succeeded"] is True, "42 success")
+    assert_true(report["phase42_exactly_once_supervised_success_recorded"] is True, "42 exactly once")
+    assert_true(report["phase42_success_message_sent_count"] == 1, "42 observed one send")
+    assert_true(report["phase42_success_sent_scope"] == "private_test_only", "42 private-test")
+    assert_true(report["phase42_success_session_lock_consumed"] is True, "42 lock consumed")
+    assert_true(report["phase42_repeat_supervised_session_locked"] is True, "42 repeat locked")
+    assert_true(report["phase42_repeat_supervised_session_allowed"] is False, "42 repeat disallowed")
+    assert_true(report["phase42_closeout_discord_api_send_called"] is False, "42 closeout no API")
+    assert_true(report["phase42_closeout_discord_message_sent"] is False, "42 closeout no message")
+    assert_true(report["phase42_closeout_additional_message_sent_count"] == 0, "42 closeout no extra send")
     assert_true(report["phase42_default_blocked"] is True, "42 default blocked")
     assert_true(report["phase42_blocked"] is True, "42 blocked")
     assert_true(report["phase42_manual_gate_required"] is True, "42 manual gate required")
@@ -80,11 +104,55 @@ def test_operations_dashboard_lock_phase41b_45a_state() -> None:
     assert_true(report["phase42_discord_api_send_called"] is False, "42 no API")
     assert_true(report["phase43_public_team_blocked"] is True, "43 public/team blocked")
     assert_true(report["phase43_phase41b_repeat_send_locked"] is True, "43 41B repeat locked")
+    assert_true(report["phase43_phase42_repeat_supervised_session_locked"] is True, "43 42 repeat locked")
     assert_true(report["phase43_phase42_manual_gate_open"] is False, "43 42 gate closed")
     assert_true(report["phase43_ready_for_phase42_actual_supervised_session"] is False, "43 no 42 actual")
     assert_true(report["phase44_actual_llm_api_call"] is False, "44 no LLM")
     assert_true(report["phase44_fake_output_schema_valid"] is True, "44 fake valid")
+    assert_true(report["phase45_ready_for_actual_llm_one_shot_call"] in {False, True}, "45 readiness is non-execution")
     assert_true(report["phase45_actual_llm_api_call"] is False, "45 no LLM")
+    assert_true(report["phase45_actual_llm_api_call_attempted"] is False, "45 no LLM attempt alias")
+    assert_true(report["phase45_actual_llm_api_called"] is False, "45 no LLM called alias")
+    assert_true(report["phase45_llm_api_call_count"] == 0, "45 no LLM count")
+    assert_true(report["phase45_actual_llm_call_closeout_available"] is True, "45 closeout available")
+    assert_true(report["phase45_actual_llm_one_shot_completed"] is True, "45 actual LLM complete")
+    assert_true(report["phase45_actual_llm_call_count"] == 1, "45 historical count one")
+    assert_true(report["phase45_actual_llm_one_shot_repeat_locked"] is True, "45 repeat locked")
+    assert_true(report["phase45_ready_for_repeat_llm_call"] is False, "45 repeat not ready")
+    assert_true(report["phase45_output_safety_blocked"] is True, "45 output blocked")
+    assert_true(report["phase45_llm_response_packet_created"] is False, "45 no packet")
+    assert_true(report["phase45_closeout_discord_api_send_called"] is False, "45 closeout no API send")
+    assert_true(report["phase45_closeout_discord_message_sent"] is False, "45 closeout no message")
+    assert_true(report["phase45_closeout_message_sent_count"] == 0, "45 closeout message count 0")
+    assert_true(report["phase46_blocked_llm_output_review_available"] is True, "46 review available")
+    assert_true(report["phase46_metadata_only"] is True, "46 metadata only")
+    assert_true(report["phase46_raw_output_included"] is False, "46 no raw output")
+    assert_true(report["phase46_full_content_included"] is False, "46 no full content")
+    assert_true(report["phase46_automatic_retry_allowed"] is False, "46 no auto retry")
+    assert_true(report["phase46_retry_requires_new_manual_gate"] is True, "46 new manual gate")
+    assert_true(report["phase46_llm_retry_policy_available"] is True, "46 retry policy")
+    assert_true(report["phase46_repeat_phase45_call_allowed"] is False, "46 no repeat")
+    assert_true(report["phase46_retry_requires_new_approval_phrase"] is True, "46 new phrase")
+    assert_true(report["phase46_retry_requires_cost_guard"] is True, "46 cost guard")
+    assert_true(report["phase46_retry_requires_call_count_guard"] is True, "46 count guard")
+    assert_true(report["phase46_discord_send_remains_disabled"] is True, "46 Discord disabled")
+    assert_true(report["phase46_llm_api_called"] is False, "46 no LLM")
+    assert_true(report["phase46_discord_message_sent"] is False, "46 no Discord")
+
+
+def test_operations_dashboard_lock_phase45_readiness_is_safe_but_execution_is_not() -> None:
+    report = build_operations_dashboard_lock()
+    report["phase45_ready_for_actual_llm_one_shot_manual_gate"] = True
+    report["phase45_ready_for_actual_llm_one_shot_call"] = True
+    assert_operations_dashboard_lock_safe(report)
+    assert_raises(lambda: assert_operations_dashboard_lock_safe({**report, "phase45_actual_llm_api_call_attempted": True}), "45 attempted unsafe")
+    assert_raises(lambda: assert_operations_dashboard_lock_safe({**report, "phase45_actual_llm_api_called": True}), "45 called unsafe")
+    assert_raises(lambda: assert_operations_dashboard_lock_safe({**report, "phase45_llm_api_call_count": 1}), "45 call count unsafe")
+    assert_raises(lambda: assert_operations_dashboard_lock_safe({**report, "phase45_actual_llm_call_count": 2}), "45 historical count must stay one")
+    assert_raises(lambda: assert_operations_dashboard_lock_safe({**report, "phase45_ready_for_repeat_llm_call": True}), "45 repeat unsafe")
+    assert_raises(lambda: assert_operations_dashboard_lock_safe({**report, "phase46_automatic_retry_allowed": True}), "46 auto retry unsafe")
+    assert_raises(lambda: assert_operations_dashboard_lock_safe({**report, "phase46_llm_api_called": True}), "46 LLM unsafe")
+    assert_raises(lambda: assert_operations_dashboard_lock_safe({**report, "phase46_retry_requires_new_manual_gate": False}), "46 manual gate required")
 
 
 def test_operations_dashboard_lock_phase36_post_call_state() -> None:
@@ -257,6 +325,7 @@ def main() -> int:
         test_operations_dashboard_lock_final_counts,
         test_operations_dashboard_lock_safety_false,
         test_operations_dashboard_lock_phase41b_45a_state,
+        test_operations_dashboard_lock_phase45_readiness_is_safe_but_execution_is_not,
         test_operations_dashboard_lock_phase36_post_call_state,
         test_operations_dashboard_lock_phase38_entry_state,
         test_operations_dashboard_lock_phase39a_blocked_state,

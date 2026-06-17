@@ -22,6 +22,7 @@ from actual_one_shot_llm_draft_call_preflight import (
 )
 from llm_client import call_llm_once, redact_text
 from llm_safety_policy import build_llm_safety_policy, check_llm_output_allowed
+from phase45_actual_llm_one_shot_preflight import build_phase45_actual_llm_one_shot_preflight
 
 
 VERSION = "phase36d_actual_one_shot_llm_draft_call_no_discord_send"
@@ -58,24 +59,28 @@ def _key_value(env: dict[str, Any] | None) -> str:
 
 def _manual_approval(env: dict[str, Any] | None) -> dict[str, bool]:
     source = _env(env)
-    flag_true = _flag(source.get(APPROVAL_FLAG))
-    phrase = str(source.get(APPROVAL_PHRASE, "") or "")
-    exact = phrase == EXPECTED_APPROVAL_PHRASE
+    phase45 = build_phase45_actual_llm_one_shot_preflight(source)
+    flag_true = bool(phase45.get("manual_approval_true"))
+    phrase_present = bool(phase45.get("approval_phrase_present"))
+    exact = bool(phase45.get("approval_phrase_exact_match"))
     return {
         "required": True,
         "approved": flag_true and exact,
         "approval_flag_true": flag_true,
-        "approval_phrase_present": bool(phrase),
+        "approval_phrase_present": phrase_present,
         "approval_phrase_exact_match": exact,
         "approval_phrase_value_logged": False,
+        "authoritative_gate": "phase45a",
     }
 
 
 def _blocked_client_result(reason: str) -> dict[str, Any]:
     return {
         "result_type": "llm_client_result",
-        "provider": PROVIDER,
-        "model": MODEL,
+        "provider_config_present": True,
+        "provider_config_value_logged": False,
+        "model_config_present": True,
+        "model_config_value_logged": False,
         "api_call_attempted": False,
         "api_call_succeeded": False,
         "api_call_failed": True,
@@ -183,8 +188,10 @@ def _response_packet(result: dict[str, Any], output: dict[str, Any]) -> dict[str
         "agent_route_candidate": "kasumi",
         "allowed_sources": ["operation"],
         "evidence_citations": [CITATION],
-        "provider": result.get("provider", PROVIDER),
-        "model": result.get("model", MODEL),
+        "provider_config_present": True,
+        "provider_config_value_logged": False,
+        "model_config_present": True,
+        "model_config_value_logged": False,
         "response_preview": preview,
         "response_preview_chars": len(preview),
         "full_content_included": False,
@@ -203,20 +210,33 @@ def build_actual_one_shot_llm_draft_call(
     env: dict[str, Any] | None = None,
     *,
     allow_actual_call: bool = False,
+    phase45_no_repeat_lock_consumed: bool = True,
     candidate_agent: str = "kasumi",
     source: str = "operation",
     llm_caller: Callable[[dict[str, Any], dict[str, Any]], dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    preflight = build_actual_one_shot_llm_draft_call_preflight(env=env)
+    phase45_preflight = build_phase45_actual_llm_one_shot_preflight(env or os.environ)
     approval = _manual_approval(env)
     openrouter_key_present = bool(_key_value(env))
+    preflight = (
+        {
+            "source_phase36b_output_safety_allowed": True,
+            "candidate_agent_allowed": candidate_agent == "kasumi",
+        }
+        if phase45_no_repeat_lock_consumed
+        else build_actual_one_shot_llm_draft_call_preflight(env=env)
+    )
     blocked_reasons: list[str] = []
+    if phase45_no_repeat_lock_consumed:
+        blocked_reasons.append("phase45_actual_llm_one_shot_already_consumed")
     if not approval["approved"]:
         blocked_reasons.append("manual_approval_not_approved")
     if not allow_actual_call:
-        blocked_reasons.append("allow_flag_missing")
+        blocked_reasons.append("actual_llm_allow_flag_missing")
     if not openrouter_key_present:
         blocked_reasons.append("openrouter_api_key_missing")
+    if not phase45_preflight.get("ready_for_actual_llm_one_shot_manual_gate"):
+        blocked_reasons.append("phase45_manual_gate_not_ready")
     if candidate_agent != "kasumi":
         blocked_reasons.append("candidate_agent_not_allowed")
     if source != "operation":
@@ -229,6 +249,16 @@ def build_actual_one_shot_llm_draft_call(
         blocked_reasons.append("candidate_agent_not_allowed")
 
     ready = not blocked_reasons
+    reason = "ready_for_fake_or_manual_llm_draft_call"
+    if not ready:
+        if "phase45_actual_llm_one_shot_already_consumed" in blocked_reasons:
+            reason = "phase45_actual_llm_one_shot_already_consumed"
+        elif "phase45_manual_gate_not_ready" in blocked_reasons or "manual_approval_not_approved" in blocked_reasons:
+            reason = "phase45_manual_gate_not_ready"
+        elif "actual_llm_allow_flag_missing" in blocked_reasons:
+            reason = "actual_llm_allow_flag_missing"
+        else:
+            reason = "actual_llm_gate_blocked"
     envelope = build_phase36d_prompt_envelope()
     config = _llm_config(env)
     if ready:
@@ -259,12 +289,33 @@ def build_actual_one_shot_llm_draft_call(
     call_count = 1 if attempted else 0
     packet_created = bool(succeeded and output.get("allowed") and call_count == 1)
     packet = _response_packet(result, output) if packet_created else {}
+    llm_client_result = {
+        key: value
+        for key, value in result.items()
+        if key not in {"response_text", "provider", "model", "base_url"}
+    }
+    llm_client_result.update(
+        {
+            "provider_config_present": bool(phase45_preflight.get("provider_config_present")),
+            "provider_config_value_logged": False,
+            "model_config_present": bool(phase45_preflight.get("model_config_present")),
+            "model_config_value_logged": False,
+            "base_url_present": bool(phase45_preflight.get("base_url_present")),
+            "base_url_value_logged": False,
+        }
+    )
+
     report = {
         "report_type": "actual_one_shot_llm_draft_call",
         "version": VERSION,
         "actual_call_available": True,
         "manual_approval_required": True,
         "manual_approval": approval,
+        "phase45_preflight_ready_for_manual_gate": bool(phase45_preflight.get("ready_for_actual_llm_one_shot_manual_gate")),
+        "phase45_preflight_ready_for_actual_llm_one_shot_call": bool(phase45_preflight.get("ready_for_actual_llm_one_shot_call")),
+        "phase45_actual_llm_one_shot_already_consumed": bool(phase45_no_repeat_lock_consumed),
+        "phase45_ready_for_repeat_llm_call": False,
+        "phase45_actual_llm_one_shot_repeat_locked": bool(phase45_no_repeat_lock_consumed),
         "allow_flag_present": bool(allow_actual_call),
         "candidate_agent": candidate_agent,
         "candidate_agent_allowed": candidate_agent == "kasumi",
@@ -272,20 +323,25 @@ def build_actual_one_shot_llm_draft_call(
         "evidence_citations": [CITATION] if source == "operation" else [],
         "openrouter_api_key_present": openrouter_key_present,
         "openrouter_api_key_value_logged": False,
-        "provider": PROVIDER,
-        "model": MODEL,
+        "provider_config_present": bool(phase45_preflight.get("provider_config_present")),
+        "provider_config_value_logged": False,
+        "model_config_present": bool(phase45_preflight.get("model_config_present")),
+        "model_config_value_logged": False,
+        "base_url_present": bool(phase45_preflight.get("base_url_present")),
+        "base_url_value_logged": False,
         "ready": ready,
         "blocked": not ready,
+        "reason": reason,
         "blocked_reasons": blocked_reasons,
         "prompt_envelope": envelope,
-        "llm_client_result": {
-            key: value
-            for key, value in result.items()
-            if key != "response_text"
-        },
+        "llm_client_result": llm_client_result,
         "llm_api_call_attempted": attempted,
         "llm_api_called": attempted,
         "llm_api_call_count": call_count,
+        "actual_llm_api_call_attempted": False,
+        "actual_llm_api_called": False,
+        "actual_llm_api_call": False,
+        "real_llm_api_call_count": 0,
         "llm_response_packet_created": packet_created,
         "llm_response_packet": packet,
         "llm_response_review_only": bool(packet_created),
@@ -338,9 +394,14 @@ def assert_actual_one_shot_llm_draft_call_safe(report: dict[str, Any]) -> None:
         "external_execution",
         "ready_for_discord_send",
         "ready_for_unattended_auto_reply",
+        "actual_llm_api_call_attempted",
+        "actual_llm_api_called",
+        "actual_llm_api_call",
     ):
         if report.get(key):
             raise ValueError(f"Actual one-shot LLM draft call unsafe flag is true: {key}")
+    if int(report.get("real_llm_api_call_count", 0) or 0) != 0:
+        raise ValueError("Actual one-shot LLM draft call must not record a real API call count in tests.")
     if int(report.get("llm_api_call_count", 0) or 0) > 1:
         raise ValueError("Actual one-shot LLM draft call exceeded one call.")
     assertions = report.get("safety_assertions", {})
@@ -371,6 +432,8 @@ def render_actual_one_shot_llm_draft_call_markdown(report: dict[str, Any]) -> st
             f"- Allow flag present: {str(report.get('allow_flag_present')).lower()}",
             f"- Manual approval approved: {str(report.get('manual_approval', {}).get('approved')).lower()}",
             f"- OpenRouter API key present: {str(report.get('openrouter_api_key_present')).lower()}",
+            f"- Provider config present: {str(report.get('provider_config_present')).lower()}",
+            f"- Model config present: {str(report.get('model_config_present')).lower()}",
             f"- Candidate agent: {report.get('candidate_agent')}",
             f"- Sources: {', '.join(report.get('allowed_sources', []))}",
             f"- LLM API call attempted: {str(report.get('llm_api_call_attempted')).lower()}",

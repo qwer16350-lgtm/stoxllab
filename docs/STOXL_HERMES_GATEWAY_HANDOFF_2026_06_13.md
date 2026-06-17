@@ -490,3 +490,71 @@ public/team/self/bot/duplicate guards, session and send-count locks, timeout
 safe closeout, and no LLM/RAG/embedding/external execution. Phase 43 records
 the routing/rate/session lock posture. Codex does not run actual Discord
 runtime, call Discord API send, send messages, or retry Phase 41B.
+
+Phase 42-0 hotfix reads the Phase 42 supervised-session gates from the current
+PowerShell process environment for preflight and diagnostics. The report stays
+safe: it prints only booleans/counts, never approval phrase values or raw
+Discord/session data, and performs no runtime/send/LLM/RAG/external action.
+
+Phase 42-1 adds the missing actual supervised private-test session runtime CLI
+behind `--phase42-supervised-private-test-session` and
+`--allow-actual-phase42-supervised-session`. Without the allow flag it returns a
+blocked report and does not collect events, call Discord API send, or send a
+message. Tests use a fake adapter for the one-message private-test success and
+blocked public/team/self/bot/duplicate cases. The real adapter boundary is
+wired for the next separate Manual Gate 2 operation; Codex did not invoke it in
+this bundle.
+
+Safe Mega Bundle 3 closes out the separately executed Manual Gate 2 result:
+Phase 42 actual supervised private-test session succeeded with exactly one
+private-test message and `session_lock_consumed=true`. Phase 42 repeat
+supervised session is locked, Phase 41B repeat send remains locked, and this
+bundle performs no new Discord runtime/send/reply. It also prepares Phase 45A
+actual LLM one-shot preflight only: key/provider/model/cost/count/manual gates
+are booleans, while actual LLM/OpenRouter attempt/call, RAG, embeddings,
+external execution, and Discord send remain false. The next actual operation is
+Manual Gate 3 for actual LLM one-shot call approval, with Discord send still
+disabled.
+
+Phase45-0 fixes Phase 45A env alias handling and gate naming. The preflight
+recognizes `HERMES_LLM_API_KEY` plus OpenRouter aliases for key presence, reads
+`HERMES_LLM_PROVIDER`, `HERMES_LLM_MODEL`, and `HERMES_LLM_BASE_URL`, and adds
+`--phase45-llm-env-diagnostics` for boolean-only checks. Gate checks now use
+positive state names and blocked reasons only list failing gates. This fix does
+not attempt or call LLM/OpenRouter, does not send Discord messages, and does not
+run RAG/embedding/external actions.
+
+Phase45-1 separates Phase 45 readiness from execution in the dashboard lock and
+sentinel. `phase45_ready_for_actual_llm_one_shot_call=true` is allowed as a
+manual-gate readiness signal when actual attempt/call/count remain false/zero.
+The actual command path returns a blocked JSON report without traceback when the
+allow gate is absent. Real LLM/OpenRouter calls remain unexecuted in this
+hotfix, Discord send remains disabled, and the next action is a separate Manual
+Gate 3 retry.
+
+Phase45-2 bridges Phase45A manual approval into the legacy actual LLM one-shot
+draft command. The Phase45A keys are authoritative for this path, so an open
+Phase45A gate is reflected as `manual_approval.approved=true`; without the
+actual allow flag the command still returns blocked JSON with reason
+`actual_llm_allow_flag_missing`. Reports keep API key, approval phrase,
+provider/model/base URL values, raw IDs, and raw content out of output. This
+safe hotfix does not attempt or call LLM/OpenRouter, does not run
+RAG/embedding/external actions, and keeps Discord send disabled. The next
+actual operation must be a separate Manual Gate 3 retry exactly once with
+Discord send disabled.
+
+Phase45-3 closes out that Manual Gate 3 operation. The actual LLM/OpenRouter
+one-shot call succeeded exactly once, with `phase45_actual_llm_call_count=1`.
+Output safety then blocked the generated draft for `external_action_claim`; no
+response packet was created, Discord send remained disabled, and no Discord
+message was sent. Phase45 repeat LLM calls are now locked, and repeat
+`--actual-one-shot-llm-draft-call` commands return blocked JSON with reason
+`phase45_actual_llm_one_shot_already_consumed`. Any future retry requires a
+separate Manual Gate with a new explicit approval policy.
+
+Phase46 records a metadata-only review policy for the blocked Phase45 output.
+It does not include the full raw LLM output, does not call LLM/OpenRouter, and
+does not send Discord messages. Fixture-based classifier calibration verifies
+that negated external-action wording is not treated as a positive external
+action claim. Automatic retry remains forbidden; Phase47 is the earliest place
+to design either human-review-only closeout or a new retry Manual Gate.

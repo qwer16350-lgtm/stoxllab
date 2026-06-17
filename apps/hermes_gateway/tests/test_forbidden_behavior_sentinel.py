@@ -94,6 +94,22 @@ def test_forbidden_behavior_sentinel_success_fixture() -> None:
     assert_true(report["phase41c_discord_api_send_called_during_phase41c"] is False, "41C no API")
     assert_true(report["phase41c_discord_message_sent_during_phase41c"] is False, "41C no message")
     assert_true(report["phase42_session_preflight_available"] is True, "42 preflight")
+    assert_true(report["phase42_actual_runtime_cli_available"] is True, "42 actual CLI")
+    assert_true(report["phase42_allow_flag_available"] is True, "42 allow flag")
+    assert_true(report["phase42_runtime_default_blocked"] is True, "42 runtime default blocked")
+    assert_true(report["phase42_runtime_allow_flag_present"] is False, "42 allow absent")
+    assert_true(report["phase42_runtime_message_sent_count"] == 0, "42 runtime no send")
+    assert_true(report["phase42_actual_session_closeout_available"] is True, "42 closeout")
+    assert_true(report["phase42_actual_supervised_private_test_session_succeeded"] is True, "42 success")
+    assert_true(report["phase42_exactly_once_supervised_success_recorded"] is True, "42 exactly once")
+    assert_true(report["phase42_success_message_sent_count"] == 1, "42 observed one send")
+    assert_true(report["phase42_success_sent_scope"] == "private_test_only", "42 private-test")
+    assert_true(report["phase42_success_session_lock_consumed"] is True, "42 lock consumed")
+    assert_true(report["phase42_repeat_supervised_session_locked"] is True, "42 repeat locked")
+    assert_true(report["phase42_repeat_supervised_session_allowed"] is False, "42 repeat disallowed")
+    assert_true(report["phase42_closeout_discord_api_send_called"] is False, "42 closeout no API")
+    assert_true(report["phase42_closeout_discord_message_sent"] is False, "42 closeout no message")
+    assert_true(report["phase42_closeout_additional_message_sent_count"] == 0, "42 closeout no extra send")
     assert_true(report["phase42_default_blocked"] is True, "42 default blocked")
     assert_true(report["phase42_blocked"] is True, "42 blocked")
     assert_true(report["phase42_manual_gate_required"] is True, "42 manual gate")
@@ -104,10 +120,33 @@ def test_forbidden_behavior_sentinel_success_fixture() -> None:
     assert_true(report["phase42_session_lock_active"] is True, "42 session lock")
     assert_true(report["phase43_public_team_blocked"] is True, "43 public/team")
     assert_true(report["phase43_phase41b_repeat_send_locked"] is True, "43 41B repeat")
+    assert_true(report["phase43_phase42_repeat_supervised_session_locked"] is True, "43 42 repeat")
     assert_true(report["phase43_phase42_manual_gate_open"] is False, "43 42 gate closed")
     assert_true(report["phase44_provider_preflight_available"] is True, "44 provider")
     assert_true(report["phase44_fake_output_schema_valid"] is True, "44 fake valid")
     assert_true(report["phase45_preflight_available"] is True, "45 preflight")
+    assert_true(report["phase45_llm_api_call_count"] == 0, "45 count 0")
+    assert_true(report["phase45_actual_llm_call_closeout_available"] is True, "45 closeout")
+    assert_true(report["phase45_actual_llm_one_shot_completed"] is True, "45 completed")
+    assert_true(report["phase45_actual_llm_call_count"] == 1, "45 historical count")
+    assert_true(report["phase45_actual_llm_one_shot_repeat_locked"] is True, "45 repeat locked")
+    assert_true(report["phase45_ready_for_repeat_llm_call"] is False, "45 no repeat")
+    assert_true(report["phase45_output_safety_blocked"] is True, "45 output blocked")
+    assert_true(report["phase45_llm_response_packet_created"] is False, "45 no packet")
+    assert_true(report["phase45_closeout_discord_api_send_called"] is False, "45 closeout no API")
+    assert_true(report["phase45_closeout_discord_message_sent"] is False, "45 closeout no message")
+    assert_true(report["phase45_closeout_message_sent_count"] == 0, "45 closeout count 0")
+    assert_true(report["phase46_blocked_llm_output_review_available"] is True, "46 review")
+    assert_true(report["phase46_metadata_only"] is True, "46 metadata")
+    assert_true(report["phase46_raw_output_included"] is False, "46 no raw")
+    assert_true(report["phase46_full_content_included"] is False, "46 no full")
+    assert_true(report["phase46_automatic_retry_allowed"] is False, "46 no auto retry")
+    assert_true(report["phase46_retry_requires_new_manual_gate"] is True, "46 manual gate")
+    assert_true(report["phase46_llm_retry_policy_available"] is True, "46 retry policy")
+    assert_true(report["phase46_repeat_phase45_call_allowed"] is False, "46 no repeat")
+    assert_true(report["phase46_discord_send_remains_disabled"] is True, "46 Discord disabled")
+    assert_true(report["phase46_llm_api_called"] is False, "46 no LLM")
+    assert_true(report["phase46_discord_message_sent"] is False, "46 no Discord")
 
 
 def test_forbidden_behavior_sentinel_flags_false() -> None:
@@ -197,12 +236,37 @@ def test_forbidden_behavior_sentinel_phase41b_45a_negative_fixtures() -> None:
         "phase44_actual_llm_api_call",
         "phase44_llm_api_call_attempted",
         "phase44_discord_message_sent",
-        "phase45_ready_for_actual_llm_one_shot_call",
         "phase45_actual_llm_api_call",
+        "phase45_actual_llm_api_call_attempted",
+        "phase45_actual_llm_api_called",
         "phase45_llm_api_call_attempted",
         "phase45_discord_message_sent",
+        "phase46_raw_output_included",
+        "phase46_full_content_included",
+        "phase46_ready_for_retry",
+        "phase46_automatic_retry_allowed",
+        "phase46_repeat_phase45_call_allowed",
+        "phase46_llm_api_call_attempted",
+        "phase46_llm_api_called",
+        "phase46_discord_api_send_called",
+        "phase46_discord_message_sent",
+        "phase46_rag_called",
+        "phase46_embedding_api_called",
+        "phase46_vector_index_created",
+        "phase46_external_execution",
     ):
         assert_raises(lambda selected=key: build_forbidden_behavior_sentinel({selected: True}), f"{key} should fail")
+    build_forbidden_behavior_sentinel({"phase45_ready_for_actual_llm_one_shot_manual_gate": True, "phase45_ready_for_actual_llm_one_shot_call": True})
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase45_llm_api_call_count": 1}), "45 LLM count should fail")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase45_actual_llm_call_closeout_available": False}), "45 closeout required")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase45_actual_llm_call_count": 2}), "45 historical count exactly one")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase45_ready_for_repeat_llm_call": True}), "45 repeat locked")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase45_output_safety_blocked": False}), "45 output blocked required")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase45_llm_response_packet_created": True}), "45 packet blocked")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase45_closeout_discord_message_sent": True}), "45 closeout no Discord")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase46_blocked_llm_output_review_available": False}), "46 review required")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase46_retry_requires_new_manual_gate": False}), "46 manual gate required")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase46_discord_send_remains_disabled": False}), "46 Discord disabled")
     assert_raises(lambda: build_forbidden_behavior_sentinel({"phase41b_message_sent_count": 1}), "41B count 0")
     assert_raises(lambda: build_forbidden_behavior_sentinel({"phase41c_message_sent_count": 0}), "41C count 1")
     assert_raises(lambda: build_forbidden_behavior_sentinel({"phase41c_sent_scope": "none"}), "41C private scope")

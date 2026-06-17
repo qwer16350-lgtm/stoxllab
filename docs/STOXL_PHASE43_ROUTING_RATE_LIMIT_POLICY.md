@@ -9,7 +9,8 @@ Policy summary:
 - Operator commands are separated from reply flow.
 - Per-session max replies, cooldown, one-shot/session locks, and crash-recovery lock placeholders are represented.
 - Phase 41B repeat send remains locked.
-- Phase 42 actual supervised session remains blocked until a separate manual gate opens.
+- Phase 42 actual supervised session succeeded exactly once in Manual Gate 2.
+- Phase 42 repeat supervised session is locked.
 - Public/team send and reply paths remain false.
 - Unattended auto reply remains false.
 - External execution remains false.

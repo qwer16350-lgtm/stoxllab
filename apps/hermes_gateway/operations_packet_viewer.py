@@ -117,11 +117,14 @@ from phase40z_operations_handoff import build_phase40z_operations_handoff
 from phase41_private_test_reply_preflight import build_phase41_private_test_reply_preflight
 from phase41b_private_test_reply_one_shot import build_phase41b_private_test_reply_one_shot
 from phase41c_actual_reply_closeout import build_phase41c_actual_reply_closeout
-from phase42_supervised_private_test_session import build_phase42_supervised_private_test_session_preflight
+from phase42_actual_session_closeout import build_phase42_actual_session_closeout
+from phase42_supervised_private_test_session import build_phase42_supervised_private_test_session, build_phase42_supervised_private_test_session_preflight
 from phase43_routing_rate_limit_policy import build_phase43_routing_rate_limit_policy
 from phase44_llm_preflight_contract import build_phase44_llm_provider_preflight
 from phase44_fake_llm_adapter import run_phase44_fake_llm_adapter
 from phase45_actual_llm_one_shot_preflight import build_phase45_actual_llm_one_shot_preflight
+from phase46_blocked_llm_output_review import build_phase46_blocked_llm_output_review
+from phase46_llm_retry_policy import build_phase46_llm_retry_policy
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope
 from rag_evidence_review_packet import build_rag_evidence_review_packet
@@ -165,6 +168,8 @@ def _assert_no_raw_values(obj: Any) -> None:
         "openrouter_api_key",
         "hermes_openrouter_api_key",
         "api_key_value_logged",
+        "api_key_present",
+        "api_key_missing",
         "openrouter api key present",
         "openrouter api key value logged",
     ):
@@ -642,11 +647,16 @@ def build_operations_packet_viewer_report(
     phase41_preflight = build_phase41_private_test_reply_preflight()
     phase41b_one_shot = build_phase41b_private_test_reply_one_shot()
     phase41c_closeout = build_phase41c_actual_reply_closeout()
+    phase42_closeout = build_phase42_actual_session_closeout()
     phase42_session = build_phase42_supervised_private_test_session_preflight()
+    phase42_runtime_gate = build_phase42_supervised_private_test_session()
     phase43_policy = build_phase43_routing_rate_limit_policy()
     phase44_provider = build_phase44_llm_provider_preflight()
     phase44_fake = run_phase44_fake_llm_adapter()
     phase45_preflight = build_phase45_actual_llm_one_shot_preflight()
+    phase45_closeout = build_actual_one_shot_llm_draft_call_closeout()
+    phase46_review = build_phase46_blocked_llm_output_review(phase45_closeout)
+    phase46_retry = build_phase46_llm_retry_policy(phase46_review)
     report = {
         "report_type": "operations_packet_viewer",
         "version": VERSION,
@@ -1202,6 +1212,7 @@ def build_operations_packet_viewer_report(
             "llm_call_count": int(phase36e_closeout.get("llm_api_called_count", 0) or 0),
             "llm_response_packet_created": bool(phase36e_closeout.get("llm_response_packet_created")),
             "output_safety_allowed": bool(phase36e_closeout.get("output_safety_allowed")),
+            "output_safety_blocked": bool(phase36e_closeout.get("output_safety_blocked")),
             "discord_message_sent": bool(phase36e_closeout.get("discord_message_sent")),
             "message_sent_count": int(phase36e_closeout.get("message_sent_count", 0) or 0),
             "ready_for_discord_send": bool(phase36e_closeout.get("ready_for_discord_send")),
@@ -1710,6 +1721,10 @@ def build_operations_packet_viewer_report(
         },
         "phase42_supervised_private_test_session_preflight": {
             "available": True,
+            "actual_runtime_cli_available": True,
+            "allow_flag_available": True,
+            "runtime_default_blocked": bool(phase42_runtime_gate.get("default_blocked")),
+            "runtime_allow_flag_present": bool(phase42_runtime_gate.get("allow_actual_phase42_supervised_session_flag_present")),
             "default_blocked": bool(phase42_session.get("default_blocked")),
             "blocked": bool(phase42_session.get("blocked")),
             "manual_gate_required": bool(phase42_session.get("manual_gate_required")),
@@ -1731,6 +1746,20 @@ def build_operations_packet_viewer_report(
             "discord_api_send_called": bool(phase42_session.get("discord_api_send_called")),
             "discord_message_sent": bool(phase42_session.get("discord_message_sent")),
             "message_sent_count": int(phase42_session.get("message_sent_count", 0) or 0),
+            "runtime_message_sent_count": int(phase42_runtime_gate.get("message_sent_count", 0) or 0),
+        },
+        "phase42_actual_session_closeout": {
+            "available": True,
+            "phase42_actual_supervised_private_test_session_succeeded": bool(phase42_closeout.get("phase42_actual_supervised_private_test_session_succeeded")),
+            "phase42_exactly_once_supervised_success_recorded": bool(phase42_closeout.get("phase42_exactly_once_supervised_success_recorded")),
+            "message_sent_count": int(phase42_closeout.get("message_sent_count", 0) or 0),
+            "sent_scope": phase42_closeout.get("sent_scope", ""),
+            "session_lock_consumed": bool(phase42_closeout.get("session_lock_consumed")),
+            "phase42_repeat_supervised_session_locked": bool(phase42_closeout.get("phase42_repeat_supervised_session_locked")),
+            "phase42_repeat_supervised_session_allowed": bool(phase42_closeout.get("phase42_repeat_supervised_session_allowed")),
+            "discord_api_send_called_during_closeout": bool(phase42_closeout.get("discord_api_send_called_during_closeout")),
+            "discord_message_sent_during_closeout": bool(phase42_closeout.get("discord_message_sent_during_closeout")),
+            "additional_message_sent_count_during_closeout": int(phase42_closeout.get("additional_message_sent_count_during_closeout", 0) or 0),
         },
         "phase43_routing_rate_limit_policy": {
             "available": True,
@@ -1738,6 +1767,7 @@ def build_operations_packet_viewer_report(
             "rate_limit_policy_available": bool(phase43_policy.get("rate_limit_policy_available")),
             "session_lock_policy_available": bool(phase43_policy.get("session_lock_policy_available")),
             "phase41b_repeat_send_locked": bool(phase43_policy.get("phase41b_repeat_send_locked")),
+            "phase42_repeat_supervised_session_locked": bool(phase43_policy.get("phase42_repeat_supervised_session_locked")),
             "phase42_manual_gate_open": bool(phase43_policy.get("phase42_manual_gate_open")),
             "ready_for_phase42_actual_supervised_session": bool(phase43_policy.get("ready_for_phase42_actual_supervised_session")),
             "public_team_blocked": bool(phase43_policy.get("public_team_blocked")),
@@ -1765,11 +1795,59 @@ def build_operations_packet_viewer_report(
         "phase45_actual_llm_one_shot_preflight": {
             "available": True,
             "default_blocked": bool(phase45_preflight.get("default_blocked")),
+            "ready_for_actual_llm_one_shot_manual_gate": bool(phase45_preflight.get("ready_for_actual_llm_one_shot_manual_gate")),
             "ready_for_actual_llm_one_shot_call": bool(phase45_preflight.get("ready_for_actual_llm_one_shot_call")),
+            "api_key_present": bool(phase45_preflight.get("api_key_present")),
+            "provider_config_present": bool(phase45_preflight.get("provider_config_present")),
+            "model_config_present": bool(phase45_preflight.get("model_config_present")),
             "actual_llm_api_call": bool(phase45_preflight.get("actual_llm_api_call")),
+            "actual_llm_api_call_attempted": bool(phase45_preflight.get("actual_llm_api_call_attempted")),
+            "actual_llm_api_called": bool(phase45_preflight.get("actual_llm_api_called")),
             "llm_api_call_attempted": bool(phase45_preflight.get("llm_api_call_attempted")),
             "discord_send_allowed": bool(phase45_preflight.get("discord_send_allowed")),
             "discord_message_sent": bool(phase45_preflight.get("discord_message_sent")),
+        },
+        "phase45_actual_llm_call_closeout": {
+            "available": True,
+            "phase45_actual_llm_one_shot_completed": bool(phase45_closeout.get("phase45_actual_llm_one_shot_completed")),
+            "phase45_actual_llm_call_count": int(phase45_closeout.get("phase45_actual_llm_call_count", 0) or 0),
+            "phase45_ready_for_repeat_llm_call": bool(phase45_closeout.get("phase45_ready_for_repeat_llm_call")),
+            "phase45_actual_llm_one_shot_repeat_locked": bool(phase45_closeout.get("phase45_actual_llm_one_shot_repeat_locked")),
+            "provider": phase45_closeout.get("provider", ""),
+            "model_present": bool(phase45_closeout.get("model_present")),
+            "provider_usage_present": bool(phase45_closeout.get("provider_usage_present")),
+            "output_safety_checked": bool(phase45_closeout.get("output_safety_checked")),
+            "output_safety_blocked": bool(phase45_closeout.get("output_safety_blocked")),
+            "llm_response_packet_created": bool(phase45_closeout.get("llm_response_packet_created")),
+            "discord_api_send_called": bool(phase45_closeout.get("discord_api_send_called")),
+            "discord_message_sent": bool(phase45_closeout.get("discord_message_sent")),
+            "message_sent_count": int(phase45_closeout.get("message_sent_count", 0) or 0),
+        },
+        "phase46_blocked_llm_output_review": {
+            "available": True,
+            "metadata_only": bool(phase46_review.get("metadata_only")),
+            "phase45_actual_llm_call_completed": bool(phase46_review.get("phase45_actual_llm_call_completed")),
+            "phase45_llm_call_count": int(phase46_review.get("phase45_llm_call_count", 0) or 0),
+            "phase45_repeat_llm_call_allowed": bool(phase46_review.get("phase45_repeat_llm_call_allowed")),
+            "output_safety_blocked": bool(phase46_review.get("output_safety_blocked")),
+            "blocked_reasons": list(phase46_review.get("blocked_reasons", [])),
+            "raw_output_included": bool(phase46_review.get("raw_output_included")),
+            "full_content_included": bool(phase46_review.get("full_content_included")),
+            "discord_message_sent": bool(phase46_review.get("discord_message_sent")),
+            "ready_for_retry": bool(phase46_review.get("ready_for_retry")),
+            "retry_requires_new_manual_gate": bool(phase46_review.get("retry_requires_new_manual_gate")),
+        },
+        "phase46_llm_retry_policy": {
+            "available": True,
+            "automatic_retry_allowed": bool(phase46_retry.get("automatic_retry_allowed")),
+            "repeat_phase45_call_allowed": bool(phase46_retry.get("repeat_phase45_call_allowed")),
+            "retry_requires_new_manual_gate": bool(phase46_retry.get("retry_requires_new_manual_gate")),
+            "retry_requires_new_approval_phrase": bool(phase46_retry.get("retry_requires_new_approval_phrase")),
+            "retry_requires_cost_guard": bool(phase46_retry.get("retry_requires_cost_guard")),
+            "retry_requires_call_count_guard": bool(phase46_retry.get("retry_requires_call_count_guard")),
+            "discord_send_remains_disabled": bool(phase46_retry.get("discord_send_remains_disabled")),
+            "llm_api_called": bool(phase46_retry.get("llm_api_called")),
+            "discord_message_sent": bool(phase46_retry.get("discord_message_sent")),
         },
         "daily_manifest_summary": load_daily_manifest(root=root, date=date),
         "filters": {
@@ -2149,10 +2227,14 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
     phase41b = report.get("phase41b_private_test_reply_one_shot", {})
     phase41c = report.get("phase41c_actual_reply_closeout", {})
     phase42 = report.get("phase42_supervised_private_test_session_preflight", {})
+    phase42_closeout = report.get("phase42_actual_session_closeout", {})
     phase43 = report.get("phase43_routing_rate_limit_policy", {})
     phase44 = report.get("phase44_llm_provider_preflight", {})
     phase44_fake = report.get("phase44_fake_llm_reply_dry_run", {})
     phase45 = report.get("phase45_actual_llm_one_shot_preflight", {})
+    phase45_closeout = report.get("phase45_actual_llm_call_closeout", {})
+    phase46_review = report.get("phase46_blocked_llm_output_review", {})
+    phase46_retry = report.get("phase46_llm_retry_policy", {})
     lines.extend(
         [
             "",
@@ -2167,6 +2249,11 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
             f"- Phase 41C sent scope: {phase41c.get('sent_scope', '')}",
             f"- Phase 41C repeat send blocked: {str(phase41c.get('repeat_send_blocked', False)).lower()}",
             f"- Phase 41C ready for supervised session: {str(phase41c.get('ready_for_supervised_session', False)).lower()}",
+            f"- Phase 42 actual runtime CLI available: {str(phase42.get('actual_runtime_cli_available', False)).lower()}",
+            f"- Phase 42 runtime default blocked: {str(phase42.get('runtime_default_blocked', True)).lower()}",
+            f"- Phase 42 closeout success: {str(phase42_closeout.get('phase42_actual_supervised_private_test_session_succeeded', False)).lower()}",
+            f"- Phase 42 observed message sent count: {phase42_closeout.get('message_sent_count', 0)}",
+            f"- Phase 42 repeat session locked: {str(phase42_closeout.get('phase42_repeat_supervised_session_locked', False)).lower()}",
             f"- Phase 42 manual gate open: {str(phase42.get('manual_gate_open', False)).lower()}",
             f"- Phase 42 actual runtime executed: {str(phase42.get('actual_runtime_executed', False)).lower()}",
             f"- Phase 43 public/team blocked: {str(phase43.get('public_team_blocked', True)).lower()}",
@@ -2174,6 +2261,15 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
             f"- Phase 44 actual LLM API call: {str(phase44.get('actual_llm_api_call', False)).lower()}",
             f"- Phase 44 fake output schema valid: {str(phase44_fake.get('output_schema_valid', False)).lower()}",
             f"- Phase 45 actual LLM API call: {str(phase45.get('actual_llm_api_call', False)).lower()}",
+            f"- Phase 45 closeout completed: {str(phase45_closeout.get('phase45_actual_llm_one_shot_completed', False)).lower()}",
+            f"- Phase 45 historical LLM call count: {phase45_closeout.get('phase45_actual_llm_call_count', 0)}",
+            f"- Phase 45 repeat LLM call ready: {str(phase45_closeout.get('phase45_ready_for_repeat_llm_call', False)).lower()}",
+            f"- Phase 45 output safety blocked: {str(phase45_closeout.get('output_safety_blocked', False)).lower()}",
+            f"- Phase 45 Discord message sent: {str(phase45_closeout.get('discord_message_sent', False)).lower()}",
+            f"- Phase 46 metadata-only review: {str(phase46_review.get('metadata_only', False)).lower()}",
+            f"- Phase 46 raw output included: {str(phase46_review.get('raw_output_included', False)).lower()}",
+            f"- Phase 46 automatic retry allowed: {str(phase46_retry.get('automatic_retry_allowed', False)).lower()}",
+            f"- Phase 46 retry requires new manual gate: {str(phase46_retry.get('retry_requires_new_manual_gate', False)).lower()}",
         ]
     )
     safety = report.get("safety_assertions", {})

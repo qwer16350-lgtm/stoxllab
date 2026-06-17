@@ -181,10 +181,24 @@ FORBIDDEN_TRUE_FIELDS = (
     "phase44_actual_llm_api_call",
     "phase44_llm_api_call_attempted",
     "phase44_discord_message_sent",
-    "phase45_ready_for_actual_llm_one_shot_call",
     "phase45_actual_llm_api_call",
+    "phase45_actual_llm_api_call_attempted",
+    "phase45_actual_llm_api_called",
     "phase45_llm_api_call_attempted",
     "phase45_discord_message_sent",
+    "phase46_raw_output_included",
+    "phase46_full_content_included",
+    "phase46_ready_for_retry",
+    "phase46_automatic_retry_allowed",
+    "phase46_repeat_phase45_call_allowed",
+    "phase46_llm_api_call_attempted",
+    "phase46_llm_api_called",
+    "phase46_discord_api_send_called",
+    "phase46_discord_message_sent",
+    "phase46_rag_called",
+    "phase46_embedding_api_called",
+    "phase46_vector_index_created",
+    "phase46_external_execution",
 )
 
 
@@ -412,6 +426,22 @@ def build_forbidden_behavior_sentinel(overrides: dict[str, Any] | None = None) -
         "phase41c_ready_for_phase42_supervised_deterministic_session_manual_gate": True,
         "phase41c_ready_for_repeat_send": False,
         "phase42_session_preflight_available": True,
+        "phase42_actual_runtime_cli_available": True,
+        "phase42_allow_flag_available": True,
+        "phase42_runtime_default_blocked": True,
+        "phase42_runtime_allow_flag_present": False,
+        "phase42_runtime_message_sent_count": 0,
+        "phase42_actual_session_closeout_available": True,
+        "phase42_actual_supervised_private_test_session_succeeded": True,
+        "phase42_exactly_once_supervised_success_recorded": True,
+        "phase42_success_message_sent_count": 1,
+        "phase42_success_sent_scope": "private_test_only",
+        "phase42_success_session_lock_consumed": True,
+        "phase42_repeat_supervised_session_locked": True,
+        "phase42_repeat_supervised_session_allowed": False,
+        "phase42_closeout_discord_api_send_called": False,
+        "phase42_closeout_discord_message_sent": False,
+        "phase42_closeout_additional_message_sent_count": 0,
         "phase42_default_blocked": True,
         "phase42_blocked": True,
         "phase42_manual_gate_required": True,
@@ -430,6 +460,7 @@ def build_forbidden_behavior_sentinel(overrides: dict[str, Any] | None = None) -
         "phase43_policy_available": True,
         "phase43_public_team_blocked": True,
         "phase43_phase41b_repeat_send_locked": True,
+        "phase43_phase42_repeat_supervised_session_locked": True,
         "phase43_phase42_manual_gate_open": False,
         "phase43_ready_for_phase42_actual_supervised_session": False,
         "phase44_provider_preflight_available": True,
@@ -439,10 +470,45 @@ def build_forbidden_behavior_sentinel(overrides: dict[str, Any] | None = None) -
         "phase44_fake_adapter_available": True,
         "phase44_fake_output_schema_valid": True,
         "phase45_preflight_available": True,
+        "phase45_ready_for_actual_llm_one_shot_manual_gate": False,
         "phase45_ready_for_actual_llm_one_shot_call": False,
         "phase45_actual_llm_api_call": False,
+        "phase45_actual_llm_api_call_attempted": False,
+        "phase45_actual_llm_api_called": False,
         "phase45_llm_api_call_attempted": False,
+        "phase45_llm_api_call_count": 0,
         "phase45_discord_message_sent": False,
+        "phase45_actual_llm_call_closeout_available": True,
+        "phase45_actual_llm_one_shot_completed": True,
+        "phase45_actual_llm_call_count": 1,
+        "phase45_actual_llm_one_shot_repeat_locked": True,
+        "phase45_ready_for_repeat_llm_call": False,
+        "phase45_output_safety_blocked": True,
+        "phase45_llm_response_packet_created": False,
+        "phase45_closeout_discord_api_send_called": False,
+        "phase45_closeout_discord_message_sent": False,
+        "phase45_closeout_message_sent_count": 0,
+        "phase46_blocked_llm_output_review_available": True,
+        "phase46_metadata_only": True,
+        "phase46_raw_output_included": False,
+        "phase46_full_content_included": False,
+        "phase46_ready_for_retry": False,
+        "phase46_automatic_retry_allowed": False,
+        "phase46_retry_requires_new_manual_gate": True,
+        "phase46_llm_retry_policy_available": True,
+        "phase46_repeat_phase45_call_allowed": False,
+        "phase46_retry_requires_new_approval_phrase": True,
+        "phase46_retry_requires_cost_guard": True,
+        "phase46_retry_requires_call_count_guard": True,
+        "phase46_discord_send_remains_disabled": True,
+        "phase46_llm_api_call_attempted": False,
+        "phase46_llm_api_called": False,
+        "phase46_discord_api_send_called": False,
+        "phase46_discord_message_sent": False,
+        "phase46_rag_called": False,
+        "phase46_embedding_api_called": False,
+        "phase46_vector_index_created": False,
+        "phase46_external_execution": False,
         "post_llm_call_sentinel": False,
         "total_phase36_llm_call_count": 1,
         "total_phase36_discord_message_sent_count": 0,
@@ -545,15 +611,47 @@ def _sentinel_passed(report: dict[str, Any]) -> bool:
         return False
     if not bool(report.get("phase41c_repeat_send_blocked")) or bool(report.get("phase41c_discord_api_send_called_during_phase41c")) or bool(report.get("phase41c_discord_message_sent_during_phase41c")):
         return False
-    if not bool(report.get("phase42_session_preflight_available")) or not bool(report.get("phase42_default_blocked")) or not bool(report.get("phase42_blocked")) or not bool(report.get("phase42_manual_gate_required")):
+    if not bool(report.get("phase42_session_preflight_available")) or not bool(report.get("phase42_actual_runtime_cli_available")) or not bool(report.get("phase42_allow_flag_available")):
+        return False
+    if not bool(report.get("phase42_runtime_default_blocked")) or bool(report.get("phase42_runtime_allow_flag_present")) or int(report.get("phase42_runtime_message_sent_count", 0) or 0) != 0:
+        return False
+    if not bool(report.get("phase42_actual_session_closeout_available")) or not bool(report.get("phase42_actual_supervised_private_test_session_succeeded")) or not bool(report.get("phase42_exactly_once_supervised_success_recorded")):
+        return False
+    if int(report.get("phase42_success_message_sent_count", 0) or 0) != 1 or report.get("phase42_success_sent_scope") != "private_test_only" or not bool(report.get("phase42_success_session_lock_consumed")):
+        return False
+    if not bool(report.get("phase42_repeat_supervised_session_locked")) or bool(report.get("phase42_repeat_supervised_session_allowed")):
+        return False
+    if bool(report.get("phase42_closeout_discord_api_send_called")) or bool(report.get("phase42_closeout_discord_message_sent")) or int(report.get("phase42_closeout_additional_message_sent_count", 0) or 0) != 0:
+        return False
+    if not bool(report.get("phase42_default_blocked")) or not bool(report.get("phase42_blocked")) or not bool(report.get("phase42_manual_gate_required")):
         return False
     if not bool(report.get("phase42_public_team_blocked")) or not bool(report.get("phase42_session_lock_active")):
         return False
-    if not bool(report.get("phase43_policy_available")) or not bool(report.get("phase43_public_team_blocked")) or not bool(report.get("phase43_phase41b_repeat_send_locked")):
+    if not bool(report.get("phase43_policy_available")) or not bool(report.get("phase43_public_team_blocked")) or not bool(report.get("phase43_phase41b_repeat_send_locked")) or not bool(report.get("phase43_phase42_repeat_supervised_session_locked")):
         return False
     if not bool(report.get("phase44_provider_preflight_available")) or not bool(report.get("phase44_fake_adapter_available")) or not bool(report.get("phase44_fake_output_schema_valid")):
         return False
     if not bool(report.get("phase45_preflight_available")):
+        return False
+    if int(report.get("phase45_llm_api_call_count", 0) or 0) > 0:
+        return False
+    if not bool(report.get("phase45_actual_llm_call_closeout_available")) or not bool(report.get("phase45_actual_llm_one_shot_completed")):
+        return False
+    if int(report.get("phase45_actual_llm_call_count", 0) or 0) != 1:
+        return False
+    if not bool(report.get("phase45_actual_llm_one_shot_repeat_locked")) or bool(report.get("phase45_ready_for_repeat_llm_call")):
+        return False
+    if not bool(report.get("phase45_output_safety_blocked")) or bool(report.get("phase45_llm_response_packet_created")):
+        return False
+    if bool(report.get("phase45_closeout_discord_api_send_called")) or bool(report.get("phase45_closeout_discord_message_sent")) or int(report.get("phase45_closeout_message_sent_count", 0) or 0) != 0:
+        return False
+    if not bool(report.get("phase46_blocked_llm_output_review_available")) or not bool(report.get("phase46_metadata_only")):
+        return False
+    if not bool(report.get("phase46_llm_retry_policy_available")) or not bool(report.get("phase46_retry_requires_new_manual_gate")):
+        return False
+    if not bool(report.get("phase46_retry_requires_new_approval_phrase")) or not bool(report.get("phase46_retry_requires_cost_guard")) or not bool(report.get("phase46_retry_requires_call_count_guard")):
+        return False
+    if not bool(report.get("phase46_discord_send_remains_disabled")):
         return False
     if not bool(report.get("phase40t_execute_flag_present")) and (
         bool(report.get("phase40t_live_runtime_started")) or bool(report.get("phase40t_closeout_started"))
@@ -646,16 +744,48 @@ def assert_forbidden_behavior_sentinel_safe(report: dict[str, Any]) -> None:
         raise ValueError("Forbidden behavior sentinel requires Phase 41C exactly-once private-test observation.")
     if not report.get("phase41c_repeat_send_blocked") or report.get("phase41c_discord_api_send_called_during_phase41c") or report.get("phase41c_discord_message_sent_during_phase41c"):
         raise ValueError("Forbidden behavior sentinel requires Phase 41C no-repeat/no-new-send state.")
-    if not report.get("phase42_session_preflight_available") or not report.get("phase42_default_blocked") or not report.get("phase42_blocked") or not report.get("phase42_manual_gate_required"):
+    if not report.get("phase42_session_preflight_available") or not report.get("phase42_actual_runtime_cli_available") or not report.get("phase42_allow_flag_available"):
+        raise ValueError("Forbidden behavior sentinel requires Phase 42 CLI availability.")
+    if not report.get("phase42_runtime_default_blocked") or report.get("phase42_runtime_allow_flag_present") or int(report.get("phase42_runtime_message_sent_count", 0) or 0) != 0:
+        raise ValueError("Forbidden behavior sentinel requires Phase 42 runtime CLI default block.")
+    if not report.get("phase42_actual_session_closeout_available") or not report.get("phase42_actual_supervised_private_test_session_succeeded") or not report.get("phase42_exactly_once_supervised_success_recorded"):
+        raise ValueError("Forbidden behavior sentinel requires Phase 42 closeout success.")
+    if int(report.get("phase42_success_message_sent_count", 0) or 0) != 1 or report.get("phase42_success_sent_scope") != "private_test_only" or not report.get("phase42_success_session_lock_consumed"):
+        raise ValueError("Forbidden behavior sentinel requires Phase 42 exactly-once private-test lock.")
+    if not report.get("phase42_repeat_supervised_session_locked") or report.get("phase42_repeat_supervised_session_allowed"):
+        raise ValueError("Forbidden behavior sentinel requires Phase 42 repeat session lock.")
+    if report.get("phase42_closeout_discord_api_send_called") or report.get("phase42_closeout_discord_message_sent") or int(report.get("phase42_closeout_additional_message_sent_count", 0) or 0) != 0:
+        raise ValueError("Forbidden behavior sentinel forbids new Phase 42 closeout sends.")
+    if not report.get("phase42_default_blocked") or not report.get("phase42_blocked") or not report.get("phase42_manual_gate_required"):
         raise ValueError("Forbidden behavior sentinel requires Phase 42 blocked session preflight.")
     if not report.get("phase42_public_team_blocked") or not report.get("phase42_session_lock_active"):
         raise ValueError("Forbidden behavior sentinel requires Phase 42 locks.")
-    if not report.get("phase43_policy_available") or not report.get("phase43_public_team_blocked") or not report.get("phase43_phase41b_repeat_send_locked"):
+    if not report.get("phase43_policy_available") or not report.get("phase43_public_team_blocked") or not report.get("phase43_phase41b_repeat_send_locked") or not report.get("phase43_phase42_repeat_supervised_session_locked"):
         raise ValueError("Forbidden behavior sentinel requires Phase 43 public/team block.")
     if not report.get("phase44_provider_preflight_available") or not report.get("phase44_fake_adapter_available") or not report.get("phase44_fake_output_schema_valid"):
         raise ValueError("Forbidden behavior sentinel requires Phase 44 preflight/fake adapter.")
     if not report.get("phase45_preflight_available"):
         raise ValueError("Forbidden behavior sentinel requires Phase 45A preflight.")
+    if int(report.get("phase45_llm_api_call_count", 0) or 0) > 0:
+        raise ValueError("Forbidden behavior sentinel forbids Phase 45 LLM API call count.")
+    if not report.get("phase45_actual_llm_call_closeout_available") or not report.get("phase45_actual_llm_one_shot_completed"):
+        raise ValueError("Forbidden behavior sentinel requires Phase 45 actual LLM call closeout.")
+    if int(report.get("phase45_actual_llm_call_count", 0) or 0) != 1:
+        raise ValueError("Forbidden behavior sentinel requires Phase 45 historical call count exactly 1.")
+    if not report.get("phase45_actual_llm_one_shot_repeat_locked") or report.get("phase45_ready_for_repeat_llm_call"):
+        raise ValueError("Forbidden behavior sentinel requires Phase 45 no-repeat LLM lock.")
+    if not report.get("phase45_output_safety_blocked") or report.get("phase45_llm_response_packet_created"):
+        raise ValueError("Forbidden behavior sentinel requires Phase 45 blocked output closeout.")
+    if report.get("phase45_closeout_discord_api_send_called") or report.get("phase45_closeout_discord_message_sent") or int(report.get("phase45_closeout_message_sent_count", 0) or 0) != 0:
+        raise ValueError("Forbidden behavior sentinel forbids Phase 45 closeout Discord sends.")
+    if not report.get("phase46_blocked_llm_output_review_available") or not report.get("phase46_metadata_only"):
+        raise ValueError("Forbidden behavior sentinel requires Phase46 metadata-only review.")
+    if not report.get("phase46_llm_retry_policy_available") or not report.get("phase46_retry_requires_new_manual_gate"):
+        raise ValueError("Forbidden behavior sentinel requires Phase46 retry policy.")
+    if not report.get("phase46_retry_requires_new_approval_phrase") or not report.get("phase46_retry_requires_cost_guard") or not report.get("phase46_retry_requires_call_count_guard"):
+        raise ValueError("Forbidden behavior sentinel requires Phase46 retry guards.")
+    if not report.get("phase46_discord_send_remains_disabled"):
+        raise ValueError("Forbidden behavior sentinel requires Phase46 Discord send disabled.")
     if not report.get("phase40t_execute_flag_present") and (report.get("phase40t_live_runtime_started") or report.get("phase40t_closeout_started")):
         raise ValueError("Forbidden behavior sentinel forbids Phase 40T started without execute flag.")
     if report.get("phase40t_ready_for_manual_readonly_runtime_launch") and not report.get("phase40t_reply_mode_readonly_private_test_only"):
@@ -698,7 +828,14 @@ def render_forbidden_behavior_sentinel_markdown(report: dict[str, Any]) -> str:
             "- Phase 42 actual runtime executed: false",
             "- Phase 43 Phase 41B repeat locked: true",
             "- Phase 44 actual LLM API call: false",
+            f"- Phase 45 closeout completed: {str(report.get('phase45_actual_llm_one_shot_completed', False)).lower()}",
+            f"- Phase 45 historical LLM call count: {report.get('phase45_actual_llm_call_count', 0)}",
+            f"- Phase 45 repeat LLM call ready: {str(report.get('phase45_ready_for_repeat_llm_call', False)).lower()}",
+            f"- Phase 45 output safety blocked: {str(report.get('phase45_output_safety_blocked', False)).lower()}",
             "- Phase 45 actual LLM API call: false",
+            f"- Phase 46 metadata only: {str(report.get('phase46_metadata_only', False)).lower()}",
+            f"- Phase 46 automatic retry allowed: {str(report.get('phase46_automatic_retry_allowed', False)).lower()}",
+            f"- Phase 46 retry requires new manual gate: {str(report.get('phase46_retry_requires_new_manual_gate', False)).lower()}",
             "- Forbidden behavior sentinel passed: true",
         ]
     ) + "\n"
