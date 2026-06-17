@@ -167,10 +167,17 @@ FORBIDDEN_TRUE_FIELDS = (
     "phase41c_discord_message_sent_during_phase41c",
     "phase41c_ready_for_repeat_send",
     "phase42_actual_runtime_executed",
+    "phase42_actual_supervised_session_executed",
+    "phase42_manual_gate_open",
+    "phase42_ready_for_manual_supervised_session",
+    "phase42_ready_for_phase41b_repeat_send",
+    "phase42_discord_api_send_called",
     "phase42_llm_called",
     "phase42_rag_called",
     "phase42_external_execution",
     "phase42_discord_message_sent",
+    "phase43_phase42_manual_gate_open",
+    "phase43_ready_for_phase42_actual_supervised_session",
     "phase44_actual_llm_api_call",
     "phase44_llm_api_call_attempted",
     "phase44_discord_message_sent",
@@ -405,13 +412,26 @@ def build_forbidden_behavior_sentinel(overrides: dict[str, Any] | None = None) -
         "phase41c_ready_for_phase42_supervised_deterministic_session_manual_gate": True,
         "phase41c_ready_for_repeat_send": False,
         "phase42_session_preflight_available": True,
+        "phase42_default_blocked": True,
+        "phase42_blocked": True,
+        "phase42_manual_gate_required": True,
+        "phase42_manual_gate_open": False,
+        "phase42_actual_supervised_session_executed": False,
         "phase42_actual_runtime_executed": False,
+        "phase42_ready_for_manual_supervised_session": False,
+        "phase42_ready_for_phase41b_repeat_send": False,
+        "phase42_public_team_blocked": True,
+        "phase42_session_lock_active": True,
+        "phase42_discord_api_send_called": False,
         "phase42_llm_called": False,
         "phase42_rag_called": False,
         "phase42_external_execution": False,
         "phase42_discord_message_sent": False,
         "phase43_policy_available": True,
         "phase43_public_team_blocked": True,
+        "phase43_phase41b_repeat_send_locked": True,
+        "phase43_phase42_manual_gate_open": False,
+        "phase43_ready_for_phase42_actual_supervised_session": False,
         "phase44_provider_preflight_available": True,
         "phase44_actual_llm_api_call": False,
         "phase44_llm_api_call_attempted": False,
@@ -525,9 +545,11 @@ def _sentinel_passed(report: dict[str, Any]) -> bool:
         return False
     if not bool(report.get("phase41c_repeat_send_blocked")) or bool(report.get("phase41c_discord_api_send_called_during_phase41c")) or bool(report.get("phase41c_discord_message_sent_during_phase41c")):
         return False
-    if not bool(report.get("phase42_session_preflight_available")):
+    if not bool(report.get("phase42_session_preflight_available")) or not bool(report.get("phase42_default_blocked")) or not bool(report.get("phase42_blocked")) or not bool(report.get("phase42_manual_gate_required")):
         return False
-    if not bool(report.get("phase43_policy_available")) or not bool(report.get("phase43_public_team_blocked")):
+    if not bool(report.get("phase42_public_team_blocked")) or not bool(report.get("phase42_session_lock_active")):
+        return False
+    if not bool(report.get("phase43_policy_available")) or not bool(report.get("phase43_public_team_blocked")) or not bool(report.get("phase43_phase41b_repeat_send_locked")):
         return False
     if not bool(report.get("phase44_provider_preflight_available")) or not bool(report.get("phase44_fake_adapter_available")) or not bool(report.get("phase44_fake_output_schema_valid")):
         return False
@@ -624,9 +646,11 @@ def assert_forbidden_behavior_sentinel_safe(report: dict[str, Any]) -> None:
         raise ValueError("Forbidden behavior sentinel requires Phase 41C exactly-once private-test observation.")
     if not report.get("phase41c_repeat_send_blocked") or report.get("phase41c_discord_api_send_called_during_phase41c") or report.get("phase41c_discord_message_sent_during_phase41c"):
         raise ValueError("Forbidden behavior sentinel requires Phase 41C no-repeat/no-new-send state.")
-    if not report.get("phase42_session_preflight_available"):
-        raise ValueError("Forbidden behavior sentinel requires Phase 42 session preflight.")
-    if not report.get("phase43_policy_available") or not report.get("phase43_public_team_blocked"):
+    if not report.get("phase42_session_preflight_available") or not report.get("phase42_default_blocked") or not report.get("phase42_blocked") or not report.get("phase42_manual_gate_required"):
+        raise ValueError("Forbidden behavior sentinel requires Phase 42 blocked session preflight.")
+    if not report.get("phase42_public_team_blocked") or not report.get("phase42_session_lock_active"):
+        raise ValueError("Forbidden behavior sentinel requires Phase 42 locks.")
+    if not report.get("phase43_policy_available") or not report.get("phase43_public_team_blocked") or not report.get("phase43_phase41b_repeat_send_locked"):
         raise ValueError("Forbidden behavior sentinel requires Phase 43 public/team block.")
     if not report.get("phase44_provider_preflight_available") or not report.get("phase44_fake_adapter_available") or not report.get("phase44_fake_output_schema_valid"):
         raise ValueError("Forbidden behavior sentinel requires Phase 44 preflight/fake adapter.")
@@ -670,7 +694,9 @@ def render_forbidden_behavior_sentinel_markdown(report: dict[str, Any]) -> str:
             "- Phase 41B Discord message sent: false",
             "- Phase 41C observed message sent count: 1",
             "- Phase 41C repeat send blocked: true",
+            "- Phase 42 manual gate open: false",
             "- Phase 42 actual runtime executed: false",
+            "- Phase 43 Phase 41B repeat locked: true",
             "- Phase 44 actual LLM API call: false",
             "- Phase 45 actual LLM API call: false",
             "- Forbidden behavior sentinel passed: true",

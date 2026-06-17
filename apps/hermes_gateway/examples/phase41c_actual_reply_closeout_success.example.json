@@ -1,0 +1,14 @@
+{
+  "report_type": "phase41c_actual_private_test_reply_closeout",
+  "actual_private_test_reply_verified": true,
+  "message_sent_count": 1,
+  "sent_scope": "private_test_only",
+  "failed_previous_attempt_message_sent_count": 0,
+  "phase41b_repeat_send_locked": true,
+  "ready_for_repeat_send": false,
+  "ready_for_supervised_session": false,
+  "ready_for_phase42_supervised_deterministic_session_manual_gate": true,
+  "discord_api_send_called_during_phase41c": false,
+  "discord_message_sent_during_phase41c": false,
+  "raw_discord_session_id_logged": false
+}

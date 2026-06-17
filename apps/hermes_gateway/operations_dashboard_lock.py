@@ -304,10 +304,27 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
         "phase41c_ready_for_phase42_supervised_deterministic_session_manual_gate": bool(phase41c_closeout.get("ready_for_phase42_supervised_deterministic_session_manual_gate")),
         "phase41c_ready_for_repeat_send": bool(phase41c_closeout.get("ready_for_repeat_send")),
         "phase42_session_preflight_available": True,
+        "phase42_default_blocked": bool(phase42_session.get("default_blocked")),
+        "phase42_blocked": bool(phase42_session.get("blocked")),
+        "phase42_manual_gate_required": bool(phase42_session.get("manual_gate_required")),
+        "phase42_manual_gate_open": bool(phase42_session.get("manual_gate_open")),
+        "phase42_actual_supervised_session_executed": bool(phase42_session.get("actual_supervised_session_executed")),
         "phase42_actual_runtime_executed": bool(phase42_session.get("actual_runtime_executed")),
+        "phase42_ready_for_manual_supervised_session": bool(phase42_session.get("ready_for_phase42_manual_supervised_session")),
+        "phase42_ready_for_phase41b_repeat_send": bool(phase42_session.get("ready_for_phase41b_repeat_send")),
+        "phase42_private_test_only": bool(phase42_session.get("private_test_only")),
+        "phase42_public_team_blocked": bool(phase42_session.get("public_team_blocked")),
+        "phase42_unattended_auto_reply_allowed": bool(phase42_session.get("unattended_auto_reply_allowed")),
+        "phase42_deterministic_reply_only": bool(phase42_session.get("deterministic_reply_only")),
+        "phase42_frozen_reply_only": bool(phase42_session.get("frozen_reply_only")),
+        "phase42_session_lock_active": bool(phase42_session.get("session_lock_active")),
+        "phase42_discord_api_send_called": bool(phase42_session.get("discord_api_send_called")),
         "phase42_discord_message_sent": bool(phase42_session.get("discord_message_sent")),
         "phase43_policy_available": bool(phase43_policy.get("routing_policy_available")),
         "phase43_public_team_blocked": bool(phase43_policy.get("public_team_blocked")),
+        "phase43_phase41b_repeat_send_locked": bool(phase43_policy.get("phase41b_repeat_send_locked")),
+        "phase43_phase42_manual_gate_open": bool(phase43_policy.get("phase42_manual_gate_open")),
+        "phase43_ready_for_phase42_actual_supervised_session": bool(phase43_policy.get("ready_for_phase42_actual_supervised_session")),
         "phase44_provider_preflight_available": True,
         "phase44_actual_llm_api_call": bool(phase44_provider.get("actual_llm_api_call")),
         "phase44_llm_api_call_attempted": bool(phase44_provider.get("llm_api_call_attempted")),
@@ -369,7 +386,9 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
             "phase41b_actual_runtime_executed": False,
             "phase41b_discord_api_send_called": False,
             "phase41b_discord_message_sent": False,
+            "phase42_actual_supervised_session_executed": False,
             "phase42_actual_runtime_executed": False,
+            "phase42_discord_api_send_called": False,
             "phase44_actual_llm_api_call": False,
             "phase44_llm_api_call_attempted": False,
             "phase45_actual_llm_api_call": False,
@@ -457,8 +476,16 @@ def assert_operations_dashboard_lock_safe(report: dict[str, Any]) -> None:
         "phase41b_discord_api_send_called",
         "phase41b_discord_message_sent",
         "phase41c_ready_for_repeat_send",
+        "phase42_actual_supervised_session_executed",
         "phase42_actual_runtime_executed",
+        "phase42_manual_gate_open",
+        "phase42_ready_for_manual_supervised_session",
+        "phase42_ready_for_phase41b_repeat_send",
+        "phase42_unattended_auto_reply_allowed",
+        "phase42_discord_api_send_called",
         "phase42_discord_message_sent",
+        "phase43_phase42_manual_gate_open",
+        "phase43_ready_for_phase42_actual_supervised_session",
         "phase44_actual_llm_api_call",
         "phase44_llm_api_call_attempted",
         "phase45_ready_for_actual_llm_one_shot_call",
@@ -530,9 +557,13 @@ def assert_operations_dashboard_lock_safe(report: dict[str, Any]) -> None:
         raise ValueError("Operations dashboard lock requires Phase 41C exactly-once private-test closeout.")
     if not report.get("phase41c_repeat_send_blocked") or report.get("phase41c_discord_api_send_called_during_phase41c") or report.get("phase41c_discord_message_sent_during_phase41c"):
         raise ValueError("Operations dashboard lock requires Phase 41C no-repeat/no-new-send state.")
-    if not report.get("phase42_session_preflight_available"):
-        raise ValueError("Operations dashboard lock requires Phase 42 session preflight.")
-    if not report.get("phase43_policy_available") or not report.get("phase43_public_team_blocked"):
+    if not report.get("phase42_session_preflight_available") or not report.get("phase42_default_blocked") or not report.get("phase42_blocked") or not report.get("phase42_manual_gate_required"):
+        raise ValueError("Operations dashboard lock requires Phase 42 blocked session preflight.")
+    if not report.get("phase42_private_test_only") and report.get("phase42_manual_gate_open"):
+        raise ValueError("Operations dashboard lock requires Phase 42 private-test-only before manual gate.")
+    if not report.get("phase42_public_team_blocked") or not report.get("phase42_session_lock_active"):
+        raise ValueError("Operations dashboard lock requires Phase 42 public/team and session locks.")
+    if not report.get("phase43_policy_available") or not report.get("phase43_public_team_blocked") or not report.get("phase43_phase41b_repeat_send_locked"):
         raise ValueError("Operations dashboard lock requires Phase 43 routing policy.")
     if not report.get("phase44_provider_preflight_available") or not report.get("phase44_fake_adapter_available") or not report.get("phase44_fake_output_schema_valid"):
         raise ValueError("Operations dashboard lock requires Phase 44 preflight/fake adapter.")
@@ -577,7 +608,9 @@ def render_operations_dashboard_lock_markdown(report: dict[str, Any]) -> str:
             f"- Phase 41B message sent count: {report.get('phase41b_message_sent_count')}",
             f"- Phase 41C observed message sent count: {report.get('phase41c_message_sent_count')}",
             f"- Phase 41C repeat send blocked: {str(report.get('phase41c_repeat_send_blocked')).lower()}",
+            f"- Phase 42 manual gate open: {str(report.get('phase42_manual_gate_open')).lower()}",
             f"- Phase 42 actual runtime executed: {str(report.get('phase42_actual_runtime_executed')).lower()}",
+            f"- Phase 43 Phase 41B repeat locked: {str(report.get('phase43_phase41b_repeat_send_locked')).lower()}",
             f"- Phase 44 actual LLM API call: {str(report.get('phase44_actual_llm_api_call')).lower()}",
             f"- Phase 45 actual LLM API call: {str(report.get('phase45_actual_llm_api_call')).lower()}",
         ]

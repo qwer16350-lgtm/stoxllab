@@ -482,3 +482,11 @@ session IDs emitted by `discord.gateway`. Codex does not run Discord live
 runtime, call Discord API send, or send a Discord message in Phase 41C. The next
 actual operation must be a separate Phase 42 supervised deterministic session
 manual gate.
+
+Safe Mega Bundle 2 prepares Phase 42 and syncs Phase 43 without opening that
+manual gate. Phase 42 remains blocked by default with manual approval and exact
+phrase required, deterministic/frozen replies only, private-test-only routing,
+public/team/self/bot/duplicate guards, session and send-count locks, timeout
+safe closeout, and no LLM/RAG/embedding/external execution. Phase 43 records
+the routing/rate/session lock posture. Codex does not run actual Discord
+runtime, call Discord API send, send messages, or retry Phase 41B.

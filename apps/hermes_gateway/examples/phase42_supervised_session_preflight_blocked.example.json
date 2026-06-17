@@ -1,11 +1,23 @@
 {
   "report_type": "phase42_supervised_private_test_session_preflight",
   "default_blocked": true,
+  "blocked": true,
+  "manual_gate_required": true,
+  "manual_gate_open": false,
+  "actual_supervised_session_executed": false,
   "actual_runtime_executed": false,
+  "ready_for_phase42_manual_supervised_session": false,
+  "ready_for_phase41b_repeat_send": false,
+  "private_test_only": true,
+  "public_team_blocked": true,
+  "unattended_auto_reply_allowed": false,
   "discord_api_send_called": false,
   "discord_message_sent": false,
   "message_sent_count": 0,
+  "llm_api_call_attempted": false,
+  "llm_api_called": false,
   "llm_called": false,
   "rag_called": false,
+  "embedding_api_called": false,
   "external_execution": false
 }

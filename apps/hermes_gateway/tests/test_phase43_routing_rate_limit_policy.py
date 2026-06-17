@@ -7,7 +7,7 @@ APP_DIR = Path(__file__).resolve().parents[1]
 if str(APP_DIR) not in sys.path:
     sys.path.insert(0, str(APP_DIR))
 
-from phase43_routing_rate_limit_policy import evaluate_phase43_rate_limit, evaluate_phase43_routing_policy
+from phase43_routing_rate_limit_policy import build_phase43_routing_rate_limit_policy, evaluate_phase43_rate_limit, evaluate_phase43_routing_policy
 
 
 def assert_true(condition: bool, message: str) -> None:
@@ -24,14 +24,33 @@ def test_routing_policy() -> None:
 
 
 def test_rate_limit_policy() -> None:
-    assert_true(evaluate_phase43_rate_limit(replies_sent=0, max_replies=1)["rate_limit_allows_reply"] is True, "Allowed by policy")
+    assert_true(evaluate_phase43_rate_limit(replies_sent=0, max_replies=1, phase41b_repeat_locked=False, manual_gate_open=True)["rate_limit_allows_reply"] is True, "Allowed by policy")
     assert_true(evaluate_phase43_rate_limit(replies_sent=1, max_replies=1)["rate_limit_allows_reply"] is False, "Max blocks")
     assert_true(evaluate_phase43_rate_limit(cooldown_active=True)["rate_limit_allows_reply"] is False, "Cooldown blocks")
     assert_true(evaluate_phase43_rate_limit(one_shot_lock_consumed=True)["rate_limit_allows_reply"] is False, "Lock blocks")
+    assert_true(evaluate_phase43_rate_limit(phase41b_repeat_locked=True, manual_gate_open=True)["rate_limit_allows_reply"] is False, "Phase 41B repeat lock blocks")
+    assert_true(evaluate_phase43_rate_limit(phase41b_repeat_locked=False, manual_gate_open=False)["rate_limit_allows_reply"] is False, "Manual gate blocks")
+
+
+def test_phase43_report_syncs_phase42_locks() -> None:
+    report = build_phase43_routing_rate_limit_policy()
+    assert_true(report["phase41b_repeat_send_locked"] is True, "Phase 41B repeat locked")
+    assert_true(report["phase42_manual_gate_required"] is True, "Phase 42 manual gate")
+    assert_true(report["phase42_manual_gate_open"] is False, "Phase 42 gate closed")
+    assert_true(report["phase42_session_lock_active"] is True, "Session lock")
+    assert_true(report["phase42_max_session_messages_enforced"] is True, "Session max")
+    assert_true(report["phase42_max_send_count_enforced"] is True, "Send max")
+    assert_true(report["ready_for_phase41b_repeat_send"] is False, "No Phase 41B repeat")
+    assert_true(report["ready_for_phase42_actual_supervised_session"] is False, "No Phase 42 actual")
+    assert_true(report["public_team_blocked"] is True, "Public/team blocked")
+    assert_true(report["unattended_auto_reply_allowed"] is False, "No unattended")
+    assert_true(report["discord_api_send_called"] is False, "No API")
+    assert_true(report["discord_message_sent"] is False, "No message")
+    assert_true(report["message_sent_count"] == 0, "No count")
 
 
 def main() -> int:
-    for test in (test_routing_policy, test_rate_limit_policy):
+    for test in (test_routing_policy, test_rate_limit_policy, test_phase43_report_syncs_phase42_locks):
         test()
         print(f"PASS {test.__name__}")
     print("All Phase 43 tests passed.")

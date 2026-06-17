@@ -27,3 +27,10 @@ Phase 41C records the subsequent Phase 41B actual private-test reply success as
 exactly one private-test-only message. It hardens Discord library log redaction
 for session IDs and locks Phase 41B against repeat send. Phase 41C itself does
 not run Discord live runtime, call Discord API send, or send a message.
+
+Safe Mega Bundle 2 extends the locked state into Phase 42/43 prep. Phase 42 is
+default blocked, manual-gate-only, deterministic/frozen-reply-only, private-test
+only, and guarded by session/message/send count, timeout, duplicate/self/bot,
+public/team, and no-repeat locks. Phase 43 syncs routing, rate-limit, and
+session policy around that state. This bundle does not execute actual Discord
+runtime/reply/send, LLM/RAG/embedding, or external actions.

@@ -94,7 +94,17 @@ def test_forbidden_behavior_sentinel_success_fixture() -> None:
     assert_true(report["phase41c_discord_api_send_called_during_phase41c"] is False, "41C no API")
     assert_true(report["phase41c_discord_message_sent_during_phase41c"] is False, "41C no message")
     assert_true(report["phase42_session_preflight_available"] is True, "42 preflight")
+    assert_true(report["phase42_default_blocked"] is True, "42 default blocked")
+    assert_true(report["phase42_blocked"] is True, "42 blocked")
+    assert_true(report["phase42_manual_gate_required"] is True, "42 manual gate")
+    assert_true(report["phase42_manual_gate_open"] is False, "42 gate closed")
+    assert_true(report["phase42_actual_supervised_session_executed"] is False, "42 no supervised session")
+    assert_true(report["phase42_discord_api_send_called"] is False, "42 no API")
+    assert_true(report["phase42_public_team_blocked"] is True, "42 public/team")
+    assert_true(report["phase42_session_lock_active"] is True, "42 session lock")
     assert_true(report["phase43_public_team_blocked"] is True, "43 public/team")
+    assert_true(report["phase43_phase41b_repeat_send_locked"] is True, "43 41B repeat")
+    assert_true(report["phase43_phase42_manual_gate_open"] is False, "43 42 gate closed")
     assert_true(report["phase44_provider_preflight_available"] is True, "44 provider")
     assert_true(report["phase44_fake_output_schema_valid"] is True, "44 fake valid")
     assert_true(report["phase45_preflight_available"] is True, "45 preflight")
@@ -173,10 +183,17 @@ def test_forbidden_behavior_sentinel_phase41b_45a_negative_fixtures() -> None:
         "phase41c_discord_message_sent_during_phase41c",
         "phase41c_ready_for_repeat_send",
         "phase42_actual_runtime_executed",
+        "phase42_actual_supervised_session_executed",
+        "phase42_manual_gate_open",
+        "phase42_ready_for_manual_supervised_session",
+        "phase42_ready_for_phase41b_repeat_send",
+        "phase42_discord_api_send_called",
         "phase42_llm_called",
         "phase42_rag_called",
         "phase42_external_execution",
         "phase42_discord_message_sent",
+        "phase43_phase42_manual_gate_open",
+        "phase43_ready_for_phase42_actual_supervised_session",
         "phase44_actual_llm_api_call",
         "phase44_llm_api_call_attempted",
         "phase44_discord_message_sent",
