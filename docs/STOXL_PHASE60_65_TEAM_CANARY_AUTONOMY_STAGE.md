@@ -21,6 +21,7 @@ Manual Gate keys:
 
 - `HERMES_PHASE60_TEAM_CANARY_APPROVED`
 - `HERMES_PHASE60_TEAM_CANARY_APPROVAL_PHRASE`
+- `HERMES_PHASE60_TEAM_CANARY_CHANNEL_ID`
 - `HERMES_PHASE60_TEAM_CANARY_KILL_SWITCH_READY`
 - `HERMES_PHASE60_TEAM_CANARY_MAX_SEND_COUNT`
 - `HERMES_PHASE60_TEAM_CANARY_MAX_REPLY_COUNT`
@@ -47,6 +48,10 @@ I_APPROVE_PHASE60_TEAM_CANARY
 
 The approval phrase value must not be printed in reports or logs. Reports emit
 only boolean presence and exact-match fields.
+
+The team canary channel ID value must not be printed in reports or logs.
+Reports emit only `team_canary_channel_id_present` and
+`team_canary_channel_id_value_logged=false`.
 
 Low-risk examples:
 

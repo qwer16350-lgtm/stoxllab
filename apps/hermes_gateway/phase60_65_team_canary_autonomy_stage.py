@@ -137,7 +137,7 @@ def _gate_snapshot(env: Mapping[str, str] | None = None) -> dict[str, Any]:
         "external_execution_disabled": not _truthy(_env_value(env, "HERMES_DISCORD_EXTERNAL_EXECUTION")),
         "discord_token_present": bool(_env_value(env, "DISCORD_BOT_TOKEN").strip()),
         "discord_token_value_logged": False,
-        "team_canary_channel_id_present": bool(_env_value(env, "HERMES_DISCORD_TEAM_CANARY_CHANNEL_ID").strip()),
+        "team_canary_channel_id_present": bool(_env_value(env, "HERMES_PHASE60_TEAM_CANARY_CHANNEL_ID").strip()),
         "team_canary_channel_id_value_logged": False,
     }
 
@@ -310,7 +310,7 @@ def build_actual_phase60_team_canary(
 
     selected_adapter = send_adapter or RealDiscordPhase60TeamCanarySendAdapter(
         token=_env_value(env, "DISCORD_BOT_TOKEN"),
-        team_channel_id=_env_value(env, "HERMES_DISCORD_TEAM_CANARY_CHANNEL_ID"),
+        team_channel_id=_env_value(env, "HERMES_PHASE60_TEAM_CANARY_CHANNEL_ID"),
     )
     send_result = selected_adapter.send_team_canary(_deterministic_reply_text())
     report = {

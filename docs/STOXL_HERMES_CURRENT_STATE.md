@@ -218,3 +218,8 @@ external/scheduler-live flags can reach the later actual path. This bundle
 verifies the send branch only with a fake sender in tests. Phase61 scheduler
 dry-run controls remain report-only, and the autonomy matrix stays at verified
 Level 3 with next target Level 4 low-risk team-channel canary.
+
+Phase60-65C fixes the authoritative team canary channel environment key to
+`HERMES_PHASE60_TEAM_CANARY_CHANNEL_ID`. Reports expose only channel-ID
+presence and never log the channel ID value. The actual Phase60 allow command
+remains reserved for the next separate Manual Gate.

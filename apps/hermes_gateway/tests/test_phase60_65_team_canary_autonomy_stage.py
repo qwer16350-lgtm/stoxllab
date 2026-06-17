@@ -44,7 +44,7 @@ def opened_env() -> dict[str, str]:
         "HERMES_VECTOR_ENABLED": "false",
         "HERMES_DISCORD_EXTERNAL_EXECUTION": "false",
         "DISCORD_BOT_TOKEN": "present",
-        "HERMES_DISCORD_TEAM_CANARY_CHANNEL_ID": "team-canary",
+        "HERMES_PHASE60_TEAM_CANARY_CHANNEL_ID": "team-canary",
     }
 
 
@@ -63,9 +63,13 @@ def test_phase60_path_available_and_default_blocked() -> None:
     assert_true(preflight["phase60_low_risk_team_canary_path_available"] is True, "Path available")
     assert_true(preflight["team_canary_manual_gate_required"] is True, "Manual gate")
     assert_true(preflight["ready_for_phase60_team_canary_manual_gate"] is False, "Closed gate")
+    assert_true(preflight["team_canary_channel_id_present"] is False, "No channel env")
+    assert_true(preflight["team_canary_channel_id_value_logged"] is False, "No channel value")
     blocked = build_actual_phase60_team_canary(env=opened_env())
     assert_true(blocked["blocked"] is True, "Default blocked")
     assert_true("allow_flag_missing" in blocked["blocked_reasons"], "Allow missing")
+    assert_true(blocked["team_canary_channel_id_present"] is True, "Channel present")
+    assert_true(blocked["team_canary_channel_id_value_logged"] is False, "Channel hidden")
     assert_true(blocked["actual_team_canary_executed"] is False, "No execution")
     assert_true(blocked["discord_api_send_called"] is False, "No API")
     assert_true(blocked["discord_message_sent"] is False, "No message")
@@ -81,6 +85,8 @@ def test_fake_sender_success_exactly_once() -> None:
     )
     assert_true(sender.calls == 1, "One fake send")
     assert_true(report["blocked"] is False, "Not blocked")
+    assert_true(report["team_canary_channel_id_present"] is True, "Channel present")
+    assert_true(report["team_canary_channel_id_value_logged"] is False, "Channel hidden")
     assert_true(report["actual_team_canary_executed"] is True, "Executed")
     assert_true(report["sent_scope"] == "known_team_channel_only", "Team scope")
     assert_true(report["reply_text_source"] == "deterministic_template", "Deterministic")
