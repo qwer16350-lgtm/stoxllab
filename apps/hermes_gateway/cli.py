@@ -177,6 +177,8 @@ from phase45_actual_llm_one_shot_preflight import (
 )
 from phase46_blocked_llm_output_review import build_phase46_blocked_llm_output_review, render_phase46_blocked_llm_output_review_markdown
 from phase46_llm_retry_policy import build_phase46_llm_retry_policy, render_phase46_llm_retry_policy_markdown
+from phase47_human_review_closeout import build_phase47_human_review_closeout, render_phase47_human_review_closeout_markdown
+from phase47_disabled_retry_gate_design import build_phase47_disabled_retry_gate_design, render_phase47_disabled_retry_gate_design_markdown
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight, render_rag_evidence_private_test_send_preflight_markdown
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope, render_rag_evidence_prompt_envelope_markdown
 from rag_evidence_review_packet import build_rag_evidence_review_packet, render_rag_evidence_review_packet_markdown
@@ -384,6 +386,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--phase45-actual-llm-one-shot-preflight", action="store_true", help="Print Phase 45A actual LLM one-shot preflight without API calls.")
     parser.add_argument("--phase46-blocked-llm-output-review", action="store_true", help="Print Phase 46 metadata-only blocked LLM output review without API calls.")
     parser.add_argument("--phase46-llm-retry-policy", action="store_true", help="Print Phase 46 no-automatic-retry LLM policy without API calls.")
+    parser.add_argument("--phase47-human-review-closeout", action="store_true", help="Print Phase 47 human-review-only closeout without API calls.")
+    parser.add_argument("--phase47-disabled-retry-gate-design", action="store_true", help="Print Phase 47 disabled retry gate design without API calls.")
     parser.add_argument("--live-event-audit-report", action="store_true", help="Print Phase 30 live event audit record report.")
     parser.add_argument("--would-send-preview-report", action="store_true", help="Print Phase 30 would-send preview report.")
     parser.add_argument("--live-event-review-packet-report", action="store_true", help="Print Phase 30 live event review packet report.")
@@ -2624,6 +2628,36 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- discord_send_remains_disabled: {output.get('discord_send_remains_disabled')}")
         return 0
 
+    if args.phase47_human_review_closeout:
+        output = build_phase47_human_review_closeout()
+        if args.markdown:
+            print(render_phase47_human_review_closeout_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase47 human-review closeout")
+            print(f"- phase45_llm_call_count: {output.get('phase45_llm_call_count')}")
+            print(f"- output_safety_blocked: {output.get('output_safety_blocked')}")
+            print(f"- human_review_required: {output.get('human_review_required')}")
+            print(f"- automatic_retry_allowed: {output.get('automatic_retry_allowed')}")
+            print(f"- raw_output_included: {output.get('raw_output_included')}")
+        return 0
+
+    if args.phase47_disabled_retry_gate_design:
+        output = build_phase47_disabled_retry_gate_design()
+        if args.markdown:
+            print(render_phase47_disabled_retry_gate_design_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase47 disabled retry gate design")
+            print(f"- retry_gate_implemented: {output.get('retry_gate_implemented')}")
+            print(f"- retry_execution_available: {output.get('retry_execution_available')}")
+            print(f"- automatic_retry_allowed: {output.get('automatic_retry_allowed')}")
+            print(f"- manual_retry_requires_new_phase: {output.get('manual_retry_requires_new_phase')}")
+            print(f"- discord_send_remains_disabled: {output.get('discord_send_remains_disabled')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -2890,6 +2924,8 @@ def main(argv: list[str] | None = None) -> int:
         or args.phase45_actual_llm_one_shot_preflight
         or args.phase46_blocked_llm_output_review
         or args.phase46_llm_retry_policy
+        or args.phase47_human_review_closeout
+        or args.phase47_disabled_retry_gate_design
         or args.execute_readonly_live_runtime
         or args.allow_llm_api_call
         or args.allow_actual_one_shot_llm_draft_call

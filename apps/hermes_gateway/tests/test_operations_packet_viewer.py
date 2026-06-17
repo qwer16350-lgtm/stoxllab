@@ -230,6 +230,20 @@ def test_phase41b_45a_safe_prep_summary() -> None:
     assert_true(report["phase46_llm_retry_policy"]["repeat_phase45_call_allowed"] is False, "46 no repeat")
     assert_true(report["phase46_llm_retry_policy"]["discord_send_remains_disabled"] is True, "46 Discord disabled")
     assert_true(report["phase46_llm_retry_policy"]["llm_api_called"] is False, "46 no LLM")
+    assert_true(report["phase47_human_review_closeout"]["metadata_only"] is True, "47 metadata")
+    assert_true(report["phase47_human_review_closeout"]["phase45_llm_call_count"] == 1, "47 historical count")
+    assert_true(report["phase47_human_review_closeout"]["output_safety_blocked"] is True, "47 blocked")
+    assert_true(report["phase47_human_review_closeout"]["human_review_required"] is True, "47 human review")
+    assert_true(report["phase47_human_review_closeout"]["automatic_retry_allowed"] is False, "47 no auto retry")
+    assert_true(report["phase47_human_review_closeout"]["raw_output_included"] is False, "47 no raw")
+    assert_true(report["phase47_disabled_retry_gate_design"]["retry_gate_implemented"] is False, "47 gate disabled")
+    assert_true(report["phase47_disabled_retry_gate_design"]["retry_execution_available"] is False, "47 no retry execution")
+    assert_true(report["phase47_disabled_retry_gate_design"]["manual_retry_requires_new_phase"] is True, "47 new phase")
+    assert_true(report["phase47_disabled_retry_gate_design"]["manual_retry_requires_new_approval_phrase"] is True, "47 new phrase")
+    assert_true(report["phase47_disabled_retry_gate_design"]["manual_retry_requires_cost_guard"] is True, "47 cost guard")
+    assert_true(report["phase47_disabled_retry_gate_design"]["manual_retry_requires_call_count_guard"] is True, "47 count guard")
+    assert_true(report["phase47_disabled_retry_gate_design"]["repeat_phase45_call_allowed"] is False, "47 no repeat")
+    assert_true(report["phase47_disabled_retry_gate_design"]["discord_send_remains_disabled"] is True, "47 Discord disabled")
 
 
 def test_phase40t_login_failure_closeout_summary() -> None:

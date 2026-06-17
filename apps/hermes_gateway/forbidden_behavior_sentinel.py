@@ -199,6 +199,24 @@ FORBIDDEN_TRUE_FIELDS = (
     "phase46_embedding_api_called",
     "phase46_vector_index_created",
     "phase46_external_execution",
+    "phase47_automatic_retry_allowed",
+    "phase47_automatic_send_allowed",
+    "phase47_raw_output_included",
+    "phase47_full_content_included",
+    "phase47_retry_execution_available",
+    "phase47_retry_gate_implemented",
+    "phase47_repeat_phase45_call_allowed",
+    "phase47_llm_api_call_attempted",
+    "phase47_llm_api_called",
+    "phase47_additional_llm_api_call",
+    "phase47_discord_api_send_called",
+    "phase47_discord_message_sent",
+    "phase47_rag_called",
+    "phase47_embedding_api_called",
+    "phase47_vector_index_created",
+    "phase47_external_execution",
+    "phase47_ready_for_phase48_retry_manual_gate_design",
+    "phase47_ready_for_phase48_discord_send_review_gate_design",
 )
 
 
@@ -509,6 +527,40 @@ def build_forbidden_behavior_sentinel(overrides: dict[str, Any] | None = None) -
         "phase46_embedding_api_called": False,
         "phase46_vector_index_created": False,
         "phase46_external_execution": False,
+        "phase47_human_review_closeout_available": True,
+        "phase47_metadata_only": True,
+        "phase47_human_review_required": True,
+        "phase47_phase45_actual_llm_call_completed": True,
+        "phase47_phase45_llm_call_count": 1,
+        "phase47_output_safety_blocked": True,
+        "phase47_phase45_repeat_llm_call_forbidden": True,
+        "phase47_blocked_output_auto_retry_forbidden": True,
+        "phase47_blocked_output_auto_discord_send_forbidden": True,
+        "phase47_raw_output_dump_forbidden": True,
+        "phase47_automatic_retry_allowed": False,
+        "phase47_automatic_send_allowed": False,
+        "phase47_raw_output_included": False,
+        "phase47_full_content_included": False,
+        "phase47_retry_execution_available": False,
+        "phase47_disabled_retry_gate_design_available": True,
+        "phase47_retry_gate_implemented": False,
+        "phase47_repeat_phase45_call_allowed": False,
+        "phase47_manual_retry_requires_new_phase": True,
+        "phase47_manual_retry_requires_new_approval_phrase": True,
+        "phase47_manual_retry_requires_cost_guard": True,
+        "phase47_manual_retry_requires_call_count_guard": True,
+        "phase47_discord_send_remains_disabled": True,
+        "phase47_llm_api_call_attempted": False,
+        "phase47_llm_api_called": False,
+        "phase47_additional_llm_api_call": False,
+        "phase47_discord_api_send_called": False,
+        "phase47_discord_message_sent": False,
+        "phase47_rag_called": False,
+        "phase47_embedding_api_called": False,
+        "phase47_vector_index_created": False,
+        "phase47_external_execution": False,
+        "phase47_ready_for_phase48_retry_manual_gate_design": False,
+        "phase47_ready_for_phase48_discord_send_review_gate_design": False,
         "post_llm_call_sentinel": False,
         "total_phase36_llm_call_count": 1,
         "total_phase36_discord_message_sent_count": 0,
@@ -653,6 +705,28 @@ def _sentinel_passed(report: dict[str, Any]) -> bool:
         return False
     if not bool(report.get("phase46_discord_send_remains_disabled")):
         return False
+    if not bool(report.get("phase47_human_review_closeout_available")) or not bool(report.get("phase47_metadata_only")):
+        return False
+    if not bool(report.get("phase47_human_review_required")) or not bool(report.get("phase47_phase45_actual_llm_call_completed")):
+        return False
+    if int(report.get("phase47_phase45_llm_call_count", 0) or 0) != 1 or not bool(report.get("phase47_output_safety_blocked")):
+        return False
+    if not bool(report.get("phase47_phase45_repeat_llm_call_forbidden")):
+        return False
+    if not bool(report.get("phase47_blocked_output_auto_retry_forbidden")):
+        return False
+    if not bool(report.get("phase47_blocked_output_auto_discord_send_forbidden")):
+        return False
+    if not bool(report.get("phase47_raw_output_dump_forbidden")):
+        return False
+    if not bool(report.get("phase47_disabled_retry_gate_design_available")):
+        return False
+    if not bool(report.get("phase47_manual_retry_requires_new_phase")) or not bool(report.get("phase47_manual_retry_requires_new_approval_phrase")):
+        return False
+    if not bool(report.get("phase47_manual_retry_requires_cost_guard")) or not bool(report.get("phase47_manual_retry_requires_call_count_guard")):
+        return False
+    if not bool(report.get("phase47_discord_send_remains_disabled")):
+        return False
     if not bool(report.get("phase40t_execute_flag_present")) and (
         bool(report.get("phase40t_live_runtime_started")) or bool(report.get("phase40t_closeout_started"))
     ):
@@ -786,6 +860,28 @@ def assert_forbidden_behavior_sentinel_safe(report: dict[str, Any]) -> None:
         raise ValueError("Forbidden behavior sentinel requires Phase46 retry guards.")
     if not report.get("phase46_discord_send_remains_disabled"):
         raise ValueError("Forbidden behavior sentinel requires Phase46 Discord send disabled.")
+    if not report.get("phase47_human_review_closeout_available") or not report.get("phase47_metadata_only"):
+        raise ValueError("Forbidden behavior sentinel requires Phase47 human-review closeout.")
+    if not report.get("phase47_human_review_required") or not report.get("phase47_phase45_actual_llm_call_completed"):
+        raise ValueError("Forbidden behavior sentinel requires Phase47 human review and Phase45 completion.")
+    if int(report.get("phase47_phase45_llm_call_count", 0) or 0) != 1 or not report.get("phase47_output_safety_blocked"):
+        raise ValueError("Forbidden behavior sentinel requires Phase47 blocked exactly-once Phase45 state.")
+    for key in (
+        "phase47_phase45_repeat_llm_call_forbidden",
+        "phase47_blocked_output_auto_retry_forbidden",
+        "phase47_blocked_output_auto_discord_send_forbidden",
+        "phase47_raw_output_dump_forbidden",
+    ):
+        if not report.get(key):
+            raise ValueError(f"Forbidden behavior sentinel missing Phase47 prohibition: {key}")
+    if not report.get("phase47_disabled_retry_gate_design_available"):
+        raise ValueError("Forbidden behavior sentinel requires Phase47 disabled retry gate design.")
+    if not report.get("phase47_manual_retry_requires_new_phase") or not report.get("phase47_manual_retry_requires_new_approval_phrase"):
+        raise ValueError("Forbidden behavior sentinel requires Phase47 new phase/new approval phrase guards.")
+    if not report.get("phase47_manual_retry_requires_cost_guard") or not report.get("phase47_manual_retry_requires_call_count_guard"):
+        raise ValueError("Forbidden behavior sentinel requires Phase47 retry cost/call-count guards.")
+    if not report.get("phase47_discord_send_remains_disabled"):
+        raise ValueError("Forbidden behavior sentinel requires Phase47 Discord send disabled.")
     if not report.get("phase40t_execute_flag_present") and (report.get("phase40t_live_runtime_started") or report.get("phase40t_closeout_started")):
         raise ValueError("Forbidden behavior sentinel forbids Phase 40T started without execute flag.")
     if report.get("phase40t_ready_for_manual_readonly_runtime_launch") and not report.get("phase40t_reply_mode_readonly_private_test_only"):
@@ -836,6 +932,13 @@ def render_forbidden_behavior_sentinel_markdown(report: dict[str, Any]) -> str:
             f"- Phase 46 metadata only: {str(report.get('phase46_metadata_only', False)).lower()}",
             f"- Phase 46 automatic retry allowed: {str(report.get('phase46_automatic_retry_allowed', False)).lower()}",
             f"- Phase 46 retry requires new manual gate: {str(report.get('phase46_retry_requires_new_manual_gate', False)).lower()}",
+            "- Phase 45 repeat LLM call forbidden: true",
+            "- Phase 45 blocked output auto retry forbidden: true",
+            "- Blocked output auto Discord send forbidden: true",
+            "- Raw output dump forbidden: true",
+            f"- Phase 47 human review required: {str(report.get('phase47_human_review_required', False)).lower()}",
+            f"- Phase 47 retry execution available: {str(report.get('phase47_retry_execution_available', False)).lower()}",
+            f"- Phase 47 Discord message sent: {str(report.get('phase47_discord_message_sent', False)).lower()}",
             "- Forbidden behavior sentinel passed: true",
         ]
     ) + "\n"

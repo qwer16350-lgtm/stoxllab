@@ -138,6 +138,23 @@ def test_operations_dashboard_lock_phase41b_45a_state() -> None:
     assert_true(report["phase46_discord_send_remains_disabled"] is True, "46 Discord disabled")
     assert_true(report["phase46_llm_api_called"] is False, "46 no LLM")
     assert_true(report["phase46_discord_message_sent"] is False, "46 no Discord")
+    assert_true(report["phase47_human_review_closeout_available"] is True, "47 closeout")
+    assert_true(report["phase47_metadata_only"] is True, "47 metadata")
+    assert_true(report["phase47_human_review_required"] is True, "47 human review")
+    assert_true(report["phase47_phase45_llm_call_count"] == 1, "47 historical count")
+    assert_true(report["phase47_output_safety_blocked"] is True, "47 blocked")
+    assert_true(report["phase47_automatic_retry_allowed"] is False, "47 no auto retry")
+    assert_true(report["phase47_automatic_send_allowed"] is False, "47 no auto send")
+    assert_true(report["phase47_raw_output_included"] is False, "47 no raw")
+    assert_true(report["phase47_retry_execution_available"] is False, "47 no retry execution")
+    assert_true(report["phase47_disabled_retry_gate_design_available"] is True, "47 retry design")
+    assert_true(report["phase47_retry_gate_implemented"] is False, "47 retry gate disabled")
+    assert_true(report["phase47_manual_retry_requires_new_phase"] is True, "47 new phase")
+    assert_true(report["phase47_manual_retry_requires_new_approval_phrase"] is True, "47 new phrase")
+    assert_true(report["phase47_manual_retry_requires_cost_guard"] is True, "47 cost guard")
+    assert_true(report["phase47_manual_retry_requires_call_count_guard"] is True, "47 count guard")
+    assert_true(report["phase47_repeat_phase45_call_allowed"] is False, "47 no Phase45 repeat")
+    assert_true(report["phase47_discord_send_remains_disabled"] is True, "47 Discord disabled")
 
 
 def test_operations_dashboard_lock_phase45_readiness_is_safe_but_execution_is_not() -> None:
@@ -153,6 +170,11 @@ def test_operations_dashboard_lock_phase45_readiness_is_safe_but_execution_is_no
     assert_raises(lambda: assert_operations_dashboard_lock_safe({**report, "phase46_automatic_retry_allowed": True}), "46 auto retry unsafe")
     assert_raises(lambda: assert_operations_dashboard_lock_safe({**report, "phase46_llm_api_called": True}), "46 LLM unsafe")
     assert_raises(lambda: assert_operations_dashboard_lock_safe({**report, "phase46_retry_requires_new_manual_gate": False}), "46 manual gate required")
+    assert_raises(lambda: assert_operations_dashboard_lock_safe({**report, "phase47_automatic_retry_allowed": True}), "47 auto retry unsafe")
+    assert_raises(lambda: assert_operations_dashboard_lock_safe({**report, "phase47_retry_execution_available": True}), "47 retry execution unsafe")
+    assert_raises(lambda: assert_operations_dashboard_lock_safe({**report, "phase47_raw_output_included": True}), "47 raw output unsafe")
+    assert_raises(lambda: assert_operations_dashboard_lock_safe({**report, "phase47_discord_message_sent": True}), "47 Discord unsafe")
+    assert_raises(lambda: assert_operations_dashboard_lock_safe({**report, "phase47_manual_retry_requires_new_phase": False}), "47 new phase required")
 
 
 def test_operations_dashboard_lock_phase36_post_call_state() -> None:

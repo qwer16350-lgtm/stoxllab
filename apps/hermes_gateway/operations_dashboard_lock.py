@@ -60,6 +60,8 @@ from phase45_actual_llm_one_shot_preflight import build_phase45_actual_llm_one_s
 from actual_one_shot_llm_draft_call_closeout import build_actual_one_shot_llm_draft_call_closeout
 from phase46_blocked_llm_output_review import build_phase46_blocked_llm_output_review
 from phase46_llm_retry_policy import build_phase46_llm_retry_policy
+from phase47_human_review_closeout import build_phase47_human_review_closeout
+from phase47_disabled_retry_gate_design import build_phase47_disabled_retry_gate_design
 from private_test_live_send_entry_gate import build_private_test_live_send_entry_gate
 from rag_evidence_private_test_phase34_final_lock import build_rag_evidence_private_test_phase34_final_lock
 
@@ -142,6 +144,8 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
     phase45_closeout = build_actual_one_shot_llm_draft_call_closeout()
     phase46_review = build_phase46_blocked_llm_output_review(phase45_closeout)
     phase46_retry = build_phase46_llm_retry_policy(phase46_review)
+    phase47_closeout = build_phase47_human_review_closeout(phase46_review)
+    phase47_retry_design = build_phase47_disabled_retry_gate_design(phase47_closeout)
     counts = audit.get("final_e2e_counts", {})
     report = {
         "report_type": "operations_dashboard_lock",
@@ -396,6 +400,38 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
         "phase46_embedding_api_called": bool(phase46_retry.get("embedding_api_called")),
         "phase46_vector_index_created": bool(phase46_retry.get("vector_index_created")),
         "phase46_external_execution": bool(phase46_retry.get("external_execution")),
+        "phase47_human_review_closeout_available": bool(phase47_closeout.get("closeout_available")),
+        "phase47_metadata_only": bool(phase47_closeout.get("metadata_only")),
+        "phase47_human_review_required": bool(phase47_closeout.get("human_review_required")),
+        "phase47_phase45_actual_llm_call_completed": bool(phase47_closeout.get("phase45_actual_llm_call_completed")),
+        "phase47_phase45_llm_call_count": int(phase47_closeout.get("phase45_llm_call_count", 0) or 0),
+        "phase47_output_safety_blocked": bool(phase47_closeout.get("output_safety_blocked")),
+        "phase47_automatic_retry_allowed": bool(phase47_closeout.get("automatic_retry_allowed")),
+        "phase47_automatic_send_allowed": bool(phase47_closeout.get("automatic_send_allowed")),
+        "phase47_raw_output_included": bool(phase47_closeout.get("raw_output_included")),
+        "phase47_full_content_included": bool(phase47_closeout.get("full_content_included")),
+        "phase47_retry_execution_available": bool(phase47_closeout.get("retry_execution_available")),
+        "phase47_llm_api_call_attempted": bool(phase47_closeout.get("llm_api_call_attempted")),
+        "phase47_llm_api_called": bool(phase47_closeout.get("llm_api_called")),
+        "phase47_additional_llm_api_call": bool(phase47_closeout.get("additional_llm_api_call")),
+        "phase47_discord_api_send_called": bool(phase47_closeout.get("discord_api_send_called")),
+        "phase47_discord_message_sent": bool(phase47_closeout.get("discord_message_sent")),
+        "phase47_rag_called": bool(phase47_closeout.get("rag_called")),
+        "phase47_embedding_api_called": bool(phase47_closeout.get("embedding_api_called")),
+        "phase47_vector_index_created": bool(phase47_closeout.get("vector_index_created")),
+        "phase47_external_execution": bool(phase47_closeout.get("external_execution")),
+        "phase47_disabled_retry_gate_design_available": bool(phase47_retry_design.get("design_packet_available")),
+        "phase47_retry_gate_implemented": bool(phase47_retry_design.get("retry_gate_implemented")),
+        "phase47_design_retry_execution_available": bool(phase47_retry_design.get("retry_execution_available")),
+        "phase47_design_automatic_retry_allowed": bool(phase47_retry_design.get("automatic_retry_allowed")),
+        "phase47_manual_retry_requires_new_phase": bool(phase47_retry_design.get("manual_retry_requires_new_phase")),
+        "phase47_manual_retry_requires_new_approval_phrase": bool(phase47_retry_design.get("manual_retry_requires_new_approval_phrase")),
+        "phase47_manual_retry_requires_cost_guard": bool(phase47_retry_design.get("manual_retry_requires_cost_guard")),
+        "phase47_manual_retry_requires_call_count_guard": bool(phase47_retry_design.get("manual_retry_requires_call_count_guard")),
+        "phase47_repeat_phase45_call_allowed": bool(phase47_retry_design.get("repeat_phase45_call_allowed")),
+        "phase47_discord_send_remains_disabled": bool(phase47_retry_design.get("discord_send_remains_disabled")),
+        "phase47_ready_for_phase48_retry_manual_gate_design": bool(phase47_retry_design.get("ready_for_phase48_retry_manual_gate_design")),
+        "phase47_ready_for_phase48_discord_send_review_gate_design": bool(phase47_retry_design.get("ready_for_phase48_discord_send_review_gate_design")),
         "ready_for_live_runtime": False,
         "ready_for_llm_call": False,
         "ready_for_discord_send": False,
@@ -567,6 +603,26 @@ def assert_operations_dashboard_lock_safe(report: dict[str, Any]) -> None:
         "phase46_embedding_api_called",
         "phase46_vector_index_created",
         "phase46_external_execution",
+        "phase47_automatic_retry_allowed",
+        "phase47_automatic_send_allowed",
+        "phase47_raw_output_included",
+        "phase47_full_content_included",
+        "phase47_retry_execution_available",
+        "phase47_llm_api_call_attempted",
+        "phase47_llm_api_called",
+        "phase47_additional_llm_api_call",
+        "phase47_discord_api_send_called",
+        "phase47_discord_message_sent",
+        "phase47_rag_called",
+        "phase47_embedding_api_called",
+        "phase47_vector_index_created",
+        "phase47_external_execution",
+        "phase47_retry_gate_implemented",
+        "phase47_design_retry_execution_available",
+        "phase47_design_automatic_retry_allowed",
+        "phase47_repeat_phase45_call_allowed",
+        "phase47_ready_for_phase48_retry_manual_gate_design",
+        "phase47_ready_for_phase48_discord_send_review_gate_design",
     ):
         if report.get(key):
             raise ValueError(f"Operations dashboard lock unsafe flag is true: {key}")
@@ -590,6 +646,18 @@ def assert_operations_dashboard_lock_safe(report: dict[str, Any]) -> None:
         raise ValueError("Operations dashboard lock requires Phase46 retry guards.")
     if not report.get("phase46_discord_send_remains_disabled"):
         raise ValueError("Operations dashboard lock requires Phase46 Discord send disabled.")
+    if not report.get("phase47_human_review_closeout_available") or not report.get("phase47_metadata_only"):
+        raise ValueError("Operations dashboard lock requires Phase47 metadata-only human-review closeout.")
+    if not report.get("phase47_human_review_required") or not report.get("phase47_phase45_actual_llm_call_completed"):
+        raise ValueError("Operations dashboard lock requires Phase47 human review and historical Phase45 completion.")
+    if int(report.get("phase47_phase45_llm_call_count", 0) or 0) != 1 or not report.get("phase47_output_safety_blocked"):
+        raise ValueError("Operations dashboard lock requires Phase47 blocked exactly-once Phase45 state.")
+    if not report.get("phase47_disabled_retry_gate_design_available") or not report.get("phase47_manual_retry_requires_new_phase"):
+        raise ValueError("Operations dashboard lock requires Phase47 disabled retry design.")
+    if not report.get("phase47_manual_retry_requires_new_approval_phrase") or not report.get("phase47_manual_retry_requires_cost_guard") or not report.get("phase47_manual_retry_requires_call_count_guard"):
+        raise ValueError("Operations dashboard lock requires Phase47 future retry guards.")
+    if not report.get("phase47_discord_send_remains_disabled"):
+        raise ValueError("Operations dashboard lock requires Phase47 Discord send disabled.")
     if int(report.get("phase39b_actual_discord_send_count", 0) or 0) != 0:
         raise ValueError("Operations dashboard lock requires Phase 39B send count 0.")
     if int(report.get("phase39c_actual_discord_send_count_locked", 0) or 0) != 1:
@@ -722,5 +790,10 @@ def render_operations_dashboard_lock_markdown(report: dict[str, Any]) -> str:
             f"- Phase 43 Phase 41B repeat locked: {str(report.get('phase43_phase41b_repeat_send_locked')).lower()}",
             f"- Phase 44 actual LLM API call: {str(report.get('phase44_actual_llm_api_call')).lower()}",
             f"- Phase 45 actual LLM API call: {str(report.get('phase45_actual_llm_api_call')).lower()}",
+            f"- Phase 47 human review required: {str(report.get('phase47_human_review_required')).lower()}",
+            f"- Phase 47 retry execution available: {str(report.get('phase47_retry_execution_available')).lower()}",
+            f"- Phase 47 automatic retry allowed: {str(report.get('phase47_automatic_retry_allowed')).lower()}",
+            f"- Phase 47 raw output included: {str(report.get('phase47_raw_output_included')).lower()}",
+            f"- Phase 47 Discord message sent: {str(report.get('phase47_discord_message_sent')).lower()}",
         ]
     ) + "\n"

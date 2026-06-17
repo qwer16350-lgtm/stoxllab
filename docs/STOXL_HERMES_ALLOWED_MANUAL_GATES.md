@@ -23,3 +23,9 @@ remained disabled, and repeat LLM calls are locked.
 
 Phase46 is review/policy only. It does not authorize any new LLM call, Discord
 send, RAG, embedding/vector generation, or external execution.
+
+Phase47 is human-review-only closeout plus disabled retry gate design. Retry
+execution is not available in Phase47. Automatic retry, automatic send, Phase45
+repeat LLM calls, blocked-output auto Discord send, and raw output dumps remain
+forbidden. A future retry must be a new explicit Manual Gate with a new approval
+policy, cost guard, call-count guard, and Discord disabled by default.

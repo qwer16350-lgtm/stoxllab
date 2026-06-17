@@ -98,3 +98,11 @@ output. Raw/full output is not included. Classifier calibration is fixture-only
 and keeps negated external-action disclaimers from being treated as positive
 external-action claims. Automatic retry is forbidden; any future retry requires
 a new explicit manual gate and approval policy.
+
+Phase47 adds human-review-only closeout and a disabled retry gate design packet.
+It keeps the Phase45 blocked output metadata-only, requires human review,
+forbids automatic retry and automatic send, includes no raw/full blocked output,
+and exposes no retry execution path. The documented next options are Option A:
+human-review-only project closeout, Option B: Phase48 new retry Manual Gate
+design, and Option C: Phase48 Discord send review gate design. Phase47 does not
+execute Option B or Option C.

@@ -147,6 +147,24 @@ def test_forbidden_behavior_sentinel_success_fixture() -> None:
     assert_true(report["phase46_discord_send_remains_disabled"] is True, "46 Discord disabled")
     assert_true(report["phase46_llm_api_called"] is False, "46 no LLM")
     assert_true(report["phase46_discord_message_sent"] is False, "46 no Discord")
+    assert_true(report["phase47_human_review_closeout_available"] is True, "47 closeout")
+    assert_true(report["phase47_human_review_required"] is True, "47 human review")
+    assert_true(report["phase47_phase45_llm_call_count"] == 1, "47 historical count")
+    assert_true(report["phase47_output_safety_blocked"] is True, "47 blocked")
+    assert_true(report["phase47_phase45_repeat_llm_call_forbidden"] is True, "47 repeat forbidden")
+    assert_true(report["phase47_blocked_output_auto_retry_forbidden"] is True, "47 retry forbidden")
+    assert_true(report["phase47_blocked_output_auto_discord_send_forbidden"] is True, "47 auto send forbidden")
+    assert_true(report["phase47_raw_output_dump_forbidden"] is True, "47 raw dump forbidden")
+    assert_true(report["phase47_automatic_retry_allowed"] is False, "47 no auto retry")
+    assert_true(report["phase47_retry_execution_available"] is False, "47 no retry execution")
+    assert_true(report["phase47_disabled_retry_gate_design_available"] is True, "47 design")
+    assert_true(report["phase47_retry_gate_implemented"] is False, "47 gate disabled")
+    assert_true(report["phase47_repeat_phase45_call_allowed"] is False, "47 no repeat")
+    assert_true(report["phase47_manual_retry_requires_new_phase"] is True, "47 new phase")
+    assert_true(report["phase47_manual_retry_requires_new_approval_phrase"] is True, "47 new phrase")
+    assert_true(report["phase47_manual_retry_requires_cost_guard"] is True, "47 cost guard")
+    assert_true(report["phase47_manual_retry_requires_call_count_guard"] is True, "47 count guard")
+    assert_true(report["phase47_discord_send_remains_disabled"] is True, "47 Discord disabled")
 
 
 def test_forbidden_behavior_sentinel_flags_false() -> None:
@@ -254,6 +272,24 @@ def test_forbidden_behavior_sentinel_phase41b_45a_negative_fixtures() -> None:
         "phase46_embedding_api_called",
         "phase46_vector_index_created",
         "phase46_external_execution",
+        "phase47_automatic_retry_allowed",
+        "phase47_automatic_send_allowed",
+        "phase47_raw_output_included",
+        "phase47_full_content_included",
+        "phase47_retry_execution_available",
+        "phase47_retry_gate_implemented",
+        "phase47_repeat_phase45_call_allowed",
+        "phase47_llm_api_call_attempted",
+        "phase47_llm_api_called",
+        "phase47_additional_llm_api_call",
+        "phase47_discord_api_send_called",
+        "phase47_discord_message_sent",
+        "phase47_rag_called",
+        "phase47_embedding_api_called",
+        "phase47_vector_index_created",
+        "phase47_external_execution",
+        "phase47_ready_for_phase48_retry_manual_gate_design",
+        "phase47_ready_for_phase48_discord_send_review_gate_design",
     ):
         assert_raises(lambda selected=key: build_forbidden_behavior_sentinel({selected: True}), f"{key} should fail")
     build_forbidden_behavior_sentinel({"phase45_ready_for_actual_llm_one_shot_manual_gate": True, "phase45_ready_for_actual_llm_one_shot_call": True})
@@ -267,6 +303,15 @@ def test_forbidden_behavior_sentinel_phase41b_45a_negative_fixtures() -> None:
     assert_raises(lambda: build_forbidden_behavior_sentinel({"phase46_blocked_llm_output_review_available": False}), "46 review required")
     assert_raises(lambda: build_forbidden_behavior_sentinel({"phase46_retry_requires_new_manual_gate": False}), "46 manual gate required")
     assert_raises(lambda: build_forbidden_behavior_sentinel({"phase46_discord_send_remains_disabled": False}), "46 Discord disabled")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase47_human_review_required": False}), "47 human review required")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase47_phase45_llm_call_count": 2}), "47 historical count exactly one")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase47_phase45_repeat_llm_call_forbidden": False}), "47 repeat forbidden")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase47_blocked_output_auto_retry_forbidden": False}), "47 auto retry forbidden")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase47_blocked_output_auto_discord_send_forbidden": False}), "47 auto send forbidden")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase47_raw_output_dump_forbidden": False}), "47 raw dump forbidden")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase47_manual_retry_requires_new_phase": False}), "47 new phase required")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase47_manual_retry_requires_new_approval_phrase": False}), "47 new phrase required")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase47_discord_send_remains_disabled": False}), "47 Discord disabled")
     assert_raises(lambda: build_forbidden_behavior_sentinel({"phase41b_message_sent_count": 1}), "41B count 0")
     assert_raises(lambda: build_forbidden_behavior_sentinel({"phase41c_message_sent_count": 0}), "41C count 1")
     assert_raises(lambda: build_forbidden_behavior_sentinel({"phase41c_sent_scope": "none"}), "41C private scope")

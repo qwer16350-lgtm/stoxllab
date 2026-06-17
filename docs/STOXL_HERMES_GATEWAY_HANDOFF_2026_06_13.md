@@ -558,3 +558,11 @@ does not send Discord messages. Fixture-based classifier calibration verifies
 that negated external-action wording is not treated as a positive external
 action claim. Automatic retry remains forbidden; Phase47 is the earliest place
 to design either human-review-only closeout or a new retry Manual Gate.
+
+Phase47 adds the human-review-only closeout and disabled retry gate design
+packet. It does not attempt or call LLM/OpenRouter, does not send to Discord,
+does not include full raw blocked output, and does not make retry execution
+available. Phase45 repeat LLM call is forbidden, blocked output auto retry is
+forbidden, blocked output auto Discord send is forbidden, and raw output dump is
+forbidden. Any future retry must be a new explicit Manual Gate with a new
+approval policy in a later phase.

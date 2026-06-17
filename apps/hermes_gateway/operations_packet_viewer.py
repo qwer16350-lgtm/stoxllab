@@ -125,6 +125,8 @@ from phase44_fake_llm_adapter import run_phase44_fake_llm_adapter
 from phase45_actual_llm_one_shot_preflight import build_phase45_actual_llm_one_shot_preflight
 from phase46_blocked_llm_output_review import build_phase46_blocked_llm_output_review
 from phase46_llm_retry_policy import build_phase46_llm_retry_policy
+from phase47_human_review_closeout import build_phase47_human_review_closeout
+from phase47_disabled_retry_gate_design import build_phase47_disabled_retry_gate_design
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope
 from rag_evidence_review_packet import build_rag_evidence_review_packet
@@ -657,6 +659,8 @@ def build_operations_packet_viewer_report(
     phase45_closeout = build_actual_one_shot_llm_draft_call_closeout()
     phase46_review = build_phase46_blocked_llm_output_review(phase45_closeout)
     phase46_retry = build_phase46_llm_retry_policy(phase46_review)
+    phase47_closeout = build_phase47_human_review_closeout(phase46_review)
+    phase47_retry_design = build_phase47_disabled_retry_gate_design(phase47_closeout)
     report = {
         "report_type": "operations_packet_viewer",
         "version": VERSION,
@@ -1849,6 +1853,31 @@ def build_operations_packet_viewer_report(
             "llm_api_called": bool(phase46_retry.get("llm_api_called")),
             "discord_message_sent": bool(phase46_retry.get("discord_message_sent")),
         },
+        "phase47_human_review_closeout": {
+            "available": True,
+            "metadata_only": bool(phase47_closeout.get("metadata_only")),
+            "phase45_actual_llm_call_completed": bool(phase47_closeout.get("phase45_actual_llm_call_completed")),
+            "phase45_llm_call_count": int(phase47_closeout.get("phase45_llm_call_count", 0) or 0),
+            "output_safety_blocked": bool(phase47_closeout.get("output_safety_blocked")),
+            "discord_message_sent": bool(phase47_closeout.get("discord_message_sent")),
+            "human_review_required": bool(phase47_closeout.get("human_review_required")),
+            "automatic_retry_allowed": bool(phase47_closeout.get("automatic_retry_allowed")),
+            "automatic_send_allowed": bool(phase47_closeout.get("automatic_send_allowed")),
+            "raw_output_included": bool(phase47_closeout.get("raw_output_included")),
+            "full_content_included": bool(phase47_closeout.get("full_content_included")),
+        },
+        "phase47_disabled_retry_gate_design": {
+            "available": True,
+            "retry_gate_implemented": bool(phase47_retry_design.get("retry_gate_implemented")),
+            "retry_execution_available": bool(phase47_retry_design.get("retry_execution_available")),
+            "automatic_retry_allowed": bool(phase47_retry_design.get("automatic_retry_allowed")),
+            "manual_retry_requires_new_phase": bool(phase47_retry_design.get("manual_retry_requires_new_phase")),
+            "manual_retry_requires_new_approval_phrase": bool(phase47_retry_design.get("manual_retry_requires_new_approval_phrase")),
+            "manual_retry_requires_cost_guard": bool(phase47_retry_design.get("manual_retry_requires_cost_guard")),
+            "manual_retry_requires_call_count_guard": bool(phase47_retry_design.get("manual_retry_requires_call_count_guard")),
+            "repeat_phase45_call_allowed": bool(phase47_retry_design.get("repeat_phase45_call_allowed")),
+            "discord_send_remains_disabled": bool(phase47_retry_design.get("discord_send_remains_disabled")),
+        },
         "daily_manifest_summary": load_daily_manifest(root=root, date=date),
         "filters": {
             "channel_name": channel_name,
@@ -2235,6 +2264,8 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
     phase45_closeout = report.get("phase45_actual_llm_call_closeout", {})
     phase46_review = report.get("phase46_blocked_llm_output_review", {})
     phase46_retry = report.get("phase46_llm_retry_policy", {})
+    phase47_closeout = report.get("phase47_human_review_closeout", {})
+    phase47_retry_design = report.get("phase47_disabled_retry_gate_design", {})
     lines.extend(
         [
             "",
@@ -2270,6 +2301,12 @@ def render_operations_summary_markdown(report: dict[str, Any]) -> str:
             f"- Phase 46 raw output included: {str(phase46_review.get('raw_output_included', False)).lower()}",
             f"- Phase 46 automatic retry allowed: {str(phase46_retry.get('automatic_retry_allowed', False)).lower()}",
             f"- Phase 46 retry requires new manual gate: {str(phase46_retry.get('retry_requires_new_manual_gate', False)).lower()}",
+            f"- Phase 47 human review required: {str(phase47_closeout.get('human_review_required', False)).lower()}",
+            f"- Phase 47 automatic retry allowed: {str(phase47_closeout.get('automatic_retry_allowed', False)).lower()}",
+            f"- Phase 47 raw output included: {str(phase47_closeout.get('raw_output_included', False)).lower()}",
+            f"- Phase 47 retry gate implemented: {str(phase47_retry_design.get('retry_gate_implemented', False)).lower()}",
+            f"- Phase 47 retry execution available: {str(phase47_retry_design.get('retry_execution_available', False)).lower()}",
+            f"- Phase 47 Discord send remains disabled: {str(phase47_retry_design.get('discord_send_remains_disabled', False)).lower()}",
         ]
     )
     safety = report.get("safety_assertions", {})
