@@ -222,6 +222,13 @@ from phase59_63_agent_os_supervised_closeout import (
     build_phase59_63_agent_os_supervised_closeout,
     render_phase59_63_agent_os_supervised_closeout_markdown,
 )
+from phase60_65_team_canary_autonomy_stage import (
+    build_actual_phase60_team_canary,
+    build_phase60_65_team_canary_autonomy_stage,
+    build_phase60_team_canary_blocked_report,
+    build_phase60_team_canary_preflight,
+    render_phase60_65_team_canary_autonomy_stage_markdown,
+)
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight, render_rag_evidence_private_test_send_preflight_markdown
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope, render_rag_evidence_prompt_envelope_markdown
 from rag_evidence_review_packet import build_rag_evidence_review_packet, render_rag_evidence_review_packet_markdown
@@ -464,6 +471,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--allow-actual-phase59-supervised-auto-reply", action="store_true", help="Allow Phase 59 actual path gate evaluation.")
     parser.add_argument("--phase59-62-agent-os-autonomy-stage", action="store_true", help="Print Phase 59-62 Agent OS autonomy stage without runtime or send.")
     parser.add_argument("--phase59-63-agent-os-supervised-closeout", action="store_true", help="Print Phase 59-63 supervised closeout without runtime or send.")
+    parser.add_argument("--phase60-team-canary-preflight", action="store_true", help="Print Phase 60 low-risk team canary preflight without runtime or send.")
+    parser.add_argument("--phase60-team-canary-blocked-report", action="store_true", help="Print Phase 60 blocked team canary report without runtime or send.")
+    parser.add_argument("--actual-phase60-team-canary", action="store_true", help="Print Phase 60 actual path report; blocked unless a later Manual Gate is opened.")
+    parser.add_argument("--allow-actual-phase60-team-canary", action="store_true", help="Allow Phase 60 team canary gate evaluation for a later Manual Gate.")
+    parser.add_argument("--phase60-65-team-canary-autonomy-stage", action="store_true", help="Print Phase 60-65 team canary autonomy stage without runtime or send.")
     parser.add_argument("--live-event-audit-report", action="store_true", help="Print Phase 30 live event audit record report.")
     parser.add_argument("--would-send-preview-report", action="store_true", help="Print Phase 30 would-send preview report.")
     parser.add_argument("--live-event-review-packet-report", action="store_true", help="Print Phase 30 live event review packet report.")
@@ -3157,6 +3169,63 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- next_target_level: {output.get('next_target_level')}")
         return 0
 
+    if args.phase60_team_canary_preflight:
+        output = build_phase60_team_canary_preflight()
+        if args.markdown:
+            print(render_phase60_65_team_canary_autonomy_stage_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase60 team canary preflight")
+            print(f"- phase60_low_risk_team_canary_path_available: {output.get('phase60_low_risk_team_canary_path_available')}")
+            print(f"- ready_for_phase60_team_canary_manual_gate: {output.get('ready_for_phase60_team_canary_manual_gate')}")
+            print(f"- discord_message_sent: {output.get('discord_message_sent')}")
+        return 0
+
+    if args.phase60_team_canary_blocked_report:
+        output = build_phase60_team_canary_blocked_report(
+            allow_flag_present=args.allow_actual_phase60_team_canary
+        )
+        if args.markdown:
+            print(render_phase60_65_team_canary_autonomy_stage_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase60 team canary blocked report")
+            print(f"- blocked: {output.get('blocked')}")
+            print(f"- actual_team_canary_executed: {output.get('actual_team_canary_executed')}")
+            print(f"- message_sent_count: {output.get('message_sent_count')}")
+        return 0
+
+    if args.actual_phase60_team_canary:
+        output = build_actual_phase60_team_canary(
+            allow_flag_present=args.allow_actual_phase60_team_canary
+        )
+        if args.markdown:
+            print(render_phase60_65_team_canary_autonomy_stage_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase60 actual team canary")
+            print(f"- blocked: {output.get('blocked')}")
+            print(f"- actual_team_canary_executed: {output.get('actual_team_canary_executed')}")
+            print(f"- message_sent_count: {output.get('message_sent_count')}")
+        return 0
+
+    if args.phase60_65_team_canary_autonomy_stage:
+        output = build_phase60_65_team_canary_autonomy_stage()
+        if args.markdown:
+            print(render_phase60_65_team_canary_autonomy_stage_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase60-65 team canary autonomy stage")
+            print(f"- phase60_low_risk_team_canary_path_available: {output.get('phase60_low_risk_team_canary_path_available')}")
+            print(f"- ready_for_phase60_team_canary_manual_gate: {output.get('ready_for_phase60_team_canary_manual_gate')}")
+            print(f"- current_verified_level: {output.get('current_verified_level')}")
+            print(f"- next_target_level: {output.get('next_target_level')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -3458,6 +3527,11 @@ def main(argv: list[str] | None = None) -> int:
         or args.allow_actual_phase59_supervised_auto_reply
         or args.phase59_62_agent_os_autonomy_stage
         or args.phase59_63_agent_os_supervised_closeout
+        or args.phase60_team_canary_preflight
+        or args.phase60_team_canary_blocked_report
+        or args.actual_phase60_team_canary
+        or args.allow_actual_phase60_team_canary
+        or args.phase60_65_team_canary_autonomy_stage
         or args.execute_readonly_live_runtime
         or args.allow_llm_api_call
         or args.allow_actual_one_shot_llm_draft_call

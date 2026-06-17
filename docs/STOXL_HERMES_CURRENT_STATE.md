@@ -209,3 +209,12 @@ and sends no Discord message, and repeat Phase59 sessions are locked with
 team-channel canary path and Phase61 scheduler dry-run control are prepared for
 future Manual Gate work, while Level 3 is now verified and Level 4/5 remain not
 ready.
+
+Phase60-65 prepares the low-risk team-channel canary actual path without
+external action. Public and unknown channels remain blocked, team canary is
+default blocked, and only known team channel plus low-risk intent, Manual Gate,
+kill switch, deterministic template, count guards, and disabled LLM/RAG/vector/
+external/scheduler-live flags can reach the later actual path. This bundle
+verifies the send branch only with a fake sender in tests. Phase61 scheduler
+dry-run controls remain report-only, and the autonomy matrix stays at verified
+Level 3 with next target Level 4 low-risk team-channel canary.

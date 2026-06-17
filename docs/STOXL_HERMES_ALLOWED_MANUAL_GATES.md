@@ -112,3 +112,14 @@ public channels blocked, require known team channel scope, low-risk intent,
 deterministic templates, max one reply per event, human override, kill switch,
 LLM/RAG disabled by default, external execution disabled, and scheduler live
 execution disabled.
+
+Phase60 defines the next Manual Gate keys for actual low-risk team-channel
+canary exactly once: `HERMES_PHASE60_TEAM_CANARY_APPROVED`,
+`HERMES_PHASE60_TEAM_CANARY_APPROVAL_PHRASE`,
+`HERMES_PHASE60_TEAM_CANARY_KILL_SWITCH_READY`,
+`HERMES_PHASE60_TEAM_CANARY_MAX_SEND_COUNT`,
+`HERMES_PHASE60_TEAM_CANARY_MAX_REPLY_COUNT`,
+`HERMES_PHASE60_TEAM_CANARY_COOLDOWN_SECONDS`, Discord send/reply mode keys,
+and LLM/RAG/embedding/vector/external disable keys. Required reply mode is
+`known_team_low_risk_canary_only`. This bundle does not run the allow command
+and does not perform real team-channel send.

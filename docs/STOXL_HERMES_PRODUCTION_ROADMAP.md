@@ -97,3 +97,10 @@ sessions are locked. Current verified level is
 canary execution, scheduler live approval, RAG/LLM live reply approval,
 production kill-switch live test, git index lock resolution, and
 refactor/compaction.
+
+Phase60-65 prepares the Level 4 low-risk team-channel canary path. Current
+verified level remains `level3_supervised_private_test_auto_reply_verified`;
+next target is `level4_low_risk_team_channel_canary`. The team canary actual
+path is present but default blocked, public/unknown/high-risk events are
+blocked, and the send branch is verified only with a fake sender. Scheduler
+live execution and production unattended mode remain not ready.
