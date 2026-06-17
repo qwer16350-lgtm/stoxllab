@@ -27,6 +27,18 @@
 - Phase 35C agent evidence pack composer and agent prompt preview are available.
 - Phase 39A actual private-test one-shot send path, safety gate, and blocked report are available, but execution remains default blocked.
 - Phase 39B-0 manual send re-entry packet and no-send lock are available, but actual send remains not executed.
+- Phase49/50 locks the final target as `STOXL_Discord_Agent_OS`.
+- Phase51/52 continuous read-only runtime foundation is available with synthetic
+  event normalization, event guard, session context, review packet base, and
+  synthetic replay only.
+- Phase51/52-1 read-only live runtime Manual Gate preflight and launch packet
+  are available. They define the approval phrase and env readiness checks
+  without printing the phrase value.
+- Phase52B read-only live capture closeout records the separate operator-run
+  Manual Gate with Gateway connected, timeout exit, zero captured events, and
+  no send/LLM/RAG/external action.
+- Phase53 capture-to-review-packet replay handles the empty capture and marks
+  the review-packet pipeline ready for the next read-only capture canary.
 
 ## Completed Chain
 
@@ -79,6 +91,22 @@
 - Phase 35B does not run Discord, send messages, call OpenRouter/LLM, create embeddings/vector indexes, watch files, schedule auto replies, or execute external actions. It keeps `operation` canonical and `operations` forbidden.
 - Phase 35C does not run Discord, send messages, call OpenRouter/LLM, execute prompts, create embeddings/vector indexes, dump full content, or execute external actions.
 - Phase 39A does not run Discord live runtime, call Discord API send, send a Discord message, execute actual private-test send, call OpenRouter/LLM, generate or actualize an approval phrase, create embeddings/vector indexes, enable unattended auto reply, or execute external actions.
+- Phase51/52 does not execute actual Discord runtime, connect to Discord
+  Gateway, call Discord API send, send Discord messages, attempt or call
+  LLM/OpenRouter, call RAG, create embeddings/vector data, run scheduler/cron
+  live execution, enable auto reply, or execute external actions. It produces
+  review packets only from synthetic fixtures.
+- Phase51/52-1 also does not execute runtime or external actions. It only
+  defines the Manual Gate preflight and launch packet for a later user-run
+  longer read-only live runtime with Discord send disabled.
+- Phase52B/53 does not execute actual Discord runtime. It records the prior
+  user-run read-only Gateway connection as metadata only, does not read capture
+  file content, does not dump capture paths, raw content, raw Discord IDs,
+  secrets, or approval phrase values, and keeps Discord send, LLM/OpenRouter,
+  RAG, embedding/vector, scheduler live execution, and external execution
+  disabled.
+- The next actual operation must be a separate Manual Gate canary for one
+  private-test human message capture with Discord send disabled.
 
 ## Important Commands
 
@@ -566,3 +594,19 @@ available. Phase45 repeat LLM call is forbidden, blocked output auto retry is
 forbidden, blocked output auto Discord send is forbidden, and raw output dump is
 forbidden. Any future retry must be a new explicit Manual Gate with a new
 approval policy in a later phase.
+
+Phase48A closes the current chain as human-review-only final closeout. It
+confirms Phase41B reply count 1, Phase42 message sent count 1, Phase45 LLM call
+count 1, Phase45 output safety blocked, and Discord send after LLM false. The
+operator handoff lists next choices only: archive/human-review finish, Phase48B
+retry Manual Gate design, Phase48C Discord send review gate design, or Phase49
+production-readiness audit. Phase48A does not implement or execute those later
+options.
+
+Phase49/50 changes the direction from archive closeout to automation
+architecture lock. The final goal is `STOXL_Discord_Agent_OS`. Current verified
+automation level is Level 3 `prototype_verified`, while Level 4 team auto ops
+and Level 5 limited production unattended remain blocked. The next safe bundle
+is continuous read-only runtime foundation. No scheduler/cron live execution,
+LLM call, Discord send, RAG, embedding/vector creation, or external execution is
+performed in Phase49/50.

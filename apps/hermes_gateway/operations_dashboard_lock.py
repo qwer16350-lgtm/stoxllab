@@ -62,6 +62,20 @@ from phase46_blocked_llm_output_review import build_phase46_blocked_llm_output_r
 from phase46_llm_retry_policy import build_phase46_llm_retry_policy
 from phase47_human_review_closeout import build_phase47_human_review_closeout
 from phase47_disabled_retry_gate_design import build_phase47_disabled_retry_gate_design
+from phase48a_human_review_final_closeout import build_phase48a_human_review_final_closeout
+from phase48a_operator_handoff_packet import build_phase48a_operator_handoff_packet
+from phase49_production_readiness_audit import build_phase49_production_readiness_audit
+from phase50_final_automation_architecture_lock import build_phase50_final_automation_architecture_lock
+from phase50_automation_roadmap import build_phase50_automation_roadmap
+from phase50_manual_gate_matrix import build_phase50_manual_gate_matrix
+from phase50_release_blocker_matrix import build_phase50_release_blocker_matrix
+from phase51_52_continuous_readonly_foundation import build_phase51_52_continuous_readonly_foundation
+from phase51_52_readonly_live_runtime_preflight import build_phase51_52_readonly_live_runtime_preflight
+from phase51_52_readonly_live_runtime_launch_packet import build_phase51_52_readonly_live_runtime_launch_packet
+from phase52b_53_readonly_capture_closeout import build_phase52b_53_readonly_capture_closeout
+from phase52b_readonly_live_capture_closeout import build_phase52b_readonly_live_capture_closeout
+from phase53_capture_to_review_packet_replay import build_phase53_capture_to_review_packet_replay
+from phase53_next_readonly_capture_canary_plan import build_phase53_next_readonly_capture_canary_plan
 from private_test_live_send_entry_gate import build_private_test_live_send_entry_gate
 from rag_evidence_private_test_phase34_final_lock import build_rag_evidence_private_test_phase34_final_lock
 
@@ -146,6 +160,20 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
     phase46_retry = build_phase46_llm_retry_policy(phase46_review)
     phase47_closeout = build_phase47_human_review_closeout(phase46_review)
     phase47_retry_design = build_phase47_disabled_retry_gate_design(phase47_closeout)
+    phase48a_final = build_phase48a_human_review_final_closeout(phase41c_closeout, phase42_closeout, phase47_closeout)
+    phase48a_handoff = build_phase48a_operator_handoff_packet(phase48a_final)
+    phase49_audit = build_phase49_production_readiness_audit(phase48a_final)
+    phase50_architecture = build_phase50_final_automation_architecture_lock(phase49_audit)
+    phase50_roadmap = build_phase50_automation_roadmap()
+    phase50_gate_matrix = build_phase50_manual_gate_matrix()
+    phase50_blockers = build_phase50_release_blocker_matrix()
+    phase51_52_foundation = build_phase51_52_continuous_readonly_foundation()
+    phase51_52_live_preflight = build_phase51_52_readonly_live_runtime_preflight()
+    phase51_52_launch_packet = build_phase51_52_readonly_live_runtime_launch_packet()
+    phase52b_closeout = build_phase52b_readonly_live_capture_closeout()
+    phase53_replay = build_phase53_capture_to_review_packet_replay()
+    phase53_canary = build_phase53_next_readonly_capture_canary_plan()
+    phase52b_53_closeout = build_phase52b_53_readonly_capture_closeout()
     counts = audit.get("final_e2e_counts", {})
     report = {
         "report_type": "operations_dashboard_lock",
@@ -432,6 +460,149 @@ def build_operations_dashboard_lock(root: str | Path | None = None) -> dict[str,
         "phase47_discord_send_remains_disabled": bool(phase47_retry_design.get("discord_send_remains_disabled")),
         "phase47_ready_for_phase48_retry_manual_gate_design": bool(phase47_retry_design.get("ready_for_phase48_retry_manual_gate_design")),
         "phase47_ready_for_phase48_discord_send_review_gate_design": bool(phase47_retry_design.get("ready_for_phase48_discord_send_review_gate_design")),
+        "phase48a_final_closeout_available": bool(phase48a_final.get("final_closeout_available")),
+        "phase48a_final_closeout_mode": phase48a_final.get("final_closeout_mode", ""),
+        "phase48a_external_action_freeze_active": bool(phase48a_final.get("external_action_freeze_active")),
+        "phase48a_actual_discord_reply_completed_once": bool(phase48a_final.get("actual_discord_reply_completed_once")),
+        "phase48a_phase41b_reply_count": int(phase48a_final.get("phase41b_reply_count", 0) or 0),
+        "phase48a_actual_supervised_discord_session_completed_once": bool(phase48a_final.get("actual_supervised_discord_session_completed_once")),
+        "phase48a_phase42_message_sent_count": int(phase48a_final.get("phase42_message_sent_count", 0) or 0),
+        "phase48a_actual_llm_call_completed_once": bool(phase48a_final.get("actual_llm_call_completed_once")),
+        "phase48a_phase45_llm_call_count": int(phase48a_final.get("phase45_llm_call_count", 0) or 0),
+        "phase48a_phase45_output_safety_blocked": bool(phase48a_final.get("phase45_output_safety_blocked")),
+        "phase48a_blocked_llm_output_raw_included": bool(phase48a_final.get("blocked_llm_output_raw_included")),
+        "phase48a_discord_send_after_llm": bool(phase48a_final.get("discord_send_after_llm")),
+        "phase48a_phase41b_repeat_allowed": bool(phase48a_final.get("phase41b_repeat_allowed")),
+        "phase48a_phase42_repeat_allowed": bool(phase48a_final.get("phase42_repeat_allowed")),
+        "phase48a_phase45_repeat_llm_call_allowed": bool(phase48a_final.get("phase45_repeat_llm_call_allowed")),
+        "phase48a_automatic_retry_allowed": bool(phase48a_final.get("automatic_retry_allowed")),
+        "phase48a_automatic_discord_send_allowed": bool(phase48a_final.get("automatic_discord_send_allowed")),
+        "phase48a_unattended_auto_reply_allowed": bool(phase48a_final.get("unattended_auto_reply_allowed")),
+        "phase48a_future_external_action_requires_new_manual_gate": bool(phase48a_final.get("future_external_action_requires_new_manual_gate")),
+        "phase48a_ready_for_production_unattended_mode": bool(phase48a_final.get("ready_for_production_unattended_mode")),
+        "phase48a_llm_api_call_attempted": bool(phase48a_final.get("llm_api_call_attempted")),
+        "phase48a_llm_api_called": bool(phase48a_final.get("llm_api_called")),
+        "phase48a_discord_api_send_called": bool(phase48a_final.get("discord_api_send_called")),
+        "phase48a_discord_message_sent": bool(phase48a_final.get("discord_message_sent")),
+        "phase48a_rag_called": bool(phase48a_final.get("rag_called")),
+        "phase48a_embedding_api_called": bool(phase48a_final.get("embedding_api_called")),
+        "phase48a_vector_index_created": bool(phase48a_final.get("vector_index_created")),
+        "phase48a_external_execution": bool(phase48a_final.get("external_execution")),
+        "phase48a_operator_handoff_packet_available": bool(phase48a_handoff.get("handoff_packet_available")),
+        "phase48a_operator_handoff_option_b_implemented": bool(phase48a_handoff.get("phase48a_implements_option_b")),
+        "phase48a_operator_handoff_option_c_implemented": bool(phase48a_handoff.get("phase48a_implements_option_c")),
+        "phase48a_operator_handoff_option_d_implemented": bool(phase48a_handoff.get("phase48a_implements_option_d")),
+        "phase49_production_readiness_audit_available": True,
+        "phase49_target_system": phase49_audit.get("target_system", ""),
+        "phase49_final_goal_is_operation_automation": bool(phase49_audit.get("final_goal_is_operation_automation")),
+        "phase49_human_review_only_is_not_final_goal": bool(phase49_audit.get("human_review_only_is_not_final_goal")),
+        "phase49_production_unattended_ready": bool(phase49_audit.get("production_unattended_ready")),
+        "phase49_safe_for_human_review_only": bool(phase49_audit.get("safe_for_human_review_only")),
+        "phase49_release_blockers_present": bool(phase49_audit.get("release_blockers_present")),
+        "phase49_current_verified_level": int(phase49_audit.get("current_verified_level", 0) or 0),
+        "phase49_current_verified_level_status": phase49_audit.get("current_verified_level_status", ""),
+        "phase49_ready_for_continuous_readonly_foundation": bool(phase49_audit.get("ready_for_continuous_readonly_foundation")),
+        "phase49_ready_for_rag_foundation": bool(phase49_audit.get("ready_for_rag_foundation")),
+        "phase49_ready_for_low_risk_team_auto_ops": bool(phase49_audit.get("ready_for_low_risk_team_auto_ops")),
+        "phase49_ready_for_limited_production_unattended": bool(phase49_audit.get("ready_for_limited_production_unattended")),
+        "phase49_scheduler_cron_live_execution": bool(phase49_audit.get("scheduler_cron_live_execution")),
+        "phase49_llm_api_call_attempted": bool(phase49_audit.get("llm_api_call_attempted")),
+        "phase49_llm_api_called": bool(phase49_audit.get("llm_api_called")),
+        "phase49_discord_api_send_called": bool(phase49_audit.get("discord_api_send_called")),
+        "phase49_discord_message_sent": bool(phase49_audit.get("discord_message_sent")),
+        "phase49_rag_called": bool(phase49_audit.get("rag_called")),
+        "phase49_embedding_api_called": bool(phase49_audit.get("embedding_api_called")),
+        "phase49_vector_index_created": bool(phase49_audit.get("vector_index_created")),
+        "phase49_external_execution": bool(phase49_audit.get("external_execution")),
+        "phase50_architecture_lock_available": True,
+        "phase50_target_system": phase50_architecture.get("target_system", ""),
+        "phase50_architecture_locked": bool(phase50_architecture.get("architecture_locked")),
+        "phase50_required_modules_defined": bool(phase50_architecture.get("required_modules_defined")),
+        "phase50_manual_gate_boundary_defined": bool(phase50_architecture.get("manual_gate_boundary_defined")),
+        "phase50_automation_levels_defined": bool(phase50_architecture.get("automation_levels_defined")),
+        "phase50_production_unattended_ready_now": bool(phase50_architecture.get("production_unattended_ready_now")),
+        "phase50_next_safe_bundle": phase50_architecture.get("next_safe_bundle", ""),
+        "phase50_scheduler_cron_live_execution": bool(phase50_architecture.get("scheduler_cron_live_execution")),
+        "phase50_unattended_auto_reply_implemented": bool(phase50_architecture.get("unattended_auto_reply_implemented")),
+        "phase50_roadmap_available": True,
+        "phase50_remaining_safe_mega_bundles": int(phase50_roadmap.get("remaining_safe_mega_bundles", 0) or 0),
+        "phase50_remaining_manual_gates": int(phase50_roadmap.get("remaining_manual_gates", 0) or 0),
+        "phase50_next_phase": phase50_roadmap.get("next_phase", ""),
+        "phase50_automatic_retry_allowed_now": bool(phase50_roadmap.get("automatic_retry_allowed_now")),
+        "phase50_automatic_discord_send_allowed_now": bool(phase50_roadmap.get("automatic_discord_send_allowed_now")),
+        "phase50_production_unattended_allowed_now": bool(phase50_roadmap.get("production_unattended_allowed_now")),
+        "phase50_manual_gate_matrix_available": bool(phase50_gate_matrix.get("manual_gate_matrix_available")),
+        "phase50_manual_gate_count": int(phase50_gate_matrix.get("gate_count", 0) or 0),
+        "phase50_manual_gate_execution_available_now": bool(phase50_gate_matrix.get("manual_gate_execution_available_now")),
+        "phase50_release_blocker_matrix_available": True,
+        "phase50_release_blockers_present": bool(phase50_blockers.get("release_blockers_present")),
+        "phase50_unattended_auto_reply_blocked": bool(phase50_blockers.get("unattended_auto_reply_blocked")),
+        "phase50_automatic_retry_blocked": bool(phase50_blockers.get("automatic_retry_blocked")),
+        "phase50_automatic_discord_send_blocked": bool(phase50_blockers.get("automatic_discord_send_blocked")),
+        "phase50_llm_repeat_call_blocked": bool(phase50_blockers.get("llm_repeat_call_blocked")),
+        "phase50_raw_output_dump_blocked": bool(phase50_blockers.get("raw_output_dump_blocked")),
+        "phase50_scheduler_live_execution_blocked": bool(phase50_blockers.get("scheduler_live_execution_blocked")),
+        "phase51_52_foundation_available": True,
+        "phase51_52_continuous_readonly_runtime_foundation_ready": bool(phase51_52_foundation.get("continuous_readonly_runtime_foundation_ready")),
+        "phase51_52_current_automation_level": int(phase51_52_foundation.get("current_automation_level", 0) or 0),
+        "phase51_52_current_automation_level_name": phase51_52_foundation.get("current_automation_level_name", ""),
+        "phase51_52_review_packet_base_ready": bool(phase51_52_foundation.get("review_packet_base_ready")),
+        "phase51_52_ready_for_manual_gate_readonly_live_runtime": bool(phase51_52_foundation.get("ready_for_manual_gate_readonly_live_runtime")),
+        "phase51_52_manual_gate_needed_for_live_readonly_runtime": bool(phase51_52_foundation.get("manual_gate_needed_for_live_readonly_runtime")),
+        "phase51_52_next_safe_step": phase51_52_foundation.get("next_safe_step", ""),
+        "phase51_52_actual_discord_runtime_executed": bool(phase51_52_foundation.get("actual_discord_runtime_executed")),
+        "phase51_52_discord_api_send_called": bool(phase51_52_foundation.get("discord_api_send_called")),
+        "phase51_52_discord_message_sent": bool(phase51_52_foundation.get("discord_message_sent")),
+        "phase51_52_actual_llm_api_call_attempted": bool(phase51_52_foundation.get("actual_llm_api_call_attempted")),
+        "phase51_52_actual_llm_api_called": bool(phase51_52_foundation.get("actual_llm_api_called")),
+        "phase51_52_rag_called": bool(phase51_52_foundation.get("rag_called")),
+        "phase51_52_embedding_api_called": bool(phase51_52_foundation.get("embedding_api_called")),
+        "phase51_52_vector_index_created": bool(phase51_52_foundation.get("vector_index_created")),
+        "phase51_52_external_execution": bool(phase51_52_foundation.get("external_execution")),
+        "phase51_52_scheduler_cron_live_execution": bool(phase51_52_foundation.get("scheduler_cron_live_execution")),
+        "phase51_52_ready_for_auto_reply": bool(phase51_52_foundation.get("ready_for_auto_reply")),
+        "phase51_52_ready_for_team_channel_auto_ops": bool(phase51_52_foundation.get("ready_for_team_channel_auto_ops")),
+        "phase51_52_ready_for_production_unattended": bool(phase51_52_foundation.get("ready_for_production_unattended")),
+        "phase51_52_readonly_live_runtime_preflight_available": True,
+        "phase51_52_manual_runtime_gate_required": bool(phase51_52_live_preflight.get("manual_gate_required")),
+        "phase51_52_manual_runtime_approval_phrase_defined": bool(phase51_52_live_preflight.get("approval_phrase_defined")),
+        "phase51_52_manual_runtime_approval_phrase_value_logged": bool(phase51_52_live_preflight.get("approval_phrase_value_logged")),
+        "phase51_52_manual_runtime_ready": bool(phase51_52_live_preflight.get("ready_for_manual_readonly_runtime_launch")),
+        "phase51_52_manual_runtime_live_runtime_started": bool(phase51_52_live_preflight.get("live_runtime_started")),
+        "phase51_52_manual_runtime_discord_api_send_called": bool(phase51_52_live_preflight.get("discord_api_send_called")),
+        "phase51_52_manual_runtime_discord_message_sent": bool(phase51_52_live_preflight.get("discord_message_sent")),
+        "phase51_52_launch_packet_available": True,
+        "phase51_52_actual_runtime_command_available": bool(phase51_52_launch_packet.get("actual_runtime_command_available")),
+        "phase51_52_launch_packet_ready_for_manual_gate": bool(phase51_52_launch_packet.get("ready_for_manual_gate")),
+        "phase52b_capture_closeout_available": True,
+        "phase52b_manual_readonly_runtime_executed_once": bool(phase52b_closeout.get("actual_readonly_runtime_executed")),
+        "phase52b_gateway_connection_verified": bool(phase52b_closeout.get("discord_gateway_connected")),
+        "phase52b_captured_event_count": int(phase52b_closeout.get("captured_event_count", 0) or 0),
+        "phase52b_empty_capture_handled": bool(phase52b_closeout.get("empty_capture_handled")),
+        "phase52b_capture_file_metadata_available": bool(phase52b_closeout.get("capture_file_metadata_available")),
+        "phase52b_capture_file_read_attempted": bool(phase52b_closeout.get("capture_file_read_attempted")),
+        "phase52b_capture_closeout_discord_api_send_called": bool(phase52b_closeout.get("discord_api_send_called")),
+        "phase52b_capture_closeout_discord_message_sent": bool(phase52b_closeout.get("discord_message_sent")),
+        "phase52b_capture_closeout_llm_api_call_attempted": bool(phase52b_closeout.get("llm_api_call_attempted")),
+        "phase52b_capture_closeout_llm_api_called": bool(phase52b_closeout.get("llm_api_called")),
+        "phase52b_capture_closeout_rag_called": bool(phase52b_closeout.get("rag_called")),
+        "phase52b_capture_closeout_embedding_api_called": bool(phase52b_closeout.get("embedding_api_called")),
+        "phase52b_capture_closeout_vector_index_created": bool(phase52b_closeout.get("vector_index_created")),
+        "phase52b_capture_closeout_external_execution": bool(phase52b_closeout.get("external_execution")),
+        "phase52b_capture_closeout_raw_content_logged": bool(phase52b_closeout.get("raw_content_logged")),
+        "phase52b_capture_closeout_raw_discord_ids_logged": bool(phase52b_closeout.get("raw_discord_ids_logged")),
+        "phase53_capture_to_review_packet_replay_ready": bool(phase53_replay.get("review_packet_pipeline_ready")),
+        "phase53_empty_capture_replay_handled": bool(phase53_replay.get("empty_capture_replay_handled")),
+        "phase53_review_packet_count": int(phase53_replay.get("review_packet_count", 0) or 0),
+        "phase53_capture_replay_discord_message_sent": bool(phase53_replay.get("discord_message_sent")),
+        "phase53_capture_replay_raw_content_logged": bool(phase53_replay.get("raw_content_logged")),
+        "phase53_capture_replay_raw_discord_ids_logged": bool(phase53_replay.get("raw_discord_ids_logged")),
+        "phase53_next_readonly_capture_canary_plan_available": True,
+        "phase53_next_canary_goal": phase53_canary.get("canary_goal", ""),
+        "phase53_ready_for_next_manual_gate": bool(phase53_canary.get("ready_for_next_manual_gate")),
+        "phase52b_53_combined_closeout_available": True,
+        "phase52b_53_review_packet_pipeline_ready_for_real_capture": bool(phase52b_53_closeout.get("review_packet_pipeline_ready_for_real_capture")),
+        "phase52b_53_ready_for_next_readonly_capture_canary_manual_gate": bool(phase52b_53_closeout.get("ready_for_next_readonly_capture_canary_manual_gate")),
         "ready_for_live_runtime": False,
         "ready_for_llm_call": False,
         "ready_for_discord_send": False,
@@ -623,6 +794,77 @@ def assert_operations_dashboard_lock_safe(report: dict[str, Any]) -> None:
         "phase47_repeat_phase45_call_allowed",
         "phase47_ready_for_phase48_retry_manual_gate_design",
         "phase47_ready_for_phase48_discord_send_review_gate_design",
+        "phase48a_blocked_llm_output_raw_included",
+        "phase48a_discord_send_after_llm",
+        "phase48a_phase41b_repeat_allowed",
+        "phase48a_phase42_repeat_allowed",
+        "phase48a_phase45_repeat_llm_call_allowed",
+        "phase48a_automatic_retry_allowed",
+        "phase48a_automatic_discord_send_allowed",
+        "phase48a_unattended_auto_reply_allowed",
+        "phase48a_ready_for_production_unattended_mode",
+        "phase48a_llm_api_call_attempted",
+        "phase48a_llm_api_called",
+        "phase48a_discord_api_send_called",
+        "phase48a_discord_message_sent",
+        "phase48a_rag_called",
+        "phase48a_embedding_api_called",
+        "phase48a_vector_index_created",
+        "phase48a_external_execution",
+        "phase48a_operator_handoff_option_b_implemented",
+        "phase48a_operator_handoff_option_c_implemented",
+        "phase48a_operator_handoff_option_d_implemented",
+        "phase49_production_unattended_ready",
+        "phase49_ready_for_rag_foundation",
+        "phase49_ready_for_low_risk_team_auto_ops",
+        "phase49_ready_for_limited_production_unattended",
+        "phase49_scheduler_cron_live_execution",
+        "phase49_llm_api_call_attempted",
+        "phase49_llm_api_called",
+        "phase49_discord_api_send_called",
+        "phase49_discord_message_sent",
+        "phase49_rag_called",
+        "phase49_embedding_api_called",
+        "phase49_vector_index_created",
+        "phase49_external_execution",
+        "phase50_production_unattended_ready_now",
+        "phase50_scheduler_cron_live_execution",
+        "phase50_unattended_auto_reply_implemented",
+        "phase50_automatic_retry_allowed_now",
+        "phase50_automatic_discord_send_allowed_now",
+        "phase50_production_unattended_allowed_now",
+        "phase50_manual_gate_execution_available_now",
+        "phase51_52_actual_discord_runtime_executed",
+        "phase51_52_discord_api_send_called",
+        "phase51_52_discord_message_sent",
+        "phase51_52_actual_llm_api_call_attempted",
+        "phase51_52_actual_llm_api_called",
+        "phase51_52_rag_called",
+        "phase51_52_embedding_api_called",
+        "phase51_52_vector_index_created",
+        "phase51_52_external_execution",
+        "phase51_52_scheduler_cron_live_execution",
+        "phase51_52_ready_for_auto_reply",
+        "phase51_52_ready_for_team_channel_auto_ops",
+        "phase51_52_ready_for_production_unattended",
+        "phase51_52_manual_runtime_approval_phrase_value_logged",
+        "phase51_52_manual_runtime_live_runtime_started",
+        "phase51_52_manual_runtime_discord_api_send_called",
+        "phase51_52_manual_runtime_discord_message_sent",
+        "phase52b_capture_file_read_attempted",
+        "phase52b_capture_closeout_discord_api_send_called",
+        "phase52b_capture_closeout_discord_message_sent",
+        "phase52b_capture_closeout_llm_api_call_attempted",
+        "phase52b_capture_closeout_llm_api_called",
+        "phase52b_capture_closeout_rag_called",
+        "phase52b_capture_closeout_embedding_api_called",
+        "phase52b_capture_closeout_vector_index_created",
+        "phase52b_capture_closeout_external_execution",
+        "phase52b_capture_closeout_raw_content_logged",
+        "phase52b_capture_closeout_raw_discord_ids_logged",
+        "phase53_capture_replay_discord_message_sent",
+        "phase53_capture_replay_raw_content_logged",
+        "phase53_capture_replay_raw_discord_ids_logged",
     ):
         if report.get(key):
             raise ValueError(f"Operations dashboard lock unsafe flag is true: {key}")
@@ -658,6 +900,69 @@ def assert_operations_dashboard_lock_safe(report: dict[str, Any]) -> None:
         raise ValueError("Operations dashboard lock requires Phase47 future retry guards.")
     if not report.get("phase47_discord_send_remains_disabled"):
         raise ValueError("Operations dashboard lock requires Phase47 Discord send disabled.")
+    if not report.get("phase48a_final_closeout_available") or report.get("phase48a_final_closeout_mode") != "human_review_only":
+        raise ValueError("Operations dashboard lock requires Phase48A human-review final closeout.")
+    if not report.get("phase48a_external_action_freeze_active"):
+        raise ValueError("Operations dashboard lock requires Phase48A external action freeze.")
+    if not report.get("phase48a_actual_discord_reply_completed_once") or int(report.get("phase48a_phase41b_reply_count", 0) or 0) != 1:
+        raise ValueError("Operations dashboard lock requires Phase48A Phase41B exactly-once state.")
+    if not report.get("phase48a_actual_supervised_discord_session_completed_once") or int(report.get("phase48a_phase42_message_sent_count", 0) or 0) != 1:
+        raise ValueError("Operations dashboard lock requires Phase48A Phase42 exactly-once state.")
+    if not report.get("phase48a_actual_llm_call_completed_once") or int(report.get("phase48a_phase45_llm_call_count", 0) or 0) != 1:
+        raise ValueError("Operations dashboard lock requires Phase48A Phase45 exactly-once state.")
+    if not report.get("phase48a_phase45_output_safety_blocked") or not report.get("phase48a_future_external_action_requires_new_manual_gate"):
+        raise ValueError("Operations dashboard lock requires Phase48A blocked output and future manual gate.")
+    if not report.get("phase48a_operator_handoff_packet_available"):
+        raise ValueError("Operations dashboard lock requires Phase48A operator handoff packet.")
+    if not report.get("phase49_production_readiness_audit_available") or report.get("phase49_target_system") != "STOXL_Discord_Agent_OS":
+        raise ValueError("Operations dashboard lock requires Phase49 STOXL Discord Agent OS audit.")
+    if not report.get("phase49_final_goal_is_operation_automation") or not report.get("phase49_human_review_only_is_not_final_goal"):
+        raise ValueError("Operations dashboard lock requires final automation goal definition.")
+    if not report.get("phase49_release_blockers_present") or not report.get("phase49_ready_for_continuous_readonly_foundation"):
+        raise ValueError("Operations dashboard lock requires Phase49 blockers and next foundation readiness.")
+    if int(report.get("phase49_current_verified_level", 0) or 0) != 3 or report.get("phase49_current_verified_level_status") != "prototype_verified":
+        raise ValueError("Operations dashboard lock requires Level 3 prototype verification.")
+    if not report.get("phase50_architecture_lock_available") or report.get("phase50_target_system") != "STOXL_Discord_Agent_OS":
+        raise ValueError("Operations dashboard lock requires Phase50 architecture lock.")
+    if not report.get("phase50_architecture_locked") or not report.get("phase50_required_modules_defined") or not report.get("phase50_manual_gate_boundary_defined") or not report.get("phase50_automation_levels_defined"):
+        raise ValueError("Operations dashboard lock requires Phase50 architecture definitions.")
+    if report.get("phase50_next_safe_bundle") != "continuous_readonly_runtime_foundation":
+        raise ValueError("Operations dashboard lock requires Phase50 next safe bundle.")
+    if int(report.get("phase50_remaining_safe_mega_bundles", 0) or 0) != 7 or int(report.get("phase50_remaining_manual_gates", 0) or 0) != 5:
+        raise ValueError("Operations dashboard lock requires Phase50 roadmap counts.")
+    if not report.get("phase50_manual_gate_matrix_available") or int(report.get("phase50_manual_gate_count", 0) or 0) != 6:
+        raise ValueError("Operations dashboard lock requires Phase50 manual gate matrix.")
+    if not report.get("phase50_release_blocker_matrix_available") or not report.get("phase50_release_blockers_present"):
+        raise ValueError("Operations dashboard lock requires Phase50 release blocker matrix.")
+    for key in ("phase50_unattended_auto_reply_blocked", "phase50_automatic_retry_blocked", "phase50_automatic_discord_send_blocked", "phase50_llm_repeat_call_blocked", "phase50_raw_output_dump_blocked", "phase50_scheduler_live_execution_blocked"):
+        if not report.get(key):
+            raise ValueError(f"Operations dashboard lock requires Phase50 blocker: {key}")
+    if not report.get("phase51_52_foundation_available") or not report.get("phase51_52_continuous_readonly_runtime_foundation_ready"):
+        raise ValueError("Operations dashboard lock requires Phase51/52 read-only foundation.")
+    if not report.get("phase51_52_review_packet_base_ready") or not report.get("phase51_52_ready_for_manual_gate_readonly_live_runtime"):
+        raise ValueError("Operations dashboard lock requires Phase51/52 review packet readiness and manual gate readiness.")
+    if not report.get("phase51_52_manual_gate_needed_for_live_readonly_runtime"):
+        raise ValueError("Operations dashboard lock requires Phase51/52 manual gate boundary.")
+    if int(report.get("phase51_52_current_automation_level", 0) or 0) != 1:
+        raise ValueError("Operations dashboard lock requires Phase51/52 automation level 1 foundation.")
+    if not report.get("phase51_52_readonly_live_runtime_preflight_available") or not report.get("phase51_52_manual_runtime_gate_required"):
+        raise ValueError("Operations dashboard lock requires Phase51/52 read-only live runtime preflight.")
+    if not report.get("phase51_52_manual_runtime_approval_phrase_defined"):
+        raise ValueError("Operations dashboard lock requires Phase51/52 approval phrase definition.")
+    if not report.get("phase51_52_launch_packet_available") or not report.get("phase51_52_actual_runtime_command_available"):
+        raise ValueError("Operations dashboard lock requires Phase51/52 launch packet command.")
+    if not report.get("phase52b_capture_closeout_available") or not report.get("phase52b_manual_readonly_runtime_executed_once"):
+        raise ValueError("Operations dashboard lock requires Phase52B read-only runtime closeout.")
+    if not report.get("phase52b_gateway_connection_verified") or not report.get("phase52b_empty_capture_handled"):
+        raise ValueError("Operations dashboard lock requires Phase52B gateway verification and empty capture handling.")
+    if int(report.get("phase52b_captured_event_count", -1) or 0) != 0:
+        raise ValueError("Operations dashboard lock expects Phase52B captured event count 0.")
+    if not report.get("phase53_capture_to_review_packet_replay_ready") or not report.get("phase53_empty_capture_replay_handled"):
+        raise ValueError("Operations dashboard lock requires Phase53 empty capture replay readiness.")
+    if not report.get("phase53_next_readonly_capture_canary_plan_available") or not report.get("phase53_ready_for_next_manual_gate"):
+        raise ValueError("Operations dashboard lock requires Phase53 next canary plan.")
+    if not report.get("phase52b_53_combined_closeout_available") or not report.get("phase52b_53_ready_for_next_readonly_capture_canary_manual_gate"):
+        raise ValueError("Operations dashboard lock requires Phase52B/53 combined closeout.")
     if int(report.get("phase39b_actual_discord_send_count", 0) or 0) != 0:
         raise ValueError("Operations dashboard lock requires Phase 39B send count 0.")
     if int(report.get("phase39c_actual_discord_send_count_locked", 0) or 0) != 1:
@@ -795,5 +1100,26 @@ def render_operations_dashboard_lock_markdown(report: dict[str, Any]) -> str:
             f"- Phase 47 automatic retry allowed: {str(report.get('phase47_automatic_retry_allowed')).lower()}",
             f"- Phase 47 raw output included: {str(report.get('phase47_raw_output_included')).lower()}",
             f"- Phase 47 Discord message sent: {str(report.get('phase47_discord_message_sent')).lower()}",
+            f"- Phase 48A final closeout mode: {report.get('phase48a_final_closeout_mode')}",
+            f"- Phase 48A external action freeze active: {str(report.get('phase48a_external_action_freeze_active')).lower()}",
+            f"- Phase 48A production unattended mode ready: {str(report.get('phase48a_ready_for_production_unattended_mode')).lower()}",
+            f"- Phase 49 target system: {report.get('phase49_target_system')}",
+            f"- Phase 49 current verified level: {report.get('phase49_current_verified_level')} {report.get('phase49_current_verified_level_status')}",
+            f"- Phase 50 architecture locked: {str(report.get('phase50_architecture_locked')).lower()}",
+            f"- Phase 50 next safe bundle: {report.get('phase50_next_safe_bundle')}",
+            f"- Phase 51/52 read-only foundation ready: {str(report.get('phase51_52_continuous_readonly_runtime_foundation_ready')).lower()}",
+            f"- Current automation level: {report.get('phase51_52_current_automation_level')} {report.get('phase51_52_current_automation_level_name')}",
+            f"- Review packet base ready: {str(report.get('phase51_52_review_packet_base_ready')).lower()}",
+            f"- Manual gate needed for live read-only runtime: {str(report.get('phase51_52_manual_gate_needed_for_live_readonly_runtime')).lower()}",
+            f"- Next safe step: {report.get('phase51_52_next_safe_step')}",
+            f"- Read-only live runtime approval phrase defined: {str(report.get('phase51_52_manual_runtime_approval_phrase_defined')).lower()}",
+            f"- Read-only live runtime gate ready: {str(report.get('phase51_52_manual_runtime_ready')).lower()}",
+            f"- Read-only live runtime launch packet available: {str(report.get('phase51_52_launch_packet_available')).lower()}",
+            f"- Manual Gate read-only runtime executed once: {str(report.get('phase52b_manual_readonly_runtime_executed_once')).lower()}",
+            f"- Gateway connected verified: {str(report.get('phase52b_gateway_connection_verified')).lower()}",
+            f"- Captured event count: {report.get('phase52b_captured_event_count')}",
+            f"- Capture closeout ready: {str(report.get('phase52b_capture_closeout_available')).lower()}",
+            f"- Review packet pipeline ready for real capture: {str(report.get('phase52b_53_review_packet_pipeline_ready_for_real_capture')).lower()}",
+            f"- Next canary manual gate: {report.get('phase53_next_canary_goal')}",
         ]
     ) + "\n"

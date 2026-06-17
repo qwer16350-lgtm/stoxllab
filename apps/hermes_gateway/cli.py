@@ -179,6 +179,49 @@ from phase46_blocked_llm_output_review import build_phase46_blocked_llm_output_r
 from phase46_llm_retry_policy import build_phase46_llm_retry_policy, render_phase46_llm_retry_policy_markdown
 from phase47_human_review_closeout import build_phase47_human_review_closeout, render_phase47_human_review_closeout_markdown
 from phase47_disabled_retry_gate_design import build_phase47_disabled_retry_gate_design, render_phase47_disabled_retry_gate_design_markdown
+from phase48a_human_review_final_closeout import build_phase48a_human_review_final_closeout, render_phase48a_human_review_final_closeout_markdown
+from phase48a_operator_handoff_packet import build_phase48a_operator_handoff_packet, render_phase48a_operator_handoff_packet_markdown
+from phase49_production_readiness_audit import build_phase49_production_readiness_audit, render_phase49_production_readiness_audit_markdown
+from phase50_final_automation_architecture_lock import build_phase50_final_automation_architecture_lock, render_phase50_final_automation_architecture_lock_markdown
+from phase50_automation_roadmap import build_phase50_automation_roadmap, render_phase50_automation_roadmap_markdown
+from phase50_manual_gate_matrix import build_phase50_manual_gate_matrix, render_phase50_manual_gate_matrix_markdown
+from phase50_release_blocker_matrix import build_phase50_release_blocker_matrix, render_phase50_release_blocker_matrix_markdown
+from phase51_readonly_event_schema import build_phase51_readonly_event_schema, render_phase51_readonly_event_schema_markdown
+from phase51_readonly_event_guard import build_phase51_readonly_event_guard, render_phase51_readonly_event_guard_markdown
+from phase52_session_context_store import build_phase52_session_context_store, render_phase52_session_context_store_markdown
+from phase52_review_packet_composer import build_phase52_review_packet_composer, render_phase52_review_packet_composer_markdown
+from phase52_readonly_synthetic_replay import run_phase52_readonly_synthetic_replay, render_phase52_readonly_synthetic_replay_markdown
+from phase51_52_continuous_readonly_foundation import build_phase51_52_continuous_readonly_foundation, render_phase51_52_continuous_readonly_foundation_markdown
+from phase51_52_readonly_live_runtime_preflight import build_phase51_52_readonly_live_runtime_preflight, render_phase51_52_readonly_live_runtime_preflight_markdown
+from phase51_52_readonly_live_runtime_launch_packet import build_phase51_52_readonly_live_runtime_launch_packet, render_phase51_52_readonly_live_runtime_launch_packet_markdown
+from phase52b_readonly_live_capture_closeout import build_phase52b_readonly_live_capture_closeout, render_phase52b_readonly_live_capture_closeout_markdown
+from phase52b_capture_metadata_review import build_phase52b_capture_metadata_review, render_phase52b_capture_metadata_review_markdown
+from phase53_capture_to_review_packet_replay import build_phase53_capture_to_review_packet_replay, render_phase53_capture_to_review_packet_replay_markdown
+from phase53_next_readonly_capture_canary_plan import build_phase53_next_readonly_capture_canary_plan, render_phase53_next_readonly_capture_canary_plan_markdown
+from phase52b_53_readonly_capture_closeout import build_phase52b_53_readonly_capture_closeout, render_phase52b_53_readonly_capture_closeout_markdown
+from phase54_57_agent_os_progression import build_phase54_57_agent_os_progression, render_phase54_57_agent_os_progression_markdown
+from phase58_manual_approved_private_test_reply import (
+    build_actual_phase58_manual_approved_private_test_reply,
+    build_phase58_manual_approved_private_test_reply_closeout,
+    build_phase58_manual_approved_private_test_reply_no_repeat_lock,
+    build_phase58_manual_approved_private_test_reply_blocked_report,
+    build_phase58_manual_approved_private_test_reply_preflight,
+    render_phase58_manual_approved_private_test_reply_markdown,
+)
+from phase59_supervised_private_test_auto_reply import (
+    build_actual_phase59_supervised_private_test_auto_reply,
+    build_phase59_supervised_private_test_auto_reply_blocked_report,
+    build_phase59_supervised_private_test_auto_reply_preflight,
+    render_phase59_supervised_private_test_auto_reply_markdown,
+)
+from phase59_62_agent_os_autonomy_stage import (
+    build_phase59_62_agent_os_autonomy_stage,
+    render_phase59_62_agent_os_autonomy_stage_markdown,
+)
+from phase59_63_agent_os_supervised_closeout import (
+    build_phase59_63_agent_os_supervised_closeout,
+    render_phase59_63_agent_os_supervised_closeout_markdown,
+)
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight, render_rag_evidence_private_test_send_preflight_markdown
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope, render_rag_evidence_prompt_envelope_markdown
 from rag_evidence_review_packet import build_rag_evidence_review_packet, render_rag_evidence_review_packet_markdown
@@ -388,6 +431,39 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--phase46-llm-retry-policy", action="store_true", help="Print Phase 46 no-automatic-retry LLM policy without API calls.")
     parser.add_argument("--phase47-human-review-closeout", action="store_true", help="Print Phase 47 human-review-only closeout without API calls.")
     parser.add_argument("--phase47-disabled-retry-gate-design", action="store_true", help="Print Phase 47 disabled retry gate design without API calls.")
+    parser.add_argument("--phase48a-human-review-final-closeout", action="store_true", help="Print Phase 48A human-review final closeout without external actions.")
+    parser.add_argument("--phase48a-operator-handoff-packet", action="store_true", help="Print Phase 48A operator handoff packet without external actions.")
+    parser.add_argument("--phase49-production-readiness-audit", action="store_true", help="Print Phase 49 production-readiness audit without external actions.")
+    parser.add_argument("--phase50-final-automation-architecture-lock", action="store_true", help="Print Phase 50 final automation architecture lock without external actions.")
+    parser.add_argument("--phase50-automation-roadmap", action="store_true", help="Print Phase 50 automation roadmap without external actions.")
+    parser.add_argument("--phase50-manual-gate-matrix", action="store_true", help="Print Phase 50 manual gate matrix without external actions.")
+    parser.add_argument("--phase50-release-blocker-matrix", action="store_true", help="Print Phase 50 release blocker matrix without external actions.")
+    parser.add_argument("--phase51-readonly-event-schema", action="store_true", help="Print Phase 51 read-only event schema without Discord runtime.")
+    parser.add_argument("--phase51-readonly-event-guard", action="store_true", help="Print Phase 51 read-only event guard without replies or sends.")
+    parser.add_argument("--phase52-session-context-store", action="store_true", help="Print Phase 52 synthetic session context store.")
+    parser.add_argument("--phase52-review-packet-composer", action="store_true", help="Print Phase 52 read-only review packet composer.")
+    parser.add_argument("--phase52-readonly-synthetic-replay", action="store_true", help="Print Phase 52 synthetic replay through the read-only packet pipeline.")
+    parser.add_argument("--phase51-52-continuous-readonly-foundation", action="store_true", help="Print Phase 51/52 continuous read-only foundation readiness.")
+    parser.add_argument("--phase51-52-readonly-live-runtime-preflight", action="store_true", help="Print Phase 51/52 read-only live runtime Manual Gate preflight without live execution.")
+    parser.add_argument("--phase51-52-readonly-live-runtime-launch-packet", action="store_true", help="Print Phase 51/52 read-only live runtime launch packet without live execution.")
+    parser.add_argument("--phase52b-readonly-live-capture-closeout", action="store_true", help="Print Phase 52B read-only live capture closeout without runtime execution.")
+    parser.add_argument("--phase52b-capture-metadata-review", action="store_true", help="Print Phase 52B capture metadata review without reading capture files.")
+    parser.add_argument("--phase53-capture-to-review-packet-replay", action="store_true", help="Print Phase 53 capture-to-review-packet replay without external actions.")
+    parser.add_argument("--phase53-next-readonly-capture-canary-plan", action="store_true", help="Print Phase 53 next read-only capture canary plan.")
+    parser.add_argument("--phase52b-53-readonly-capture-closeout", action="store_true", help="Print Phase 52B/53 combined read-only capture closeout.")
+    parser.add_argument("--phase54-57-agent-os-progression", action="store_true", help="Print Phase 54-57 Agent OS progression without external actions.")
+    parser.add_argument("--phase58-manual-approved-private-test-reply-preflight", action="store_true", help="Print Phase 58 manual-approved private-test reply preflight without sending.")
+    parser.add_argument("--phase58-manual-approved-private-test-reply-blocked-report", action="store_true", help="Print Phase 58 blocked actual reply report without sending.")
+    parser.add_argument("--phase58-manual-approved-private-test-reply-closeout", action="store_true", help="Print Phase 58 actual reply metadata-only closeout.")
+    parser.add_argument("--phase58-manual-approved-private-test-reply-no-repeat-lock", action="store_true", help="Print Phase 58 no-repeat send lock.")
+    parser.add_argument("--actual-phase58-manual-approved-private-test-reply", action="store_true", help="Print Phase 58 actual path report; blocked unless the later Manual Gate is opened.")
+    parser.add_argument("--allow-actual-phase58-manual-approved-private-test-reply", action="store_true", help="Allow Phase 58 actual path gate evaluation; Safe Hotfix still sends nothing.")
+    parser.add_argument("--phase59-supervised-private-test-auto-reply-preflight", action="store_true", help="Print Phase 59 supervised auto-reply preflight without runtime.")
+    parser.add_argument("--phase59-supervised-private-test-auto-reply-blocked-report", action="store_true", help="Print Phase 59 blocked supervised auto-reply report.")
+    parser.add_argument("--actual-phase59-supervised-private-test-auto-reply", action="store_true", help="Print Phase 59 actual path report; blocked unless a later Manual Gate is opened.")
+    parser.add_argument("--allow-actual-phase59-supervised-auto-reply", action="store_true", help="Allow Phase 59 actual path gate evaluation.")
+    parser.add_argument("--phase59-62-agent-os-autonomy-stage", action="store_true", help="Print Phase 59-62 Agent OS autonomy stage without runtime or send.")
+    parser.add_argument("--phase59-63-agent-os-supervised-closeout", action="store_true", help="Print Phase 59-63 supervised closeout without runtime or send.")
     parser.add_argument("--live-event-audit-report", action="store_true", help="Print Phase 30 live event audit record report.")
     parser.add_argument("--would-send-preview-report", action="store_true", help="Print Phase 30 would-send preview report.")
     parser.add_argument("--live-event-review-packet-report", action="store_true", help="Print Phase 30 live event review packet report.")
@@ -2658,6 +2734,429 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- discord_send_remains_disabled: {output.get('discord_send_remains_disabled')}")
         return 0
 
+    if args.phase48a_human_review_final_closeout:
+        output = build_phase48a_human_review_final_closeout()
+        if args.markdown:
+            print(render_phase48a_human_review_final_closeout_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase48A human-review final closeout")
+            print(f"- final_closeout_mode: {output.get('final_closeout_mode')}")
+            print(f"- external_action_freeze_active: {output.get('external_action_freeze_active')}")
+            print(f"- phase41b_reply_count: {output.get('phase41b_reply_count')}")
+            print(f"- phase42_message_sent_count: {output.get('phase42_message_sent_count')}")
+            print(f"- phase45_llm_call_count: {output.get('phase45_llm_call_count')}")
+            print(f"- ready_for_production_unattended_mode: {output.get('ready_for_production_unattended_mode')}")
+        return 0
+
+    if args.phase48a_operator_handoff_packet:
+        output = build_phase48a_operator_handoff_packet()
+        if args.markdown:
+            print(render_phase48a_operator_handoff_packet_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase48A operator handoff packet")
+            print(f"- external_action_freeze_active: {output.get('external_action_freeze_active')}")
+            print(f"- future_external_action_requires_new_manual_gate: {output.get('future_external_action_requires_new_manual_gate')}")
+            print(f"- next_decision_options: {len(output.get('next_decision_options', []))}")
+        return 0
+
+    if args.phase49_production_readiness_audit:
+        output = build_phase49_production_readiness_audit()
+        if args.markdown:
+            print(render_phase49_production_readiness_audit_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase49 production-readiness audit")
+            print(f"- target_system: {output.get('target_system')}")
+            print(f"- production_unattended_ready: {output.get('production_unattended_ready')}")
+            print(f"- current_verified_level: {output.get('current_verified_level')}")
+            print(f"- release_blockers_present: {output.get('release_blockers_present')}")
+        return 0
+
+    if args.phase50_final_automation_architecture_lock:
+        output = build_phase50_final_automation_architecture_lock()
+        if args.markdown:
+            print(render_phase50_final_automation_architecture_lock_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase50 final automation architecture lock")
+            print(f"- target_system: {output.get('target_system')}")
+            print(f"- architecture_locked: {output.get('architecture_locked')}")
+            print(f"- production_unattended_ready_now: {output.get('production_unattended_ready_now')}")
+            print(f"- next_safe_bundle: {output.get('next_safe_bundle')}")
+        return 0
+
+    if args.phase50_automation_roadmap:
+        output = build_phase50_automation_roadmap()
+        if args.markdown:
+            print(render_phase50_automation_roadmap_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase50 automation roadmap")
+            print(f"- remaining_safe_mega_bundles: {output.get('remaining_safe_mega_bundles')}")
+            print(f"- remaining_manual_gates: {output.get('remaining_manual_gates')}")
+            print(f"- next_phase: {output.get('next_phase')}")
+        return 0
+
+    if args.phase50_manual_gate_matrix:
+        output = build_phase50_manual_gate_matrix()
+        if args.markdown:
+            print(render_phase50_manual_gate_matrix_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase50 manual gate matrix")
+            print(f"- gate_count: {output.get('gate_count')}")
+            print(f"- manual_gate_execution_available_now: {output.get('manual_gate_execution_available_now')}")
+        return 0
+
+    if args.phase50_release_blocker_matrix:
+        output = build_phase50_release_blocker_matrix()
+        if args.markdown:
+            print(render_phase50_release_blocker_matrix_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase50 release blocker matrix")
+            print(f"- release_blockers_present: {output.get('release_blockers_present')}")
+            print(f"- production_unattended_ready: {output.get('production_unattended_ready')}")
+            print(f"- missing_before_production: {len(output.get('missing_before_production', []))}")
+        return 0
+
+    if args.phase51_readonly_event_schema:
+        output = build_phase51_readonly_event_schema()
+        if args.markdown:
+            print(render_phase51_readonly_event_schema_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase51 read-only event schema")
+            print(f"- channel_scope: {output.get('channel_scope')}")
+            print(f"- channel_risk: {output.get('channel_risk')}")
+            print(f"- raw_content_logged: {output.get('raw_content_logged')}")
+        return 0
+
+    if args.phase51_readonly_event_guard:
+        output = build_phase51_readonly_event_guard()
+        if args.markdown:
+            print(render_phase51_readonly_event_guard_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase51 read-only event guard")
+            print(f"- fixture_count: {output.get('fixture_count')}")
+            print(f"- event_allowed_for_reply: {output.get('event_allowed_for_reply')}")
+            print(f"- discord_send_allowed: {output.get('discord_send_allowed')}")
+        return 0
+
+    if args.phase52_session_context_store:
+        output = build_phase52_session_context_store()
+        if args.markdown:
+            print(render_phase52_session_context_store_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase52 session context store")
+            print(f"- message_count: {output.get('message_count')}")
+            print(f"- duplicate_count: {output.get('duplicate_count')}")
+            print(f"- send_count: {output.get('send_count')}")
+        return 0
+
+    if args.phase52_review_packet_composer:
+        output = build_phase52_review_packet_composer()
+        if args.markdown:
+            print(render_phase52_review_packet_composer_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase52 review packet composer")
+            print(f"- packet_type: {output.get('packet_type')}")
+            print(f"- recommended_next_action: {output.get('recommended_next_action')}")
+            print(f"- discord_send_allowed: {output.get('discord_send_allowed')}")
+        return 0
+
+    if args.phase52_readonly_synthetic_replay:
+        output = run_phase52_readonly_synthetic_replay()
+        if args.markdown:
+            print(render_phase52_readonly_synthetic_replay_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase52 read-only synthetic replay")
+            print(f"- event_count: {output.get('event_count')}")
+            print(f"- all_events_packetized: {output.get('all_events_packetized')}")
+            print(f"- discord_message_sent: {output.get('discord_message_sent')}")
+        return 0
+
+    if args.phase51_52_continuous_readonly_foundation:
+        output = build_phase51_52_continuous_readonly_foundation()
+        if args.markdown:
+            print(render_phase51_52_continuous_readonly_foundation_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase51/52 continuous read-only foundation")
+            print(f"- continuous_readonly_runtime_foundation_ready: {output.get('continuous_readonly_runtime_foundation_ready')}")
+            print(f"- review_packet_base_ready: {output.get('review_packet_base_ready')}")
+            print(f"- ready_for_manual_gate_readonly_live_runtime: {output.get('ready_for_manual_gate_readonly_live_runtime')}")
+        return 0
+
+    if args.phase51_52_readonly_live_runtime_preflight:
+        output = build_phase51_52_readonly_live_runtime_preflight()
+        if args.markdown:
+            print(render_phase51_52_readonly_live_runtime_preflight_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase51/52 read-only live runtime preflight")
+            print(f"- manual_gate_required: {output.get('manual_gate_required')}")
+            print(f"- approval_phrase_exact_match: {output.get('approval_phrase_exact_match')}")
+            print(f"- ready_for_manual_readonly_runtime_launch: {output.get('ready_for_manual_readonly_runtime_launch')}")
+            print(f"- actual_discord_runtime_executed: {output.get('actual_discord_runtime_executed')}")
+        return 0
+
+    if args.phase51_52_readonly_live_runtime_launch_packet:
+        output = build_phase51_52_readonly_live_runtime_launch_packet()
+        if args.markdown:
+            print(render_phase51_52_readonly_live_runtime_launch_packet_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase51/52 read-only live runtime launch packet")
+            print(f"- actual_runtime_command_available: {output.get('actual_runtime_command_available')}")
+            print(f"- ready_for_manual_gate: {output.get('ready_for_manual_gate')}")
+            print(f"- actual_discord_runtime_executed: {output.get('actual_discord_runtime_executed')}")
+        return 0
+
+    if args.phase52b_readonly_live_capture_closeout:
+        output = build_phase52b_readonly_live_capture_closeout()
+        if args.markdown:
+            print(render_phase52b_readonly_live_capture_closeout_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase52B read-only live capture closeout")
+            print(f"- actual_readonly_runtime_executed: {output.get('actual_readonly_runtime_executed')}")
+            print(f"- captured_event_count: {output.get('captured_event_count')}")
+            print(f"- discord_message_sent: {output.get('discord_message_sent')}")
+        return 0
+
+    if args.phase52b_capture_metadata_review:
+        output = build_phase52b_capture_metadata_review()
+        if args.markdown:
+            print(render_phase52b_capture_metadata_review_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase52B capture metadata review")
+            print(f"- capture_file_present: {output.get('capture_file_present')}")
+            print(f"- capture_file_read_attempted: {output.get('capture_file_read_attempted')}")
+            print(f"- metadata_review_passed: {output.get('metadata_review_passed')}")
+        return 0
+
+    if args.phase53_capture_to_review_packet_replay:
+        output = build_phase53_capture_to_review_packet_replay()
+        if args.markdown:
+            print(render_phase53_capture_to_review_packet_replay_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase53 capture-to-review-packet replay")
+            print(f"- captured_event_count: {output.get('captured_event_count')}")
+            print(f"- review_packet_count: {output.get('review_packet_count')}")
+            print(f"- ready_for_next_readonly_capture_canary: {output.get('ready_for_next_readonly_capture_canary')}")
+        return 0
+
+    if args.phase53_next_readonly_capture_canary_plan:
+        output = build_phase53_next_readonly_capture_canary_plan()
+        if args.markdown:
+            print(render_phase53_next_readonly_capture_canary_plan_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase53 next read-only capture canary plan")
+            print(f"- canary_goal: {output.get('canary_goal')}")
+            print(f"- next_manual_gate_required: {output.get('next_manual_gate_required')}")
+            print(f"- ready_for_next_manual_gate: {output.get('ready_for_next_manual_gate')}")
+        return 0
+
+    if args.phase52b_53_readonly_capture_closeout:
+        output = build_phase52b_53_readonly_capture_closeout()
+        if args.markdown:
+            print(render_phase52b_53_readonly_capture_closeout_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase52B/53 read-only capture closeout")
+            print(f"- manual_readonly_runtime_successfully_closed_out: {output.get('manual_readonly_runtime_successfully_closed_out')}")
+            print(f"- capture_to_review_packet_replay_ready: {output.get('capture_to_review_packet_replay_ready')}")
+            print(f"- ready_for_next_readonly_capture_canary_manual_gate: {output.get('ready_for_next_readonly_capture_canary_manual_gate')}")
+        return 0
+
+    if args.phase54_57_agent_os_progression:
+        output = build_phase54_57_agent_os_progression()
+        if args.markdown:
+            print(render_phase54_57_agent_os_progression_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase54-57 Agent OS progression")
+            print(f"- real_readonly_canary_closed_out: {output.get('real_readonly_canary_closed_out')}")
+            print(f"- captured_event_count: {output.get('captured_event_count')}")
+            print(f"- review_packet_count: {output.get('review_packet_count')}")
+            print(f"- mock_reply_packet_created: {output.get('mock_reply_packet_created')}")
+            print(f"- discord_message_sent: {output.get('discord_message_sent')}")
+        return 0
+
+    if args.phase58_manual_approved_private_test_reply_preflight:
+        output = build_phase58_manual_approved_private_test_reply_preflight()
+        if args.markdown:
+            print(render_phase58_manual_approved_private_test_reply_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase58 manual-approved private-test reply preflight")
+            print(f"- phase58_actual_path_available: {output.get('phase58_actual_path_available')}")
+            print(f"- ready_for_actual_phase58_manual_reply: {output.get('ready_for_actual_phase58_manual_reply')}")
+            print(f"- discord_message_sent: {output.get('discord_message_sent')}")
+        return 0
+
+    if args.phase58_manual_approved_private_test_reply_blocked_report:
+        output = build_phase58_manual_approved_private_test_reply_blocked_report(
+            allow_flag_present=args.allow_actual_phase58_manual_approved_private_test_reply
+        )
+        if args.markdown:
+            print(render_phase58_manual_approved_private_test_reply_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase58 manual-approved private-test reply blocked report")
+            print(f"- actual_path_available: {output.get('actual_path_available')}")
+            print(f"- allow_flag_present: {output.get('allow_flag_present')}")
+            print(f"- blocked: {output.get('blocked')}")
+            print(f"- discord_message_sent: {output.get('discord_message_sent')}")
+        return 0
+
+    if args.phase58_manual_approved_private_test_reply_closeout:
+        output = build_phase58_manual_approved_private_test_reply_closeout()
+        if args.markdown:
+            print(render_phase58_manual_approved_private_test_reply_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase58 manual-approved private-test reply closeout")
+            print(f"- actual_phase58_reply_sent: {output.get('actual_phase58_reply_sent')}")
+            print(f"- message_sent_count: {output.get('message_sent_count')}")
+            print(f"- repeat_send_locked: {output.get('repeat_send_locked')}")
+        return 0
+
+    if args.phase58_manual_approved_private_test_reply_no_repeat_lock:
+        output = build_phase58_manual_approved_private_test_reply_no_repeat_lock()
+        if args.markdown:
+            print(render_phase58_manual_approved_private_test_reply_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase58 manual-approved private-test reply no-repeat lock")
+            print(f"- repeat_send_locked: {output.get('repeat_send_locked')}")
+            print(f"- ready_for_repeat_send: {output.get('ready_for_repeat_send')}")
+            print(f"- blocked_reasons: {output.get('blocked_reasons')}")
+        return 0
+
+    if args.actual_phase58_manual_approved_private_test_reply:
+        output = build_actual_phase58_manual_approved_private_test_reply(
+            allow_flag_present=args.allow_actual_phase58_manual_approved_private_test_reply
+        )
+        if args.markdown:
+            print(render_phase58_manual_approved_private_test_reply_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase58 actual manual-approved private-test reply")
+            print(f"- actual_path_available: {output.get('actual_path_available')}")
+            print(f"- blocked: {output.get('blocked')}")
+            print(f"- actual_send_executed: {output.get('actual_send_executed')}")
+            print(f"- message_sent_count: {output.get('message_sent_count')}")
+        return 0
+
+    if args.phase59_supervised_private_test_auto_reply_preflight:
+        output = build_phase59_supervised_private_test_auto_reply_preflight()
+        if args.markdown:
+            print(render_phase59_supervised_private_test_auto_reply_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase59 supervised private-test auto-reply preflight")
+            print(f"- phase59_actual_path_available: {output.get('phase59_actual_path_available')}")
+            print(f"- ready_for_actual_phase59_supervised_auto_reply: {output.get('ready_for_actual_phase59_supervised_auto_reply')}")
+            print(f"- discord_message_sent: {output.get('discord_message_sent')}")
+        return 0
+
+    if args.phase59_supervised_private_test_auto_reply_blocked_report:
+        output = build_phase59_supervised_private_test_auto_reply_blocked_report(
+            allow_flag_present=args.allow_actual_phase59_supervised_auto_reply
+        )
+        if args.markdown:
+            print(render_phase59_supervised_private_test_auto_reply_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase59 supervised private-test auto-reply blocked report")
+            print(f"- blocked: {output.get('blocked')}")
+            print(f"- actual_supervised_auto_reply_executed: {output.get('actual_supervised_auto_reply_executed')}")
+            print(f"- message_sent_count: {output.get('message_sent_count')}")
+        return 0
+
+    if args.actual_phase59_supervised_private_test_auto_reply:
+        output = build_actual_phase59_supervised_private_test_auto_reply(
+            allow_flag_present=args.allow_actual_phase59_supervised_auto_reply
+        )
+        if args.markdown:
+            print(render_phase59_supervised_private_test_auto_reply_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase59 actual supervised private-test auto-reply")
+            print(f"- blocked: {output.get('blocked')}")
+            print(f"- actual_supervised_auto_reply_executed: {output.get('actual_supervised_auto_reply_executed')}")
+            print(f"- message_sent_count: {output.get('message_sent_count')}")
+        return 0
+
+    if args.phase59_62_agent_os_autonomy_stage:
+        output = build_phase59_62_agent_os_autonomy_stage()
+        if args.markdown:
+            print(render_phase59_62_agent_os_autonomy_stage_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase59-62 Agent OS autonomy stage")
+            print(f"- phase59_sender_adapter_wired: {output.get('phase59_sender_adapter_wired')}")
+            print(f"- phase60_low_risk_team_canary_policy_synced: {output.get('phase60_low_risk_team_canary_policy_synced')}")
+            print(f"- phase61_scheduler_dry_run_control_synced: {output.get('phase61_scheduler_dry_run_control_synced')}")
+            print(f"- phase62_autonomy_matrix_updated: {output.get('phase62_autonomy_matrix_updated')}")
+        return 0
+
+    if args.phase59_63_agent_os_supervised_closeout:
+        output = build_phase59_63_agent_os_supervised_closeout()
+        if args.markdown:
+            print(render_phase59_63_agent_os_supervised_closeout_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase59-63 Agent OS supervised closeout")
+            print(f"- phase59_supervised_auto_reply_closed_out: {output.get('phase59_supervised_auto_reply_closed_out')}")
+            print(f"- historical_message_sent_count: {output.get('historical_message_sent_count')}")
+            print(f"- phase59_repeat_session_locked: {output.get('phase59_repeat_session_locked')}")
+            print(f"- current_verified_level: {output.get('current_verified_level')}")
+            print(f"- next_target_level: {output.get('next_target_level')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -2926,6 +3425,39 @@ def main(argv: list[str] | None = None) -> int:
         or args.phase46_llm_retry_policy
         or args.phase47_human_review_closeout
         or args.phase47_disabled_retry_gate_design
+        or args.phase48a_human_review_final_closeout
+        or args.phase48a_operator_handoff_packet
+        or args.phase49_production_readiness_audit
+        or args.phase50_final_automation_architecture_lock
+        or args.phase50_automation_roadmap
+        or args.phase50_manual_gate_matrix
+        or args.phase50_release_blocker_matrix
+        or args.phase51_readonly_event_schema
+        or args.phase51_readonly_event_guard
+        or args.phase52_session_context_store
+        or args.phase52_review_packet_composer
+        or args.phase52_readonly_synthetic_replay
+        or args.phase51_52_continuous_readonly_foundation
+        or args.phase51_52_readonly_live_runtime_preflight
+        or args.phase51_52_readonly_live_runtime_launch_packet
+        or args.phase52b_readonly_live_capture_closeout
+        or args.phase52b_capture_metadata_review
+        or args.phase53_capture_to_review_packet_replay
+        or args.phase53_next_readonly_capture_canary_plan
+        or args.phase52b_53_readonly_capture_closeout
+        or args.phase54_57_agent_os_progression
+        or args.phase58_manual_approved_private_test_reply_preflight
+        or args.phase58_manual_approved_private_test_reply_blocked_report
+        or args.phase58_manual_approved_private_test_reply_closeout
+        or args.phase58_manual_approved_private_test_reply_no_repeat_lock
+        or args.actual_phase58_manual_approved_private_test_reply
+        or args.allow_actual_phase58_manual_approved_private_test_reply
+        or args.phase59_supervised_private_test_auto_reply_preflight
+        or args.phase59_supervised_private_test_auto_reply_blocked_report
+        or args.actual_phase59_supervised_private_test_auto_reply
+        or args.allow_actual_phase59_supervised_auto_reply
+        or args.phase59_62_agent_os_autonomy_stage
+        or args.phase59_63_agent_os_supervised_closeout
         or args.execute_readonly_live_runtime
         or args.allow_llm_api_call
         or args.allow_actual_one_shot_llm_draft_call

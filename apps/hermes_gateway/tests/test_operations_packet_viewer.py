@@ -244,6 +244,34 @@ def test_phase41b_45a_safe_prep_summary() -> None:
     assert_true(report["phase47_disabled_retry_gate_design"]["manual_retry_requires_call_count_guard"] is True, "47 count guard")
     assert_true(report["phase47_disabled_retry_gate_design"]["repeat_phase45_call_allowed"] is False, "47 no repeat")
     assert_true(report["phase47_disabled_retry_gate_design"]["discord_send_remains_disabled"] is True, "47 Discord disabled")
+    assert_true(report["phase48a_human_review_final_closeout"]["final_closeout_mode"] == "human_review_only", "48A human review")
+    assert_true(report["phase48a_human_review_final_closeout"]["external_action_freeze_active"] is True, "48A freeze")
+    assert_true(report["phase48a_human_review_final_closeout"]["phase41b_reply_count"] == 1, "48A 41B count")
+    assert_true(report["phase48a_human_review_final_closeout"]["phase42_message_sent_count"] == 1, "48A 42 count")
+    assert_true(report["phase48a_human_review_final_closeout"]["phase45_llm_call_count"] == 1, "48A 45 count")
+    assert_true(report["phase48a_human_review_final_closeout"]["blocked_llm_output_raw_included"] is False, "48A no raw")
+    assert_true(report["phase48a_human_review_final_closeout"]["automatic_retry_allowed"] is False, "48A no retry")
+    assert_true(report["phase48a_human_review_final_closeout"]["ready_for_production_unattended_mode"] is False, "48A no production unattended")
+    assert_true(report["phase48a_operator_handoff_packet"]["available"] is True, "48A handoff")
+    assert_true(report["phase48a_operator_handoff_packet"]["future_external_action_requires_new_manual_gate"] is True, "48A future gate")
+    assert_true(report["phase48a_operator_handoff_packet"]["phase48a_implements_option_b"] is False, "48A no B")
+    assert_true(report["phase48a_operator_handoff_packet"]["phase48a_implements_option_c"] is False, "48A no C")
+    assert_true(report["phase48a_operator_handoff_packet"]["phase48a_implements_option_d"] is False, "48A no D")
+    assert_true(report["phase49_production_readiness_audit"]["target_system"] == "STOXL_Discord_Agent_OS", "49 target")
+    assert_true(report["phase49_production_readiness_audit"]["final_goal_is_operation_automation"] is True, "49 automation")
+    assert_true(report["phase49_production_readiness_audit"]["production_unattended_ready"] is False, "49 production false")
+    assert_true(report["phase49_production_readiness_audit"]["current_verified_level"] == 3, "49 level")
+    assert_true(report["phase49_production_readiness_audit"]["current_verified_level_status"] == "prototype_verified", "49 level status")
+    assert_true(report["phase50_final_automation_architecture_lock"]["architecture_locked"] is True, "50 locked")
+    assert_true(report["phase50_final_automation_architecture_lock"]["next_safe_bundle"] == "continuous_readonly_runtime_foundation", "50 next")
+    assert_true(report["phase50_automation_roadmap"]["remaining_safe_mega_bundles"] == 7, "50 bundles")
+    assert_true(report["phase50_automation_roadmap"]["remaining_manual_gates"] == 5, "50 gates")
+    assert_true(report["phase50_automation_roadmap"]["next_phase"] == "phase51_52_continuous_readonly_runtime_foundation", "50 next phase")
+    assert_true(report["phase50_manual_gate_matrix"]["gate_count"] == 6, "50 gate count")
+    assert_true(report["phase50_manual_gate_matrix"]["manual_gate_execution_available_now"] is False, "50 no gate execution")
+    assert_true(report["phase50_release_blocker_matrix"]["release_blockers_present"] is True, "50 blockers")
+    assert_true(report["phase50_release_blocker_matrix"]["production_unattended_ready"] is False, "50 production false")
+    assert_true(report["phase50_release_blocker_matrix"]["scheduler_live_execution_blocked"] is True, "50 scheduler blocked")
 
 
 def test_phase40t_login_failure_closeout_summary() -> None:
@@ -1200,6 +1228,74 @@ def test_phase40u_41a_safe_bundle_summaries() -> None:
     assert_true(phase41["message_sent_count"] == 0, "41A no send")
 
 
+def test_phase51_52_readonly_foundation_summary() -> None:
+    report = build_operations_packet_viewer_report(root=TEST_ROOT)
+    phase51_52 = report["phase51_52_continuous_readonly_foundation"]
+    preflight = report["phase51_52_readonly_live_runtime_preflight"]
+    launch_packet = report["phase51_52_readonly_live_runtime_launch_packet"]
+    phase52b = report["phase52b_readonly_live_capture_closeout"]
+    metadata = report["phase52b_capture_metadata_review"]
+    replay = report["phase53_capture_to_review_packet_replay"]
+    canary = report["phase53_next_readonly_capture_canary_plan"]
+    combined = report["phase52b_53_readonly_capture_closeout"]
+    assert_true(phase51_52["available"] is True, "51/52 available")
+    assert_true(phase51_52["continuous_readonly_runtime_foundation_ready"] is True, "Foundation ready")
+    assert_true(phase51_52["current_automation_level"] == 1, "Level 1")
+    assert_true(phase51_52["review_packet_base_ready"] is True, "Packet ready")
+    assert_true(phase51_52["manual_gate_needed_for_live_readonly_runtime"] is True, "Manual gate needed")
+    assert_true(phase51_52["ready_for_manual_gate_readonly_live_runtime"] is True, "Manual gate readiness")
+    assert_true(phase51_52["actual_discord_runtime_executed"] is False, "No Discord runtime")
+    assert_true(phase51_52["discord_api_send_called"] is False, "No Discord API")
+    assert_true(phase51_52["discord_message_sent"] is False, "No message")
+    assert_true(phase51_52["actual_llm_api_call_attempted"] is False, "No LLM attempt")
+    assert_true(phase51_52["actual_llm_api_called"] is False, "No LLM call")
+    assert_true(phase51_52["rag_called"] is False, "No RAG")
+    assert_true(phase51_52["embedding_api_called"] is False, "No embedding")
+    assert_true(phase51_52["vector_index_created"] is False, "No vector")
+    assert_true(phase51_52["external_execution"] is False, "No external")
+    assert_true(phase51_52["scheduler_cron_live_execution"] is False, "No scheduler")
+    assert_true(preflight["available"] is True, "Preflight available")
+    assert_true(preflight["manual_gate_required"] is True, "Manual gate")
+    assert_true(preflight["approval_phrase_defined"] is True, "Phrase defined")
+    assert_true(preflight["approval_phrase_value_logged"] is False, "Phrase hidden")
+    assert_true(preflight["actual_discord_runtime_executed"] is False, "No preflight runtime")
+    assert_true(preflight["discord_message_sent"] is False, "No preflight message")
+    assert_true(launch_packet["available"] is True, "Launch packet available")
+    assert_true(launch_packet["actual_runtime_command_available"] is True, "Runtime command")
+    assert_true(launch_packet["actual_discord_runtime_executed"] is False, "No launch runtime")
+    assert_true(phase52b["available"] is True, "52B closeout available")
+    assert_true(phase52b["actual_readonly_runtime_executed"] is True, "52B manual runtime observed")
+    assert_true(phase52b["discord_gateway_connected"] is True, "52B gateway verified")
+    assert_true(phase52b["captured_event_count"] == 0, "52B empty capture count")
+    assert_true(phase52b["empty_capture_handled"] is True, "52B empty capture handled")
+    assert_true(phase52b["discord_message_sent"] is False, "52B no message")
+    assert_true(phase52b["llm_api_called"] is False, "52B no LLM")
+    assert_true(phase52b["raw_content_logged"] is False, "52B no raw")
+    assert_true(metadata["available"] is True, "52B metadata review")
+    assert_true(metadata["capture_file_read_attempted"] is False, "52B no file read")
+    assert_true(metadata["empty_capture_valid"] is True, "52B empty valid")
+    assert_true(metadata["metadata_review_passed"] is True, "52B metadata passed")
+    assert_true(replay["available"] is True, "53 replay available")
+    assert_true(replay["review_packet_pipeline_ready"] is True, "53 pipeline ready")
+    assert_true(replay["review_packet_count"] == 0, "53 no packets from empty capture")
+    assert_true(replay["empty_capture_replay_handled"] is True, "53 empty replay handled")
+    assert_true(replay["discord_message_sent"] is False, "53 no message")
+    assert_true(replay["raw_content_logged"] is False, "53 no raw")
+    assert_true(canary["available"] is True, "53 canary available")
+    assert_true(canary["next_manual_gate_required"] is True, "53 canary manual gate")
+    assert_true(canary["canary_goal"] == "capture_one_private_test_human_message_readonly", "53 canary goal")
+    assert_true(combined["available"] is True, "52B/53 combined available")
+    assert_true(combined["gateway_connection_verified"] is True, "52B/53 gateway verified")
+    assert_true(combined["review_packet_pipeline_ready_for_real_capture"] is True, "52B/53 pipeline ready")
+    markdown = render_operations_summary_markdown(report)
+    assert_true("Review packet readiness: true" in markdown, "Markdown readiness")
+    assert_true("manual_gate_longer_readonly_live_runtime_no_send" in markdown, "Markdown next step")
+    assert_true("Read-only live runtime approval phrase defined: true" in markdown, "Markdown phrase defined")
+    assert_true("Actual read-only gateway connection verified: true" in markdown, "Markdown gateway")
+    assert_true("Review packet pipeline ready: true" in markdown, "Markdown pipeline")
+    assert_true("Next canary goal: capture_one_private_test_human_message_readonly" in markdown, "Markdown canary")
+
+
 def main() -> int:
     tests = [
         test_recent_events_returned,
@@ -1262,6 +1358,7 @@ def main() -> int:
         test_phase40j_n_readonly_runtime_entry_summaries,
         test_phase40o_s_manual_runtime_review_pipeline_summaries,
         test_phase40u_41a_safe_bundle_summaries,
+        test_phase51_52_readonly_foundation_summary,
     ]
     for test in tests:
         test()

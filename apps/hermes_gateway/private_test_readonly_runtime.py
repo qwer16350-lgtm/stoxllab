@@ -46,22 +46,44 @@ def _build_conditions(source: Mapping[str, str] | None) -> dict[str, bool]:
     approval_flag = _flag(source, "HERMES_PHASE40J_READONLY_LIVE_RUNTIME_APPROVED")
     phrase_present = _present(source, "HERMES_PHASE40J_READONLY_LIVE_RUNTIME_APPROVAL_PHRASE")
     phrase_exact = _value(source, "HERMES_PHASE40J_READONLY_LIVE_RUNTIME_APPROVAL_PHRASE") == APPROVAL_PHRASE
+    llm_disabled = (
+        _false_flag(source, "HERMES_DISCORD_LLM_ENABLED")
+        and _false_flag(source, "HERMES_LLM_DISCORD_SEND_ENABLED")
+        and _false_flag(source, "HERMES_LLM_PRIVATE_TEST_REPLY_ENABLED")
+    )
+    rag_disabled = (
+        _false_flag(source, "HERMES_DISCORD_RAG_ENABLED")
+        and _false_flag(source, "HERMES_LLM_RAG_ENABLED")
+        and _false_flag(source, "HERMES_RAG_LLM_REPLY_ENABLED")
+    )
+    embedding_disabled = (
+        _false_flag(source, "HERMES_EMBEDDING_ENABLED")
+        and _false_flag(source, "HERMES_VECTOR_ENABLED")
+        and _false_flag(source, "HERMES_EMBEDDING_API_ENABLED")
+        and _false_flag(source, "HERMES_VECTOR_INDEX_ENABLED")
+    )
     return {
         "discord_token_present": _present(source, "DISCORD_BOT_TOKEN"),
         "private_test_channel_id_present": _present(source, "HERMES_DISCORD_PRIVATE_TEST_CHANNEL_ID"),
+        "manual_approval_present": _present(source, "HERMES_PHASE40J_READONLY_LIVE_RUNTIME_APPROVED"),
+        "manual_approval_true": approval_flag,
         "approval_phrase_present": phrase_present,
         "approval_phrase_exact_match": phrase_exact,
         "approval_actualized": approval_flag and phrase_exact,
         "send_messages_disabled": _false_flag(source, "HERMES_DISCORD_SEND_MESSAGES"),
         "private_test_reply_disabled": _false_flag(source, "HERMES_DISCORD_PRIVATE_TEST_REPLY"),
         "reply_mode_readonly_private_test_only": _value(source, "HERMES_DISCORD_REPLY_MODE") == "readonly_private_test_only",
+        "discord_llm_disabled": _false_flag(source, "HERMES_DISCORD_LLM_ENABLED"),
         "llm_discord_send_disabled": _false_flag(source, "HERMES_LLM_DISCORD_SEND_ENABLED"),
         "llm_private_test_reply_disabled": _false_flag(source, "HERMES_LLM_PRIVATE_TEST_REPLY_ENABLED"),
+        "llm_disabled": llm_disabled,
         "discord_rag_disabled": _false_flag(source, "HERMES_DISCORD_RAG_ENABLED"),
         "llm_rag_disabled": _false_flag(source, "HERMES_LLM_RAG_ENABLED"),
         "rag_llm_reply_disabled": _false_flag(source, "HERMES_RAG_LLM_REPLY_ENABLED"),
+        "rag_disabled": rag_disabled,
         "external_execution_disabled": _false_flag(source, "HERMES_DISCORD_EXTERNAL_EXECUTION"),
-        "embedding_disabled": _false_flag(source, "HERMES_EMBEDDING_API_ENABLED") and _false_flag(source, "HERMES_VECTOR_INDEX_ENABLED"),
+        "embedding_disabled": embedding_disabled,
+        "embedding_vector_disabled": embedding_disabled,
     }
 
 
@@ -73,6 +95,7 @@ def _failure_reason(conditions: dict[str, bool]) -> str:
         ("send_messages_enabled", conditions["send_messages_disabled"]),
         ("private_test_reply_enabled", conditions["private_test_reply_disabled"]),
         ("reply_mode_not_readonly_private_test_only", conditions["reply_mode_readonly_private_test_only"]),
+        ("discord_llm_enabled", conditions["discord_llm_disabled"]),
         ("llm_discord_send_enabled", conditions["llm_discord_send_disabled"]),
         ("llm_private_test_reply_enabled", conditions["llm_private_test_reply_disabled"]),
         ("discord_rag_enabled", conditions["discord_rag_disabled"]),
@@ -111,13 +134,21 @@ def build_private_test_readonly_runtime_preflight(
         "private_test_channel_id_present": conditions["private_test_channel_id_present"],
         "private_test_channel_id_value_logged": False,
         "approval_required": True,
+        "manual_approval_present": conditions["manual_approval_present"],
+        "manual_approval_true": conditions["manual_approval_true"],
         "approval_actualized": conditions["approval_actualized"],
         "approval_phrase_present": conditions["approval_phrase_present"],
         "approval_phrase_exact_match": conditions["approval_phrase_exact_match"],
         "approval_phrase_value_logged": False,
         "send_messages_enabled": not conditions["send_messages_disabled"],
+        "send_messages_disabled": conditions["send_messages_disabled"],
         "private_test_reply_enabled": not conditions["private_test_reply_disabled"],
+        "private_test_reply_disabled": conditions["private_test_reply_disabled"],
         "reply_mode_readonly_private_test_only": conditions["reply_mode_readonly_private_test_only"],
+        "llm_disabled": conditions["llm_disabled"],
+        "rag_disabled": conditions["rag_disabled"],
+        "embedding_vector_disabled": conditions["embedding_vector_disabled"],
+        "external_execution_disabled": conditions["external_execution_disabled"],
         "live_runtime_started": False,
         "discord_gateway_connected": False,
         "discord_api_send_called": False,

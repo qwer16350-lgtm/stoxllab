@@ -6,6 +6,7 @@ import json
 import re
 from typing import Any
 
+from phase51_52_readonly_live_runtime_preflight import build_phase51_52_readonly_live_runtime_preflight
 from phase40_safe_overnight_summary import build_phase40_safe_overnight_summary
 
 
@@ -17,6 +18,7 @@ APPROVAL_RE = re.compile(r"I_APPROVE_[A-Z0-9_]+")
 
 def build_phase40j_private_test_readonly_runtime_preflight() -> dict[str, Any]:
     phase40 = build_phase40_safe_overnight_summary()
+    gate = build_phase51_52_readonly_live_runtime_preflight()
     report = {
         "report_type": "phase40j_private_test_readonly_runtime_preflight",
         "version": VERSION,
@@ -42,7 +44,21 @@ def build_phase40j_private_test_readonly_runtime_preflight() -> dict[str, Any]:
             "embedding false",
             "external false",
         ],
-        "ready_for_manual_readonly_runtime_launch": False,
+        "manual_gate_required": True,
+        "manual_approval_present": bool(gate.get("manual_approval_present")),
+        "manual_approval_true": bool(gate.get("manual_approval_true")),
+        "approval_phrase_present": bool(gate.get("approval_phrase_present")),
+        "approval_phrase_exact_match": bool(gate.get("approval_phrase_exact_match")),
+        "approval_phrase_value_logged": False,
+        "send_messages_disabled": bool(gate.get("send_messages_disabled")),
+        "private_test_reply_disabled": bool(gate.get("private_test_reply_disabled")),
+        "reply_mode_readonly_private_test_only": bool(gate.get("reply_mode_readonly_private_test_only")),
+        "llm_disabled": bool(gate.get("llm_disabled")),
+        "rag_disabled": bool(gate.get("rag_disabled")),
+        "embedding_vector_disabled": bool(gate.get("embedding_vector_disabled")),
+        "external_execution_disabled": bool(gate.get("external_execution_disabled")),
+        "ready_for_manual_readonly_runtime_launch": bool(gate.get("ready_for_manual_readonly_runtime_launch")),
+        "actual_discord_runtime_executed": False,
         "ready_for_reply_send": False,
         "reply_send_allowed": False,
         "llm_api_call_attempted": False,
@@ -73,7 +89,7 @@ def assert_phase40j_private_test_readonly_runtime_preflight_safe(report: dict[st
         "discord_gateway_connected",
         "discord_api_send_called",
         "discord_message_sent",
-        "ready_for_manual_readonly_runtime_launch",
+        "actual_discord_runtime_executed",
         "ready_for_reply_send",
         "reply_send_allowed",
         "llm_api_call_attempted",

@@ -217,6 +217,113 @@ FORBIDDEN_TRUE_FIELDS = (
     "phase47_external_execution",
     "phase47_ready_for_phase48_retry_manual_gate_design",
     "phase47_ready_for_phase48_discord_send_review_gate_design",
+    "phase48a_phase41b_repeat_allowed",
+    "phase48a_phase42_repeat_allowed",
+    "phase48a_phase45_repeat_llm_call_allowed",
+    "phase48a_blocked_output_auto_retry_allowed",
+    "phase48a_blocked_output_auto_discord_send_allowed",
+    "phase48a_unattended_auto_reply_allowed",
+    "phase48a_raw_output_dump_allowed",
+    "phase48a_ready_for_production_unattended_mode",
+    "phase48a_llm_api_call_attempted",
+    "phase48a_llm_api_called",
+    "phase48a_additional_llm_api_call",
+    "phase48a_discord_api_send_called",
+    "phase48a_discord_message_sent",
+    "phase48a_rag_called",
+    "phase48a_embedding_api_called",
+    "phase48a_vector_index_created",
+    "phase48a_external_execution",
+    "phase48a_option_b_implemented",
+    "phase48a_option_c_implemented",
+    "phase48a_option_d_implemented",
+    "phase49_production_unattended_ready",
+    "phase49_automatic_retry_allowed",
+    "phase49_automatic_discord_send_allowed",
+    "phase49_scheduler_cron_live_execution",
+    "phase49_llm_api_call_attempted",
+    "phase49_llm_api_called",
+    "phase49_discord_api_send_called",
+    "phase49_discord_message_sent",
+    "phase49_rag_called",
+    "phase49_embedding_api_called",
+    "phase49_vector_index_created",
+    "phase49_external_execution",
+    "phase50_production_unattended_ready_now",
+    "phase50_production_unattended_before_hardening",
+    "phase50_automatic_retry_before_new_manual_gate",
+    "phase50_automatic_discord_send_before_send_gate",
+    "phase50_raw_output_dump_allowed",
+    "phase50_repeat_phase45_llm_call_allowed",
+    "phase50_scheduler_live_execution_before_scheduler_gate",
+    "phase50_scheduler_cron_live_execution",
+    "phase50_unattended_auto_reply_implemented",
+    "phase50_manual_gate_execution_available_now",
+    "phase50_llm_api_call_attempted",
+    "phase50_llm_api_called",
+    "phase50_discord_api_send_called",
+    "phase50_discord_message_sent",
+    "phase50_rag_called",
+    "phase50_embedding_api_called",
+    "phase50_vector_index_created",
+    "phase50_external_execution",
+    "phase51_52_readonly_foundation_can_send",
+    "phase51_52_readonly_foundation_can_call_llm",
+    "phase51_52_readonly_foundation_can_call_rag",
+    "phase51_52_readonly_foundation_can_start_scheduler",
+    "phase51_52_readonly_foundation_can_auto_reply",
+    "phase51_52_actual_discord_runtime_executed",
+    "phase51_52_discord_gateway_live_connection",
+    "phase51_52_discord_api_send_called",
+    "phase51_52_discord_message_sent",
+    "phase51_52_actual_llm_api_call_attempted",
+    "phase51_52_actual_llm_api_called",
+    "phase51_52_rag_called",
+    "phase51_52_embedding_api_called",
+    "phase51_52_vector_index_created",
+    "phase51_52_external_execution",
+    "phase51_52_scheduler_cron_live_execution",
+    "phase51_52_unattended_auto_reply_implemented",
+    "phase51_52_ready_for_auto_reply",
+    "phase51_52_ready_for_team_channel_auto_ops",
+    "phase51_52_ready_for_production_unattended",
+    "phase51_52_manual_runtime_approval_phrase_value_logged",
+    "phase51_52_manual_runtime_live_runtime_started",
+    "phase51_52_manual_runtime_discord_gateway_connected",
+    "phase51_52_manual_runtime_discord_api_send_called",
+    "phase51_52_manual_runtime_discord_message_sent",
+    "phase51_52_manual_runtime_actual_llm_api_call_attempted",
+    "phase51_52_manual_runtime_actual_llm_api_called",
+    "phase51_52_manual_runtime_rag_called",
+    "phase51_52_manual_runtime_embedding_api_called",
+    "phase51_52_manual_runtime_vector_index_created",
+    "phase51_52_manual_runtime_external_execution",
+    "phase51_52_manual_runtime_scheduler_cron_live_execution",
+    "phase52b_capture_closeout_runtime_started_by_bundle",
+    "phase52b_capture_closeout_discord_api_send_called",
+    "phase52b_capture_closeout_discord_message_sent",
+    "phase52b_capture_closeout_llm_api_call_attempted",
+    "phase52b_capture_closeout_llm_api_called",
+    "phase52b_capture_closeout_rag_called",
+    "phase52b_capture_closeout_embedding_api_called",
+    "phase52b_capture_closeout_vector_index_created",
+    "phase52b_capture_closeout_external_execution",
+    "phase52b_capture_closeout_scheduler_live_execution",
+    "phase52b_capture_closeout_raw_content_logged",
+    "phase52b_capture_closeout_raw_discord_ids_logged",
+    "phase52b_capture_closeout_secret_values_logged",
+    "phase53_capture_replay_discord_send_allowed",
+    "phase53_capture_replay_discord_api_send_called",
+    "phase53_capture_replay_discord_message_sent",
+    "phase53_capture_replay_llm_api_call_attempted",
+    "phase53_capture_replay_llm_api_called",
+    "phase53_capture_replay_rag_called",
+    "phase53_capture_replay_embedding_api_called",
+    "phase53_capture_replay_vector_index_created",
+    "phase53_capture_replay_external_execution",
+    "phase53_capture_replay_raw_content_logged",
+    "phase53_capture_replay_raw_discord_ids_logged",
+    "phase53_capture_replay_auto_reply_allowed",
 )
 
 
@@ -561,6 +668,190 @@ def build_forbidden_behavior_sentinel(overrides: dict[str, Any] | None = None) -
         "phase47_external_execution": False,
         "phase47_ready_for_phase48_retry_manual_gate_design": False,
         "phase47_ready_for_phase48_discord_send_review_gate_design": False,
+        "phase48a_final_closeout_available": True,
+        "phase48a_final_closeout_mode": "human_review_only",
+        "phase48a_external_action_freeze_active": True,
+        "phase48a_phase41b_completed_once": True,
+        "phase48a_phase41b_reply_count": 1,
+        "phase48a_phase42_completed_once": True,
+        "phase48a_phase42_message_sent_count": 1,
+        "phase48a_phase45_llm_completed_once": True,
+        "phase48a_phase45_llm_call_count": 1,
+        "phase48a_phase45_output_safety_blocked": True,
+        "phase48a_phase45_repeat_llm_call_forbidden": True,
+        "phase48a_blocked_output_auto_retry_forbidden": True,
+        "phase48a_blocked_output_auto_discord_send_forbidden": True,
+        "phase48a_unattended_auto_reply_forbidden": True,
+        "phase48a_raw_output_dump_forbidden": True,
+        "phase48a_production_unattended_mode_not_ready": True,
+        "phase48a_phase41b_repeat_allowed": False,
+        "phase48a_phase42_repeat_allowed": False,
+        "phase48a_phase45_repeat_llm_call_allowed": False,
+        "phase48a_blocked_output_auto_retry_allowed": False,
+        "phase48a_blocked_output_auto_discord_send_allowed": False,
+        "phase48a_unattended_auto_reply_allowed": False,
+        "phase48a_raw_output_dump_allowed": False,
+        "phase48a_ready_for_production_unattended_mode": False,
+        "phase48a_future_external_action_requires_new_manual_gate": True,
+        "phase48a_operator_handoff_packet_available": True,
+        "phase48a_llm_api_call_attempted": False,
+        "phase48a_llm_api_called": False,
+        "phase48a_additional_llm_api_call": False,
+        "phase48a_discord_api_send_called": False,
+        "phase48a_discord_message_sent": False,
+        "phase48a_rag_called": False,
+        "phase48a_embedding_api_called": False,
+        "phase48a_vector_index_created": False,
+        "phase48a_external_execution": False,
+        "phase48a_option_b_implemented": False,
+        "phase48a_option_c_implemented": False,
+        "phase48a_option_d_implemented": False,
+        "phase49_production_readiness_audit_available": True,
+        "phase49_target_system": "STOXL_Discord_Agent_OS",
+        "phase49_final_goal_is_operation_automation": True,
+        "phase49_human_review_only_is_not_final_goal": True,
+        "phase49_production_unattended_ready": False,
+        "phase49_safe_for_human_review_only": True,
+        "phase49_release_blockers_present": True,
+        "phase49_current_verified_level": 3,
+        "phase49_current_verified_level_status": "prototype_verified",
+        "phase49_ready_for_continuous_readonly_foundation": True,
+        "phase49_automatic_retry_allowed": False,
+        "phase49_automatic_discord_send_allowed": False,
+        "phase49_scheduler_cron_live_execution": False,
+        "phase49_llm_api_call_attempted": False,
+        "phase49_llm_api_called": False,
+        "phase49_discord_api_send_called": False,
+        "phase49_discord_message_sent": False,
+        "phase49_rag_called": False,
+        "phase49_embedding_api_called": False,
+        "phase49_vector_index_created": False,
+        "phase49_external_execution": False,
+        "phase50_architecture_lock_available": True,
+        "phase50_target_system": "STOXL_Discord_Agent_OS",
+        "phase50_architecture_locked": True,
+        "phase50_required_modules_defined": True,
+        "phase50_manual_gate_boundary_defined": True,
+        "phase50_automation_levels_defined": True,
+        "phase50_next_safe_bundle": "continuous_readonly_runtime_foundation",
+        "phase50_production_unattended_ready_now": False,
+        "phase50_production_unattended_before_hardening_forbidden": True,
+        "phase50_automatic_retry_before_new_manual_gate_forbidden": True,
+        "phase50_automatic_discord_send_before_send_gate_forbidden": True,
+        "phase50_raw_output_dump_forbidden": True,
+        "phase50_repeat_phase45_llm_call_forbidden": True,
+        "phase50_scheduler_live_execution_before_scheduler_gate_forbidden": True,
+        "phase50_production_unattended_before_hardening": False,
+        "phase50_automatic_retry_before_new_manual_gate": False,
+        "phase50_automatic_discord_send_before_send_gate": False,
+        "phase50_raw_output_dump_allowed": False,
+        "phase50_repeat_phase45_llm_call_allowed": False,
+        "phase50_scheduler_live_execution_before_scheduler_gate": False,
+        "phase50_scheduler_cron_live_execution": False,
+        "phase50_unattended_auto_reply_implemented": False,
+        "phase50_roadmap_available": True,
+        "phase50_remaining_safe_mega_bundles": 7,
+        "phase50_remaining_manual_gates": 5,
+        "phase50_next_phase": "phase51_52_continuous_readonly_runtime_foundation",
+        "phase50_manual_gate_matrix_available": True,
+        "phase50_manual_gate_count": 6,
+        "phase50_manual_gate_execution_available_now": False,
+        "phase50_release_blocker_matrix_available": True,
+        "phase50_release_blockers_present": True,
+        "phase50_unattended_auto_reply_blocked": True,
+        "phase50_automatic_retry_blocked": True,
+        "phase50_automatic_discord_send_blocked": True,
+        "phase50_llm_repeat_call_blocked": True,
+        "phase50_raw_output_dump_blocked": True,
+        "phase50_scheduler_live_execution_blocked": True,
+        "phase50_llm_api_call_attempted": False,
+        "phase50_llm_api_called": False,
+        "phase50_discord_api_send_called": False,
+        "phase50_discord_message_sent": False,
+        "phase50_rag_called": False,
+        "phase50_embedding_api_called": False,
+        "phase50_vector_index_created": False,
+        "phase50_external_execution": False,
+        "phase51_52_foundation_available": True,
+        "phase51_52_continuous_readonly_runtime_foundation_ready": True,
+        "phase51_52_review_packet_base_ready": True,
+        "phase51_52_current_automation_level": 1,
+        "phase51_52_current_automation_level_name": "continuous_readonly_observation_foundation",
+        "phase51_52_ready_for_manual_gate_readonly_live_runtime": True,
+        "phase51_52_manual_gate_needed_for_live_readonly_runtime": True,
+        "phase51_52_next_safe_step": "manual_gate_longer_readonly_live_runtime_no_send",
+        "phase51_52_readonly_foundation_can_send": False,
+        "phase51_52_readonly_foundation_can_call_llm": False,
+        "phase51_52_readonly_foundation_can_call_rag": False,
+        "phase51_52_readonly_foundation_can_start_scheduler": False,
+        "phase51_52_readonly_foundation_can_auto_reply": False,
+        "phase51_52_actual_discord_runtime_executed": False,
+        "phase51_52_discord_gateway_live_connection": False,
+        "phase51_52_discord_api_send_called": False,
+        "phase51_52_discord_message_sent": False,
+        "phase51_52_actual_llm_api_call_attempted": False,
+        "phase51_52_actual_llm_api_called": False,
+        "phase51_52_rag_called": False,
+        "phase51_52_embedding_api_called": False,
+        "phase51_52_vector_index_created": False,
+        "phase51_52_external_execution": False,
+        "phase51_52_scheduler_cron_live_execution": False,
+        "phase51_52_unattended_auto_reply_implemented": False,
+        "phase51_52_ready_for_auto_reply": False,
+        "phase51_52_ready_for_team_channel_auto_ops": False,
+        "phase51_52_ready_for_production_unattended": False,
+        "phase51_52_readonly_live_runtime_preflight_available": True,
+        "phase51_52_manual_runtime_gate_required": True,
+        "phase51_52_manual_runtime_approval_phrase_defined": True,
+        "phase51_52_manual_runtime_approval_phrase_value_logged": False,
+        "phase51_52_manual_runtime_ready": False,
+        "phase51_52_manual_runtime_live_runtime_started": False,
+        "phase51_52_manual_runtime_discord_gateway_connected": False,
+        "phase51_52_manual_runtime_discord_api_send_called": False,
+        "phase51_52_manual_runtime_discord_message_sent": False,
+        "phase51_52_manual_runtime_actual_llm_api_call_attempted": False,
+        "phase51_52_manual_runtime_actual_llm_api_called": False,
+        "phase51_52_manual_runtime_rag_called": False,
+        "phase51_52_manual_runtime_embedding_api_called": False,
+        "phase51_52_manual_runtime_vector_index_created": False,
+        "phase51_52_manual_runtime_external_execution": False,
+        "phase51_52_manual_runtime_scheduler_cron_live_execution": False,
+        "phase51_52_launch_packet_available": True,
+        "phase51_52_actual_runtime_command_available": True,
+        "phase52b_capture_closeout_available": True,
+        "phase52b_manual_readonly_runtime_executed_once": True,
+        "phase52b_gateway_connection_verified": True,
+        "phase52b_captured_event_count": 0,
+        "phase52b_empty_capture_handled": True,
+        "phase52b_capture_closeout_runtime_started_by_bundle": False,
+        "phase52b_capture_closeout_discord_api_send_called": False,
+        "phase52b_capture_closeout_discord_message_sent": False,
+        "phase52b_capture_closeout_llm_api_call_attempted": False,
+        "phase52b_capture_closeout_llm_api_called": False,
+        "phase52b_capture_closeout_rag_called": False,
+        "phase52b_capture_closeout_embedding_api_called": False,
+        "phase52b_capture_closeout_vector_index_created": False,
+        "phase52b_capture_closeout_external_execution": False,
+        "phase52b_capture_closeout_scheduler_live_execution": False,
+        "phase52b_capture_closeout_raw_content_logged": False,
+        "phase52b_capture_closeout_raw_discord_ids_logged": False,
+        "phase52b_capture_closeout_secret_values_logged": False,
+        "phase53_capture_to_review_packet_replay_ready": True,
+        "phase53_empty_capture_replay_handled": True,
+        "phase53_capture_replay_discord_send_allowed": False,
+        "phase53_capture_replay_discord_api_send_called": False,
+        "phase53_capture_replay_discord_message_sent": False,
+        "phase53_capture_replay_llm_api_call_attempted": False,
+        "phase53_capture_replay_llm_api_called": False,
+        "phase53_capture_replay_rag_called": False,
+        "phase53_capture_replay_embedding_api_called": False,
+        "phase53_capture_replay_vector_index_created": False,
+        "phase53_capture_replay_external_execution": False,
+        "phase53_capture_replay_raw_content_logged": False,
+        "phase53_capture_replay_raw_discord_ids_logged": False,
+        "phase53_capture_replay_auto_reply_allowed": False,
+        "phase53_next_readonly_capture_canary_plan_available": True,
+        "phase53_ready_for_next_manual_gate": True,
         "post_llm_call_sentinel": False,
         "total_phase36_llm_call_count": 1,
         "total_phase36_discord_message_sent_count": 0,
@@ -727,6 +1018,89 @@ def _sentinel_passed(report: dict[str, Any]) -> bool:
         return False
     if not bool(report.get("phase47_discord_send_remains_disabled")):
         return False
+    if not bool(report.get("phase48a_final_closeout_available")) or report.get("phase48a_final_closeout_mode") != "human_review_only":
+        return False
+    if not bool(report.get("phase48a_external_action_freeze_active")):
+        return False
+    if not bool(report.get("phase48a_phase41b_completed_once")) or int(report.get("phase48a_phase41b_reply_count", 0) or 0) != 1:
+        return False
+    if not bool(report.get("phase48a_phase42_completed_once")) or int(report.get("phase48a_phase42_message_sent_count", 0) or 0) != 1:
+        return False
+    if not bool(report.get("phase48a_phase45_llm_completed_once")) or int(report.get("phase48a_phase45_llm_call_count", 0) or 0) != 1:
+        return False
+    if not bool(report.get("phase48a_phase45_output_safety_blocked")):
+        return False
+    for key in (
+        "phase48a_phase45_repeat_llm_call_forbidden",
+        "phase48a_blocked_output_auto_retry_forbidden",
+        "phase48a_blocked_output_auto_discord_send_forbidden",
+        "phase48a_unattended_auto_reply_forbidden",
+        "phase48a_raw_output_dump_forbidden",
+        "phase48a_production_unattended_mode_not_ready",
+        "phase48a_future_external_action_requires_new_manual_gate",
+        "phase48a_operator_handoff_packet_available",
+    ):
+        if not bool(report.get(key)):
+            return False
+    if not bool(report.get("phase49_production_readiness_audit_available")) or report.get("phase49_target_system") != "STOXL_Discord_Agent_OS":
+        return False
+    if not bool(report.get("phase49_final_goal_is_operation_automation")) or not bool(report.get("phase49_human_review_only_is_not_final_goal")):
+        return False
+    if int(report.get("phase49_current_verified_level", 0) or 0) != 3 or report.get("phase49_current_verified_level_status") != "prototype_verified":
+        return False
+    if not bool(report.get("phase49_release_blockers_present")) or not bool(report.get("phase49_ready_for_continuous_readonly_foundation")):
+        return False
+    if not bool(report.get("phase50_architecture_lock_available")) or report.get("phase50_target_system") != "STOXL_Discord_Agent_OS":
+        return False
+    if not bool(report.get("phase50_architecture_locked")) or not bool(report.get("phase50_required_modules_defined")):
+        return False
+    if not bool(report.get("phase50_manual_gate_boundary_defined")) or not bool(report.get("phase50_automation_levels_defined")):
+        return False
+    if report.get("phase50_next_safe_bundle") != "continuous_readonly_runtime_foundation":
+        return False
+    for key in (
+        "phase50_production_unattended_before_hardening_forbidden",
+        "phase50_automatic_retry_before_new_manual_gate_forbidden",
+        "phase50_automatic_discord_send_before_send_gate_forbidden",
+        "phase50_raw_output_dump_forbidden",
+        "phase50_repeat_phase45_llm_call_forbidden",
+        "phase50_scheduler_live_execution_before_scheduler_gate_forbidden",
+    ):
+        if not bool(report.get(key)):
+            return False
+    if int(report.get("phase50_remaining_safe_mega_bundles", 0) or 0) != 7 or int(report.get("phase50_remaining_manual_gates", 0) or 0) != 5:
+        return False
+    if not bool(report.get("phase50_manual_gate_matrix_available")) or int(report.get("phase50_manual_gate_count", 0) or 0) != 6:
+        return False
+    if not bool(report.get("phase50_release_blocker_matrix_available")) or not bool(report.get("phase50_release_blockers_present")):
+        return False
+    for key in ("phase50_unattended_auto_reply_blocked", "phase50_automatic_retry_blocked", "phase50_automatic_discord_send_blocked", "phase50_llm_repeat_call_blocked", "phase50_raw_output_dump_blocked", "phase50_scheduler_live_execution_blocked"):
+        if not bool(report.get(key)):
+            return False
+    if not bool(report.get("phase51_52_foundation_available")) or not bool(report.get("phase51_52_continuous_readonly_runtime_foundation_ready")):
+        return False
+    if not bool(report.get("phase51_52_review_packet_base_ready")) or not bool(report.get("phase51_52_ready_for_manual_gate_readonly_live_runtime")):
+        return False
+    if not bool(report.get("phase51_52_manual_gate_needed_for_live_readonly_runtime")):
+        return False
+    if int(report.get("phase51_52_current_automation_level", 0) or 0) != 1:
+        return False
+    if not bool(report.get("phase51_52_readonly_live_runtime_preflight_available")) or not bool(report.get("phase51_52_manual_runtime_gate_required")):
+        return False
+    if not bool(report.get("phase51_52_manual_runtime_approval_phrase_defined")):
+        return False
+    if not bool(report.get("phase51_52_launch_packet_available")) or not bool(report.get("phase51_52_actual_runtime_command_available")):
+        return False
+    if not bool(report.get("phase52b_capture_closeout_available")) or not bool(report.get("phase52b_manual_readonly_runtime_executed_once")):
+        return False
+    if not bool(report.get("phase52b_gateway_connection_verified")) or not bool(report.get("phase52b_empty_capture_handled")):
+        return False
+    if int(report.get("phase52b_captured_event_count", -1) or 0) != 0:
+        return False
+    if not bool(report.get("phase53_capture_to_review_packet_replay_ready")) or not bool(report.get("phase53_empty_capture_replay_handled")):
+        return False
+    if not bool(report.get("phase53_next_readonly_capture_canary_plan_available")) or not bool(report.get("phase53_ready_for_next_manual_gate")):
+        return False
     if not bool(report.get("phase40t_execute_flag_present")) and (
         bool(report.get("phase40t_live_runtime_started")) or bool(report.get("phase40t_closeout_started"))
     ):
@@ -882,6 +1256,87 @@ def assert_forbidden_behavior_sentinel_safe(report: dict[str, Any]) -> None:
         raise ValueError("Forbidden behavior sentinel requires Phase47 retry cost/call-count guards.")
     if not report.get("phase47_discord_send_remains_disabled"):
         raise ValueError("Forbidden behavior sentinel requires Phase47 Discord send disabled.")
+    if not report.get("phase48a_final_closeout_available") or report.get("phase48a_final_closeout_mode") != "human_review_only":
+        raise ValueError("Forbidden behavior sentinel requires Phase48A human-review final closeout.")
+    if not report.get("phase48a_external_action_freeze_active"):
+        raise ValueError("Forbidden behavior sentinel requires Phase48A external action freeze.")
+    if not report.get("phase48a_phase41b_completed_once") or int(report.get("phase48a_phase41b_reply_count", 0) or 0) != 1:
+        raise ValueError("Forbidden behavior sentinel requires Phase48A Phase41B exactly-once state.")
+    if not report.get("phase48a_phase42_completed_once") or int(report.get("phase48a_phase42_message_sent_count", 0) or 0) != 1:
+        raise ValueError("Forbidden behavior sentinel requires Phase48A Phase42 exactly-once state.")
+    if not report.get("phase48a_phase45_llm_completed_once") or int(report.get("phase48a_phase45_llm_call_count", 0) or 0) != 1:
+        raise ValueError("Forbidden behavior sentinel requires Phase48A Phase45 exactly-once state.")
+    if not report.get("phase48a_phase45_output_safety_blocked"):
+        raise ValueError("Forbidden behavior sentinel requires Phase48A blocked output state.")
+    for key in (
+        "phase48a_phase45_repeat_llm_call_forbidden",
+        "phase48a_blocked_output_auto_retry_forbidden",
+        "phase48a_blocked_output_auto_discord_send_forbidden",
+        "phase48a_unattended_auto_reply_forbidden",
+        "phase48a_raw_output_dump_forbidden",
+        "phase48a_production_unattended_mode_not_ready",
+        "phase48a_future_external_action_requires_new_manual_gate",
+        "phase48a_operator_handoff_packet_available",
+    ):
+        if not report.get(key):
+            raise ValueError(f"Forbidden behavior sentinel missing Phase48A prohibition: {key}")
+    if not report.get("phase49_production_readiness_audit_available") or report.get("phase49_target_system") != "STOXL_Discord_Agent_OS":
+        raise ValueError("Forbidden behavior sentinel requires Phase49 production readiness audit.")
+    if not report.get("phase49_final_goal_is_operation_automation") or not report.get("phase49_human_review_only_is_not_final_goal"):
+        raise ValueError("Forbidden behavior sentinel requires final automation goal definition.")
+    if int(report.get("phase49_current_verified_level", 0) or 0) != 3 or report.get("phase49_current_verified_level_status") != "prototype_verified":
+        raise ValueError("Forbidden behavior sentinel requires Level 3 prototype verified state.")
+    if not report.get("phase49_release_blockers_present") or not report.get("phase49_ready_for_continuous_readonly_foundation"):
+        raise ValueError("Forbidden behavior sentinel requires Phase49 blockers and next foundation readiness.")
+    if not report.get("phase50_architecture_lock_available") or report.get("phase50_target_system") != "STOXL_Discord_Agent_OS":
+        raise ValueError("Forbidden behavior sentinel requires Phase50 architecture lock.")
+    if not report.get("phase50_architecture_locked") or not report.get("phase50_required_modules_defined") or not report.get("phase50_manual_gate_boundary_defined") or not report.get("phase50_automation_levels_defined"):
+        raise ValueError("Forbidden behavior sentinel requires Phase50 architecture definitions.")
+    if report.get("phase50_next_safe_bundle") != "continuous_readonly_runtime_foundation":
+        raise ValueError("Forbidden behavior sentinel requires Phase50 next safe bundle.")
+    for key in (
+        "phase50_production_unattended_before_hardening_forbidden",
+        "phase50_automatic_retry_before_new_manual_gate_forbidden",
+        "phase50_automatic_discord_send_before_send_gate_forbidden",
+        "phase50_raw_output_dump_forbidden",
+        "phase50_repeat_phase45_llm_call_forbidden",
+        "phase50_scheduler_live_execution_before_scheduler_gate_forbidden",
+    ):
+        if not report.get(key):
+            raise ValueError(f"Forbidden behavior sentinel missing Phase50 prohibition: {key}")
+    if int(report.get("phase50_remaining_safe_mega_bundles", 0) or 0) != 7 or int(report.get("phase50_remaining_manual_gates", 0) or 0) != 5:
+        raise ValueError("Forbidden behavior sentinel requires Phase50 roadmap counts.")
+    if not report.get("phase50_manual_gate_matrix_available") or int(report.get("phase50_manual_gate_count", 0) or 0) != 6:
+        raise ValueError("Forbidden behavior sentinel requires Phase50 manual gate matrix.")
+    if not report.get("phase50_release_blocker_matrix_available") or not report.get("phase50_release_blockers_present"):
+        raise ValueError("Forbidden behavior sentinel requires Phase50 release blockers.")
+    for key in ("phase50_unattended_auto_reply_blocked", "phase50_automatic_retry_blocked", "phase50_automatic_discord_send_blocked", "phase50_llm_repeat_call_blocked", "phase50_raw_output_dump_blocked", "phase50_scheduler_live_execution_blocked"):
+        if not report.get(key):
+            raise ValueError(f"Forbidden behavior sentinel requires blocker: {key}")
+    if not report.get("phase51_52_foundation_available") or not report.get("phase51_52_continuous_readonly_runtime_foundation_ready"):
+        raise ValueError("Forbidden behavior sentinel requires Phase51/52 read-only foundation.")
+    if not report.get("phase51_52_review_packet_base_ready") or not report.get("phase51_52_ready_for_manual_gate_readonly_live_runtime"):
+        raise ValueError("Forbidden behavior sentinel requires Phase51/52 review packet readiness and manual gate readiness.")
+    if not report.get("phase51_52_manual_gate_needed_for_live_readonly_runtime"):
+        raise ValueError("Forbidden behavior sentinel requires Phase51/52 manual gate boundary.")
+    if int(report.get("phase51_52_current_automation_level", 0) or 0) != 1:
+        raise ValueError("Forbidden behavior sentinel requires Phase51/52 automation level 1 foundation.")
+    if not report.get("phase51_52_readonly_live_runtime_preflight_available") or not report.get("phase51_52_manual_runtime_gate_required"):
+        raise ValueError("Forbidden behavior sentinel requires Phase51/52 read-only live runtime preflight.")
+    if not report.get("phase51_52_manual_runtime_approval_phrase_defined"):
+        raise ValueError("Forbidden behavior sentinel requires Phase51/52 approval phrase definition.")
+    if not report.get("phase51_52_launch_packet_available") or not report.get("phase51_52_actual_runtime_command_available"):
+        raise ValueError("Forbidden behavior sentinel requires Phase51/52 launch packet command.")
+    if not report.get("phase52b_capture_closeout_available") or not report.get("phase52b_manual_readonly_runtime_executed_once"):
+        raise ValueError("Forbidden behavior sentinel requires Phase52B read-only runtime closeout.")
+    if not report.get("phase52b_gateway_connection_verified") or not report.get("phase52b_empty_capture_handled"):
+        raise ValueError("Forbidden behavior sentinel requires Phase52B gateway verification and empty capture handling.")
+    if int(report.get("phase52b_captured_event_count", -1) or 0) != 0:
+        raise ValueError("Forbidden behavior sentinel expects Phase52B captured event count 0.")
+    if not report.get("phase53_capture_to_review_packet_replay_ready") or not report.get("phase53_empty_capture_replay_handled"):
+        raise ValueError("Forbidden behavior sentinel requires Phase53 empty capture replay readiness.")
+    if not report.get("phase53_next_readonly_capture_canary_plan_available") or not report.get("phase53_ready_for_next_manual_gate"):
+        raise ValueError("Forbidden behavior sentinel requires Phase53 next canary plan.")
     if not report.get("phase40t_execute_flag_present") and (report.get("phase40t_live_runtime_started") or report.get("phase40t_closeout_started")):
         raise ValueError("Forbidden behavior sentinel forbids Phase 40T started without execute flag.")
     if report.get("phase40t_ready_for_manual_readonly_runtime_launch") and not report.get("phase40t_reply_mode_readonly_private_test_only"):
@@ -939,6 +1394,33 @@ def render_forbidden_behavior_sentinel_markdown(report: dict[str, Any]) -> str:
             f"- Phase 47 human review required: {str(report.get('phase47_human_review_required', False)).lower()}",
             f"- Phase 47 retry execution available: {str(report.get('phase47_retry_execution_available', False)).lower()}",
             f"- Phase 47 Discord message sent: {str(report.get('phase47_discord_message_sent', False)).lower()}",
+            f"- Phase 48A final closeout mode: {report.get('phase48a_final_closeout_mode', '')}",
+            "- Phase 48A external action freeze active: true",
+            "- Unattended auto reply forbidden: true",
+            "- Production unattended mode not ready: true",
+            "- Final target system: STOXL_Discord_Agent_OS",
+            "- Production unattended before hardening forbidden: true",
+            "- Scheduler live execution before scheduler gate forbidden: true",
+            f"- Phase 50 next safe bundle: {report.get('phase50_next_safe_bundle', '')}",
+            "- Phase 51/52 read-only foundation cannot send: true",
+            "- Phase 51/52 read-only foundation cannot call LLM: true",
+            "- Phase 51/52 read-only foundation cannot call RAG: true",
+            "- Phase 51/52 read-only foundation cannot start scheduler: true",
+            "- Phase 51/52 read-only foundation cannot auto reply: true",
+            f"- Phase 51/52 foundation ready: {str(report.get('phase51_52_continuous_readonly_runtime_foundation_ready', False)).lower()}",
+            f"- Review packet base ready: {str(report.get('phase51_52_review_packet_base_ready', False)).lower()}",
+            f"- Next safe step: {report.get('phase51_52_next_safe_step', '')}",
+            "- Phase 51/52 read-only live runtime Manual Gate defined: true",
+            "- Phase 51/52 approval phrase value logged: false",
+            "- Phase 51/52 actual Discord runtime executed: false",
+            "- Capture closeout cannot start runtime: true",
+            "- Capture closeout cannot send Discord message: true",
+            "- Capture closeout cannot call LLM: true",
+            "- Capture closeout cannot call RAG: true",
+            "- Capture replay cannot expose raw content or raw IDs: true",
+            "- Capture replay cannot auto reply: true",
+            "- Phase52B Gateway connection verified: true",
+            "- Phase53 next read-only capture canary required: true",
             "- Forbidden behavior sentinel passed: true",
         ]
     ) + "\n"

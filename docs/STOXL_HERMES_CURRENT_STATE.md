@@ -106,3 +106,106 @@ and exposes no retry execution path. The documented next options are Option A:
 human-review-only project closeout, Option B: Phase48 new retry Manual Gate
 design, and Option C: Phase48 Discord send review gate design. Phase47 does not
 execute Option B or Option C.
+
+Phase48A adds the human-review-only final closeout and operator handoff packet.
+The historical completed external actions are fixed as: Phase41B private-test
+reply exactly once, Phase42 supervised private-test session exactly once, and
+Phase45 LLM/OpenRouter call exactly once. The blocked Phase45 output remains
+metadata-only, raw/full output is not included, and no Discord send occurred
+after the LLM output. External action freeze is active; automatic retry,
+automatic Discord send, unattended auto reply, repeat actions, and production
+unattended mode remain disabled.
+
+Phase49/50 clarifies the final target as `STOXL_Discord_Agent_OS`, not a
+human-review-only archive. Production unattended mode is still not ready.
+
+Phase51/52 adds the continuous read-only runtime foundation using synthetic
+fixtures only. It defines read-only event normalization, event guard
+classification, session context, review packet composition, and synthetic replay
+through the review-packet pipeline. It does not execute actual Discord runtime,
+connect to Discord Gateway, call Discord API send, send Discord messages, call
+LLM/OpenRouter, call RAG, create embeddings/vector data, run scheduler/cron live
+execution, or execute external actions. Current automation level is Level 1
+foundation, and the next operation must be a separate Manual Gate for longer
+read-only live runtime with Discord send disabled.
+
+Phase51/52-1 defines the read-only live runtime Manual Gate and launch packet.
+The approval phrase is now documented, the authoritative process-env gate keys
+are fixed, and the preflight/launch packet report readiness without exposing the
+phrase value. This hotfix does not execute actual Discord runtime.
+
+Phase52B closes out the separate operator-run read-only runtime Manual Gate as
+metadata only. The Gateway connection is verified, the run timed out normally,
+`captured_event_count=0`, empty capture is valid, and the capture file was not
+read by this bundle. Discord API send, Discord message send,
+LLM/OpenRouter, RAG, embedding/vector, scheduler live execution, and external
+execution remain false.
+
+Phase53 replays that empty capture into the review-packet pipeline without
+external action. It produces `review_packet_count=0` from the empty capture and
+marks the pipeline ready for the next real read-only capture canary. The next
+actual operation must be a separate Manual Gate for one private-test human
+message capture with Discord send disabled.
+Automation levels are locked from Level 0 through Level 5, with current verified
+state at Level 3 `prototype_verified`. Phase50 defines the final architecture,
+manual gate matrix, release blocker matrix, and roadmap. The next actual
+operation is the Phase53 read-only capture canary Manual Gate with one
+private-test human message and Discord send disabled.
+
+Phase54-57 closes out that separate read-only capture canary as metadata only:
+Gateway connection verified, `captured_event_count=1`,
+`captured_private_test_human_message_count=1`, and `review_packet_count=1`.
+It prepares manual-approved reply preflight, a deterministic mock reply packet,
+supervised private-test auto-reply safety prep, low-risk team auto-ops policy,
+and scheduler dry-run policy. This Lean Mega Bundle does not execute actual
+Discord runtime, call Discord API send, send a Discord message, attempt or call
+LLM/OpenRouter, call RAG, create embeddings/vector data, run scheduler/cron live
+execution, or execute external actions. The next actual operation must be a
+separate Manual Gate for actual private-test manual-approved reply with Discord
+send disabled until the approval gate is explicitly opened.
+
+Phase58 adds a dedicated manual-approved deterministic private-test reply actual
+path for the captured canary event, separate from older Phase39/41 send paths.
+Phase58-1 enables the actual command to enter the send branch when all Manual
+Gate checks pass, while this Lean Safe Hotfix verifies that branch only with a
+fake sender. The approval phrase is defined for the later Manual Gate, but
+phrase values are not logged in reports. The required verification commands do
+not execute actual Discord runtime, perform real Discord send, call
+LLM/OpenRouter, call RAG, create embeddings/vector data, run scheduler/cron live
+execution, or execute external actions. The next actual operation must be a
+separate Manual Gate: actual Phase58 private-test deterministic reply send
+exactly once.
+
+Phase58 closeout records the operator-run actual Phase58 private-test
+deterministic reply send as metadata only. The historical
+`message_sent_count=1` is fixed, closeout itself performs no Discord API send
+and sends no message, and repeat send is locked with
+`phase58_actual_manual_reply_already_consumed`. The next gate readiness is
+supervised private-test auto-reply Manual Gate prep.
+
+Phase59 adds the supervised private-test auto-reply runtime path for the next
+Manual Gate. The Safe Hotfix verifies only preflight, blocked reports, and a
+fake sender session in tests. Runtime scope is `private_test_only`, reply source
+is `deterministic_template`, self/bot/duplicate/public/team events are guarded,
+max session/reply/send/cooldown/kill-switch checks are represented, and real
+Discord runtime/send, LLM/OpenRouter, RAG, embedding/vector, scheduler live
+execution, and external execution remain disabled.
+
+Phase59-62 wires the Phase59 real Discord sender adapter for the next separate
+Manual Gate while keeping this Large Lean Mega Bundle no-runtime and no-send.
+The `send_adapter_required_for_actual_manual_gate` block is resolved by
+selecting the real adapter only after allow flag and gate checks pass; safe
+verification still uses fake sender tests. Phase60 team canary policy and
+Phase61 scheduler dry-run control are synchronized without live execution.
+Phase62 sets Level 2 as manual-gate deterministic reply verified, Level 3 as
+supervised private-test auto-reply nearly ready with sender wired, and keeps
+Level 4 team auto-ops and Level 5 production unattended not ready.
+
+Phase59-63 closes out the operator-run Phase59 supervised private-test
+auto-reply short session as metadata only. The historical send count is fixed at
+`historical_message_sent_count=1`, closeout itself performs no Discord API send
+and sends no Discord message, and repeat Phase59 sessions are locked with
+`phase59_supervised_auto_reply_session_already_consumed`. Phase60 low-risk
+team-channel canary path and Phase61 scheduler dry-run control are prepared for
+future Manual Gate work, while Level 3 is now verified and Level 4/5 remain not
+ready.

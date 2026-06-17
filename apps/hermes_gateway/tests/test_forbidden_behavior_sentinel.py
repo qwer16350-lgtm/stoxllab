@@ -165,6 +165,38 @@ def test_forbidden_behavior_sentinel_success_fixture() -> None:
     assert_true(report["phase47_manual_retry_requires_cost_guard"] is True, "47 cost guard")
     assert_true(report["phase47_manual_retry_requires_call_count_guard"] is True, "47 count guard")
     assert_true(report["phase47_discord_send_remains_disabled"] is True, "47 Discord disabled")
+    assert_true(report["phase48a_final_closeout_available"] is True, "48A final closeout")
+    assert_true(report["phase48a_final_closeout_mode"] == "human_review_only", "48A human review")
+    assert_true(report["phase48a_external_action_freeze_active"] is True, "48A freeze")
+    assert_true(report["phase48a_phase41b_completed_once"] is True, "48A 41B once")
+    assert_true(report["phase48a_phase41b_reply_count"] == 1, "48A 41B count")
+    assert_true(report["phase48a_phase42_completed_once"] is True, "48A 42 once")
+    assert_true(report["phase48a_phase42_message_sent_count"] == 1, "48A 42 count")
+    assert_true(report["phase48a_phase45_llm_completed_once"] is True, "48A 45 once")
+    assert_true(report["phase48a_phase45_llm_call_count"] == 1, "48A 45 count")
+    assert_true(report["phase48a_phase45_output_safety_blocked"] is True, "48A blocked")
+    assert_true(report["phase48a_phase45_repeat_llm_call_forbidden"] is True, "48A repeat forbidden")
+    assert_true(report["phase48a_blocked_output_auto_retry_forbidden"] is True, "48A retry forbidden")
+    assert_true(report["phase48a_blocked_output_auto_discord_send_forbidden"] is True, "48A send forbidden")
+    assert_true(report["phase48a_unattended_auto_reply_forbidden"] is True, "48A unattended forbidden")
+    assert_true(report["phase48a_raw_output_dump_forbidden"] is True, "48A raw forbidden")
+    assert_true(report["phase48a_production_unattended_mode_not_ready"] is True, "48A production not ready")
+    assert_true(report["phase48a_ready_for_production_unattended_mode"] is False, "48A production false")
+    assert_true(report["phase49_target_system"] == "STOXL_Discord_Agent_OS", "49 target")
+    assert_true(report["phase49_final_goal_is_operation_automation"] is True, "49 automation")
+    assert_true(report["phase49_human_review_only_is_not_final_goal"] is True, "49 not archive")
+    assert_true(report["phase49_production_unattended_ready"] is False, "49 production false")
+    assert_true(report["phase49_current_verified_level"] == 3, "49 level")
+    assert_true(report["phase49_release_blockers_present"] is True, "49 blockers")
+    assert_true(report["phase50_architecture_locked"] is True, "50 locked")
+    assert_true(report["phase50_next_safe_bundle"] == "continuous_readonly_runtime_foundation", "50 next")
+    assert_true(report["phase50_production_unattended_before_hardening_forbidden"] is True, "50 production forbidden")
+    assert_true(report["phase50_automatic_retry_before_new_manual_gate_forbidden"] is True, "50 retry forbidden")
+    assert_true(report["phase50_automatic_discord_send_before_send_gate_forbidden"] is True, "50 send forbidden")
+    assert_true(report["phase50_scheduler_live_execution_before_scheduler_gate_forbidden"] is True, "50 scheduler forbidden")
+    assert_true(report["phase50_remaining_safe_mega_bundles"] == 7, "50 bundles")
+    assert_true(report["phase50_remaining_manual_gates"] == 5, "50 gates")
+    assert_true(report["phase50_manual_gate_count"] == 6, "50 manual gate count")
 
 
 def test_forbidden_behavior_sentinel_flags_false() -> None:
@@ -290,6 +322,80 @@ def test_forbidden_behavior_sentinel_phase41b_45a_negative_fixtures() -> None:
         "phase47_external_execution",
         "phase47_ready_for_phase48_retry_manual_gate_design",
         "phase47_ready_for_phase48_discord_send_review_gate_design",
+        "phase48a_phase41b_repeat_allowed",
+        "phase48a_phase42_repeat_allowed",
+        "phase48a_phase45_repeat_llm_call_allowed",
+        "phase48a_blocked_output_auto_retry_allowed",
+        "phase48a_blocked_output_auto_discord_send_allowed",
+        "phase48a_unattended_auto_reply_allowed",
+        "phase48a_raw_output_dump_allowed",
+        "phase48a_ready_for_production_unattended_mode",
+        "phase48a_llm_api_call_attempted",
+        "phase48a_llm_api_called",
+        "phase48a_discord_api_send_called",
+        "phase48a_discord_message_sent",
+        "phase48a_rag_called",
+        "phase48a_embedding_api_called",
+        "phase48a_vector_index_created",
+        "phase48a_external_execution",
+        "phase48a_option_b_implemented",
+        "phase48a_option_c_implemented",
+        "phase48a_option_d_implemented",
+        "phase49_production_unattended_ready",
+        "phase49_automatic_retry_allowed",
+        "phase49_automatic_discord_send_allowed",
+        "phase49_scheduler_cron_live_execution",
+        "phase49_llm_api_call_attempted",
+        "phase49_llm_api_called",
+        "phase49_discord_api_send_called",
+        "phase49_discord_message_sent",
+        "phase49_rag_called",
+        "phase49_embedding_api_called",
+        "phase49_vector_index_created",
+        "phase49_external_execution",
+        "phase50_production_unattended_ready_now",
+        "phase50_production_unattended_before_hardening",
+        "phase50_automatic_retry_before_new_manual_gate",
+        "phase50_automatic_discord_send_before_send_gate",
+        "phase50_raw_output_dump_allowed",
+        "phase50_repeat_phase45_llm_call_allowed",
+        "phase50_scheduler_live_execution_before_scheduler_gate",
+        "phase50_scheduler_cron_live_execution",
+        "phase50_unattended_auto_reply_implemented",
+        "phase50_manual_gate_execution_available_now",
+        "phase50_llm_api_call_attempted",
+        "phase50_llm_api_called",
+        "phase50_discord_api_send_called",
+        "phase50_discord_message_sent",
+        "phase50_rag_called",
+        "phase50_embedding_api_called",
+        "phase50_vector_index_created",
+        "phase50_external_execution",
+        "phase52b_capture_closeout_runtime_started_by_bundle",
+        "phase52b_capture_closeout_discord_api_send_called",
+        "phase52b_capture_closeout_discord_message_sent",
+        "phase52b_capture_closeout_llm_api_call_attempted",
+        "phase52b_capture_closeout_llm_api_called",
+        "phase52b_capture_closeout_rag_called",
+        "phase52b_capture_closeout_embedding_api_called",
+        "phase52b_capture_closeout_vector_index_created",
+        "phase52b_capture_closeout_external_execution",
+        "phase52b_capture_closeout_scheduler_live_execution",
+        "phase52b_capture_closeout_raw_content_logged",
+        "phase52b_capture_closeout_raw_discord_ids_logged",
+        "phase52b_capture_closeout_secret_values_logged",
+        "phase53_capture_replay_discord_send_allowed",
+        "phase53_capture_replay_discord_api_send_called",
+        "phase53_capture_replay_discord_message_sent",
+        "phase53_capture_replay_llm_api_call_attempted",
+        "phase53_capture_replay_llm_api_called",
+        "phase53_capture_replay_rag_called",
+        "phase53_capture_replay_embedding_api_called",
+        "phase53_capture_replay_vector_index_created",
+        "phase53_capture_replay_external_execution",
+        "phase53_capture_replay_raw_content_logged",
+        "phase53_capture_replay_raw_discord_ids_logged",
+        "phase53_capture_replay_auto_reply_allowed",
     ):
         assert_raises(lambda selected=key: build_forbidden_behavior_sentinel({selected: True}), f"{key} should fail")
     build_forbidden_behavior_sentinel({"phase45_ready_for_actual_llm_one_shot_manual_gate": True, "phase45_ready_for_actual_llm_one_shot_call": True})
@@ -312,6 +418,23 @@ def test_forbidden_behavior_sentinel_phase41b_45a_negative_fixtures() -> None:
     assert_raises(lambda: build_forbidden_behavior_sentinel({"phase47_manual_retry_requires_new_phase": False}), "47 new phase required")
     assert_raises(lambda: build_forbidden_behavior_sentinel({"phase47_manual_retry_requires_new_approval_phrase": False}), "47 new phrase required")
     assert_raises(lambda: build_forbidden_behavior_sentinel({"phase47_discord_send_remains_disabled": False}), "47 Discord disabled")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase48a_external_action_freeze_active": False}), "48A freeze required")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase48a_phase41b_reply_count": 2}), "48A 41B count")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase48a_phase42_message_sent_count": 2}), "48A 42 count")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase48a_phase45_llm_call_count": 2}), "48A 45 count")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase48a_phase45_output_safety_blocked": False}), "48A blocked required")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase48a_phase45_repeat_llm_call_forbidden": False}), "48A repeat forbidden")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase48a_blocked_output_auto_retry_forbidden": False}), "48A retry forbidden")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase48a_blocked_output_auto_discord_send_forbidden": False}), "48A send forbidden")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase48a_unattended_auto_reply_forbidden": False}), "48A unattended forbidden")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase48a_raw_output_dump_forbidden": False}), "48A raw forbidden")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase48a_production_unattended_mode_not_ready": False}), "48A production not ready")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase49_production_unattended_ready": True}), "49 production unsafe")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase49_current_verified_level": 5}), "49 level unsafe")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase50_architecture_locked": False}), "50 architecture required")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase50_next_safe_bundle": "other"}), "50 next required")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase50_scheduler_live_execution_before_scheduler_gate_forbidden": False}), "50 scheduler forbidden")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase50_release_blockers_present": False}), "50 blockers required")
     assert_raises(lambda: build_forbidden_behavior_sentinel({"phase41b_message_sent_count": 1}), "41B count 0")
     assert_raises(lambda: build_forbidden_behavior_sentinel({"phase41c_message_sent_count": 0}), "41C count 1")
     assert_raises(lambda: build_forbidden_behavior_sentinel({"phase41c_sent_scope": "none"}), "41C private scope")
@@ -326,6 +449,72 @@ def test_forbidden_behavior_sentinel_post_llm_call_fixtures() -> None:
     assert_raises(lambda: build_forbidden_behavior_sentinel({"post_llm_call_sentinel": True, "total_phase36_llm_call_count": 2}), "LLM count >1 should fail")
     assert_raises(lambda: build_forbidden_behavior_sentinel({"post_llm_call_sentinel": True, "total_phase36_discord_message_sent_count": 1}), "Discord count should fail")
     assert_raises(lambda: build_forbidden_behavior_sentinel({"post_llm_call_sentinel": True, "phase36_discord_message_sent": True}), "Discord sent should fail")
+
+
+def test_forbidden_behavior_sentinel_phase51_52_foundation() -> None:
+    report = build_forbidden_behavior_sentinel()
+    assert_true(report["phase51_52_foundation_available"] is True, "51/52 available")
+    assert_true(report["phase51_52_continuous_readonly_runtime_foundation_ready"] is True, "51/52 ready")
+    assert_true(report["phase51_52_review_packet_base_ready"] is True, "Packet ready")
+    assert_true(report["phase51_52_current_automation_level"] == 1, "Level 1")
+    assert_true(report["phase51_52_ready_for_manual_gate_readonly_live_runtime"] is True, "Manual gate readiness")
+    assert_true(report["phase51_52_readonly_foundation_can_send"] is False, "Cannot send")
+    assert_true(report["phase51_52_readonly_foundation_can_call_llm"] is False, "Cannot call LLM")
+    assert_true(report["phase51_52_readonly_foundation_can_call_rag"] is False, "Cannot call RAG")
+    assert_true(report["phase51_52_readonly_foundation_can_start_scheduler"] is False, "Cannot start scheduler")
+    assert_true(report["phase51_52_readonly_foundation_can_auto_reply"] is False, "Cannot auto reply")
+    assert_true(report["phase51_52_readonly_live_runtime_preflight_available"] is True, "Live preflight available")
+    assert_true(report["phase51_52_manual_runtime_gate_required"] is True, "Manual runtime gate")
+    assert_true(report["phase51_52_manual_runtime_approval_phrase_defined"] is True, "Phrase defined")
+    assert_true(report["phase51_52_manual_runtime_approval_phrase_value_logged"] is False, "Phrase hidden")
+    assert_true(report["phase51_52_launch_packet_available"] is True, "Launch packet")
+    assert_true(report["phase51_52_actual_runtime_command_available"] is True, "Runtime command")
+    assert_true(report["phase52b_capture_closeout_available"] is True, "52B closeout available")
+    assert_true(report["phase52b_manual_readonly_runtime_executed_once"] is True, "52B manual runtime observed")
+    assert_true(report["phase52b_gateway_connection_verified"] is True, "52B gateway verified")
+    assert_true(report["phase52b_captured_event_count"] == 0, "52B empty capture count")
+    assert_true(report["phase52b_empty_capture_handled"] is True, "52B empty capture handled")
+    assert_true(report["phase53_capture_to_review_packet_replay_ready"] is True, "53 replay ready")
+    assert_true(report["phase53_empty_capture_replay_handled"] is True, "53 empty replay handled")
+    assert_true(report["phase53_next_readonly_capture_canary_plan_available"] is True, "53 canary plan")
+    assert_true(report["phase53_ready_for_next_manual_gate"] is True, "53 next manual gate")
+    for key in (
+        "phase51_52_readonly_foundation_can_send",
+        "phase51_52_readonly_foundation_can_call_llm",
+        "phase51_52_readonly_foundation_can_call_rag",
+        "phase51_52_readonly_foundation_can_start_scheduler",
+        "phase51_52_readonly_foundation_can_auto_reply",
+        "phase51_52_actual_discord_runtime_executed",
+        "phase51_52_discord_api_send_called",
+        "phase51_52_discord_message_sent",
+        "phase51_52_actual_llm_api_call_attempted",
+        "phase51_52_actual_llm_api_called",
+        "phase51_52_rag_called",
+        "phase51_52_embedding_api_called",
+        "phase51_52_vector_index_created",
+        "phase51_52_external_execution",
+        "phase51_52_scheduler_cron_live_execution",
+        "phase51_52_ready_for_auto_reply",
+        "phase51_52_manual_runtime_approval_phrase_value_logged",
+        "phase51_52_manual_runtime_live_runtime_started",
+        "phase51_52_manual_runtime_discord_gateway_connected",
+        "phase51_52_manual_runtime_discord_api_send_called",
+        "phase51_52_manual_runtime_discord_message_sent",
+        "phase51_52_manual_runtime_actual_llm_api_call_attempted",
+        "phase51_52_manual_runtime_actual_llm_api_called",
+        "phase51_52_manual_runtime_rag_called",
+        "phase51_52_manual_runtime_embedding_api_called",
+        "phase51_52_manual_runtime_vector_index_created",
+        "phase51_52_manual_runtime_external_execution",
+        "phase51_52_manual_runtime_scheduler_cron_live_execution",
+    ):
+        assert_raises(lambda selected=key: build_forbidden_behavior_sentinel({selected: True}), f"{key} should fail")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase51_52_current_automation_level": 2}), "Level must be 1")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase51_52_review_packet_base_ready": False}), "Packet readiness required")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase51_52_manual_runtime_approval_phrase_defined": False}), "Phrase definition required")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase52b_gateway_connection_verified": False}), "52B gateway required")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase52b_captured_event_count": 1}), "52B empty count required")
+    assert_raises(lambda: build_forbidden_behavior_sentinel({"phase53_capture_to_review_packet_replay_ready": False}), "53 replay required")
 
 
 def test_forbidden_behavior_sentinel_no_sensitive_values() -> None:
@@ -347,6 +536,7 @@ def main() -> int:
         test_forbidden_behavior_sentinel_actual_message_count_fixture,
         test_forbidden_behavior_sentinel_phase41b_45a_negative_fixtures,
         test_forbidden_behavior_sentinel_post_llm_call_fixtures,
+        test_forbidden_behavior_sentinel_phase51_52_foundation,
         test_forbidden_behavior_sentinel_no_sensitive_values,
         test_forbidden_behavior_sentinel_markdown,
     ]
