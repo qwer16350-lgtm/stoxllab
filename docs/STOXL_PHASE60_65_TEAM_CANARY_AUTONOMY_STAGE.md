@@ -4,6 +4,16 @@ This Large Lean Mega Bundle prepares the low-risk team-channel canary path
 without actual Discord runtime, real Discord send, LLM/RAG, external execution,
 or scheduler live execution.
 
+Phase60 Safe Closeout:
+
+- Phase60 actual low-risk team-channel canary was already executed exactly once
+  before closeout.
+- Historical `message_sent_count` is fixed at `1`.
+- Closeout performs no new Discord send.
+- Repeat team canary send is locked with `phase60_team_canary_already_consumed`.
+- Historical real-send semantics are recorded as
+  `real_team_discord_send_performed=true` only in the metadata-only closeout.
+
 Phase60 team canary path:
 
 - Team canary actual path is available.
@@ -86,8 +96,8 @@ Phase62/65 autonomy:
 - Level 1: read-only observation verified.
 - Level 2: manual-gate deterministic reply verified.
 - Level 3: supervised private-test auto-reply verified.
-- Level 4: low-risk team-channel canary path ready, not executed.
+- Level 4: low-risk team-channel canary verified once / partial.
 - Level 5: production unattended not ready.
 
-Next actual operation must be a separate Manual Gate: actual Phase60 low-risk
-team-channel canary exactly once.
+Next actual operation must be a separate Manual Gate for supervised team-channel
+auto-ops. Production unattended mode remains not ready.

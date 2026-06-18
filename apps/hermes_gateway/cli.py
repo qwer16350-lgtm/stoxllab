@@ -226,6 +226,7 @@ from phase60_65_team_canary_autonomy_stage import (
     build_actual_phase60_team_canary,
     build_phase60_65_team_canary_autonomy_stage,
     build_phase60_team_canary_blocked_report,
+    build_phase60_team_canary_closeout,
     build_phase60_team_canary_preflight,
     render_phase60_65_team_canary_autonomy_stage_markdown,
 )
@@ -473,6 +474,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--phase59-63-agent-os-supervised-closeout", action="store_true", help="Print Phase 59-63 supervised closeout without runtime or send.")
     parser.add_argument("--phase60-team-canary-preflight", action="store_true", help="Print Phase 60 low-risk team canary preflight without runtime or send.")
     parser.add_argument("--phase60-team-canary-blocked-report", action="store_true", help="Print Phase 60 blocked team canary report without runtime or send.")
+    parser.add_argument("--phase60-team-canary-closeout", action="store_true", help="Print Phase 60 team canary metadata-only closeout.")
     parser.add_argument("--actual-phase60-team-canary", action="store_true", help="Print Phase 60 actual path report; blocked unless a later Manual Gate is opened.")
     parser.add_argument("--allow-actual-phase60-team-canary", action="store_true", help="Allow Phase 60 team canary gate evaluation for a later Manual Gate.")
     parser.add_argument("--phase60-65-team-canary-autonomy-stage", action="store_true", help="Print Phase 60-65 team canary autonomy stage without runtime or send.")
@@ -3197,6 +3199,20 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- message_sent_count: {output.get('message_sent_count')}")
         return 0
 
+    if args.phase60_team_canary_closeout:
+        output = build_phase60_team_canary_closeout()
+        if args.markdown:
+            print(render_phase60_65_team_canary_autonomy_stage_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase60 team canary closeout")
+            print(f"- phase60_team_canary_closed_out: {output.get('phase60_team_canary_closed_out')}")
+            print(f"- historical_message_sent_count: {output.get('historical_message_sent_count')}")
+            print(f"- phase60_repeat_team_canary_locked: {output.get('phase60_repeat_team_canary_locked')}")
+            print(f"- current_verified_level: {output.get('current_verified_level')}")
+        return 0
+
     if args.actual_phase60_team_canary:
         output = build_actual_phase60_team_canary(
             allow_flag_present=args.allow_actual_phase60_team_canary
@@ -3529,6 +3545,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.phase59_63_agent_os_supervised_closeout
         or args.phase60_team_canary_preflight
         or args.phase60_team_canary_blocked_report
+        or args.phase60_team_canary_closeout
         or args.actual_phase60_team_canary
         or args.allow_actual_phase60_team_canary
         or args.phase60_65_team_canary_autonomy_stage

@@ -124,3 +124,8 @@ canary exactly once: `HERMES_PHASE60_TEAM_CANARY_APPROVED`,
 and LLM/RAG/embedding/vector/external disable keys. Required reply mode is
 `known_team_low_risk_canary_only`. This bundle does not run the allow command
 and does not perform real team-channel send.
+
+Phase60 actual low-risk team-channel canary has now been consumed exactly once
+and is locked against repeat sends with `phase60_team_canary_already_consumed`.
+Any later team-channel automation must be a separate Manual Gate and must not
+reuse the consumed Phase60 canary gate.

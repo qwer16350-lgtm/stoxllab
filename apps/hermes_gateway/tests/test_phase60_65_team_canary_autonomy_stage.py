@@ -16,6 +16,7 @@ from phase60_65_team_canary_autonomy_stage import (
     build_actual_phase60_team_canary,
     build_phase60_65_team_canary_autonomy_stage,
     build_phase60_team_canary_blocked_report,
+    build_phase60_team_canary_closeout,
     build_phase60_team_canary_preflight,
 )
 
@@ -67,7 +68,7 @@ def test_phase60_path_available_and_default_blocked() -> None:
     assert_true(preflight["team_canary_channel_id_value_logged"] is False, "No channel value")
     blocked = build_actual_phase60_team_canary(env=opened_env())
     assert_true(blocked["blocked"] is True, "Default blocked")
-    assert_true("allow_flag_missing" in blocked["blocked_reasons"], "Allow missing")
+    assert_true(blocked["blocked_reasons"] == ["phase60_team_canary_already_consumed"], "Consumed lock")
     assert_true(blocked["team_canary_channel_id_present"] is True, "Channel present")
     assert_true(blocked["team_canary_channel_id_value_logged"] is False, "Channel hidden")
     assert_true(blocked["actual_team_canary_executed"] is False, "No execution")
@@ -82,6 +83,7 @@ def test_fake_sender_success_exactly_once() -> None:
         allow_flag_present=True,
         env=opened_env(),
         send_adapter=sender,
+        phase60_team_canary_already_consumed=False,
     )
     assert_true(sender.calls == 1, "One fake send")
     assert_true(report["blocked"] is False, "Not blocked")
@@ -96,6 +98,42 @@ def test_fake_sender_success_exactly_once() -> None:
     assert_true(report["ready_for_repeat_team_canary"] is False, "No repeat")
     assert_true(report["public_channel_send_allowed"] is False, "No public")
     assert_true(report["unknown_channel_send_allowed"] is False, "No unknown")
+
+
+def test_phase60_actual_success_historical_closeout() -> None:
+    report = build_phase60_team_canary_closeout()
+    assert_true(report["report_type"] == "phase60_team_canary_closeout", "Closeout report")
+    assert_true(report["phase60_team_canary_closed_out"] is True, "Closed out")
+    assert_true(report["phase60_actual_team_canary_sent"] is True, "Historical sent")
+    assert_true(report["historical_message_sent_count"] == 1, "Historical count")
+    assert_true(report["real_team_discord_send_performed"] is True, "Historical real send semantic")
+    assert_true(report["phase60_repeat_team_canary_locked"] is True, "Repeat locked")
+    assert_true(report["ready_for_repeat_team_canary"] is False, "No repeat")
+    assert_true(report["current_verified_level"] == "level4_low_risk_team_channel_canary_verified_once", "Level 4")
+    assert_true(report["previous_verified_level"] == "level3_supervised_private_test_auto_reply_verified", "Previous level")
+    assert_true(report["next_target_level"] == "level4_supervised_team_channel_auto_ops", "Next target")
+    assert_true(report["ready_for_production_unattended"] is False, "Production false")
+    assert_true(report["discord_api_send_called"] is False, "Closeout no API")
+    assert_true(report["discord_message_sent"] is False, "Closeout no send")
+    assert_true(report["message_sent_count"] == 0, "Closeout no new message")
+
+
+def test_repeat_actual_blocks_even_with_open_gate() -> None:
+    sender = FakeTeamCanarySender()
+    report = build_actual_phase60_team_canary(
+        allow_flag_present=True,
+        env=opened_env(),
+        send_adapter=sender,
+    )
+    assert_true(sender.calls == 0, "Consumed canary must not call sender")
+    assert_true(report["blocked"] is True, "Blocked")
+    assert_true(report["blocked_reasons"] == ["phase60_team_canary_already_consumed"], "Consumed reason only")
+    assert_true(report["actual_team_canary_executed"] is False, "No execution")
+    assert_true(report["real_team_discord_send_performed"] is False, "No real send")
+    assert_true(report["discord_api_send_called"] is False, "No API")
+    assert_true(report["discord_message_sent"] is False, "No message")
+    assert_true(report["message_sent_count"] == 0, "No count")
+    assert_true(report["ready_for_repeat_team_canary"] is False, "No repeat")
 
 
 def test_public_unknown_high_risk_and_multi_message_blocked() -> None:
@@ -155,6 +193,8 @@ def main() -> int:
     tests = [
         test_phase60_path_available_and_default_blocked,
         test_fake_sender_success_exactly_once,
+        test_phase60_actual_success_historical_closeout,
+        test_repeat_actual_blocks_even_with_open_gate,
         test_public_unknown_high_risk_and_multi_message_blocked,
         test_phase61_scheduler_and_phase62_65_matrix,
         test_no_external_or_sensitive_values,

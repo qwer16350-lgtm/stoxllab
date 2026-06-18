@@ -223,3 +223,12 @@ Phase60-65C fixes the authoritative team canary channel environment key to
 `HERMES_PHASE60_TEAM_CANARY_CHANNEL_ID`. Reports expose only channel-ID
 presence and never log the channel ID value. The actual Phase60 allow command
 remains reserved for the next separate Manual Gate.
+
+Phase60-66 closes out the operator-run Phase60 low-risk team-channel canary as
+metadata only. The historical send count is fixed at
+`historical_message_sent_count=1`, closeout itself performs no Discord API send
+and sends no Discord message, and repeat team canary sends are locked with
+`phase60_team_canary_already_consumed`. The historical real-send semantic is
+recorded as `real_team_discord_send_performed=true` in closeout only. Current
+verified level is now `level4_low_risk_team_channel_canary_verified_once`;
+production unattended mode remains not ready.

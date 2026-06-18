@@ -209,8 +209,17 @@ def _deterministic_reply_text() -> str:
     return "Phase60 team canary acknowledgement. Low-risk team-channel scope remains supervised."
 
 
-def _blocked_reasons(gate: Mapping[str, Any], guard: Mapping[str, Any], *, allow_flag_present: bool) -> list[str]:
+def _blocked_reasons(
+    gate: Mapping[str, Any],
+    guard: Mapping[str, Any],
+    *,
+    allow_flag_present: bool,
+    phase60_team_canary_already_consumed: bool = False,
+) -> list[str]:
     reasons: list[str] = []
+    if phase60_team_canary_already_consumed:
+        reasons.append("phase60_team_canary_already_consumed")
+        return reasons
     if not allow_flag_present:
         reasons.append("allow_flag_missing")
     if not gate.get("manual_approval_true"):
@@ -290,10 +299,16 @@ def build_actual_phase60_team_canary(
     env: Mapping[str, str] | None = None,
     event: Mapping[str, Any] | None = None,
     send_adapter: Phase60TeamCanarySendAdapter | None = None,
+    phase60_team_canary_already_consumed: bool = True,
 ) -> dict[str, Any]:
     gate = _gate_snapshot(env)
     guard = _event_guard(event)
-    reasons = _blocked_reasons(gate, guard, allow_flag_present=allow_flag_present)
+    reasons = _blocked_reasons(
+        gate,
+        guard,
+        allow_flag_present=allow_flag_present,
+        phase60_team_canary_already_consumed=phase60_team_canary_already_consumed,
+    )
     if reasons:
         report = {
             **_base_report(),
@@ -301,6 +316,8 @@ def build_actual_phase60_team_canary(
             **guard,
             "report_type": "phase60_team_canary_blocked",
             "allow_flag_present": allow_flag_present,
+            "phase60_team_canary_already_consumed": phase60_team_canary_already_consumed,
+            "phase60_repeat_team_canary_locked": phase60_team_canary_already_consumed,
             "blocked": True,
             "blocked_reasons": reasons,
             "ready_for_phase60_team_canary_manual_gate": False,
@@ -319,12 +336,15 @@ def build_actual_phase60_team_canary(
         **guard,
         "report_type": "phase60_team_canary_actual_session",
         "allow_flag_present": True,
+        "phase60_team_canary_already_consumed": False,
+        "phase60_repeat_team_canary_locked": True,
         "blocked": False,
         "blocked_reasons": [],
         "actual_team_canary_executed": bool(send_result.message_sent),
         "real_team_sender_adapter_selected": send_adapter is None,
         "fake_sender_adapter_used": send_adapter is not None,
         "team_channel_auto_ops_executed": bool(send_result.message_sent),
+        "real_team_discord_send_performed": bool(send_result.message_sent and send_result.api_send_called and send_adapter is None),
         "team_channel_discord_send_called": bool(send_result.api_send_called),
         "discord_api_send_called": bool(send_result.api_send_called),
         "discord_message_sent": bool(send_result.message_sent),
@@ -334,6 +354,42 @@ def build_actual_phase60_team_canary(
         "ready_for_phase60_team_canary_manual_gate": False,
     }
     assert_phase60_65_team_canary_safe(report, allow_fake_success=True)
+    return report
+
+
+def build_phase60_team_canary_closeout() -> dict[str, Any]:
+    report: dict[str, Any] = {
+        **_base_report(),
+        "report_type": "phase60_team_canary_closeout",
+        "metadata_only": True,
+        "phase60_team_canary_closed_out": True,
+        "phase60_actual_team_canary_sent": True,
+        "historical_message_sent_count": 1,
+        "phase60_repeat_team_canary_locked": True,
+        "phase60_team_canary_already_consumed": True,
+        "ready_for_repeat_team_canary": False,
+        "ready_for_phase60_team_canary_manual_gate": False,
+        "sent_scope": "known_team_channel_only",
+        "reply_text_source": "deterministic_template",
+        "real_team_discord_send_performed": True,
+        "current_verified_level": "level4_low_risk_team_channel_canary_verified_once",
+        "previous_verified_level": "level3_supervised_private_test_auto_reply_verified",
+        "next_target_level": "level4_supervised_team_channel_auto_ops",
+        "ready_for_production_unattended": False,
+        "phase61_scheduler_gate_available": True,
+        "scheduler_dry_run_control_available": True,
+        "ready_for_scheduler_manual_gate": False,
+        "phase62_65_autonomy_matrix_updated": True,
+        "autonomy_matrix": {
+            "level_1": "read_only_observation_verified",
+            "level_2": "manual_gate_deterministic_reply_verified",
+            "level_3": "supervised_private_test_auto_reply_verified",
+            "level_4": "low_risk_team_channel_canary_verified_once_partial",
+            "level_5": "production_unattended_not_ready",
+        },
+        "next_actual_operation": "separate_manual_gate_for_supervised_team_channel_auto_ops",
+    }
+    assert_phase60_65_team_canary_safe(report, allow_historical_closeout=True)
     return report
 
 
@@ -392,7 +448,11 @@ def build_phase60_65_team_canary_autonomy_stage() -> dict[str, Any]:
 
 
 def assert_phase60_65_team_canary_safe(
-    report: Mapping[str, Any], *, allow_ready: bool = False, allow_fake_success: bool = False
+    report: Mapping[str, Any],
+    *,
+    allow_ready: bool = False,
+    allow_fake_success: bool = False,
+    allow_historical_closeout: bool = False,
 ) -> None:
     text = json.dumps(report, ensure_ascii=False)
     if SECRET_RE.search(text.lower()) or LONG_ID_RE.search(text) or APPROVAL_RE.search(text):
@@ -422,7 +482,7 @@ def assert_phase60_65_team_canary_safe(
     ):
         if report.get(key):
             raise ValueError(f"Phase60-65 unsafe flag is true: {key}")
-    if not allow_fake_success:
+    if not allow_fake_success and not allow_historical_closeout:
         for key in (
             "actual_team_canary_executed",
             "real_team_discord_send_performed",
@@ -437,6 +497,10 @@ def assert_phase60_65_team_canary_safe(
             raise ValueError("Phase60-65 safe reports must not send messages.")
     if int(report.get("message_sent_count", 0) or 0) > 1:
         raise ValueError("Phase60-65 message_sent_count must not exceed 1.")
+    if allow_historical_closeout and int(report.get("historical_message_sent_count", 0) or 0) != 1:
+        raise ValueError("Phase60 closeout historical_message_sent_count must be 1.")
+    if allow_historical_closeout and not report.get("real_team_discord_send_performed"):
+        raise ValueError("Phase60 closeout must record historical real team send semantic.")
     if report.get("reply_text_source") != "deterministic_template":
         raise ValueError("Phase60-65 reply text source must be deterministic_template.")
     if report.get("sent_scope") != "known_team_channel_only":
@@ -455,8 +519,8 @@ def render_phase60_65_team_canary_autonomy_stage_markdown(report: Mapping[str, A
             "- Ready for Phase60 team canary Manual Gate: true",
             "- Phase61 scheduler dry-run control available: true",
             "- Phase62/65 autonomy matrix updated: true",
-            "- Current verified level: level3_supervised_private_test_auto_reply_verified",
-            "- Next target level: level4_low_risk_team_channel_canary",
+            f"- Current verified level: {report.get('current_verified_level', 'level3_supervised_private_test_auto_reply_verified')}",
+            f"- Next target level: {report.get('next_target_level', 'level4_low_risk_team_channel_canary')}",
             "- Discord API send called: false",
             "- Discord message sent: false",
             "- LLM/RAG/embedding/vector/external: false",

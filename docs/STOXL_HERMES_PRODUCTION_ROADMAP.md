@@ -104,3 +104,10 @@ next target is `level4_low_risk_team_channel_canary`. The team canary actual
 path is present but default blocked, public/unknown/high-risk events are
 blocked, and the send branch is verified only with a fake sender. Scheduler
 live execution and production unattended mode remain not ready.
+
+Phase60-66 records the completed low-risk team-channel canary exactly once and
+locks repeat sends. Current verified level is
+`level4_low_risk_team_channel_canary_verified_once`, still partial because
+supervised team-channel auto-ops and scheduler live operation are not approved.
+Next work is a Large Lean stage for supervised team-channel auto-ops, still
+manual-gated.
