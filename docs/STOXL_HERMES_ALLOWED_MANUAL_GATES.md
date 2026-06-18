@@ -129,3 +129,16 @@ Phase60 actual low-risk team-channel canary has now been consumed exactly once
 and is locked against repeat sends with `phase60_team_canary_already_consumed`.
 Any later team-channel automation must be a separate Manual Gate and must not
 reuse the consumed Phase60 canary gate.
+
+Phase67 defines the next Manual Gate keys for supervised team-channel auto-ops:
+`HERMES_PHASE67_TEAM_AUTO_OPS_APPROVED`,
+`HERMES_PHASE67_TEAM_AUTO_OPS_APPROVAL_PHRASE`,
+`HERMES_PHASE67_TEAM_AUTO_OPS_CHANNEL_ID`,
+`HERMES_PHASE67_TEAM_AUTO_OPS_KILL_SWITCH_READY`,
+`HERMES_PHASE67_TEAM_AUTO_OPS_MAX_SESSION_SECONDS`,
+`HERMES_PHASE67_TEAM_AUTO_OPS_MAX_SEND_COUNT`,
+`HERMES_PHASE67_TEAM_AUTO_OPS_MAX_REPLY_COUNT`,
+`HERMES_PHASE67_TEAM_AUTO_OPS_COOLDOWN_SECONDS`, Discord send/reply mode keys,
+and LLM/RAG/embedding/vector/external disable keys. Required reply mode is
+`supervised_team_low_risk_auto_ops_only`. This bundle does not run the allow
+command and does not perform real send.

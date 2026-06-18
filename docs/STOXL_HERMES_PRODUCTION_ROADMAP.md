@@ -111,3 +111,9 @@ locks repeat sends. Current verified level is
 supervised team-channel auto-ops and scheduler live operation are not approved.
 Next work is a Large Lean stage for supervised team-channel auto-ops, still
 manual-gated.
+
+Phase67-72 prepares that supervised team-channel auto-ops stage without external
+action. It adds queue/review-packet/deterministic-candidate readiness while
+keeping actual send default blocked, preserving the Phase60 consumed lock, and
+keeping Level 5 production unattended not ready. The next actual operation must
+be a separate Manual Gate.

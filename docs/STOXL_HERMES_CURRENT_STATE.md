@@ -232,3 +232,11 @@ and sends no Discord message, and repeat team canary sends are locked with
 recorded as `real_team_discord_send_performed=true` in closeout only. Current
 verified level is now `level4_low_risk_team_channel_canary_verified_once`;
 production unattended mode remains not ready.
+
+Phase67-72 prepares supervised team-channel auto-ops with a team-event
+classifier, low-risk classifier, ops queue, review packet, and deterministic
+reply candidate. It is still manual-gated, default blocked for actual send, and
+does not execute Discord runtime/send, LLM/OpenRouter, RAG, embedding/vector,
+external execution, scheduler live execution, or production unattended mode.
+Current verified level remains `level4_low_risk_team_channel_canary_verified_once`;
+next target is `level4_supervised_team_channel_auto_ops`.
