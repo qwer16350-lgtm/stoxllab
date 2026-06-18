@@ -152,3 +152,10 @@ reply remains disabled by default. External execution remains disabled. The
 runtime facade, docs consolidation index, and MVP state registry remain SSOT.
 Recommended next stage is Production Hardening G: dry-run safety audit, no live
 action.
+
+Production Hardening G adds the dry-run production safety audit and launch
+readiness scorecard. Dry-run audit only. No live action performed. MVP complete
+but production unattended still blocked. The scorecard marks MVP controls and
+safety defaults as passed, while live-ops and operator controls remain blocking.
+Next safe live action would be read-only live soak, not send/reply. Recommended
+next stage is Production Hardening H: read-only live soak plan, no send.

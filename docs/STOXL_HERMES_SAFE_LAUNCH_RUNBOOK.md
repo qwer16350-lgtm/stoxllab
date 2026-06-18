@@ -49,3 +49,18 @@ python apps\hermes_gateway\cli.py --hermes-safe-launch-runbook --json
 
 Recommended next stage: Production Hardening G - dry-run safety audit, no live
 action.
+
+Production Hardening G adds a dry-run safety audit and launch readiness
+scorecard. Dry-run audit only. No live action performed. MVP complete but
+production unattended still blocked. Next safe live action would be read-only
+live soak, not send/reply.
+
+Additional report commands:
+
+```powershell
+python apps\hermes_gateway\cli.py --hermes-production-safety-audit --json
+python apps\hermes_gateway\cli.py --hermes-launch-readiness-scorecard --json
+```
+
+Recommended next stage: Production Hardening H - read-only live soak plan, no
+send.

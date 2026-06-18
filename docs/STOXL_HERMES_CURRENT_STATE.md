@@ -323,3 +323,12 @@ LLM/RAG live reply remains disabled by default. External execution remains
 disabled. Runtime facade, docs consolidation index, and MVP state registry
 remain SSOT. Recommended next stage is Production Hardening G: dry-run safety
 audit, no live action.
+
+Production Hardening G adds `production_safety_audit.py`, a dry-run production
+safety audit, and a launch readiness scorecard. Dry-run audit only. No live
+action performed. MVP complete but production unattended still blocked. Existing
+Manual Gate behavior, consumed/no-repeat locks, secret redaction, public/
+unknown/high-risk blocking, and disabled LLM/RAG/external/scheduler-live
+defaults remain preserved. Next safe live action would be read-only live soak,
+not send/reply. Recommended next stage is Production Hardening H: read-only live
+soak plan, no send.

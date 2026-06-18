@@ -262,6 +262,10 @@ from production_hardening import (
     build_hermes_production_hardening_checklist,
     build_hermes_safe_launch_runbook,
 )
+from production_safety_audit import (
+    build_hermes_launch_readiness_scorecard,
+    build_hermes_production_safety_audit,
+)
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight, render_rag_evidence_private_test_send_preflight_markdown
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope, render_rag_evidence_prompt_envelope_markdown
 from rag_evidence_review_packet import build_rag_evidence_review_packet, render_rag_evidence_review_packet_markdown
@@ -530,6 +534,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--hermes-docs-consolidation-index", action="store_true", help="Print report-only Hermes docs consolidation index.")
     parser.add_argument("--hermes-production-hardening-checklist", action="store_true", help="Print report-only Hermes production hardening checklist.")
     parser.add_argument("--hermes-safe-launch-runbook", action="store_true", help="Print report-only Hermes safe launch runbook.")
+    parser.add_argument("--hermes-production-safety-audit", action="store_true", help="Print dry-run Hermes production safety audit.")
+    parser.add_argument("--hermes-launch-readiness-scorecard", action="store_true", help="Print dry-run Hermes launch readiness scorecard.")
     parser.add_argument("--actual-phase74-limited-auto-mode", action="store_true", help="Print Phase 74 actual path report; blocked until a separate Manual Gate.")
     parser.add_argument("--allow-actual-phase74-limited-auto-mode", action="store_true", help="Allow Phase 74 actual path gate evaluation for a later Manual Gate.")
     parser.add_argument("--live-event-audit-report", action="store_true", help="Print Phase 30 live event audit record report.")
@@ -3525,6 +3531,30 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- manual_gate_required_for_next_live_action: {output.get('manual_gate_required_for_next_live_action')}")
         return 0
 
+    if args.hermes_production_safety_audit:
+        output = build_hermes_production_safety_audit()
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Hermes production safety audit")
+            print(f"- dry_run_audit: {output.get('dry_run_audit')}")
+            print(f"- production_safety_audit_available: {output.get('production_safety_audit_available')}")
+            print(f"- ready_for_production_unattended: {output.get('ready_for_production_unattended')}")
+            print(f"- recommended_next_stage: {output.get('recommended_next_stage')}")
+        return 0
+
+    if args.hermes_launch_readiness_scorecard:
+        output = build_hermes_launch_readiness_scorecard()
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Hermes launch readiness scorecard")
+            print(f"- dry_run_scorecard: {output.get('dry_run_scorecard')}")
+            print(f"- production_unattended_launch_allowed: {output.get('production_unattended_launch_allowed')}")
+            print(f"- overall_ready: {output.get('score_summary', {}).get('overall_ready')}")
+            print(f"- next_safe_action: {output.get('next_safe_action')}")
+        return 0
+
     if args.actual_phase74_limited_auto_mode:
         output = build_actual_phase74_limited_auto_mode(
             allow_flag_present=args.allow_actual_phase74_limited_auto_mode
@@ -3881,6 +3911,8 @@ def main(argv: list[str] | None = None) -> int:
         or args.hermes_docs_consolidation_index
         or args.hermes_production_hardening_checklist
         or args.hermes_safe_launch_runbook
+        or args.hermes_production_safety_audit
+        or args.hermes_launch_readiness_scorecard
         or args.actual_phase74_limited_auto_mode
         or args.allow_actual_phase74_limited_auto_mode
         or args.execute_readonly_live_runtime
