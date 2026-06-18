@@ -251,6 +251,10 @@ from mvp_state_registry import (
     build_hermes_mvp_state_report,
     build_hermes_post_mvp_compaction_plan,
 )
+from phase_archive_index import (
+    build_hermes_phase_archive_index,
+    build_hermes_phase_archive_plan,
+)
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight, render_rag_evidence_private_test_send_preflight_markdown
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope, render_rag_evidence_prompt_envelope_markdown
 from rag_evidence_review_packet import build_rag_evidence_review_packet, render_rag_evidence_review_packet_markdown
@@ -512,6 +516,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--hermes-manual-gate-inventory", action="store_true", help="Print Post-MVP Manual Gate inventory report.")
     parser.add_argument("--hermes-post-mvp-compaction-plan", action="store_true", help="Print Post-MVP compaction/refactor plan without file moves.")
     parser.add_argument("--post-mvp-compaction-b-report", action="store_true", help="Print Post-MVP Code Compaction B helper integration report.")
+    parser.add_argument("--hermes-phase-archive-index", action="store_true", help="Print Post-MVP phase archive index without deleting or moving files.")
+    parser.add_argument("--hermes-phase-archive-plan", action="store_true", help="Print Post-MVP phase archive plan without deleting or moving files.")
     parser.add_argument("--actual-phase74-limited-auto-mode", action="store_true", help="Print Phase 74 actual path report; blocked until a separate Manual Gate.")
     parser.add_argument("--allow-actual-phase74-limited-auto-mode", action="store_true", help="Allow Phase 74 actual path gate evaluation for a later Manual Gate.")
     parser.add_argument("--live-event-audit-report", action="store_true", help="Print Phase 30 live event audit record report.")
@@ -3423,6 +3429,30 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- delete_files_now: {output.get('delete_files_now')}")
         return 0
 
+    if args.hermes_phase_archive_index:
+        output = build_hermes_phase_archive_index()
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Hermes phase archive index")
+            print(f"- active_runtime_core_count: {output.get('active_runtime_core_count')}")
+            print(f"- archive_candidate_count: {output.get('archive_candidate_count')}")
+            print(f"- delete_files_now: {output.get('delete_files_now')}")
+            print(f"- move_files_now: {output.get('move_files_now')}")
+        return 0
+
+    if args.hermes_phase_archive_plan:
+        output = build_hermes_phase_archive_plan()
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Hermes phase archive plan")
+            print(f"- safe_to_prepare_archive: {output.get('safe_to_prepare_archive')}")
+            print(f"- archive_before_delete_required: {output.get('archive_before_delete_required')}")
+            print(f"- delete_files_now: {output.get('delete_files_now')}")
+            print(f"- move_files_now: {output.get('move_files_now')}")
+        return 0
+
     if args.actual_phase74_limited_auto_mode:
         output = build_actual_phase74_limited_auto_mode(
             allow_flag_present=args.allow_actual_phase74_limited_auto_mode
@@ -3772,6 +3802,8 @@ def main(argv: list[str] | None = None) -> int:
         or args.hermes_manual_gate_inventory
         or args.hermes_post_mvp_compaction_plan
         or args.post_mvp_compaction_b_report
+        or args.hermes_phase_archive_index
+        or args.hermes_phase_archive_plan
         or args.actual_phase74_limited_auto_mode
         or args.allow_actual_phase74_limited_auto_mode
         or args.execute_readonly_live_runtime

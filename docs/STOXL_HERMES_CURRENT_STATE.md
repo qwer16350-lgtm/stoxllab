@@ -291,3 +291,11 @@ changing behavior. Existing CLI commands are preserved, repeat locks remain
 blocked, and reports remain no-runtime/no-send/no-LLM/no-RAG/no-external/
 no-scheduler-live. Next recommended stage is Code Compaction C: consolidate old
 phase docs/runtime index before deletion.
+
+Post-MVP Code Compaction C adds `phase_archive_index.py`, a phase archive index
+CLI, and a phase archive plan CLI. It does not delete or move files; archive
+candidates are recommendations only. Active/do-not-delete files include the MVP
+registry, helpers, CLI, and Phase60/67/74 runtime modules. Consumed locks remain
+authoritative, existing CLI remains preserved, production unattended remains not
+ready, and the next recommended stage is Code Compaction D: safe module
+consolidation pass with no deletion yet.

@@ -79,3 +79,18 @@ python apps\hermes_gateway\cli.py --post-mvp-compaction-b-report --json
 
 Recommended next stage is Code Compaction C: consolidate old phase docs/runtime
 index before deletion.
+
+Code Compaction C adds the old phase runtime/docs index and archive plan before
+any deletion. No files are deleted or moved. Archive candidates are
+recommendations only, MVP registry remains the current SSOT, consumed locks
+remain authoritative, and production unattended is still not ready.
+
+Code Compaction C report commands:
+
+```powershell
+python apps\hermes_gateway\cli.py --hermes-phase-archive-index --json
+python apps\hermes_gateway\cli.py --hermes-phase-archive-plan --json
+```
+
+Recommended next stage is Code Compaction D: safe module consolidation pass, no
+deletion yet.
