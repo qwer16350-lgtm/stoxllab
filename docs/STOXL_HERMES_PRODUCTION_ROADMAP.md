@@ -136,3 +136,10 @@ exactly once and locks repeat sends. The supervised Hermes Discord Agent OS MVP
 is complete at `level4_limited_auto_mode_short_run_verified_once`. Level 5
 production unattended remains not ready. Next work is production hardening,
 refactor, and compaction.
+
+Post-MVP Compaction A adds the SSOT state registry, Manual Gate inventory, and
+compaction plan. It is not automation expansion and it does not delete, move, or
+remove phase files. Production unattended remains blocked until separate
+hardening gates address scheduler live operation, long-running runtime, live
+LLM/RAG team replies, unrestricted public/team replies, and post-MVP refactor
+risk.

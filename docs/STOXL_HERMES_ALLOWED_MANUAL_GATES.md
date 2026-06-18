@@ -174,3 +174,9 @@ and is locked against repeat sends with
 `phase74_limited_auto_mode_already_consumed`. The supervised MVP is complete.
 Any later production hardening, refactor, compaction, or production-unattended
 work must be a separate gate and must not reuse the consumed Phase74 gate.
+
+Post-MVP Compaction A freezes the Manual Gate inventory in the MVP state
+registry. Completed actual gates are listed as `consumed_locked`, future real
+send/runtime/LLM/RAG/scheduler live work still requires a separate Manual Gate,
+and no approval phrase, token, channel ID, raw Discord ID, raw session ID, or
+raw content values are documented.

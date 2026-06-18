@@ -42,3 +42,12 @@ phase74_limited_auto_mode_already_consumed
 
 Next work is production hardening, refactor, and compaction. This is still not
 production unattended mode.
+
+Post-MVP SSOT reports:
+
+- `python apps\hermes_gateway\cli.py --hermes-mvp-state-report --json`
+- `python apps\hermes_gateway\cli.py --hermes-manual-gate-inventory --json`
+- `python apps\hermes_gateway\cli.py --hermes-post-mvp-compaction-plan --json`
+
+These reports document only command names, scopes, statuses, booleans, and
+planning metadata. No secret/channel/raw ID values are documented.

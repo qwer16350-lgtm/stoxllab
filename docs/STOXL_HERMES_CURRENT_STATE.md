@@ -276,3 +276,11 @@ Agent OS MVP is complete, current verified level is
 `level4_limited_auto_mode_short_run_verified_once`, and next target is
 `production_hardening_refactor_compaction`. Production unattended mode remains
 not ready.
+
+Post-MVP Compaction A freezes that MVP state in
+`apps/hermes_gateway/mvp_state_registry.py` and exposes safe report-only CLI
+inventory for MVP state, Manual Gates, consumed locks, and the compaction plan.
+No files are deleted or moved, no working CLI is removed, Manual Gates and
+consumed locks are not weakened, no secret/channel/raw ID values are documented,
+and the next phase is compaction/refactor/hardening rather than new automation
+expansion.
