@@ -246,6 +246,7 @@ from phase74_limited_auto_mode_prep import (
     render_phase74_limited_auto_mode_markdown,
 )
 from mvp_state_registry import (
+    build_post_mvp_compaction_b_report,
     build_hermes_manual_gate_inventory,
     build_hermes_mvp_state_report,
     build_hermes_post_mvp_compaction_plan,
@@ -510,6 +511,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--hermes-mvp-state-report", action="store_true", help="Print Post-MVP supervised Hermes state registry report.")
     parser.add_argument("--hermes-manual-gate-inventory", action="store_true", help="Print Post-MVP Manual Gate inventory report.")
     parser.add_argument("--hermes-post-mvp-compaction-plan", action="store_true", help="Print Post-MVP compaction/refactor plan without file moves.")
+    parser.add_argument("--post-mvp-compaction-b-report", action="store_true", help="Print Post-MVP Code Compaction B helper integration report.")
     parser.add_argument("--actual-phase74-limited-auto-mode", action="store_true", help="Print Phase 74 actual path report; blocked until a separate Manual Gate.")
     parser.add_argument("--allow-actual-phase74-limited-auto-mode", action="store_true", help="Allow Phase 74 actual path gate evaluation for a later Manual Gate.")
     parser.add_argument("--live-event-audit-report", action="store_true", help="Print Phase 30 live event audit record report.")
@@ -3409,6 +3411,18 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- production_unattended_ready: {output.get('production_unattended_ready')}")
         return 0
 
+    if args.post_mvp_compaction_b_report:
+        output = build_post_mvp_compaction_b_report()
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Hermes post-MVP Code Compaction B")
+            print(f"- manual_gate_helpers_available: {output.get('manual_gate_helpers_available')}")
+            print(f"- safety_report_builders_available: {output.get('safety_report_builders_available')}")
+            print(f"- ready_for_next_compaction_stage: {output.get('ready_for_next_compaction_stage')}")
+            print(f"- delete_files_now: {output.get('delete_files_now')}")
+        return 0
+
     if args.actual_phase74_limited_auto_mode:
         output = build_actual_phase74_limited_auto_mode(
             allow_flag_present=args.allow_actual_phase74_limited_auto_mode
@@ -3757,6 +3771,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.hermes_mvp_state_report
         or args.hermes_manual_gate_inventory
         or args.hermes_post_mvp_compaction_plan
+        or args.post_mvp_compaction_b_report
         or args.actual_phase74_limited_auto_mode
         or args.allow_actual_phase74_limited_auto_mode
         or args.execute_readonly_live_runtime

@@ -56,3 +56,26 @@ Do not change:
 - Scheduler live disabled by default.
 
 Next phase is compaction/refactor/hardening, not new automation expansion.
+
+Code Compaction B centralizes the first helper layer:
+
+- `manual_gate_helpers.py` for redacted env presence, boolean approval checks,
+  reply mode checks, disabled flag checks, blocked reason assembly, and consumed
+  lock reason assembly.
+- `safety_report_builders.py` for no-runtime/no-send, no-LLM/RAG/external,
+  scheduler-disabled, secret-redaction, blocked report, and consumed-lock report
+  fragments.
+
+Phase60, Phase67, and Phase74 now use the shared consumed-lock helper while
+preserving existing CLI commands, report field names, blocked reasons, Manual
+Gate behavior, no-repeat locks, public/unknown/high-risk blocking, and secret
+redaction. No files are deleted or moved.
+
+Code Compaction B report:
+
+```powershell
+python apps\hermes_gateway\cli.py --post-mvp-compaction-b-report --json
+```
+
+Recommended next stage is Code Compaction C: consolidate old phase docs/runtime
+index before deletion.

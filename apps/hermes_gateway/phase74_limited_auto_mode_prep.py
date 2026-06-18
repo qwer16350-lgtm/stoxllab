@@ -15,6 +15,8 @@ import urllib.error
 import urllib.request
 from typing import Any, Mapping, Protocol
 
+from manual_gate_helpers import consumed_lock_blocked_reasons, env_int, env_present, env_true
+
 
 VERSION = "phase74_limited_auto_mode_prep"
 APPROVAL_PHRASE = "I_APPROVE_PHASE74_LIMITED_AUTO_MODE"
@@ -113,9 +115,8 @@ def _env_value(env: Mapping[str, str] | None, key: str) -> str:
 
 
 def _positive_int(env: Mapping[str, str] | None, key: str, default: int) -> int:
-    try:
-        value = int((_env_value(env, key) or "").strip())
-    except ValueError:
+    value = env_int(env, key, default)
+    if value is None:
         return default
     return value if value > 0 else default
 
@@ -131,15 +132,15 @@ def _gate_snapshot(env: Mapping[str, str] | None = None) -> dict[str, Any]:
     return {
         "limited_auto_mode_manual_gate_required": True,
         "manual_gate_required": True,
-        "manual_approval_true": _truthy(_env_value(env, "HERMES_PHASE74_LIMITED_AUTO_APPROVED")),
+        "manual_approval_true": env_true(env, "HERMES_PHASE74_LIMITED_AUTO_APPROVED"),
         "approval_phrase_present": bool(phrase),
         "approval_phrase_exact_match": phrase == APPROVAL_PHRASE,
         "approval_phrase_value_logged": False,
-        "discord_token_present": bool(_env_value(env, "DISCORD_BOT_TOKEN").strip()),
+        "discord_token_present": env_present(env, "DISCORD_BOT_TOKEN"),
         "discord_token_value_logged": False,
-        "team_channel_id_present": bool(_env_value(env, "HERMES_PHASE74_LIMITED_AUTO_CHANNEL_ID").strip()),
+        "team_channel_id_present": env_present(env, "HERMES_PHASE74_LIMITED_AUTO_CHANNEL_ID"),
         "team_channel_id_value_logged": False,
-        "kill_switch_ready": _truthy(_env_value(env, "HERMES_PHASE74_LIMITED_AUTO_KILL_SWITCH_READY")),
+        "kill_switch_ready": env_true(env, "HERMES_PHASE74_LIMITED_AUTO_KILL_SWITCH_READY"),
         "kill_switch_required": True,
         "max_session_seconds": max_session_seconds,
         "max_send_count": max_send_count,
@@ -151,14 +152,14 @@ def _gate_snapshot(env: Mapping[str, str] | None = None) -> dict[str, Any]:
         "max_reply_count_configured": max_reply_count == 1,
         "cooldown_required": True,
         "cooldown_configured": cooldown_configured,
-        "discord_send_enabled": _truthy(_env_value(env, "HERMES_DISCORD_SEND_MESSAGES")),
+        "discord_send_enabled": env_true(env, "HERMES_DISCORD_SEND_MESSAGES"),
         "reply_mode_limited_team_low_risk_auto_mode_only": _env_value(env, "HERMES_DISCORD_REPLY_MODE") == REPLY_MODE,
-        "llm_disabled": not _truthy(_env_value(env, "HERMES_DISCORD_LLM_ENABLED")),
-        "rag_disabled": not _truthy(_env_value(env, "HERMES_DISCORD_RAG_ENABLED")),
-        "embedding_disabled": not _truthy(_env_value(env, "HERMES_EMBEDDING_ENABLED")),
-        "vector_disabled": not _truthy(_env_value(env, "HERMES_VECTOR_ENABLED")),
-        "external_execution_disabled": not _truthy(_env_value(env, "HERMES_DISCORD_EXTERNAL_EXECUTION")),
-        "scheduler_live_disabled": not _truthy(_env_value(env, "HERMES_SCHEDULER_LIVE_ENABLED")),
+        "llm_disabled": not env_true(env, "HERMES_DISCORD_LLM_ENABLED"),
+        "rag_disabled": not env_true(env, "HERMES_DISCORD_RAG_ENABLED"),
+        "embedding_disabled": not env_true(env, "HERMES_EMBEDDING_ENABLED"),
+        "vector_disabled": not env_true(env, "HERMES_VECTOR_ENABLED"),
+        "external_execution_disabled": not env_true(env, "HERMES_DISCORD_EXTERNAL_EXECUTION"),
+        "scheduler_live_disabled": not env_true(env, "HERMES_SCHEDULER_LIVE_ENABLED"),
     }
 
 
@@ -291,9 +292,9 @@ def _blocked_reasons(
     force_separate_manual_gate: bool,
     phase74_limited_auto_mode_already_consumed: bool = False,
 ) -> list[str]:
-    reasons: list[str] = []
-    if phase74_limited_auto_mode_already_consumed:
-        return [CONSUMED_REASON]
+    reasons = consumed_lock_blocked_reasons(phase74_limited_auto_mode_already_consumed, CONSUMED_REASON)
+    if reasons:
+        return reasons
     if force_separate_manual_gate:
         reasons.append("manual_gate_missing")
     if not allow_flag_present:

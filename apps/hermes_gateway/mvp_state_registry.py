@@ -11,6 +11,8 @@ import json
 import re
 from typing import Any, Mapping
 
+from safety_report_builders import base_no_external_action_report
+
 
 VERSION = "post_mvp_compaction_a_state_registry"
 LONG_ID_RE = re.compile(r"\b\d{15,25}\b")
@@ -194,6 +196,31 @@ def build_hermes_post_mvp_compaction_plan() -> dict[str, Any]:
         "recommended_next_steps": list(NEXT_REFACTOR_TARGETS),
         "do_not_change": list(DO_NOT_CHANGE),
         "forbidden_paths": list(FORBIDDEN_PATHS),
+    }
+    assert_mvp_state_report_safe(report)
+    return report
+
+
+def build_post_mvp_compaction_b_report() -> dict[str, Any]:
+    report = {
+        **base_no_external_action_report(),
+        "version": VERSION,
+        "report_type": "post_mvp_code_compaction_b",
+        "manual_gate_helpers_available": True,
+        "safety_report_builders_available": True,
+        "phase60_helpers_integrated": True,
+        "phase67_helpers_integrated": True,
+        "phase74_helpers_integrated": True,
+        "existing_cli_preserved": True,
+        "manual_gate_behavior_weakened": False,
+        "consumed_locks_weakened": False,
+        "secret_redaction_weakened": False,
+        "public_unknown_high_risk_blocking_weakened": False,
+        "delete_files_now": False,
+        "move_files_now": False,
+        "ready_for_next_compaction_stage": True,
+        "next_target_level": "code_compaction_c_runtime_doc_index_before_deletion",
+        "recommended_next_stage": "Code Compaction C - consolidate old phase docs/runtime index before deletion",
     }
     assert_mvp_state_report_safe(report)
     return report

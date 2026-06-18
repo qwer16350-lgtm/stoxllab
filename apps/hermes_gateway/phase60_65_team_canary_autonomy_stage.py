@@ -15,6 +15,8 @@ import urllib.error
 import urllib.request
 from typing import Any, Mapping, Protocol
 
+from manual_gate_helpers import consumed_lock_blocked_reasons
+
 
 VERSION = "phase60_65_team_canary_autonomy_stage_report_only"
 APPROVAL_PHRASE = "I_APPROVE_PHASE60_TEAM_CANARY"
@@ -216,9 +218,11 @@ def _blocked_reasons(
     allow_flag_present: bool,
     phase60_team_canary_already_consumed: bool = False,
 ) -> list[str]:
-    reasons: list[str] = []
-    if phase60_team_canary_already_consumed:
-        reasons.append("phase60_team_canary_already_consumed")
+    reasons = consumed_lock_blocked_reasons(
+        phase60_team_canary_already_consumed,
+        "phase60_team_canary_already_consumed",
+    )
+    if reasons:
         return reasons
     if not allow_flag_present:
         reasons.append("allow_flag_missing")

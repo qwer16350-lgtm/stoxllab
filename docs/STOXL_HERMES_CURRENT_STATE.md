@@ -284,3 +284,10 @@ No files are deleted or moved, no working CLI is removed, Manual Gates and
 consumed locks are not weakened, no secret/channel/raw ID values are documented,
 and the next phase is compaction/refactor/hardening rather than new automation
 expansion.
+
+Post-MVP Code Compaction B adds shared Manual Gate and safety report helpers,
+then applies the consumed-lock helper to Phase60, Phase67, and Phase74 without
+changing behavior. Existing CLI commands are preserved, repeat locks remain
+blocked, and reports remain no-runtime/no-send/no-LLM/no-RAG/no-external/
+no-scheduler-live. Next recommended stage is Code Compaction C: consolidate old
+phase docs/runtime index before deletion.

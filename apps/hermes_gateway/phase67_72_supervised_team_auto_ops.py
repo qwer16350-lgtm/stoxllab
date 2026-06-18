@@ -15,6 +15,8 @@ import urllib.error
 import urllib.request
 from typing import Any, Mapping, Protocol
 
+from manual_gate_helpers import consumed_lock_blocked_reasons
+
 
 VERSION = "phase67_72_supervised_team_auto_ops_report_only"
 APPROVAL_PHRASE = "I_APPROVE_PHASE67_TEAM_AUTO_OPS"
@@ -224,9 +226,11 @@ def _blocked_reasons(
     allow_flag_present: bool,
     phase67_team_auto_ops_already_consumed: bool = False,
 ) -> list[str]:
-    reasons: list[str] = []
-    if phase67_team_auto_ops_already_consumed:
-        reasons.append("phase67_team_auto_ops_already_consumed")
+    reasons = consumed_lock_blocked_reasons(
+        phase67_team_auto_ops_already_consumed,
+        "phase67_team_auto_ops_already_consumed",
+    )
+    if reasons:
         return reasons
     if not allow_flag_present:
         reasons.append("allow_flag_missing")
