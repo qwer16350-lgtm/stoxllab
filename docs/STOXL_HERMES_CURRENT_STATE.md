@@ -314,3 +314,12 @@ moved, existing CLI commands are preserved, consumed locks remain authoritative,
 MVP state registry remains SSOT, and production unattended is still not ready.
 Next recommended stage is Code Compaction F: production hardening checklist and
 safe launch runbook.
+
+Post-MVP Code Compaction F adds `production_hardening.py`, the production
+hardening checklist, and the safe launch runbook. MVP complete does not mean
+production unattended ready. Production unattended is still blocked. Next live
+action must require Manual Gate. Scheduler live remains disabled by default.
+LLM/RAG live reply remains disabled by default. External execution remains
+disabled. Runtime facade, docs consolidation index, and MVP state registry
+remain SSOT. Recommended next stage is Production Hardening G: dry-run safety
+audit, no live action.

@@ -258,6 +258,10 @@ from phase_archive_index import (
 )
 from runtime_facade import build_hermes_runtime_facade_report
 from docs_consolidation_index import build_hermes_docs_consolidation_index
+from production_hardening import (
+    build_hermes_production_hardening_checklist,
+    build_hermes_safe_launch_runbook,
+)
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight, render_rag_evidence_private_test_send_preflight_markdown
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope, render_rag_evidence_prompt_envelope_markdown
 from rag_evidence_review_packet import build_rag_evidence_review_packet, render_rag_evidence_review_packet_markdown
@@ -524,6 +528,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--hermes-phase-archive-plan", action="store_true", help="Print Post-MVP phase archive plan without deleting or moving files.")
     parser.add_argument("--hermes-runtime-facade-report", action="store_true", help="Print report-only Hermes runtime facade summary.")
     parser.add_argument("--hermes-docs-consolidation-index", action="store_true", help="Print report-only Hermes docs consolidation index.")
+    parser.add_argument("--hermes-production-hardening-checklist", action="store_true", help="Print report-only Hermes production hardening checklist.")
+    parser.add_argument("--hermes-safe-launch-runbook", action="store_true", help="Print report-only Hermes safe launch runbook.")
     parser.add_argument("--actual-phase74-limited-auto-mode", action="store_true", help="Print Phase 74 actual path report; blocked until a separate Manual Gate.")
     parser.add_argument("--allow-actual-phase74-limited-auto-mode", action="store_true", help="Allow Phase 74 actual path gate evaluation for a later Manual Gate.")
     parser.add_argument("--live-event-audit-report", action="store_true", help="Print Phase 30 live event audit record report.")
@@ -3495,6 +3501,30 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- move_docs_now: {output.get('move_docs_now')}")
         return 0
 
+    if args.hermes_production_hardening_checklist:
+        output = build_hermes_production_hardening_checklist()
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Hermes production hardening checklist")
+            print(f"- production_hardening_checklist_available: {output.get('production_hardening_checklist_available')}")
+            print(f"- ready_for_production_unattended: {output.get('ready_for_production_unattended')}")
+            print(f"- current_verified_level: {output.get('current_verified_level')}")
+            print(f"- next_target_level: {output.get('next_target_level')}")
+        return 0
+
+    if args.hermes_safe_launch_runbook:
+        output = build_hermes_safe_launch_runbook()
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Hermes safe launch runbook")
+            print(f"- safe_launch_runbook_available: {output.get('safe_launch_runbook_available')}")
+            print(f"- production_unattended_launch_allowed: {output.get('production_unattended_launch_allowed')}")
+            print(f"- launch_mode: {output.get('launch_mode')}")
+            print(f"- manual_gate_required_for_next_live_action: {output.get('manual_gate_required_for_next_live_action')}")
+        return 0
+
     if args.actual_phase74_limited_auto_mode:
         output = build_actual_phase74_limited_auto_mode(
             allow_flag_present=args.allow_actual_phase74_limited_auto_mode
@@ -3849,6 +3879,8 @@ def main(argv: list[str] | None = None) -> int:
         or args.hermes_phase_archive_plan
         or args.hermes_runtime_facade_report
         or args.hermes_docs_consolidation_index
+        or args.hermes_production_hardening_checklist
+        or args.hermes_safe_launch_runbook
         or args.actual_phase74_limited_auto_mode
         or args.allow_actual_phase74_limited_auto_mode
         or args.execute_readonly_live_runtime

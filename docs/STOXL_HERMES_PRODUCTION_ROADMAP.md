@@ -143,3 +143,12 @@ remove phase files. Production unattended remains blocked until separate
 hardening gates address scheduler live operation, long-running runtime, live
 LLM/RAG team replies, unrestricted public/team replies, and post-MVP refactor
 risk.
+
+Post-MVP Code Compaction F adds the production hardening checklist and safe
+launch runbook as report-only artifacts. MVP complete does not mean production
+unattended ready. Production unattended is still blocked. Next live action must
+require Manual Gate. Scheduler live remains disabled by default. LLM/RAG live
+reply remains disabled by default. External execution remains disabled. The
+runtime facade, docs consolidation index, and MVP state registry remain SSOT.
+Recommended next stage is Production Hardening G: dry-run safety audit, no live
+action.
