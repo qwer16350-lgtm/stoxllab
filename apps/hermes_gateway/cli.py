@@ -256,6 +256,8 @@ from phase_archive_index import (
     build_hermes_phase_archive_index,
     build_hermes_phase_archive_plan,
 )
+from runtime_facade import build_hermes_runtime_facade_report
+from docs_consolidation_index import build_hermes_docs_consolidation_index
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight, render_rag_evidence_private_test_send_preflight_markdown
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope, render_rag_evidence_prompt_envelope_markdown
 from rag_evidence_review_packet import build_rag_evidence_review_packet, render_rag_evidence_review_packet_markdown
@@ -520,6 +522,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--post-mvp-compaction-d-report", action="store_true", help="Print Post-MVP Code Compaction D policy builder integration report.")
     parser.add_argument("--hermes-phase-archive-index", action="store_true", help="Print Post-MVP phase archive index without deleting or moving files.")
     parser.add_argument("--hermes-phase-archive-plan", action="store_true", help="Print Post-MVP phase archive plan without deleting or moving files.")
+    parser.add_argument("--hermes-runtime-facade-report", action="store_true", help="Print report-only Hermes runtime facade summary.")
+    parser.add_argument("--hermes-docs-consolidation-index", action="store_true", help="Print report-only Hermes docs consolidation index.")
     parser.add_argument("--actual-phase74-limited-auto-mode", action="store_true", help="Print Phase 74 actual path report; blocked until a separate Manual Gate.")
     parser.add_argument("--allow-actual-phase74-limited-auto-mode", action="store_true", help="Allow Phase 74 actual path gate evaluation for a later Manual Gate.")
     parser.add_argument("--live-event-audit-report", action="store_true", help="Print Phase 30 live event audit record report.")
@@ -3467,6 +3471,30 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- move_files_now: {output.get('move_files_now')}")
         return 0
 
+    if args.hermes_runtime_facade_report:
+        output = build_hermes_runtime_facade_report()
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Hermes runtime facade report")
+            print(f"- facade_available: {output.get('facade_available')}")
+            print(f"- report_only: {output.get('report_only')}")
+            print(f"- consumed_locks_preserved: {output.get('consumed_locks_preserved')}")
+            print(f"- ready_for_production_unattended: {output.get('ready_for_production_unattended')}")
+        return 0
+
+    if args.hermes_docs_consolidation_index:
+        output = build_hermes_docs_consolidation_index()
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Hermes docs consolidation index")
+            print(f"- docs_consolidation_index_available: {output.get('docs_consolidation_index_available')}")
+            print(f"- ssot_docs_count: {output.get('ssot_docs_count')}")
+            print(f"- delete_docs_now: {output.get('delete_docs_now')}")
+            print(f"- move_docs_now: {output.get('move_docs_now')}")
+        return 0
+
     if args.actual_phase74_limited_auto_mode:
         output = build_actual_phase74_limited_auto_mode(
             allow_flag_present=args.allow_actual_phase74_limited_auto_mode
@@ -3819,6 +3847,8 @@ def main(argv: list[str] | None = None) -> int:
         or args.post_mvp_compaction_d_report
         or args.hermes_phase_archive_index
         or args.hermes_phase_archive_plan
+        or args.hermes_runtime_facade_report
+        or args.hermes_docs_consolidation_index
         or args.actual_phase74_limited_auto_mode
         or args.allow_actual_phase74_limited_auto_mode
         or args.execute_readonly_live_runtime

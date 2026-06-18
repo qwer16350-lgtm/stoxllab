@@ -306,3 +306,11 @@ deleted or moved, existing CLI commands are preserved, consumed locks remain
 authoritative, MVP state registry remains SSOT, and production unattended is
 still not ready. Next recommended stage is Code Compaction E: small
 archive-safe doc consolidation or runtime facade, no deletion yet.
+
+Post-MVP Code Compaction E adds `runtime_facade.py` and
+`docs_consolidation_index.py`. The runtime facade is report-only, the docs
+consolidation index is recommendation-only, no files or docs are deleted or
+moved, existing CLI commands are preserved, consumed locks remain authoritative,
+MVP state registry remains SSOT, and production unattended is still not ready.
+Next recommended stage is Code Compaction F: production hardening checklist and
+safe launch runbook.

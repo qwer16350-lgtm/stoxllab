@@ -110,3 +110,19 @@ python apps\hermes_gateway\cli.py --post-mvp-compaction-d-report --json
 
 Recommended next stage is Code Compaction E: small archive-safe doc
 consolidation or runtime facade, no deletion yet.
+
+Code Compaction E adds a report-only runtime facade and docs consolidation
+index. Code Compaction E does not delete or move files. The runtime facade is
+report-only, the docs consolidation index is recommendation-only, MVP registry
+remains SSOT, consumed locks remain authoritative, and production unattended is
+still not ready.
+
+Code Compaction E report commands:
+
+```powershell
+python apps\hermes_gateway\cli.py --hermes-runtime-facade-report --json
+python apps\hermes_gateway\cli.py --hermes-docs-consolidation-index --json
+```
+
+Recommended next stage is Code Compaction F: production hardening checklist and
+safe launch runbook.
