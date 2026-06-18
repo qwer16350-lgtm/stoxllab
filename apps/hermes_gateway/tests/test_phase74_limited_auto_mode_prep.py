@@ -37,6 +37,7 @@ def opened_env() -> dict[str, str]:
         "HERMES_PHASE74_LIMITED_AUTO_MAX_SEND_COUNT": "1",
         "HERMES_PHASE74_LIMITED_AUTO_MAX_REPLY_COUNT": "1",
         "HERMES_PHASE74_LIMITED_AUTO_COOLDOWN_SECONDS": "30",
+        "DISCORD_BOT_TOKEN": "present",
         "HERMES_DISCORD_SEND_MESSAGES": "true",
         "HERMES_DISCORD_REPLY_MODE": REPLY_MODE,
         "HERMES_DISCORD_LLM_ENABLED": "false",
@@ -86,6 +87,7 @@ def test_default_actual_blocked_without_send() -> None:
     report = build_actual_phase74_limited_auto_mode(env=opened_env())
     assert_true(report["report_type"] == "phase74_limited_auto_mode_blocked", "Blocked report")
     assert_true(report["blocked"] is True, "Blocked")
+    assert_true("allow_flag_missing" in report["blocked_reasons"], "Allow missing")
     assert_true(report["actual_limited_auto_mode_executed"] is False, "No execution")
     assert_true(report["discord_api_send_called"] is False, "No API")
     assert_true(report["discord_message_sent"] is False, "No message")
@@ -117,6 +119,7 @@ def test_fake_limited_session_exactly_once() -> None:
     assert_true(session.calls == 1, "One fake session")
     assert_true(report["blocked"] is False, "Not blocked")
     assert_true(report["fake_limited_auto_session_executed"] is True, "Fake executed")
+    assert_true(report["real_limited_auto_session_adapter_selected"] is False, "No real sender")
     assert_true(report["actual_limited_auto_mode_executed"] is True, "Executed semantic")
     assert_true(report["sent_scope"] == "known_team_channel_only", "Team scope")
     assert_true(report["reply_text_source"] == "deterministic_template", "Template")
@@ -167,10 +170,48 @@ def test_phase67_lock_level_matrix_and_production_false() -> None:
     assert_true(report["ready_for_production_unattended"] is False, "Production false")
 
 
+def test_actual_branch_missing_gate_values_blocked() -> None:
+    cases = (
+        ("token missing", "DISCORD_BOT_TOKEN", "", "discord_token_missing"),
+        ("channel missing", "HERMES_PHASE74_LIMITED_AUTO_CHANNEL_ID", "", "team_channel_id_missing"),
+        ("approval false", "HERMES_PHASE74_LIMITED_AUTO_APPROVED", "false", "manual_approval_not_approved"),
+        ("approval mismatch", "HERMES_PHASE74_LIMITED_AUTO_APPROVAL_PHRASE", "wrong", "approval_phrase_mismatch"),
+    )
+    for _label, key, value, reason in cases:
+        env = opened_env()
+        env[key] = value
+        report = build_actual_phase74_limited_auto_mode(allow_flag_present=True, env=env)
+        assert_true(report["blocked"] is True, reason)
+        assert_true(reason in report["blocked_reasons"], reason)
+        assert_true(report["actual_limited_auto_mode_executed"] is False, "No execution")
+        assert_true(report["discord_api_send_called"] is False, "No API")
+        assert_true(report["discord_message_sent"] is False, "No message")
+        assert_true(report["message_sent_count"] == 0, "No count")
+
+
+def test_actual_branch_runtime_safety_values_blocked() -> None:
+    cases = (
+        ("scheduler", "HERMES_SCHEDULER_LIVE_ENABLED", "true", "scheduler_live_enabled"),
+        ("llm", "HERMES_DISCORD_LLM_ENABLED", "true", "llm_rag_embedding_vector_must_be_disabled"),
+        ("rag", "HERMES_DISCORD_RAG_ENABLED", "true", "llm_rag_embedding_vector_must_be_disabled"),
+        ("external", "HERMES_DISCORD_EXTERNAL_EXECUTION", "true", "external_execution_enabled"),
+        ("max session", "HERMES_PHASE74_LIMITED_AUTO_MAX_SESSION_SECONDS", "61", "session_bounds_not_configured"),
+        ("cooldown", "HERMES_PHASE74_LIMITED_AUTO_COOLDOWN_SECONDS", "4", "cooldown_not_configured"),
+    )
+    for _label, key, value, reason in cases:
+        env = opened_env()
+        env[key] = value
+        report = build_actual_phase74_limited_auto_mode(allow_flag_present=True, env=env)
+        assert_true(report["blocked"] is True, reason)
+        assert_true(reason in report["blocked_reasons"], reason)
+        assert_true(report["actual_limited_auto_mode_executed"] is False, "No execution")
+        assert_true(report["message_sent_count"] == 0, "No send")
+
+
 def test_no_external_or_sensitive_values_in_cli_reports() -> None:
     reports = [
         build_phase74_limited_auto_mode_preflight(),
-        build_actual_phase74_limited_auto_mode(env=opened_env(), allow_flag_present=True),
+        build_actual_phase74_limited_auto_mode(env={}, allow_flag_present=True),
         build_phase74_limited_auto_mode_prep(),
     ]
     for report in reports:
@@ -206,6 +247,8 @@ def main() -> int:
         test_default_actual_blocked_without_send,
         test_manual_gate_preflight_requirements,
         test_fake_limited_session_exactly_once,
+        test_actual_branch_missing_gate_values_blocked,
+        test_actual_branch_runtime_safety_values_blocked,
         test_public_unknown_high_risk_and_multi_message_blocked,
         test_phase67_lock_level_matrix_and_production_false,
         test_no_external_or_sensitive_values_in_cli_reports,

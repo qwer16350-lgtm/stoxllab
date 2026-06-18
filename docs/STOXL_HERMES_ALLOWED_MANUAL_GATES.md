@@ -162,3 +162,9 @@ Required reply mode is `limited_team_low_risk_auto_mode_only`. This bundle does
 not run the allow command and does not perform real send. The next actual
 operation must be a separate Manual Gate for actual Phase74 limited auto mode
 short run exactly once.
+
+Phase74 Hotfix E0 wires that actual Manual Gate branch so a fully opened gate
+can reach the bounded adapter path in the next Manual Gate. This hotfix does not
+run the allow command, does not perform real send, and keeps missing allow flag,
+approval, token, channel, unsafe runtime settings, public/unknown/high-risk
+events, and multi-message events blocked with explicit reasons.

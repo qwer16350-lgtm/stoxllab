@@ -11,6 +11,8 @@ from dataclasses import dataclass
 import json
 import os
 import re
+import urllib.error
+import urllib.request
 from typing import Any, Mapping, Protocol
 
 
@@ -58,6 +60,48 @@ class Phase74LimitedAutoSessionAdapter(Protocol):
         """Run one bounded deterministic limited auto session."""
 
 
+class RealDiscordPhase74LimitedAutoSessionAdapter:
+    def __init__(self, *, token: str, team_channel_id: str) -> None:
+        self._token = token
+        self._team_channel_id = team_channel_id
+
+    def run_limited_auto_session(self, content: str, *, max_session_seconds: int) -> Phase74LimitedAutoSessionResult:
+        if not self._token or not self._team_channel_id:
+            return Phase74LimitedAutoSessionResult(error_type="missing_token_or_team_channel")
+        payload = json.dumps({"content": content}, ensure_ascii=False).encode("utf-8")
+        request = urllib.request.Request(
+            f"https://discord.com/api/v10/channels/{self._team_channel_id}/messages",
+            data=payload,
+            headers={
+                "Authorization": f"Bot {self._token}",
+                "Content-Type": "application/json",
+                "User-Agent": "stoxl-hermes-gateway/phase74",
+            },
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=min(max_session_seconds, 15)) as response:
+                status_code = int(getattr(response, "status", 0) or 0)
+            sent = 200 <= status_code < 300
+            return Phase74LimitedAutoSessionResult(
+                api_send_called=True,
+                message_sent=sent,
+                message_sent_count=1 if sent else 0,
+                reply_count=1 if sent else 0,
+                session_seconds=min(max_session_seconds, 15),
+                cooldown_respected=True,
+            )
+        except urllib.error.HTTPError as exc:
+            return Phase74LimitedAutoSessionResult(
+                api_send_called=True,
+                session_seconds=min(max_session_seconds, 15),
+                cooldown_respected=True,
+                error_type=f"http_error_{int(exc.code)}",
+            )
+        except Exception as exc:
+            return Phase74LimitedAutoSessionResult(error_type=type(exc).__name__)
+
+
 def _truthy(value: str | None) -> bool:
     return (value or "").strip().lower() in {"1", "true", "yes", "on"}
 
@@ -81,6 +125,8 @@ def _gate_snapshot(env: Mapping[str, str] | None = None) -> dict[str, Any]:
     max_send_count = _positive_int(env, "HERMES_PHASE74_LIMITED_AUTO_MAX_SEND_COUNT", 1)
     max_reply_count = _positive_int(env, "HERMES_PHASE74_LIMITED_AUTO_MAX_REPLY_COUNT", 1)
     cooldown_seconds = _positive_int(env, "HERMES_PHASE74_LIMITED_AUTO_COOLDOWN_SECONDS", 30)
+    max_session_configured = 0 < max_session_seconds <= 60
+    cooldown_configured = cooldown_seconds >= 5
     return {
         "limited_auto_mode_manual_gate_required": True,
         "manual_gate_required": True,
@@ -88,6 +134,8 @@ def _gate_snapshot(env: Mapping[str, str] | None = None) -> dict[str, Any]:
         "approval_phrase_present": bool(phrase),
         "approval_phrase_exact_match": phrase == APPROVAL_PHRASE,
         "approval_phrase_value_logged": False,
+        "discord_token_present": bool(_env_value(env, "DISCORD_BOT_TOKEN").strip()),
+        "discord_token_value_logged": False,
         "team_channel_id_present": bool(_env_value(env, "HERMES_PHASE74_LIMITED_AUTO_CHANNEL_ID").strip()),
         "team_channel_id_value_logged": False,
         "kill_switch_ready": _truthy(_env_value(env, "HERMES_PHASE74_LIMITED_AUTO_KILL_SWITCH_READY")),
@@ -97,11 +145,11 @@ def _gate_snapshot(env: Mapping[str, str] | None = None) -> dict[str, Any]:
         "max_reply_count": max_reply_count,
         "cooldown_seconds": cooldown_seconds,
         "session_bounds_required": True,
-        "session_seconds_bounded": max_session_seconds > 0,
+        "session_seconds_bounded": max_session_configured,
         "max_send_count_configured": max_send_count == 1,
         "max_reply_count_configured": max_reply_count == 1,
         "cooldown_required": True,
-        "cooldown_configured": cooldown_seconds > 0,
+        "cooldown_configured": cooldown_configured,
         "discord_send_enabled": _truthy(_env_value(env, "HERMES_DISCORD_SEND_MESSAGES")),
         "reply_mode_limited_team_low_risk_auto_mode_only": _env_value(env, "HERMES_DISCORD_REPLY_MODE") == REPLY_MODE,
         "llm_disabled": not _truthy(_env_value(env, "HERMES_DISCORD_LLM_ENABLED")),
@@ -241,13 +289,15 @@ def _blocked_reasons(
 ) -> list[str]:
     reasons: list[str] = []
     if force_separate_manual_gate:
-        return [BLOCKED_ACTUAL_REASON]
+        reasons.append("manual_gate_missing")
     if not allow_flag_present:
         reasons.append("allow_flag_missing")
     if not gate.get("manual_approval_true"):
         reasons.append("manual_approval_not_approved")
     if not gate.get("approval_phrase_exact_match"):
         reasons.append("approval_phrase_mismatch")
+    if not gate.get("discord_token_present"):
+        reasons.append("discord_token_missing")
     if not gate.get("team_channel_id_present"):
         reasons.append("team_channel_id_missing")
     if not gate.get("kill_switch_ready"):
@@ -322,7 +372,7 @@ def build_actual_phase74_limited_auto_mode(
     env: Mapping[str, str] | None = None,
     event: Mapping[str, Any] | None = None,
     session_adapter: Phase74LimitedAutoSessionAdapter | None = None,
-    force_separate_manual_gate: bool = True,
+    force_separate_manual_gate: bool = False,
 ) -> dict[str, Any]:
     gate = _gate_snapshot(env)
     guard = _event_guard(event)
@@ -348,23 +398,12 @@ def build_actual_phase74_limited_auto_mode(
         assert_phase74_limited_auto_mode_safe(report, allow_ready=True)
         return report
 
-    if session_adapter is None:
-        report = {
-            **_base_report(),
-            **_policy_capsule(),
-            **gate,
-            **guard,
-            "report_type": "phase74_limited_auto_mode_blocked",
-            "allow_flag_present": allow_flag_present,
-            "blocked": True,
-            "blocked_reasons": ["session_adapter_required_for_safe_bundle"],
-            "ready_for_phase74_limited_auto_manual_gate": True,
-            "next_actual_operation": "separate_manual_gate_actual_phase74_limited_auto_mode_short_run_exactly_once",
-        }
-        assert_phase74_limited_auto_mode_safe(report, allow_ready=True)
-        return report
+    selected_adapter = session_adapter or RealDiscordPhase74LimitedAutoSessionAdapter(
+        token=_env_value(env, "DISCORD_BOT_TOKEN"),
+        team_channel_id=_env_value(env, "HERMES_PHASE74_LIMITED_AUTO_CHANNEL_ID"),
+    )
 
-    result = session_adapter.run_limited_auto_session(
+    result = selected_adapter.run_limited_auto_session(
         _deterministic_reply_text(),
         max_session_seconds=int(gate.get("max_session_seconds", 60) or 60),
     )
@@ -377,7 +416,8 @@ def build_actual_phase74_limited_auto_mode(
         "allow_flag_present": allow_flag_present,
         "blocked": False,
         "blocked_reasons": [],
-        "fake_limited_auto_session_executed": True,
+        "fake_limited_auto_session_executed": session_adapter is not None,
+        "real_limited_auto_session_adapter_selected": session_adapter is None,
         "actual_limited_auto_mode_executed": bool(result.message_sent),
         "session_executed": bool(result.message_sent),
         "discord_api_send_called": bool(result.api_send_called),
@@ -421,6 +461,7 @@ def assert_phase74_limited_auto_mode_safe(
         "secret_values_logged",
         "approval_phrase_value_logged",
         "team_channel_id_value_logged",
+        "discord_token_value_logged",
         "ready_for_repeat_limited_auto_mode",
         "public_channel_send_allowed",
         "public_channel_reply_allowed",

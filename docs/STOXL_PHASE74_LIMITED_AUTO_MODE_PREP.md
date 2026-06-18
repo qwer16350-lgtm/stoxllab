@@ -76,6 +76,15 @@ python apps\hermes_gateway\cli.py --actual-phase74-limited-auto-mode --json
 The actual path remains default blocked. The allow command is reserved for a
 later separate Manual Gate and is not executed in this Safe Bundle.
 
+Hotfix E0 wires the actual Manual Gate branch so that the allow command is no
+longer hard-blocked by a generic separate-gate reason after all gate and safety
+conditions are true. Missing allow flag, approval, approval phrase, token,
+channel, kill switch, reply mode, bounded session settings, disabled
+LLM/RAG/embedding/vector/external/scheduler settings, and eligible low-risk
+team event checks still block the path with specific reasons. This hotfix
+verifies the actual branch only with a fake session adapter in tests; the real
+sender branch is reserved for the next separate Manual Gate.
+
 Current verified level:
 
 ```text

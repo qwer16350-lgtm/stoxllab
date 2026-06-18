@@ -259,3 +259,10 @@ locked against repeat team auto-ops sends. Current verified level remains
 `level4_supervised_team_channel_auto_ops_verified_once`; next target is
 `level4_limited_auto_mode_short_run`. Production unattended mode remains not
 ready.
+
+Phase74 Hotfix E0 wires the limited-auto actual Manual Gate branch without
+executing it. The generic separate-gate hard block no longer masks a fully open
+gate; missing allow flag, approval, approval phrase, token, team channel, kill
+switch, reply mode, bounds, cooldown, disabled LLM/RAG/vector/external/
+scheduler settings, and event eligibility now produce specific blocked reasons.
+Safe verification uses only fake session tests and default-blocked CLI reports.
