@@ -16,6 +16,7 @@ import urllib.request
 from typing import Any, Mapping, Protocol
 
 from manual_gate_helpers import consumed_lock_blocked_reasons
+from phase_policy_builders import build_known_team_low_risk_policy_report, build_phase_progression_report
 
 
 VERSION = "phase60_65_team_canary_autonomy_stage_report_only"
@@ -405,9 +406,7 @@ def build_phase60_65_team_canary_autonomy_stage() -> dict[str, Any]:
         "large_lean_bundle": True,
         "phase60_low_risk_team_canary_path_available": True,
         "team_canary_manual_gate_required": True,
-        "known_team_channel_required": True,
-        "low_risk_intent_required": True,
-        "deterministic_template_only": True,
+        **build_known_team_low_risk_policy_report(),
         "ready_for_phase60_team_canary_manual_gate": True,
         "phase61_scheduler_gate_available": True,
         "scheduler_dry_run_control_available": True,
@@ -442,9 +441,10 @@ def build_phase60_65_team_canary_autonomy_stage() -> dict[str, Any]:
             "git_index_lock_unresolved",
             "refactor_compaction_pending",
         ],
-        "current_verified_level": "level3_supervised_private_test_auto_reply_verified",
-        "next_target_level": "level4_low_risk_team_channel_canary",
-        "ready_for_production_unattended": False,
+        **build_phase_progression_report(
+            "level3_supervised_private_test_auto_reply_verified",
+            "level4_low_risk_team_channel_canary",
+        ),
         "next_actual_operation": "separate_manual_gate_actual_phase60_low_risk_team_channel_canary_exactly_once",
     }
     assert_phase60_65_team_canary_safe(report, allow_ready=True)

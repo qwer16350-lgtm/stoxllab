@@ -16,6 +16,14 @@ import urllib.request
 from typing import Any, Mapping, Protocol
 
 from manual_gate_helpers import consumed_lock_blocked_reasons, env_int, env_present, env_true
+from phase_policy_builders import (
+    build_allowed_scope,
+    build_blocked_scope,
+    build_limited_bounds_report,
+    build_phase_progression_report,
+    build_policy_capsule_report,
+    build_queue_review_packet_report,
+)
 
 
 VERSION = "phase74_limited_auto_mode_prep"
@@ -127,8 +135,6 @@ def _gate_snapshot(env: Mapping[str, str] | None = None) -> dict[str, Any]:
     max_send_count = _positive_int(env, "HERMES_PHASE74_LIMITED_AUTO_MAX_SEND_COUNT", 1)
     max_reply_count = _positive_int(env, "HERMES_PHASE74_LIMITED_AUTO_MAX_REPLY_COUNT", 1)
     cooldown_seconds = _positive_int(env, "HERMES_PHASE74_LIMITED_AUTO_COOLDOWN_SECONDS", 30)
-    max_session_configured = 0 < max_session_seconds <= 60
-    cooldown_configured = cooldown_seconds >= 5
     return {
         "limited_auto_mode_manual_gate_required": True,
         "manual_gate_required": True,
@@ -142,16 +148,7 @@ def _gate_snapshot(env: Mapping[str, str] | None = None) -> dict[str, Any]:
         "team_channel_id_value_logged": False,
         "kill_switch_ready": env_true(env, "HERMES_PHASE74_LIMITED_AUTO_KILL_SWITCH_READY"),
         "kill_switch_required": True,
-        "max_session_seconds": max_session_seconds,
-        "max_send_count": max_send_count,
-        "max_reply_count": max_reply_count,
-        "cooldown_seconds": cooldown_seconds,
-        "session_bounds_required": True,
-        "session_seconds_bounded": max_session_configured,
-        "max_send_count_configured": max_send_count == 1,
-        "max_reply_count_configured": max_reply_count == 1,
-        "cooldown_required": True,
-        "cooldown_configured": cooldown_configured,
+        **build_limited_bounds_report(max_session_seconds, max_send_count, max_reply_count, cooldown_seconds),
         "discord_send_enabled": env_true(env, "HERMES_DISCORD_SEND_MESSAGES"),
         "reply_mode_limited_team_low_risk_auto_mode_only": _env_value(env, "HERMES_DISCORD_REPLY_MODE") == REPLY_MODE,
         "llm_disabled": not env_true(env, "HERMES_DISCORD_LLM_ENABLED"),
@@ -189,9 +186,8 @@ def _event_guard(event: Mapping[str, Any] | None = None) -> dict[str, Any]:
 
 
 def _policy_capsule() -> dict[str, Any]:
-    return {
-        "policy_capsule_available": True,
-        "allowed_scope": [
+    return build_policy_capsule_report(
+        build_allowed_scope(
             "known_team_channel_only",
             "low_risk_intent_only",
             "deterministic_template_only",
@@ -204,8 +200,8 @@ def _policy_capsule() -> dict[str, Any]:
             "kill_switch_ready",
             "manual_gate_required",
             "human_override_available",
-        ],
-        "blocked_scope": [
+        ),
+        build_blocked_scope(
             "public_channel",
             "unknown_channel",
             "high_risk_intent",
@@ -219,8 +215,8 @@ def _policy_capsule() -> dict[str, Any]:
             "multi_message",
             "unbounded_session",
             "production_unattended",
-        ],
-    }
+        ),
+    )
 
 
 def _base_report() -> dict[str, Any]:
@@ -229,16 +225,14 @@ def _base_report() -> dict[str, Any]:
         "phase74_limited_auto_mode_path_available": True,
         "sent_scope": "known_team_channel_only",
         "reply_text_source": "deterministic_template",
-        "ops_queue_required": True,
-        "ops_queue_item_exists": True,
-        "review_packet_required": True,
-        "review_packet_exists": True,
-        "review_packet_raw_content_included": False,
+        **build_queue_review_packet_report(queue_required=True, packet_required=True, raw_content_included=False),
         "human_override_available": True,
         "phase67_team_auto_ops_verified_once": True,
         "phase67_repeat_team_auto_ops_locked": True,
-        "current_verified_level": "level4_supervised_team_channel_auto_ops_verified_once",
-        "next_target_level": "level4_limited_auto_mode_short_run",
+        **build_phase_progression_report(
+            "level4_supervised_team_channel_auto_ops_verified_once",
+            "level4_limited_auto_mode_short_run",
+        ),
         "ready_for_phase74_limited_auto_manual_gate": True,
         "ready_for_repeat_limited_auto_mode": False,
         "phase74_limited_auto_mode_already_consumed": False,

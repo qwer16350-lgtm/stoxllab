@@ -299,3 +299,10 @@ registry, helpers, CLI, and Phase60/67/74 runtime modules. Consumed locks remain
 authoritative, existing CLI remains preserved, production unattended remains not
 ready, and the next recommended stage is Code Compaction D: safe module
 consolidation pass with no deletion yet.
+
+Post-MVP Code Compaction D adds `phase_policy_builders.py` and applies shared
+policy/report assembly helpers to Phase60, Phase67, and Phase74. No files are
+deleted or moved, existing CLI commands are preserved, consumed locks remain
+authoritative, MVP state registry remains SSOT, and production unattended is
+still not ready. Next recommended stage is Code Compaction E: small
+archive-safe doc consolidation or runtime facade, no deletion yet.

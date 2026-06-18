@@ -226,6 +226,30 @@ def build_post_mvp_compaction_b_report() -> dict[str, Any]:
     return report
 
 
+def build_post_mvp_compaction_d_report() -> dict[str, Any]:
+    report = {
+        **base_no_external_action_report(),
+        "version": VERSION,
+        "report_type": "post_mvp_code_compaction_d",
+        "phase_policy_builders_available": True,
+        "phase60_policy_helpers_integrated": True,
+        "phase67_policy_helpers_integrated": True,
+        "phase74_policy_helpers_integrated": True,
+        "existing_cli_preserved": True,
+        "delete_files_now": False,
+        "move_files_now": False,
+        "manual_gate_behavior_weakened": False,
+        "consumed_locks_weakened": False,
+        "secret_redaction_weakened": False,
+        "public_unknown_high_risk_blocking_weakened": False,
+        "ready_for_next_compaction_stage": True,
+        "next_target_level": "code_compaction_e_archive_safe_doc_consolidation_or_runtime_facade",
+        "recommended_next_stage": "Code Compaction E - small archive-safe doc consolidation or runtime facade, no deletion yet",
+    }
+    assert_mvp_state_report_safe(report)
+    return report
+
+
 def assert_mvp_state_report_safe(report: Mapping[str, Any]) -> None:
     text = json.dumps(report, ensure_ascii=False)
     if SECRET_RE.search(text.lower()) or LONG_ID_RE.search(text) or APPROVAL_RE.search(text):

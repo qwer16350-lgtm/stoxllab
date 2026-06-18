@@ -16,6 +16,11 @@ import urllib.request
 from typing import Any, Mapping, Protocol
 
 from manual_gate_helpers import consumed_lock_blocked_reasons
+from phase_policy_builders import (
+    build_known_team_low_risk_policy_report,
+    build_phase_progression_report,
+    build_queue_review_packet_report,
+)
 
 
 VERSION = "phase67_72_supervised_team_auto_ops_report_only"
@@ -306,13 +311,13 @@ def build_phase67_72_supervised_team_auto_ops(
         "report_type": "phase67_72_supervised_team_auto_ops",
         "metadata_only": True,
         "team_auto_ops_manual_gate_required": True,
-        "known_team_channel_required": True,
-        "low_risk_intent_required": True,
-        "deterministic_template_only": True,
+        **build_known_team_low_risk_policy_report(),
+        **build_queue_review_packet_report(queue_required=True, packet_required=True, raw_content_included=False),
         "ready_for_phase67_team_auto_ops_manual_gate": True,
-        "current_verified_level": "level4_low_risk_team_channel_canary_verified_once",
-        "next_target_level": "level4_supervised_team_channel_auto_ops",
-        "ready_for_production_unattended": False,
+        **build_phase_progression_report(
+            "level4_low_risk_team_channel_canary_verified_once",
+            "level4_supervised_team_channel_auto_ops",
+        ),
         "autonomy_matrix": {
             "level_1": "read_only_observation_verified",
             "level_2": "manual_gate_deterministic_reply_verified",

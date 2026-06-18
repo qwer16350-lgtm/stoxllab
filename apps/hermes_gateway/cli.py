@@ -247,6 +247,7 @@ from phase74_limited_auto_mode_prep import (
 )
 from mvp_state_registry import (
     build_post_mvp_compaction_b_report,
+    build_post_mvp_compaction_d_report,
     build_hermes_manual_gate_inventory,
     build_hermes_mvp_state_report,
     build_hermes_post_mvp_compaction_plan,
@@ -516,6 +517,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--hermes-manual-gate-inventory", action="store_true", help="Print Post-MVP Manual Gate inventory report.")
     parser.add_argument("--hermes-post-mvp-compaction-plan", action="store_true", help="Print Post-MVP compaction/refactor plan without file moves.")
     parser.add_argument("--post-mvp-compaction-b-report", action="store_true", help="Print Post-MVP Code Compaction B helper integration report.")
+    parser.add_argument("--post-mvp-compaction-d-report", action="store_true", help="Print Post-MVP Code Compaction D policy builder integration report.")
     parser.add_argument("--hermes-phase-archive-index", action="store_true", help="Print Post-MVP phase archive index without deleting or moving files.")
     parser.add_argument("--hermes-phase-archive-plan", action="store_true", help="Print Post-MVP phase archive plan without deleting or moving files.")
     parser.add_argument("--actual-phase74-limited-auto-mode", action="store_true", help="Print Phase 74 actual path report; blocked until a separate Manual Gate.")
@@ -3429,6 +3431,18 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- delete_files_now: {output.get('delete_files_now')}")
         return 0
 
+    if args.post_mvp_compaction_d_report:
+        output = build_post_mvp_compaction_d_report()
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Hermes post-MVP Code Compaction D")
+            print(f"- phase_policy_builders_available: {output.get('phase_policy_builders_available')}")
+            print(f"- phase60_policy_helpers_integrated: {output.get('phase60_policy_helpers_integrated')}")
+            print(f"- phase67_policy_helpers_integrated: {output.get('phase67_policy_helpers_integrated')}")
+            print(f"- phase74_policy_helpers_integrated: {output.get('phase74_policy_helpers_integrated')}")
+        return 0
+
     if args.hermes_phase_archive_index:
         output = build_hermes_phase_archive_index()
         if args.json:
@@ -3802,6 +3816,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.hermes_manual_gate_inventory
         or args.hermes_post_mvp_compaction_plan
         or args.post_mvp_compaction_b_report
+        or args.post_mvp_compaction_d_report
         or args.hermes_phase_archive_index
         or args.hermes_phase_archive_plan
         or args.actual_phase74_limited_auto_mode

@@ -94,3 +94,19 @@ python apps\hermes_gateway\cli.py --hermes-phase-archive-plan --json
 
 Recommended next stage is Code Compaction D: safe module consolidation pass, no
 deletion yet.
+
+Code Compaction D consolidates Phase60/67/74 policy and report assembly through
+`phase_policy_builders.py`. Code Compaction D does not delete or move files.
+Phase60/67/74 policy/report assembly now uses shared helpers while preserving
+existing CLI behavior, report keys, Manual Gate behavior, consumed/no-repeat
+locks, public/unknown/high-risk blocking, and secret redaction. MVP state
+registry remains SSOT. Production unattended is still not ready.
+
+Code Compaction D report:
+
+```powershell
+python apps\hermes_gateway\cli.py --post-mvp-compaction-d-report --json
+```
+
+Recommended next stage is Code Compaction E: small archive-safe doc
+consolidation or runtime facade, no deletion yet.
