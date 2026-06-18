@@ -248,3 +248,14 @@ and sends no Discord message, and repeat Phase67 team auto-ops sends are locked
 with `phase67_team_auto_ops_already_consumed`. Current verified level is
 `level4_supervised_team_channel_auto_ops_verified_once`; next target is
 `level4_limited_auto_mode_prep`. Production unattended mode remains not ready.
+
+Phase74 prepares limited supervised auto mode without external action. The path
+is Manual Gate only, known-team-channel only, low-risk-intent only,
+deterministic-template only, bounded by max session/send/reply/cooldown guards,
+and requires an ops queue item, review packet, kill switch, and human override.
+The actual path is default blocked in this bundle and the allow command is
+reserved for a separate Manual Gate. Phase67 remains verified exactly once and
+locked against repeat team auto-ops sends. Current verified level remains
+`level4_supervised_team_channel_auto_ops_verified_once`; next target is
+`level4_limited_auto_mode_short_run`. Production unattended mode remains not
+ready.

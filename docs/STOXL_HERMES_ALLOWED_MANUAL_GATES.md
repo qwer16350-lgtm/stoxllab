@@ -147,3 +147,18 @@ Phase67 actual supervised team-channel auto-ops has now been consumed exactly
 once and is locked against repeat sends with
 `phase67_team_auto_ops_already_consumed`. Any later limited auto mode work must
 be a separate Manual Gate and must not reuse the consumed Phase67 gate.
+
+Phase74 defines the next Manual Gate prep for limited supervised auto mode:
+`HERMES_PHASE74_LIMITED_AUTO_APPROVED`,
+`HERMES_PHASE74_LIMITED_AUTO_APPROVAL_PHRASE`,
+`HERMES_PHASE74_LIMITED_AUTO_CHANNEL_ID`,
+`HERMES_PHASE74_LIMITED_AUTO_KILL_SWITCH_READY`,
+`HERMES_PHASE74_LIMITED_AUTO_MAX_SESSION_SECONDS`,
+`HERMES_PHASE74_LIMITED_AUTO_MAX_SEND_COUNT`,
+`HERMES_PHASE74_LIMITED_AUTO_MAX_REPLY_COUNT`,
+`HERMES_PHASE74_LIMITED_AUTO_COOLDOWN_SECONDS`, Discord send/reply mode keys,
+LLM/RAG/embedding/vector/external disable keys, and scheduler live disable key.
+Required reply mode is `limited_team_low_risk_auto_mode_only`. This bundle does
+not run the allow command and does not perform real send. The next actual
+operation must be a separate Manual Gate for actual Phase74 limited auto mode
+short run exactly once.

@@ -237,6 +237,12 @@ from phase67_72_supervised_team_auto_ops import (
     build_phase67_team_auto_ops_preflight,
     render_phase67_72_supervised_team_auto_ops_markdown,
 )
+from phase74_limited_auto_mode_prep import (
+    build_actual_phase74_limited_auto_mode,
+    build_phase74_limited_auto_mode_preflight,
+    build_phase74_limited_auto_mode_prep,
+    render_phase74_limited_auto_mode_markdown,
+)
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight, render_rag_evidence_private_test_send_preflight_markdown
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope, render_rag_evidence_prompt_envelope_markdown
 from rag_evidence_review_packet import build_rag_evidence_review_packet, render_rag_evidence_review_packet_markdown
@@ -490,6 +496,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--phase67-team-auto-ops-closeout", action="store_true", help="Print Phase 67 team auto-ops metadata-only closeout.")
     parser.add_argument("--actual-phase67-team-auto-ops", action="store_true", help="Print Phase 67 actual path report; blocked unless a later Manual Gate is opened.")
     parser.add_argument("--allow-actual-phase67-team-auto-ops", action="store_true", help="Allow Phase 67 team auto-ops gate evaluation for a later Manual Gate.")
+    parser.add_argument("--phase74-limited-auto-mode-prep", action="store_true", help="Print Phase 74 limited auto mode prep without runtime or send.")
+    parser.add_argument("--phase74-limited-auto-mode-preflight", action="store_true", help="Print Phase 74 limited auto mode preflight without runtime or send.")
+    parser.add_argument("--actual-phase74-limited-auto-mode", action="store_true", help="Print Phase 74 actual path report; blocked until a separate Manual Gate.")
+    parser.add_argument("--allow-actual-phase74-limited-auto-mode", action="store_true", help="Allow Phase 74 actual path gate evaluation for a later Manual Gate.")
     parser.add_argument("--live-event-audit-report", action="store_true", help="Print Phase 30 live event audit record report.")
     parser.add_argument("--would-send-preview-report", action="store_true", help="Print Phase 30 would-send preview report.")
     parser.add_argument("--live-event-review-packet-report", action="store_true", help="Print Phase 30 live event review packet report.")
@@ -3310,6 +3320,48 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- next_target_level: {output.get('next_target_level')}")
         return 0
 
+    if args.phase74_limited_auto_mode_preflight:
+        output = build_phase74_limited_auto_mode_preflight()
+        if args.markdown:
+            print(render_phase74_limited_auto_mode_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase74 limited auto mode preflight")
+            print(f"- preflight_passed: {output.get('preflight_passed')}")
+            print(f"- ready_for_phase74_limited_auto_manual_gate: {output.get('ready_for_phase74_limited_auto_manual_gate')}")
+            print(f"- discord_message_sent: {output.get('discord_message_sent')}")
+        return 0
+
+    if args.actual_phase74_limited_auto_mode:
+        output = build_actual_phase74_limited_auto_mode(
+            allow_flag_present=args.allow_actual_phase74_limited_auto_mode
+        )
+        if args.markdown:
+            print(render_phase74_limited_auto_mode_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase74 actual limited auto mode")
+            print(f"- blocked: {output.get('blocked')}")
+            print(f"- actual_limited_auto_mode_executed: {output.get('actual_limited_auto_mode_executed')}")
+            print(f"- message_sent_count: {output.get('message_sent_count')}")
+        return 0
+
+    if args.phase74_limited_auto_mode_prep:
+        output = build_phase74_limited_auto_mode_prep()
+        if args.markdown:
+            print(render_phase74_limited_auto_mode_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase74 limited auto mode prep")
+            print(f"- phase74_limited_auto_mode_path_available: {output.get('phase74_limited_auto_mode_path_available')}")
+            print(f"- policy_capsule_available: {output.get('policy_capsule_available')}")
+            print(f"- current_verified_level: {output.get('current_verified_level')}")
+            print(f"- next_target_level: {output.get('next_target_level')}")
+        return 0
+
     if args.validate_local_mapping:
         cfg = load_config(Path(__file__).resolve())
         output = build_local_mapping_manager_report(cfg.repo_root, strict=args.strict)
@@ -3622,6 +3674,10 @@ def main(argv: list[str] | None = None) -> int:
         or args.phase67_team_auto_ops_closeout
         or args.actual_phase67_team_auto_ops
         or args.allow_actual_phase67_team_auto_ops
+        or args.phase74_limited_auto_mode_prep
+        or args.phase74_limited_auto_mode_preflight
+        or args.actual_phase74_limited_auto_mode
+        or args.allow_actual_phase74_limited_auto_mode
         or args.execute_readonly_live_runtime
         or args.allow_llm_api_call
         or args.allow_actual_one_shot_llm_draft_call

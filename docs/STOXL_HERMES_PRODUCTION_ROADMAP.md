@@ -122,3 +122,11 @@ Phase67-73 records the completed supervised team-channel auto-ops send exactly
 once and locks repeat sends. Current verified level is
 `level4_supervised_team_channel_auto_ops_verified_once`; next target is
 `level4_limited_auto_mode_prep`. Production unattended remains not ready.
+
+Phase74 prepares limited supervised auto mode without running it. It adds the
+policy capsule, bounded session/send/reply/cooldown requirements, ops queue and
+review packet requirements, kill switch requirement, human override, and default
+blocked actual path. Current verified level remains
+`level4_supervised_team_channel_auto_ops_verified_once`; next target is
+`level4_limited_auto_mode_short_run`. Production unattended remains not ready,
+and the next actual operation must be a separate Manual Gate.
