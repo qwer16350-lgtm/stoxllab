@@ -142,3 +142,8 @@ Phase67 defines the next Manual Gate keys for supervised team-channel auto-ops:
 and LLM/RAG/embedding/vector/external disable keys. Required reply mode is
 `supervised_team_low_risk_auto_ops_only`. This bundle does not run the allow
 command and does not perform real send.
+
+Phase67 actual supervised team-channel auto-ops has now been consumed exactly
+once and is locked against repeat sends with
+`phase67_team_auto_ops_already_consumed`. Any later limited auto mode work must
+be a separate Manual Gate and must not reuse the consumed Phase67 gate.

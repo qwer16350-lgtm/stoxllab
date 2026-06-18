@@ -15,6 +15,7 @@ from phase67_72_supervised_team_auto_ops import (
     Phase67TeamAutoOpsSendResult,
     build_actual_phase67_team_auto_ops,
     build_phase67_72_supervised_team_auto_ops,
+    build_phase67_team_auto_ops_closeout,
     build_phase67_team_auto_ops_preflight,
 )
 
@@ -67,7 +68,7 @@ def test_phase67_path_available_and_default_blocked() -> None:
     assert_true(preflight["ready_for_phase67_team_auto_ops_manual_gate"] is False, "Closed gate")
     blocked = build_actual_phase67_team_auto_ops(env=opened_env())
     assert_true(blocked["blocked"] is True, "Default blocked")
-    assert_true("allow_flag_missing" in blocked["blocked_reasons"], "Allow missing")
+    assert_true(blocked["blocked_reasons"] == ["phase67_team_auto_ops_already_consumed"], "Consumed lock")
     assert_true(blocked["actual_team_auto_ops_executed"] is False, "No execution")
     assert_true(blocked["discord_api_send_called"] is False, "No API")
     assert_true(blocked["discord_message_sent"] is False, "No message")
@@ -80,6 +81,7 @@ def test_fake_sender_success_exactly_once() -> None:
         allow_flag_present=True,
         env=opened_env(),
         send_adapter=sender,
+        phase67_team_auto_ops_already_consumed=False,
     )
     assert_true(sender.calls == 1, "One fake send")
     assert_true(report["blocked"] is False, "Not blocked")
@@ -94,6 +96,42 @@ def test_fake_sender_success_exactly_once() -> None:
     assert_true(report["unknown_channel_send_allowed"] is False, "No unknown")
 
 
+def test_phase67_actual_success_historical_closeout() -> None:
+    report = build_phase67_team_auto_ops_closeout()
+    assert_true(report["report_type"] == "phase67_team_auto_ops_closeout", "Closeout report")
+    assert_true(report["phase67_team_auto_ops_closed_out"] is True, "Closed out")
+    assert_true(report["phase67_actual_team_auto_ops_sent"] is True, "Historical sent")
+    assert_true(report["historical_message_sent_count"] == 1, "Historical count")
+    assert_true(report["real_team_auto_ops_send_performed"] is True, "Historical real send semantic")
+    assert_true(report["phase67_repeat_team_auto_ops_locked"] is True, "Repeat locked")
+    assert_true(report["ready_for_repeat_team_auto_ops"] is False, "No repeat")
+    assert_true(report["previous_verified_level"] == "level4_low_risk_team_channel_canary_verified_once", "Previous")
+    assert_true(report["current_verified_level"] == "level4_supervised_team_channel_auto_ops_verified_once", "Current")
+    assert_true(report["next_target_level"] == "level4_limited_auto_mode_prep", "Next")
+    assert_true(report["ready_for_production_unattended"] is False, "Production false")
+    assert_true(report["discord_api_send_called"] is False, "Closeout no API")
+    assert_true(report["discord_message_sent"] is False, "Closeout no send")
+    assert_true(report["message_sent_count"] == 0, "Closeout no new message")
+
+
+def test_repeat_actual_blocks_even_with_open_gate() -> None:
+    sender = FakeTeamAutoOpsSender()
+    report = build_actual_phase67_team_auto_ops(
+        allow_flag_present=True,
+        env=opened_env(),
+        send_adapter=sender,
+    )
+    assert_true(sender.calls == 0, "Consumed auto-ops must not call sender")
+    assert_true(report["blocked"] is True, "Blocked")
+    assert_true(report["blocked_reasons"] == ["phase67_team_auto_ops_already_consumed"], "Consumed reason")
+    assert_true(report["actual_team_auto_ops_executed"] is False, "No execution")
+    assert_true(report["real_team_auto_ops_send_performed"] is False, "No real send")
+    assert_true(report["discord_api_send_called"] is False, "No API")
+    assert_true(report["discord_message_sent"] is False, "No message")
+    assert_true(report["message_sent_count"] == 0, "No count")
+    assert_true(report["ready_for_repeat_team_auto_ops"] is False, "No repeat")
+
+
 def test_public_unknown_high_risk_and_multi_message_blocked() -> None:
     cases = (
         ({"channel_scope": "public"}, "public_channel_blocked"),
@@ -102,7 +140,12 @@ def test_public_unknown_high_risk_and_multi_message_blocked() -> None:
         ({"message_count": 2}, "max_one_reply_per_event_required"),
     )
     for event, reason in cases:
-        report = build_actual_phase67_team_auto_ops(allow_flag_present=True, env=opened_env(), event=event)
+        report = build_actual_phase67_team_auto_ops(
+            allow_flag_present=True,
+            env=opened_env(),
+            event=event,
+            phase67_team_auto_ops_already_consumed=False,
+        )
         assert_true(report["blocked"] is True, "Blocked")
         assert_true(reason in report["blocked_reasons"], reason)
         assert_true(report["actual_team_auto_ops_executed"] is False, "No execution")
@@ -150,6 +193,8 @@ def main() -> int:
     tests = [
         test_phase67_path_available_and_default_blocked,
         test_fake_sender_success_exactly_once,
+        test_phase67_actual_success_historical_closeout,
+        test_repeat_actual_blocks_even_with_open_gate,
         test_public_unknown_high_risk_and_multi_message_blocked,
         test_phase60_lock_and_level_matrix,
         test_no_external_or_sensitive_values,

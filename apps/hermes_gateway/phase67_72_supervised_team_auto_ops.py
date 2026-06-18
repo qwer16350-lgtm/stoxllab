@@ -217,8 +217,17 @@ def _deterministic_reply_text() -> str:
     return "Phase67 supervised team auto-ops acknowledgement. Human oversight remains active."
 
 
-def _blocked_reasons(gate: Mapping[str, Any], guard: Mapping[str, Any], *, allow_flag_present: bool) -> list[str]:
+def _blocked_reasons(
+    gate: Mapping[str, Any],
+    guard: Mapping[str, Any],
+    *,
+    allow_flag_present: bool,
+    phase67_team_auto_ops_already_consumed: bool = False,
+) -> list[str]:
     reasons: list[str] = []
+    if phase67_team_auto_ops_already_consumed:
+        reasons.append("phase67_team_auto_ops_already_consumed")
+        return reasons
     if not allow_flag_present:
         reasons.append("allow_flag_missing")
     if not gate.get("manual_approval_true"):
@@ -320,10 +329,16 @@ def build_actual_phase67_team_auto_ops(
     env: Mapping[str, str] | None = None,
     event: Mapping[str, Any] | None = None,
     send_adapter: Phase67TeamAutoOpsSendAdapter | None = None,
+    phase67_team_auto_ops_already_consumed: bool = True,
 ) -> dict[str, Any]:
     gate = _gate_snapshot(env)
     guard = _event_guard(event)
-    reasons = _blocked_reasons(gate, guard, allow_flag_present=allow_flag_present)
+    reasons = _blocked_reasons(
+        gate,
+        guard,
+        allow_flag_present=allow_flag_present,
+        phase67_team_auto_ops_already_consumed=phase67_team_auto_ops_already_consumed,
+    )
     if reasons:
         report = {
             **_base_report(),
@@ -331,6 +346,8 @@ def build_actual_phase67_team_auto_ops(
             **guard,
             "report_type": "phase67_team_auto_ops_blocked",
             "allow_flag_present": allow_flag_present,
+            "phase67_team_auto_ops_already_consumed": phase67_team_auto_ops_already_consumed,
+            "phase67_repeat_team_auto_ops_locked": phase67_team_auto_ops_already_consumed,
             "blocked": True,
             "blocked_reasons": reasons,
             "ready_for_phase67_team_auto_ops_manual_gate": False,
@@ -352,6 +369,8 @@ def build_actual_phase67_team_auto_ops(
         **guard,
         "report_type": "phase67_team_auto_ops_actual_session",
         "allow_flag_present": True,
+        "phase67_team_auto_ops_already_consumed": False,
+        "phase67_repeat_team_auto_ops_locked": True,
         "blocked": False,
         "blocked_reasons": [],
         "actual_team_auto_ops_executed": bool(send_result.message_sent),
@@ -372,8 +391,45 @@ def build_actual_phase67_team_auto_ops(
     return report
 
 
+def build_phase67_team_auto_ops_closeout() -> dict[str, Any]:
+    report: dict[str, Any] = {
+        **_base_report(),
+        "report_type": "phase67_team_auto_ops_closeout",
+        "metadata_only": True,
+        "phase67_team_auto_ops_closed_out": True,
+        "phase67_actual_team_auto_ops_sent": True,
+        "historical_message_sent_count": 1,
+        "phase67_repeat_team_auto_ops_locked": True,
+        "phase67_team_auto_ops_already_consumed": True,
+        "ready_for_repeat_team_auto_ops": False,
+        "ready_for_phase67_team_auto_ops_manual_gate": False,
+        "sent_scope": "known_team_channel_only",
+        "reply_text_source": "deterministic_template",
+        "real_team_auto_ops_send_performed": True,
+        "previous_verified_level": "level4_low_risk_team_channel_canary_verified_once",
+        "current_verified_level": "level4_supervised_team_channel_auto_ops_verified_once",
+        "next_target_level": "level4_limited_auto_mode_prep",
+        "ready_for_production_unattended": False,
+        "autonomy_matrix": {
+            "level_1": "read_only_observation_verified",
+            "level_2": "manual_gate_deterministic_reply_verified",
+            "level_3": "supervised_private_test_auto_reply_verified",
+            "level_4_canary": "low_risk_team_channel_canary_verified_once",
+            "level_4_auto_ops": "supervised_team_channel_auto_ops_verified_once",
+            "level_5": "production_unattended_not_ready",
+        },
+        "next_actual_operation": "separate_manual_gate_for_limited_auto_mode_prep",
+    }
+    assert_phase67_72_supervised_team_auto_ops_safe(report, allow_historical_closeout=True)
+    return report
+
+
 def assert_phase67_72_supervised_team_auto_ops_safe(
-    report: Mapping[str, Any], *, allow_ready: bool = False, allow_fake_success: bool = False
+    report: Mapping[str, Any],
+    *,
+    allow_ready: bool = False,
+    allow_fake_success: bool = False,
+    allow_historical_closeout: bool = False,
 ) -> None:
     text = json.dumps(report, ensure_ascii=False)
     if SECRET_RE.search(text.lower()) or LONG_ID_RE.search(text) or APPROVAL_RE.search(text):
@@ -402,7 +458,7 @@ def assert_phase67_72_supervised_team_auto_ops_safe(
     ):
         if report.get(key):
             raise ValueError(f"Phase67-72 unsafe flag is true: {key}")
-    if not allow_fake_success:
+    if not allow_fake_success and not allow_historical_closeout:
         for key in (
             "actual_team_auto_ops_executed",
             "real_team_auto_ops_send_performed",
@@ -415,6 +471,10 @@ def assert_phase67_72_supervised_team_auto_ops_safe(
             raise ValueError("Phase67-72 safe reports must not send messages.")
     if int(report.get("message_sent_count", 0) or 0) > 1:
         raise ValueError("Phase67-72 message_sent_count must not exceed 1.")
+    if allow_historical_closeout and int(report.get("historical_message_sent_count", 0) or 0) != 1:
+        raise ValueError("Phase67 closeout historical_message_sent_count must be 1.")
+    if allow_historical_closeout and not report.get("real_team_auto_ops_send_performed"):
+        raise ValueError("Phase67 closeout must record historical real team auto-ops send semantic.")
     if report.get("reply_text_source") != "deterministic_template":
         raise ValueError("Phase67-72 reply text source must be deterministic_template.")
     if report.get("sent_scope") != "known_team_channel_only":

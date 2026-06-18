@@ -117,3 +117,8 @@ action. It adds queue/review-packet/deterministic-candidate readiness while
 keeping actual send default blocked, preserving the Phase60 consumed lock, and
 keeping Level 5 production unattended not ready. The next actual operation must
 be a separate Manual Gate.
+
+Phase67-73 records the completed supervised team-channel auto-ops send exactly
+once and locks repeat sends. Current verified level is
+`level4_supervised_team_channel_auto_ops_verified_once`; next target is
+`level4_limited_auto_mode_prep`. Production unattended remains not ready.

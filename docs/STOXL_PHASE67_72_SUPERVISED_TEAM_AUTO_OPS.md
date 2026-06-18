@@ -5,6 +5,17 @@ Phase60 low-risk team canary was verified exactly once. It performs no actual
 Discord runtime, no real Discord send, no LLM/RAG, no external execution, and no
 scheduler live execution.
 
+Phase67 Safe Closeout:
+
+- Phase67 actual supervised team-channel auto-ops was already executed exactly
+  once before closeout.
+- Historical `message_sent_count` is fixed at `1`.
+- Closeout performs no new Discord send.
+- Repeat Phase67 team auto-ops send is locked with
+  `phase67_team_auto_ops_already_consumed`.
+- Historical real-send semantics are recorded as
+  `real_team_auto_ops_send_performed=true` only in the metadata-only closeout.
+
 Pipeline:
 
 - Team-channel event classifier.
@@ -61,7 +72,8 @@ Autonomy matrix:
 - Level 2: manual-gate deterministic reply verified.
 - Level 3: supervised private-test auto-reply verified.
 - Level 4: low-risk team-channel canary verified once.
-- Level 4: supervised team-channel auto-ops prepared, not executed.
+- Level 4: supervised team-channel auto-ops verified once.
 - Level 5: production unattended not ready.
 
-Next actual operation must be a separate Manual Gate.
+Next target is Limited Auto Mode Prep. Next actual operation must be a separate
+Manual Gate.

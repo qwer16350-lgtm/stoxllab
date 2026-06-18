@@ -240,3 +240,11 @@ does not execute Discord runtime/send, LLM/OpenRouter, RAG, embedding/vector,
 external execution, scheduler live execution, or production unattended mode.
 Current verified level remains `level4_low_risk_team_channel_canary_verified_once`;
 next target is `level4_supervised_team_channel_auto_ops`.
+
+Phase67-73 closes out the operator-run supervised team-channel auto-ops session
+as metadata only. The historical send count is fixed at
+`historical_message_sent_count=1`, closeout itself performs no Discord API send
+and sends no Discord message, and repeat Phase67 team auto-ops sends are locked
+with `phase67_team_auto_ops_already_consumed`. Current verified level is
+`level4_supervised_team_channel_auto_ops_verified_once`; next target is
+`level4_limited_auto_mode_prep`. Production unattended mode remains not ready.

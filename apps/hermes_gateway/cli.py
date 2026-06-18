@@ -233,6 +233,7 @@ from phase60_65_team_canary_autonomy_stage import (
 from phase67_72_supervised_team_auto_ops import (
     build_actual_phase67_team_auto_ops,
     build_phase67_72_supervised_team_auto_ops,
+    build_phase67_team_auto_ops_closeout,
     build_phase67_team_auto_ops_preflight,
     render_phase67_72_supervised_team_auto_ops_markdown,
 )
@@ -486,6 +487,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--phase60-65-team-canary-autonomy-stage", action="store_true", help="Print Phase 60-65 team canary autonomy stage without runtime or send.")
     parser.add_argument("--phase67-72-supervised-team-auto-ops", action="store_true", help="Print Phase 67-72 supervised team auto-ops stage without runtime or send.")
     parser.add_argument("--phase67-team-auto-ops-preflight", action="store_true", help="Print Phase 67 team auto-ops preflight without runtime or send.")
+    parser.add_argument("--phase67-team-auto-ops-closeout", action="store_true", help="Print Phase 67 team auto-ops metadata-only closeout.")
     parser.add_argument("--actual-phase67-team-auto-ops", action="store_true", help="Print Phase 67 actual path report; blocked unless a later Manual Gate is opened.")
     parser.add_argument("--allow-actual-phase67-team-auto-ops", action="store_true", help="Allow Phase 67 team auto-ops gate evaluation for a later Manual Gate.")
     parser.add_argument("--live-event-audit-report", action="store_true", help="Print Phase 30 live event audit record report.")
@@ -3265,6 +3267,20 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- discord_message_sent: {output.get('discord_message_sent')}")
         return 0
 
+    if args.phase67_team_auto_ops_closeout:
+        output = build_phase67_team_auto_ops_closeout()
+        if args.markdown:
+            print(render_phase67_72_supervised_team_auto_ops_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase67 team auto-ops closeout")
+            print(f"- phase67_team_auto_ops_closed_out: {output.get('phase67_team_auto_ops_closed_out')}")
+            print(f"- historical_message_sent_count: {output.get('historical_message_sent_count')}")
+            print(f"- phase67_repeat_team_auto_ops_locked: {output.get('phase67_repeat_team_auto_ops_locked')}")
+            print(f"- current_verified_level: {output.get('current_verified_level')}")
+        return 0
+
     if args.actual_phase67_team_auto_ops:
         output = build_actual_phase67_team_auto_ops(
             allow_flag_present=args.allow_actual_phase67_team_auto_ops
@@ -3603,6 +3619,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.phase60_65_team_canary_autonomy_stage
         or args.phase67_72_supervised_team_auto_ops
         or args.phase67_team_auto_ops_preflight
+        or args.phase67_team_auto_ops_closeout
         or args.actual_phase67_team_auto_ops
         or args.allow_actual_phase67_team_auto_ops
         or args.execute_readonly_live_runtime
