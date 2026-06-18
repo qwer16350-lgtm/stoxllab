@@ -64,3 +64,19 @@ python apps\hermes_gateway\cli.py --hermes-launch-readiness-scorecard --json
 
 Recommended next stage: Production Hardening H - read-only live soak plan, no
 send.
+
+Production Hardening H adds the read-only live soak plan, preflight, and
+default-blocked actual soak placeholder. Read-only soak is live observation
+only. No send/reply. No LLM/RAG. No external execution. No scheduler live. This
+step only prepares the plan/preflight. Actual soak requires separate Manual
+Gate. Production unattended remains blocked.
+
+Additional report commands:
+
+```powershell
+python apps\hermes_gateway\cli.py --hermes-read-only-soak-plan --json
+python apps\hermes_gateway\cli.py --hermes-read-only-soak-preflight --json
+python apps\hermes_gateway\cli.py --actual-read-only-live-soak --json
+```
+
+Recommended next stage: Manual Gate - actual read-only live soak, no send.

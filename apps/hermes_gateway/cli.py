@@ -266,6 +266,11 @@ from production_safety_audit import (
     build_hermes_launch_readiness_scorecard,
     build_hermes_production_safety_audit,
 )
+from read_only_soak_plan import (
+    build_actual_read_only_live_soak_blocked,
+    build_hermes_read_only_soak_plan,
+    build_hermes_read_only_soak_preflight,
+)
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight, render_rag_evidence_private_test_send_preflight_markdown
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope, render_rag_evidence_prompt_envelope_markdown
 from rag_evidence_review_packet import build_rag_evidence_review_packet, render_rag_evidence_review_packet_markdown
@@ -536,6 +541,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--hermes-safe-launch-runbook", action="store_true", help="Print report-only Hermes safe launch runbook.")
     parser.add_argument("--hermes-production-safety-audit", action="store_true", help="Print dry-run Hermes production safety audit.")
     parser.add_argument("--hermes-launch-readiness-scorecard", action="store_true", help="Print dry-run Hermes launch readiness scorecard.")
+    parser.add_argument("--hermes-read-only-soak-plan", action="store_true", help="Print report-only Hermes read-only live soak plan.")
+    parser.add_argument("--hermes-read-only-soak-preflight", action="store_true", help="Print report-only Hermes read-only live soak preflight.")
+    parser.add_argument("--actual-read-only-live-soak", action="store_true", help="Print default-blocked read-only live soak actual path report.")
+    parser.add_argument("--allow-actual-read-only-live-soak", action="store_true", help="Record allow flag presence for a later Manual Gate; still blocked in this phase.")
     parser.add_argument("--actual-phase74-limited-auto-mode", action="store_true", help="Print Phase 74 actual path report; blocked until a separate Manual Gate.")
     parser.add_argument("--allow-actual-phase74-limited-auto-mode", action="store_true", help="Allow Phase 74 actual path gate evaluation for a later Manual Gate.")
     parser.add_argument("--live-event-audit-report", action="store_true", help="Print Phase 30 live event audit record report.")
@@ -3555,6 +3564,44 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- next_safe_action: {output.get('next_safe_action')}")
         return 0
 
+    if args.hermes_read_only_soak_plan:
+        output = build_hermes_read_only_soak_plan()
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Hermes read-only live soak plan")
+            print(f"- read_only_soak_plan_available: {output.get('read_only_soak_plan_available')}")
+            print(f"- soak_scope: {output.get('soak_scope')}")
+            print(f"- next_live_action_requires_manual_gate: {output.get('next_live_action_requires_manual_gate')}")
+            print(f"- recommended_next_stage: {output.get('recommended_next_stage')}")
+        return 0
+
+    if args.hermes_read_only_soak_preflight:
+        output = build_hermes_read_only_soak_preflight()
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Hermes read-only live soak preflight")
+            print(f"- manual_gate_required: {output.get('manual_gate_required')}")
+            print(f"- ready_for_read_only_soak_manual_gate: {output.get('ready_for_read_only_soak_manual_gate')}")
+            print(f"- discord_token_present: {output.get('discord_token_present')}")
+            print(f"- recommended_command: {output.get('recommended_command')}")
+        return 0
+
+    if args.actual_read_only_live_soak:
+        output = build_actual_read_only_live_soak_blocked(
+            allow_flag_present=args.allow_actual_read_only_live_soak
+        )
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Hermes actual read-only live soak")
+            print(f"- blocked: {output.get('blocked')}")
+            print(f"- actual_read_only_soak_executed: {output.get('actual_read_only_soak_executed')}")
+            print(f"- discord_gateway_live_connection_executed: {output.get('discord_gateway_live_connection_executed')}")
+            print(f"- message_sent_count: {output.get('message_sent_count')}")
+        return 0
+
     if args.actual_phase74_limited_auto_mode:
         output = build_actual_phase74_limited_auto_mode(
             allow_flag_present=args.allow_actual_phase74_limited_auto_mode
@@ -3913,6 +3960,10 @@ def main(argv: list[str] | None = None) -> int:
         or args.hermes_safe_launch_runbook
         or args.hermes_production_safety_audit
         or args.hermes_launch_readiness_scorecard
+        or args.hermes_read_only_soak_plan
+        or args.hermes_read_only_soak_preflight
+        or args.actual_read_only_live_soak
+        or args.allow_actual_read_only_live_soak
         or args.actual_phase74_limited_auto_mode
         or args.allow_actual_phase74_limited_auto_mode
         or args.execute_readonly_live_runtime

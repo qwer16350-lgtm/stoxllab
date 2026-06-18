@@ -332,3 +332,10 @@ unknown/high-risk blocking, and disabled LLM/RAG/external/scheduler-live
 defaults remain preserved. Next safe live action would be read-only live soak,
 not send/reply. Recommended next stage is Production Hardening H: read-only live
 soak plan, no send.
+
+Production Hardening H adds `read_only_soak_plan.py`, a read-only live soak
+plan, preflight, and default-blocked actual soak placeholder. Read-only soak is
+live observation only. No send/reply, no LLM/RAG, no external execution, and no
+scheduler live are allowed. This step only prepares the plan/preflight and does
+not connect to Discord Gateway. Actual soak requires a separate Manual Gate.
+Production unattended remains blocked.

@@ -159,3 +159,10 @@ but production unattended still blocked. The scorecard marks MVP controls and
 safety defaults as passed, while live-ops and operator controls remain blocking.
 Next safe live action would be read-only live soak, not send/reply. Recommended
 next stage is Production Hardening H: read-only live soak plan, no send.
+
+Production Hardening H adds the read-only live soak plan, preflight, and
+default-blocked actual soak placeholder. Read-only soak is live observation
+only: no send/reply, no LLM/RAG, no external execution, and no scheduler live.
+This step only prepares the plan/preflight and does not connect to Discord
+Gateway. Actual soak requires a separate Manual Gate. Production unattended
+remains blocked.
