@@ -14,6 +14,8 @@ from phase74_limited_auto_mode_prep import (
     REPLY_MODE,
     Phase74LimitedAutoSessionResult,
     build_actual_phase74_limited_auto_mode,
+    build_hermes_mvp_final_closeout,
+    build_phase74_limited_auto_closeout,
     build_phase74_limited_auto_mode_preflight,
     build_phase74_limited_auto_mode_prep,
 )
@@ -87,11 +89,12 @@ def test_default_actual_blocked_without_send() -> None:
     report = build_actual_phase74_limited_auto_mode(env=opened_env())
     assert_true(report["report_type"] == "phase74_limited_auto_mode_blocked", "Blocked report")
     assert_true(report["blocked"] is True, "Blocked")
-    assert_true("allow_flag_missing" in report["blocked_reasons"], "Allow missing")
+    assert_true(report["blocked_reasons"] == ["phase74_limited_auto_mode_already_consumed"], "Consumed lock")
     assert_true(report["actual_limited_auto_mode_executed"] is False, "No execution")
     assert_true(report["discord_api_send_called"] is False, "No API")
     assert_true(report["discord_message_sent"] is False, "No message")
     assert_true(report["message_sent_count"] == 0, "No count")
+    assert_true(report["reply_count"] == 0, "No reply")
     assert_true(report["session_executed"] is False, "No session")
 
 
@@ -115,6 +118,7 @@ def test_fake_limited_session_exactly_once() -> None:
         env=opened_env(),
         session_adapter=session,
         force_separate_manual_gate=False,
+        phase74_limited_auto_mode_already_consumed=False,
     )
     assert_true(session.calls == 1, "One fake session")
     assert_true(report["blocked"] is False, "Not blocked")
@@ -147,6 +151,7 @@ def test_public_unknown_high_risk_and_multi_message_blocked() -> None:
             env=opened_env(),
             event=event,
             force_separate_manual_gate=False,
+            phase74_limited_auto_mode_already_consumed=False,
         )
         assert_true(report["blocked"] is True, "Blocked")
         assert_true(reason in report["blocked_reasons"], reason)
@@ -170,6 +175,59 @@ def test_phase67_lock_level_matrix_and_production_false() -> None:
     assert_true(report["ready_for_production_unattended"] is False, "Production false")
 
 
+def test_phase74_actual_success_historical_closeout_and_mvp() -> None:
+    report = build_phase74_limited_auto_closeout()
+    assert_true(report["report_type"] == "phase74_limited_auto_mode_closeout", "Closeout report")
+    assert_true(report["phase74_limited_auto_mode_closed_out"] is True, "Closed out")
+    assert_true(report["phase74_actual_limited_auto_sent"] is True, "Historical actual sent")
+    assert_true(report["historical_message_sent_count"] == 1, "Historical message")
+    assert_true(report["historical_reply_count"] == 1, "Historical reply")
+    assert_true(report["phase74_limited_auto_mode_already_consumed"] is True, "Consumed")
+    assert_true(report["phase74_repeat_limited_auto_locked"] is True, "Repeat locked")
+    assert_true(report["ready_for_repeat_limited_auto_mode"] is False, "No repeat")
+    assert_true(report["ready_for_phase74_limited_auto_manual_gate"] is False, "Manual gate closed")
+    assert_true(report["limited_auto_mode_short_run_verified_once"] is True, "Verified once")
+    assert_true(report["current_verified_level"] == "level4_limited_auto_mode_short_run_verified_once", "Current")
+    assert_true(report["previous_verified_level"] == "level4_supervised_team_channel_auto_ops_verified_once", "Previous")
+    assert_true(report["next_target_level"] == "production_hardening_refactor_compaction", "Next")
+    assert_true(report["mvp_supervised_discord_agent_os_complete"] is True, "MVP complete")
+    assert_true(report["ready_for_production_unattended"] is False, "Level 5 false")
+    assert_true(report["autonomy_level_matrix"]["level_4_limited_auto"] == "limited_auto_mode_short_run_verified_once", "Matrix fixed")
+    assert_true(report["next_actual_operation"] == "production_hardening_refactor_compaction", "No repeat pointer")
+    assert_true(report["discord_api_send_called"] is False, "Closeout no API")
+    assert_true(report["discord_message_sent"] is False, "Closeout no send")
+    assert_true(report["message_sent_count"] == 0, "Closeout no new message")
+    assert_true(report["reply_count"] == 0, "Closeout no new reply")
+
+
+def test_hermes_mvp_final_closeout() -> None:
+    report = build_hermes_mvp_final_closeout()
+    assert_true(report["report_type"] == "hermes_mvp_final_closeout", "MVP report")
+    assert_true(report["mvp_supervised_discord_agent_os_complete"] is True, "MVP complete")
+    assert_true(report["phase74_limited_auto_mode_closed_out"] is True, "Phase74 closed")
+    assert_true(report["historical_message_sent_count"] == 1, "Historical message")
+    assert_true(report["historical_reply_count"] == 1, "Historical reply")
+    assert_true(report["next_target_level"] == "production_hardening_refactor_compaction", "Next")
+
+
+def test_repeat_actual_blocks_even_with_open_gate() -> None:
+    session = FakeLimitedAutoSession()
+    report = build_actual_phase74_limited_auto_mode(
+        allow_flag_present=True,
+        env=opened_env(),
+        session_adapter=session,
+    )
+    assert_true(session.calls == 0, "Consumed actual must not call adapter")
+    assert_true(report["blocked"] is True, "Blocked")
+    assert_true(report["blocked_reasons"] == ["phase74_limited_auto_mode_already_consumed"], "Consumed reason")
+    assert_true(report["actual_limited_auto_mode_executed"] is False, "No execution")
+    assert_true(report["session_executed"] is False, "No session")
+    assert_true(report["discord_api_send_called"] is False, "No API")
+    assert_true(report["discord_message_sent"] is False, "No message")
+    assert_true(report["message_sent_count"] == 0, "No count")
+    assert_true(report["reply_count"] == 0, "No reply")
+
+
 def test_actual_branch_missing_gate_values_blocked() -> None:
     cases = (
         ("token missing", "DISCORD_BOT_TOKEN", "", "discord_token_missing"),
@@ -180,7 +238,11 @@ def test_actual_branch_missing_gate_values_blocked() -> None:
     for _label, key, value, reason in cases:
         env = opened_env()
         env[key] = value
-        report = build_actual_phase74_limited_auto_mode(allow_flag_present=True, env=env)
+        report = build_actual_phase74_limited_auto_mode(
+            allow_flag_present=True,
+            env=env,
+            phase74_limited_auto_mode_already_consumed=False,
+        )
         assert_true(report["blocked"] is True, reason)
         assert_true(reason in report["blocked_reasons"], reason)
         assert_true(report["actual_limited_auto_mode_executed"] is False, "No execution")
@@ -201,7 +263,11 @@ def test_actual_branch_runtime_safety_values_blocked() -> None:
     for _label, key, value, reason in cases:
         env = opened_env()
         env[key] = value
-        report = build_actual_phase74_limited_auto_mode(allow_flag_present=True, env=env)
+        report = build_actual_phase74_limited_auto_mode(
+            allow_flag_present=True,
+            env=env,
+            phase74_limited_auto_mode_already_consumed=False,
+        )
         assert_true(report["blocked"] is True, reason)
         assert_true(reason in report["blocked_reasons"], reason)
         assert_true(report["actual_limited_auto_mode_executed"] is False, "No execution")
@@ -251,6 +317,9 @@ def main() -> int:
         test_actual_branch_runtime_safety_values_blocked,
         test_public_unknown_high_risk_and_multi_message_blocked,
         test_phase67_lock_level_matrix_and_production_false,
+        test_phase74_actual_success_historical_closeout_and_mvp,
+        test_hermes_mvp_final_closeout,
+        test_repeat_actual_blocks_even_with_open_gate,
         test_no_external_or_sensitive_values_in_cli_reports,
     ]
     for test in tests:

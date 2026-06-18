@@ -239,6 +239,8 @@ from phase67_72_supervised_team_auto_ops import (
 )
 from phase74_limited_auto_mode_prep import (
     build_actual_phase74_limited_auto_mode,
+    build_hermes_mvp_final_closeout,
+    build_phase74_limited_auto_closeout,
     build_phase74_limited_auto_mode_preflight,
     build_phase74_limited_auto_mode_prep,
     render_phase74_limited_auto_mode_markdown,
@@ -498,6 +500,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--allow-actual-phase67-team-auto-ops", action="store_true", help="Allow Phase 67 team auto-ops gate evaluation for a later Manual Gate.")
     parser.add_argument("--phase74-limited-auto-mode-prep", action="store_true", help="Print Phase 74 limited auto mode prep without runtime or send.")
     parser.add_argument("--phase74-limited-auto-mode-preflight", action="store_true", help="Print Phase 74 limited auto mode preflight without runtime or send.")
+    parser.add_argument("--phase74-limited-auto-closeout", action="store_true", help="Print Phase 74 limited auto mode metadata-only closeout.")
+    parser.add_argument("--hermes-mvp-final-closeout", action="store_true", help="Print supervised Hermes Discord Agent OS MVP final closeout.")
     parser.add_argument("--actual-phase74-limited-auto-mode", action="store_true", help="Print Phase 74 actual path report; blocked until a separate Manual Gate.")
     parser.add_argument("--allow-actual-phase74-limited-auto-mode", action="store_true", help="Allow Phase 74 actual path gate evaluation for a later Manual Gate.")
     parser.add_argument("--live-event-audit-report", action="store_true", help="Print Phase 30 live event audit record report.")
@@ -3333,6 +3337,34 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- discord_message_sent: {output.get('discord_message_sent')}")
         return 0
 
+    if args.phase74_limited_auto_closeout:
+        output = build_phase74_limited_auto_closeout()
+        if args.markdown:
+            print(render_phase74_limited_auto_mode_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Phase74 limited auto mode closeout")
+            print(f"- phase74_limited_auto_mode_closed_out: {output.get('phase74_limited_auto_mode_closed_out')}")
+            print(f"- historical_message_sent_count: {output.get('historical_message_sent_count')}")
+            print(f"- historical_reply_count: {output.get('historical_reply_count')}")
+            print(f"- current_verified_level: {output.get('current_verified_level')}")
+        return 0
+
+    if args.hermes_mvp_final_closeout:
+        output = build_hermes_mvp_final_closeout()
+        if args.markdown:
+            print(render_phase74_limited_auto_mode_markdown(output))
+        elif args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Hermes MVP final closeout")
+            print(f"- mvp_supervised_discord_agent_os_complete: {output.get('mvp_supervised_discord_agent_os_complete')}")
+            print(f"- phase74_limited_auto_mode_closed_out: {output.get('phase74_limited_auto_mode_closed_out')}")
+            print(f"- current_verified_level: {output.get('current_verified_level')}")
+            print(f"- next_target_level: {output.get('next_target_level')}")
+        return 0
+
     if args.actual_phase74_limited_auto_mode:
         output = build_actual_phase74_limited_auto_mode(
             allow_flag_present=args.allow_actual_phase74_limited_auto_mode
@@ -3676,6 +3708,8 @@ def main(argv: list[str] | None = None) -> int:
         or args.allow_actual_phase67_team_auto_ops
         or args.phase74_limited_auto_mode_prep
         or args.phase74_limited_auto_mode_preflight
+        or args.phase74_limited_auto_closeout
+        or args.hermes_mvp_final_closeout
         or args.actual_phase74_limited_auto_mode
         or args.allow_actual_phase74_limited_auto_mode
         or args.execute_readonly_live_runtime

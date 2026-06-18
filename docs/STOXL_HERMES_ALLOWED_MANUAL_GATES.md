@@ -168,3 +168,9 @@ can reach the bounded adapter path in the next Manual Gate. This hotfix does not
 run the allow command, does not perform real send, and keeps missing allow flag,
 approval, token, channel, unsafe runtime settings, public/unknown/high-risk
 events, and multi-message events blocked with explicit reasons.
+
+Phase74 actual limited auto mode short run has now been consumed exactly once
+and is locked against repeat sends with
+`phase74_limited_auto_mode_already_consumed`. The supervised MVP is complete.
+Any later production hardening, refactor, compaction, or production-unattended
+work must be a separate gate and must not reuse the consumed Phase74 gate.

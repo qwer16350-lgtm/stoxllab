@@ -130,3 +130,9 @@ blocked actual path. Current verified level remains
 `level4_supervised_team_channel_auto_ops_verified_once`; next target is
 `level4_limited_auto_mode_short_run`. Production unattended remains not ready,
 and the next actual operation must be a separate Manual Gate.
+
+Phase74 final MVP closeout records the limited auto mode short run as completed
+exactly once and locks repeat sends. The supervised Hermes Discord Agent OS MVP
+is complete at `level4_limited_auto_mode_short_run_verified_once`. Level 5
+production unattended remains not ready. Next work is production hardening,
+refactor, and compaction.

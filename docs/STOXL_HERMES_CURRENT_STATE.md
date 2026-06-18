@@ -266,3 +266,13 @@ gate; missing allow flag, approval, approval phrase, token, team channel, kill
 switch, reply mode, bounds, cooldown, disabled LLM/RAG/vector/external/
 scheduler settings, and event eligibility now produce specific blocked reasons.
 Safe verification uses only fake session tests and default-blocked CLI reports.
+
+Phase74 final MVP closeout records the operator-run limited auto mode short run
+as completed exactly once. The historical message count and reply count are
+fixed at one, closeout itself performs no Discord runtime or send, and repeat
+Phase74 limited auto sends are locked with
+`phase74_limited_auto_mode_already_consumed`. The supervised Hermes Discord
+Agent OS MVP is complete, current verified level is
+`level4_limited_auto_mode_short_run_verified_once`, and next target is
+`production_hardening_refactor_compaction`. Production unattended mode remains
+not ready.

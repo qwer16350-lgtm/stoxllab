@@ -42,6 +42,7 @@ HIGH_RISK_INTENTS = {
     "llm_rag_live_reply_without_manual_gate",
 }
 BLOCKED_ACTUAL_REASON = "phase74_limited_auto_mode_requires_separate_manual_gate"
+CONSUMED_REASON = "phase74_limited_auto_mode_already_consumed"
 
 
 @dataclass
@@ -239,6 +240,8 @@ def _base_report() -> dict[str, Any]:
         "next_target_level": "level4_limited_auto_mode_short_run",
         "ready_for_phase74_limited_auto_manual_gate": True,
         "ready_for_repeat_limited_auto_mode": False,
+        "phase74_limited_auto_mode_already_consumed": False,
+        "phase74_repeat_limited_auto_locked": False,
         "ready_for_production_unattended": False,
         "actual_limited_auto_mode_executed": False,
         "fake_limited_auto_session_executed": False,
@@ -286,8 +289,11 @@ def _blocked_reasons(
     *,
     allow_flag_present: bool,
     force_separate_manual_gate: bool,
+    phase74_limited_auto_mode_already_consumed: bool = False,
 ) -> list[str]:
     reasons: list[str] = []
+    if phase74_limited_auto_mode_already_consumed:
+        return [CONSUMED_REASON]
     if force_separate_manual_gate:
         reasons.append("manual_gate_missing")
     if not allow_flag_present:
@@ -373,6 +379,7 @@ def build_actual_phase74_limited_auto_mode(
     event: Mapping[str, Any] | None = None,
     session_adapter: Phase74LimitedAutoSessionAdapter | None = None,
     force_separate_manual_gate: bool = False,
+    phase74_limited_auto_mode_already_consumed: bool = True,
 ) -> dict[str, Any]:
     gate = _gate_snapshot(env)
     guard = _event_guard(event)
@@ -381,8 +388,10 @@ def build_actual_phase74_limited_auto_mode(
         guard,
         allow_flag_present=allow_flag_present,
         force_separate_manual_gate=force_separate_manual_gate,
+        phase74_limited_auto_mode_already_consumed=phase74_limited_auto_mode_already_consumed,
     )
     if reasons:
+        consumed = phase74_limited_auto_mode_already_consumed
         report = {
             **_base_report(),
             **_policy_capsule(),
@@ -390,10 +399,42 @@ def build_actual_phase74_limited_auto_mode(
             **guard,
             "report_type": "phase74_limited_auto_mode_blocked",
             "allow_flag_present": allow_flag_present,
+            "phase74_limited_auto_mode_already_consumed": consumed,
+            "phase74_repeat_limited_auto_locked": consumed,
             "blocked": True,
             "blocked_reasons": reasons,
-            "ready_for_phase74_limited_auto_manual_gate": True,
-            "next_actual_operation": "separate_manual_gate_actual_phase74_limited_auto_mode_short_run_exactly_once",
+            "ready_for_phase74_limited_auto_manual_gate": not consumed,
+            "current_verified_level": (
+                "level4_limited_auto_mode_short_run_verified_once"
+                if consumed
+                else "level4_supervised_team_channel_auto_ops_verified_once"
+            ),
+            "next_target_level": (
+                "production_hardening_refactor_compaction"
+                if consumed
+                else "level4_limited_auto_mode_short_run"
+            ),
+            "limited_auto_mode_short_run_verified_once": consumed,
+            "mvp_supervised_discord_agent_os_complete": consumed,
+            "production_unattended_ready": False,
+            "autonomy_level_matrix": {
+                "level_1": "read_only_observation_verified",
+                "level_2": "manual_deterministic_reply_verified",
+                "level_3": "supervised_private_test_auto_reply_verified",
+                "level_4_canary": "low_risk_team_channel_canary_verified_once",
+                "level_4_auto_ops": "supervised_team_channel_auto_ops_verified_once",
+                "level_4_limited_auto": (
+                    "limited_auto_mode_short_run_verified_once"
+                    if consumed
+                    else "limited_auto_mode_prepared_not_executed"
+                ),
+                "level_5": "production_unattended_not_ready",
+            },
+            "next_actual_operation": (
+                "production_hardening_refactor_compaction"
+                if consumed
+                else "separate_manual_gate_actual_phase74_limited_auto_mode_short_run_exactly_once"
+            ),
         }
         assert_phase74_limited_auto_mode_safe(report, allow_ready=True)
         return report
@@ -412,8 +453,10 @@ def build_actual_phase74_limited_auto_mode(
         **_policy_capsule(),
         **gate,
         **guard,
-        "report_type": "phase74_limited_auto_mode_fake_session",
+        "report_type": "phase74_limited_auto_mode_actual_session",
         "allow_flag_present": allow_flag_present,
+        "phase74_limited_auto_mode_already_consumed": False,
+        "phase74_repeat_limited_auto_locked": True,
         "blocked": False,
         "blocked_reasons": [],
         "fake_limited_auto_session_executed": session_adapter is not None,
@@ -434,11 +477,56 @@ def build_actual_phase74_limited_auto_mode(
     return report
 
 
+def build_phase74_limited_auto_closeout() -> dict[str, Any]:
+    report = {
+        **_base_report(),
+        **_policy_capsule(),
+        "report_type": "phase74_limited_auto_mode_closeout",
+        "metadata_only": True,
+        "phase74_limited_auto_mode_closed_out": True,
+        "phase74_actual_limited_auto_sent": True,
+        "historical_message_sent_count": 1,
+        "historical_reply_count": 1,
+        "phase74_limited_auto_mode_already_consumed": True,
+        "phase74_repeat_limited_auto_locked": True,
+        "ready_for_repeat_limited_auto_mode": False,
+        "ready_for_phase74_limited_auto_manual_gate": False,
+        "sent_scope": "known_team_channel_only",
+        "reply_text_source": "deterministic_template",
+        "limited_auto_mode_short_run_verified_once": True,
+        "previous_verified_level": "level4_supervised_team_channel_auto_ops_verified_once",
+        "current_verified_level": "level4_limited_auto_mode_short_run_verified_once",
+        "next_target_level": "production_hardening_refactor_compaction",
+        "mvp_supervised_discord_agent_os_complete": True,
+        "production_unattended_ready": False,
+        "autonomy_level_matrix": {
+            "level_1": "read_only_observation_verified",
+            "level_2": "manual_deterministic_reply_verified",
+            "level_3": "supervised_private_test_auto_reply_verified",
+            "level_4_canary": "low_risk_team_channel_canary_verified_once",
+            "level_4_auto_ops": "supervised_team_channel_auto_ops_verified_once",
+            "level_4_limited_auto": "limited_auto_mode_short_run_verified_once",
+            "level_5": "production_unattended_not_ready",
+        },
+        "next_actual_operation": "production_hardening_refactor_compaction",
+    }
+    assert_phase74_limited_auto_mode_safe(report, allow_historical_closeout=True)
+    return report
+
+
+def build_hermes_mvp_final_closeout() -> dict[str, Any]:
+    report = build_phase74_limited_auto_closeout()
+    report["report_type"] = "hermes_mvp_final_closeout"
+    assert_phase74_limited_auto_mode_safe(report, allow_historical_closeout=True)
+    return report
+
+
 def assert_phase74_limited_auto_mode_safe(
     report: Mapping[str, Any],
     *,
     allow_ready: bool = False,
     allow_fake_success: bool = False,
+    allow_historical_closeout: bool = False,
 ) -> None:
     text = json.dumps(report, ensure_ascii=False)
     if SECRET_RE.search(text.lower()) or LONG_ID_RE.search(text) or APPROVAL_RE.search(text):
@@ -482,6 +570,15 @@ def assert_phase74_limited_auto_mode_safe(
                 raise ValueError(f"Phase74 unsafe flag is true: {key}")
         if int(report.get("message_sent_count", 0) or 0) != 0:
             raise ValueError("Phase74 CLI reports must not send messages.")
+    if allow_historical_closeout:
+        if int(report.get("historical_message_sent_count", 0) or 0) != 1:
+            raise ValueError("Phase74 closeout historical_message_sent_count must be 1.")
+        if int(report.get("historical_reply_count", 0) or 0) != 1:
+            raise ValueError("Phase74 closeout historical_reply_count must be 1.")
+        if not report.get("phase74_repeat_limited_auto_locked"):
+            raise ValueError("Phase74 closeout must lock repeat limited auto mode.")
+        if not report.get("mvp_supervised_discord_agent_os_complete"):
+            raise ValueError("Phase74 closeout must mark supervised MVP complete.")
     if int(report.get("message_sent_count", 0) or 0) > 1:
         raise ValueError("Phase74 message_sent_count must not exceed 1.")
     if int(report.get("reply_count", 0) or 0) > 1:

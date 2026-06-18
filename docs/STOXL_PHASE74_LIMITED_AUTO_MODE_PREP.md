@@ -85,16 +85,24 @@ team event checks still block the path with specific reasons. This hotfix
 verifies the actual branch only with a fake session adapter in tests; the real
 sender branch is reserved for the next separate Manual Gate.
 
+Final MVP closeout records that the separate operator-run Phase74 limited auto
+mode short run succeeded exactly once before closeout. The closeout is
+metadata-only: it fixes `historical_message_sent_count=1` and
+`historical_reply_count=1`, performs no new Discord send, and locks repeats with
+`phase74_limited_auto_mode_already_consumed`. The current verified level is now
+`level4_limited_auto_mode_short_run_verified_once`, while Level 5 production
+unattended remains not ready.
+
 Current verified level:
 
 ```text
-level4_supervised_team_channel_auto_ops_verified_once
+level4_limited_auto_mode_short_run_verified_once
 ```
 
 Next target level:
 
 ```text
-level4_limited_auto_mode_short_run
+production_hardening_refactor_compaction
 ```
 
 Level matrix:
@@ -104,8 +112,8 @@ Level matrix:
 - Level 3: supervised private-test auto-reply verified.
 - Level 4: low-risk team-channel canary verified once.
 - Level 4: supervised team-channel auto-ops verified once.
-- Level 4: limited auto mode prepared, not executed.
+- Level 4: limited auto mode short run verified once.
 - Level 5: production unattended not ready.
 
-Next actual operation must be a separate Manual Gate for actual Phase74 limited
-auto mode short run exactly once.
+Next work is production hardening, refactor, and compaction. It is not
+production unattended mode.
