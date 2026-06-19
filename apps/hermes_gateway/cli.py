@@ -271,6 +271,11 @@ from read_only_soak_plan import (
     build_hermes_read_only_soak_plan,
     build_hermes_read_only_soak_preflight,
 )
+from company_agent_runtime import (
+    build_company_agent_org_runtime_report,
+    build_company_agent_router_dry_run,
+    build_company_agent_runtime_report,
+)
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight, render_rag_evidence_private_test_send_preflight_markdown
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope, render_rag_evidence_prompt_envelope_markdown
 from rag_evidence_review_packet import build_rag_evidence_review_packet, render_rag_evidence_review_packet_markdown
@@ -425,6 +430,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Run a local STOXL Hermes Gateway dry-run pipeline.")
     parser.add_argument("--text", help="Local request text.")
     parser.add_argument("--channel", help="Source channel name for --text input, or channel filter for operations viewer.")
+    parser.add_argument("--message", help="Company agent router dry-run message.")
     parser.add_argument("--author-role", default="Decision Maker", help="Author role for --text input.")
     parser.add_argument("--event", help="Path to a local JSON event.")
     parser.add_argument("--discord-readiness", action="store_true", help="Run Phase 17 read-only Discord readiness checks.")
@@ -545,6 +551,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--hermes-read-only-soak-preflight", action="store_true", help="Print report-only Hermes read-only live soak preflight.")
     parser.add_argument("--actual-read-only-live-soak", action="store_true", help="Print default-blocked read-only live soak actual path report.")
     parser.add_argument("--allow-actual-read-only-live-soak", action="store_true", help="Record allow flag presence for a later Manual Gate; still blocked in this phase.")
+    parser.add_argument("--company-agent-org-report", action="store_true", help="Print STOXL Discord company agent organization report.")
+    parser.add_argument("--company-agent-router-dry-run", action="store_true", help="Route a company agent message without Discord API calls.")
+    parser.add_argument("--run-company-agent-runtime", action="store_true", help="Run or report the STOXL company agent runtime; default blocked without allow flag.")
+    parser.add_argument("--allow-company-agent-runtime", action="store_true", help="Record allow flag presence for a later company agent runtime Manual Gate.")
     parser.add_argument("--actual-phase74-limited-auto-mode", action="store_true", help="Print Phase 74 actual path report; blocked until a separate Manual Gate.")
     parser.add_argument("--allow-actual-phase74-limited-auto-mode", action="store_true", help="Allow Phase 74 actual path gate evaluation for a later Manual Gate.")
     parser.add_argument("--live-event-audit-report", action="store_true", help="Print Phase 30 live event audit record report.")
@@ -3602,6 +3612,42 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- message_sent_count: {output.get('message_sent_count')}")
         return 0
 
+    if args.company_agent_org_report:
+        output = build_company_agent_org_runtime_report()
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Discord company agent org report")
+            print(f"- company_agent_layer_v0_available: {output.get('company_agent_layer_v0_available')}")
+            print(f"- agent_count: {output.get('agent_count')}")
+            print(f"- discord_message_sent: {output.get('discord_message_sent')}")
+            print(f"- external_execution_allowed: {output.get('permissions', {}).get('external_execution_allowed')}")
+        return 0
+
+    if args.company_agent_router_dry_run:
+        output = build_company_agent_router_dry_run(args.channel or "marketing-brief", args.message or args.text or "")
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Discord company agent router dry-run")
+            print(f"- selected_agent: {output.get('selected_agent')}")
+            print(f"- target_channel: {output.get('target_channel')}")
+            print(f"- handoff_to: {output.get('handoff_to')}")
+            print(f"- reason: {output.get('reason')}")
+        return 0
+
+    if args.run_company_agent_runtime:
+        output = build_company_agent_runtime_report(allow_flag_present=args.allow_company_agent_runtime)
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Discord company agent runtime")
+            print(f"- blocked: {output.get('blocked')}")
+            print(f"- actual_discord_runtime_executed: {output.get('actual_discord_runtime_executed')}")
+            print(f"- discord_gateway_live_connection_executed: {output.get('discord_gateway_live_connection_executed')}")
+            print(f"- message_sent_count: {output.get('message_sent_count')}")
+        return 0
+
     if args.actual_phase74_limited_auto_mode:
         output = build_actual_phase74_limited_auto_mode(
             allow_flag_present=args.allow_actual_phase74_limited_auto_mode
@@ -3964,6 +4010,10 @@ def main(argv: list[str] | None = None) -> int:
         or args.hermes_read_only_soak_preflight
         or args.actual_read_only_live_soak
         or args.allow_actual_read_only_live_soak
+        or args.company_agent_org_report
+        or args.company_agent_router_dry_run
+        or args.run_company_agent_runtime
+        or args.allow_company_agent_runtime
         or args.actual_phase74_limited_auto_mode
         or args.allow_actual_phase74_limited_auto_mode
         or args.execute_readonly_live_runtime
