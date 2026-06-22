@@ -31,6 +31,7 @@ from company_agent_router import (
 )
 from company_agent_responder import build_approval_draft, build_company_agent_response
 from company_handoff import build_handoff_post_payload, store_company_handoff_context
+from company_persistent_memory import build_memory_command_response
 from company_webhook_sender import send_as_agent
 from company_webhook_sender import send_as_agent_webhook
 from company_webhook_sender import resolve_agent_webhook_name
@@ -50,6 +51,11 @@ COMMAND_SYNTAX = [
     "!approve-draft",
     "!agents",
     "!help",
+    "!memory recent",
+    "!memory handoffs",
+    "!memory approvals",
+    "!memory decisions",
+    "!recall <keyword>",
 ]
 
 
@@ -243,18 +249,22 @@ def build_company_agent_message_result(
             "bot_message_fallback_used": False,
         }
     command = route.get("command")
-    if command in {"agents", "help"}:
-        return {
-            **route,
-            "reply_prepared": True,
-            "response": {
+    if command in {"agents", "help", "memory", "recall"}:
+        if command in {"memory", "recall"}:
+            command_response = build_memory_command_response(command, str(route.get("command_argument") or ""))
+        else:
+            command_response = {
                 "response_type": "company_agent_command_response",
                 "reply_text_source": command,
                 "content": _command_response_text(command),
                 "llm_api_call_attempted": False,
                 "rag_called": False,
                 "external_execution": False,
-            },
+            }
+        return {
+            **route,
+            "reply_prepared": True,
+            "response": command_response,
             "webhook_send_available": False,
             "bot_message_fallback_used": True,
             "send_strategy": "bot_message_fallback",
@@ -408,7 +418,8 @@ def _command_response_text(command: str) -> str:
         )
     return (
         "Commands: !lucy, !marin, !meiko, !kasumi, !reze, !agent, !route, "
-        "!handoff, !review, !approve-draft, !agents, !help"
+        "!handoff, !review, !approve-draft, !agents, !help, !memory recent, "
+        "!memory handoffs, !memory approvals, !memory decisions, !recall <keyword>"
     )
 
 

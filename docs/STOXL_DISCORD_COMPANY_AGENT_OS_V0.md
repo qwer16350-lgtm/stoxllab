@@ -389,3 +389,20 @@ deterministic fallback uses the same context boundary, allowing Lucy and Meiko t
 review transferred work without requesting already-provided material again. The
 store does not persist across runtime restarts and does not enable RAG, embeddings,
 vector indexes, Discord sends, or external execution.
+
+## Workflow v0.6 Persistent Work Memory
+
+v0.6 adds a JSONL work-memory layer beneath the in-memory handoff context. It stores
+four bounded record streams in `apps/hermes_gateway/local/company_memory/`:
+`handoffs.jsonl`, `approvals.jsonl`, `decisions.jsonl`, and `recent_items.jsonl`.
+The path is Git-ignored and is never part of a commit.
+
+Handoff creation writes a handoff record, approval draft creation writes an approval
+record, and judgment-shaped Lucy/Meiko/Reze responses write decision records. On an
+in-memory context miss, only the latest 20 handoffs are considered for channel or
+agent-pair recovery. `!memory` and `!recall` return short summaries rather than raw
+content dumps.
+
+This backend is deliberately plain JSONL. It does not perform document ingestion,
+semantic retrieval, RAG, embedding generation, vector indexing, Discord sends, or
+external execution. Write failures return a safe warning and do not crash runtime.

@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
+import tempfile
 from pathlib import Path
 
 APP_DIR = Path(__file__).resolve().parents[1]
 if str(APP_DIR) not in sys.path:
     sys.path.insert(0, str(APP_DIR))
+
+TEST_MEMORY_DIR = tempfile.TemporaryDirectory()
+os.environ["HERMES_COMPANY_MEMORY_DIR"] = TEST_MEMORY_DIR.name
 
 from company_agent_llm import build_agent_llm_messages
 from company_agent_runtime import (
@@ -36,6 +41,11 @@ SAFE_ENV = {
 def assert_true(condition: bool, message: str) -> None:
     if not condition:
         raise AssertionError(message)
+
+
+def clear_test_persistent_memory() -> None:
+    for path in Path(TEST_MEMORY_DIR.name).glob("*.jsonl"):
+        path.write_text("", encoding="utf-8")
 
 
 def kasumi_context(content: str = "시제품/PoC/사업화 지원 후보. 마감과 자격은 최신 확인 필요.") -> HandoffContext:
@@ -141,6 +151,7 @@ def test_reply_context_has_priority_over_latest_channel_context() -> None:
 
 def test_no_context_preserves_existing_insufficient_information_behavior() -> None:
     clear_handoff_context_store()
+    clear_test_persistent_memory()
     result = build_company_agent_message_result(
         "meiko-검토",
         "!meiko 이 지원사업 넣을만한지 판단해줘",
@@ -206,6 +217,7 @@ def main() -> int:
         test()
         print(f"PASS {test.__name__}")
     clear_handoff_context_store()
+    TEST_MEMORY_DIR.cleanup()
     print("All company agent handoff context v0.5.2 tests passed.")
     return 0
 

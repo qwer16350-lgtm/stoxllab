@@ -6,6 +6,7 @@ from typing import Any
 
 from company_context_store import HandoffContext, sanitize_company_context_text, store_handoff_context
 from company_agent_registry import get_agent
+from company_persistent_memory import append_memory_record
 
 
 HANDOFF_RULES = {
@@ -67,7 +68,7 @@ def store_company_handoff_context(
     handoff_content: str,
     next_action: str,
 ) -> dict[str, Any]:
-    return store_handoff_context(
+    stored = store_handoff_context(
         target_channel,
         HandoffContext(
             context_type="handoff",
@@ -81,6 +82,25 @@ def store_company_handoff_context(
             next_action=next_action,
         ),
     )
+    persistent = append_memory_record(
+        "handoff",
+        {
+            "source_agent": source_agent,
+            "target_agent": target_agent,
+            "source_channel": source_channel,
+            "target_channel": target_channel,
+            "title": sanitize_company_context_text(request_summary or f"{source_agent} handoff", 120),
+            "summary": sanitize_company_context_text(request_summary, 500),
+            "content": sanitize_company_context_text(handoff_content, 1600),
+            "next_action": sanitize_company_context_text(next_action, 300),
+            "status": "open",
+        },
+    )
+    return {
+        **stored,
+        "persistent_memory_written": bool(persistent.get("record_written")),
+        "persistent_memory_warning": persistent.get("warning_code"),
+    }
 
 
 def build_handoff_post_payload(result: dict[str, Any], request_summary: str = "") -> dict[str, Any]:

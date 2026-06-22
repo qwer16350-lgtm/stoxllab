@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from company_agent_registry import get_agent
+from company_persistent_memory import load_recent_records
 from llm_client import redact_text
 
 
@@ -103,14 +104,44 @@ def store_handoff_context(target_channel_name: str, context: HandoffContext | di
 
 
 def get_latest_context_for_channel(channel_name: str) -> dict[str, Any] | None:
-    context = _CONTEXT_BY_CHANNEL.get(_safe(channel_name, 120).strip().lower())
-    return dict(context) if context else None
+    channel_key = _safe(channel_name, 120).strip().lower()
+    context = _CONTEXT_BY_CHANNEL.get(channel_key)
+    if context:
+        return dict(context)
+    for record in load_recent_records("handoff", limit=20):
+        if str(record.get("target_channel") or "").strip().lower() == channel_key:
+            return _context_from_memory_record(record)
+    return None
 
 
 def get_latest_context_by_agent_pair(source_agent: str, target_agent: str) -> dict[str, Any] | None:
     pair = (_safe(source_agent, 40).lower(), _safe(target_agent, 40).lower())
     context = _CONTEXT_BY_AGENT_PAIR.get(pair)
-    return dict(context) if context else None
+    if context:
+        return dict(context)
+    for record in load_recent_records("handoff", limit=20):
+        if (
+            str(record.get("source_agent") or "").strip().lower(),
+            str(record.get("target_agent") or "").strip().lower(),
+        ) == pair:
+            return _context_from_memory_record(record)
+    return None
+
+
+def _context_from_memory_record(record: dict[str, Any]) -> dict[str, Any]:
+    return _normalized_context(
+        str(record.get("target_channel") or ""),
+        {
+            "source_agent": record.get("source_agent"),
+            "target_agent": record.get("target_agent"),
+            "source_channel": record.get("source_channel"),
+            "target_channel": record.get("target_channel"),
+            "status": record.get("status"),
+            "request_summary": record.get("summary") or record.get("title"),
+            "handoff_content": record.get("content") or record.get("summary"),
+            "next_action": record.get("next_action"),
+        },
+    )
 
 
 def detect_context_reference_terms(message: str) -> bool:

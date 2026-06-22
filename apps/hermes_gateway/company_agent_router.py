@@ -15,7 +15,7 @@ from company_agent_registry import (
 from company_handoff import build_handoff_message, get_handoff_rule
 
 
-COMMAND_RE = re.compile(r"^!(lucy|marin|meiko|kasumi|reze|agent|route|handoff|review|approve-draft|agents|help)(?:\s+(.+))?$", re.I)
+COMMAND_RE = re.compile(r"^!(lucy|marin|meiko|kasumi|reze|agent|route|handoff|review|approve-draft|agents|help|memory|recall)(?:\s+(.+))?$", re.I)
 EXTERNAL_ACTION_WORDS = (
     "publish",
     "deploy",
@@ -190,6 +190,17 @@ def _command_route(channel_name: str, message: str) -> dict[str, Any] | None:
         if selected_agent in {"marin", "kasumi"}:
             selected_agent = "lucy" if selected_agent == "marin" else "meiko"
         return _build_route(selected_agent, channel_name, rest, "approve_draft_command_" + reason, target_channel="최종-승인요청")
+    if command in {"memory", "recall"}:
+        return {
+            **_base_result(channel_name, rest),
+            "command": command,
+            "command_argument": rest,
+            "selected_agent": None,
+            "target_channel": channel_name,
+            "reason": f"{command}_command",
+            "persistent_memory_requested": True,
+            "blocked": False,
+        }
     if command in {"agents", "help"}:
         agent_commands = [
             "!lucy",
@@ -204,6 +215,11 @@ def _command_route(channel_name: str, message: str) -> dict[str, Any] | None:
             "!approve-draft",
             "!agents",
             "!help",
+            "!memory recent",
+            "!memory handoffs",
+            "!memory approvals",
+            "!memory decisions",
+            "!recall <keyword>",
         ]
         return {
             **_base_result(channel_name, rest),
@@ -342,6 +358,11 @@ def build_company_agent_org_report() -> dict[str, Any]:
             "!approve-draft",
             "!agents",
             "!help",
+            "!memory recent",
+            "!memory handoffs",
+            "!memory approvals",
+            "!memory decisions",
+            "!recall <keyword>",
         ],
         "discord_api_send_called": False,
         "discord_message_sent": False,

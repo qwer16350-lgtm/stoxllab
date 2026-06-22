@@ -398,3 +398,33 @@ The simulation stores and immediately verifies one context in its own process. S
 the store is intentionally in-memory, the standalone dry-run uses a clearly labeled
 `dry_run_fixture` when no runtime context exists. Actual runtime responses use only
 real handoffs or replied messages. Reports never expose raw Discord IDs or secrets.
+
+## Workflow v0.6 Persistent Work Memory
+
+Company work memory is a local JSONL history, not RAG or vector search. Handoffs,
+approval requests, and Lucy/Meiko/Reze decisions are written under
+`apps/hermes_gateway/local/company_memory/`. The entire local directory is ignored
+by Git. Records contain bounded summaries and content only; tokens, API keys,
+webhook URLs, raw Discord IDs, and `.env` values are redacted or omitted.
+
+Discord commands:
+
+```text
+!memory recent
+!memory handoffs
+!memory approvals
+!memory decisions
+!recall <keyword>
+```
+
+Local verification:
+
+```powershell
+python apps\hermes_gateway\cli.py --company-agent-memory-report --json
+python apps\hermes_gateway\cli.py --company-agent-memory-simulate-write --json --record-type handoff --title "지원사업 후보 정리" --content "카스미가 지원사업 후보를 넘김"
+python apps\hermes_gateway\cli.py --company-agent-memory-query --json --query "지원사업"
+```
+
+After a runtime restart, context resolution checks the latest 20 persisted handoffs
+when no in-memory handoff exists. No memory command calls an LLM, Discord API, RAG,
+embeddings, vector indexes, or external execution.

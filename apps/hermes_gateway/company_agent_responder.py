@@ -7,6 +7,7 @@ from typing import Any, Mapping
 
 from company_agent_llm import generate_agent_reply, redact_company_agent_text
 from company_agent_registry import get_agent, get_report_format
+from company_persistent_memory import append_memory_record
 
 
 def _flag(value: Any, default: bool = False) -> bool:
@@ -48,6 +49,20 @@ def _summary(message: str) -> str:
     return redact_company_agent_text((message or "요청 내용 없음").strip(), 300)
 
 
+def _handoff_excerpt(content: str) -> str:
+    safe = redact_company_agent_text(content, 900)
+    lines = [
+        line
+        for line in safe.splitlines()
+        if not (
+            (line.startswith("[") and "_STOXL" in line)
+            or line.startswith("소속:")
+            or line.startswith("업무:")
+        )
+    ]
+    return "\n".join(lines).strip()
+
+
 def _external_requested(message: str, route: dict[str, Any]) -> bool:
     if route.get("external_execution_requested"):
         return True
@@ -85,12 +100,29 @@ def build_approval_draft(agent_id: str, message: str, route: dict[str, Any]) -> 
         f"external_execution_requested: {str(external_requested).lower()}\n"
         "external_execution_performed: false"
     )
+    persisted = append_memory_record(
+        "approval",
+        {
+            "source_agent": agent_id,
+            "target_channel": "최종-승인요청",
+            "title": f"{_summary(message)[:90]} 승인 요청",
+            "summary": _summary(message),
+            "content": content,
+            "recommendation": "승인 전까지 초안/검토 상태로 보류",
+            "risk": "공개, 제출, 배포, 외부 발송은 승인 전 실행 금지",
+            "external_execution_requested": external_requested,
+            "external_execution_performed": False,
+            "status": "pending",
+        },
+    )
     return {
         "approval_draft_created": True,
         "approval_channel": "최종-승인요청",
         "external_execution_requested": external_requested,
         "external_execution_performed": False,
         "content": content,
+        "persistent_approval_written": bool(persisted.get("record_written")),
+        "persistent_memory_warning": persisted.get("warning_code"),
         "raw_discord_ids_logged": False,
         "secret_values_logged": False,
     }
@@ -100,13 +132,15 @@ def _template_for_agent(agent_id: str, message: str, route: dict[str, Any]) -> s
     summary = _summary(message)
     context = route.get("handoff_context") if isinstance(route.get("handoff_context"), dict) else None
     context_source = str((context or {}).get("source_agent") or "").lower()
-    context_content = redact_company_agent_text(str((context or {}).get("handoff_content") or ""), 900)
+    context_content = _handoff_excerpt(str((context or {}).get("handoff_content") or ""))
     if agent_id == "meiko" and context and context_source == "kasumi":
         return (
             "[MEIKO_STOXL / 메이코]\n"
             "소속: 운영팀 선임\n"
             "업무: 실행 판단 / 일정 / 리스크\n"
-            "상태: 보류\n\n"
+            "판단:\n"
+            "- 추천 / 보류 / 비추천: 보류\n\n"
+            "이유:\n"
             "카스미가 넘긴 내용 기준으로 보면, 현재 자료만으로 즉시 신청을 확정하기보다 "
             "후보의 실제 공고 조건을 검증하는 것이 맞습니다.\n\n"
             "전달 근거:\n"
@@ -115,6 +149,7 @@ def _template_for_agent(agent_id: str, message: str, route: dict[str, Any]) -> s
             "- 추천도: 보류\n"
             "- 이유: 마감/자격/자부담/평가항목이 특정되지 않은 후보 단계\n"
             "- 가능성: 시제품/PoC/사업화 지원 유형은 STOXL 제품 개발과 연결 가능\n\n"
+            "실행 조건:\n"
             "우선 확인:\n"
             "1. 실제 공고명\n"
             "2. 마감일\n"
@@ -122,6 +157,8 @@ def _template_for_agent(agent_id: str, message: str, route: dict[str, Any]) -> s
             "4. 자부담 여부\n"
             "5. 제출물\n"
             "6. STOXL 사업자 조건 적합성\n\n"
+            "리스크:\n"
+            "- 최신 공고 조건 확인 전 신청 여부를 확정하면 일정과 자격 판단이 틀릴 수 있음\n\n"
             "next:\n"
             "카스미가 실제 공고 URL/마감/자격을 확인하면 메이코가 최종 지원 여부를 판단합니다."
         )
@@ -286,6 +323,53 @@ def build_deterministic_company_agent_reply(agent_id: str, message: str, route: 
     }
 
 
+def _decision_value(agent_id: str, content: str) -> str:
+    if agent_id == "lucy":
+        for value in ("발행 가능", "수정 필요", "보류"):
+            if value in content:
+                return value
+    if agent_id == "meiko":
+        for value in ("비추천", "추천", "보류"):
+            if value in content:
+                return value
+    if agent_id == "reze" and any(marker in content for marker in ("전략 판단", "우선순위", "스톡슬 적합성")):
+        return "전략 판단"
+    return ""
+
+
+def _with_persistent_decision(
+    response: dict[str, Any],
+    agent_id: str,
+    message: str,
+    route: dict[str, Any],
+) -> dict[str, Any]:
+    if agent_id not in {"lucy", "meiko", "reze"}:
+        return response
+    content = str(response.get("content") or "")
+    decision = _decision_value(agent_id, content)
+    if not decision:
+        return response
+    persisted = append_memory_record(
+        "decision",
+        {
+            "agent": agent_id,
+            "channel": route.get("source_channel") or route.get("target_channel"),
+            "title": f"{_summary(message)[:90]} 판단",
+            "summary": _summary(message),
+            "content": content,
+            "decision": decision,
+            "risk": "응답 내 리스크 항목 확인",
+            "next_action": "응답의 next 항목에 따라 담당자 검토",
+            "status": "open",
+        },
+    )
+    return {
+        **response,
+        "persistent_decision_written": bool(persisted.get("record_written")),
+        "persistent_memory_warning": persisted.get("warning_code"),
+    }
+
+
 def build_company_agent_response(
     agent_id: str,
     message: str,
@@ -297,7 +381,7 @@ def build_company_agent_response(
         llm_result = generate_agent_reply(agent_id, message, route, dict(env or os.environ))
         if llm_result.get("llm_succeeded"):
             agent = get_agent(agent_id) or {}
-            return {
+            response = {
                 "response_type": "company_agent_response",
                 "reply_text_source": "llm",
                 "agent_id": agent_id,
@@ -315,12 +399,13 @@ def build_company_agent_response(
                 "raw_discord_ids_logged": False,
                 "secret_values_logged": False,
             }
+            return _with_persistent_decision(response, agent_id, message, route)
         deterministic = build_deterministic_company_agent_reply(agent_id, message, route)
         deterministic["llm_result"] = llm_result
         deterministic["llm_api_call_attempted"] = bool(llm_result.get("llm_attempted"))
         deterministic["llm_api_called"] = bool(llm_result.get("llm_api_called", False))
         deterministic["fallback_used"] = "deterministic"
-        return deterministic
+        return _with_persistent_decision(deterministic, agent_id, message, route)
     if mode == "llm" and not _llm_enabled(env):
         deterministic = build_deterministic_company_agent_reply(agent_id, message, route)
         deterministic["llm_result"] = {
@@ -331,5 +416,6 @@ def build_company_agent_response(
             "embedding_called": False,
             "external_execution": False,
         }
-        return deterministic
-    return build_deterministic_company_agent_reply(agent_id, message, route)
+        return _with_persistent_decision(deterministic, agent_id, message, route)
+    deterministic = build_deterministic_company_agent_reply(agent_id, message, route)
+    return _with_persistent_decision(deterministic, agent_id, message, route)

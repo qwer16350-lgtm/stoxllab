@@ -289,6 +289,11 @@ from company_agent_llm import (
     build_company_agent_llm_one_shot,
     build_company_agent_llm_report,
 )
+from company_persistent_memory import (
+    append_memory_record,
+    build_company_agent_memory_report,
+    build_memory_query_report,
+)
 from company_agent_bot_fleet import (
     build_company_agent_real_bot_fleet_report,
     build_company_agent_real_bot_send_dry_run,
@@ -456,6 +461,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--source-agent", help="Source agent for company handoff context simulation.")
     parser.add_argument("--target-agent", help="Target agent for company handoff context simulation.")
     parser.add_argument("--target-channel", help="Target channel name for company handoff context simulation.")
+    parser.add_argument("--record-type", help="Persistent company memory record type.")
+    parser.add_argument("--title", help="Persistent company memory simulation title.")
     parser.add_argument("--author-role", default="Decision Maker", help="Author role for --text input.")
     parser.add_argument("--event", help="Path to a local JSON event.")
     parser.add_argument("--discord-readiness", action="store_true", help="Run Phase 17 read-only Discord readiness checks.")
@@ -583,6 +590,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--company-agent-handoff-dry-run", action="store_true", help="Build STOXL company agent handoff v0.2 dry-run without Discord sends.")
     parser.add_argument("--company-agent-context-dry-run", action="store_true", help="Resolve STOXL company agent handoff context without Discord or LLM calls.")
     parser.add_argument("--company-agent-context-simulate-handoff", action="store_true", help="Store and inspect one in-memory handoff context without Discord sends.")
+    parser.add_argument("--company-agent-memory-report", action="store_true", help="Print STOXL company agent JSONL memory report without external calls.")
+    parser.add_argument("--company-agent-memory-simulate-write", action="store_true", help="Write one safe local STOXL company memory simulation record.")
+    parser.add_argument("--company-agent-memory-query", action="store_true", help="Query safe local STOXL company memory without RAG or embeddings.")
     parser.add_argument("--company-agent-approval-dry-run", action="store_true", help="Build STOXL company agent approval v0.2 dry-run without Discord sends.")
     parser.add_argument("--company-agent-webhook-persona-report", action="store_true", help="Print STOXL company agent webhook persona v0.3 report.")
     parser.add_argument("--company-agent-webhook-persona-dry-run", action="store_true", help="Build STOXL company agent webhook persona v0.3 dry-run without Discord sends.")
@@ -3741,6 +3751,56 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- context_used: {output.get('context_used')}")
         return 0
 
+    if args.company_agent_memory_report:
+        output = build_company_agent_memory_report()
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL company agent persistent memory")
+            print(f"- persistent_memory_available: {output.get('persistent_memory_available')}")
+            print(f"- memory_backend: {output.get('memory_backend')}")
+            print(f"- memory_dir_gitignored: {output.get('memory_dir_gitignored')}")
+        return 0
+
+    if args.company_agent_memory_simulate_write:
+        selected_type = args.record_type or "handoff"
+        output = append_memory_record(
+            selected_type,
+            {
+                "source_agent": args.source_agent or "kasumi",
+                "target_agent": args.target_agent or "meiko",
+                "source_channel": args.channel or "kasumi-리서치",
+                "target_channel": args.target_channel or "meiko-검토",
+                "title": args.title or "company memory simulation",
+                "summary": args.content or args.message or args.text or "company memory simulation",
+                "content": args.content or args.message or args.text or "company memory simulation",
+                "next_action": "manual review",
+                "status": "open",
+            },
+        )
+        output.update({
+            "rag_called": False,
+            "embedding_called": False,
+            "vector_index_created": False,
+            "external_execution": False,
+        })
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL company agent memory simulation")
+            print(f"- record_written: {output.get('record_written')}")
+            print(f"- record_type: {output.get('record_type')}")
+        return 0
+
+    if args.company_agent_memory_query:
+        output = build_memory_query_report(args.query or "")
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL company agent memory query")
+            print(f"- results_count: {output.get('results_count')}")
+        return 0
+
     if args.company_agent_approval_dry_run:
         output = build_company_agent_approval_dry_run(args.channel or "lucy-검토", args.message or args.text or "")
         if args.json:
@@ -4246,6 +4306,9 @@ def main(argv: list[str] | None = None) -> int:
         or args.company_agent_handoff_dry_run
         or args.company_agent_context_dry_run
         or args.company_agent_context_simulate_handoff
+        or args.company_agent_memory_report
+        or args.company_agent_memory_simulate_write
+        or args.company_agent_memory_query
         or args.company_agent_approval_dry_run
         or args.company_agent_webhook_persona_report
         or args.company_agent_webhook_persona_dry_run
