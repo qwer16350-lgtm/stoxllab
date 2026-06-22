@@ -275,6 +275,8 @@ from company_agent_runtime import (
     build_company_agent_org_runtime_report,
     build_company_agent_router_dry_run,
     build_company_agent_runtime_report,
+    build_company_agent_workflow_dry_run,
+    build_company_agent_workflow_v01_report,
     run_company_agent_runtime_forever,
 )
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight, render_rag_evidence_private_test_send_preflight_markdown
@@ -554,6 +556,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--allow-actual-read-only-live-soak", action="store_true", help="Record allow flag presence for a later Manual Gate; still blocked in this phase.")
     parser.add_argument("--company-agent-org-report", action="store_true", help="Print STOXL Discord company agent organization report.")
     parser.add_argument("--company-agent-router-dry-run", action="store_true", help="Route a company agent message without Discord API calls.")
+    parser.add_argument("--company-agent-workflow-v01-report", action="store_true", help="Print STOXL company agent workflow v0.1 report.")
+    parser.add_argument("--company-agent-workflow-dry-run", action="store_true", help="Run STOXL company agent workflow v0.1 without Discord sends.")
     parser.add_argument("--run-company-agent-runtime", action="store_true", help="Run or report the STOXL company agent runtime; default blocked without allow flag.")
     parser.add_argument("--allow-company-agent-runtime", action="store_true", help="Record allow flag presence for a later company agent runtime Manual Gate.")
     parser.add_argument("--actual-phase74-limited-auto-mode", action="store_true", help="Print Phase 74 actual path report; blocked until a separate Manual Gate.")
@@ -3637,6 +3641,30 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- reason: {output.get('reason')}")
         return 0
 
+    if args.company_agent_workflow_v01_report:
+        output = build_company_agent_workflow_v01_report()
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Discord company agent workflow v0.1")
+            print(f"- workflow_v01_available: {output.get('workflow_v01_available')}")
+            print(f"- agent_templates_upgraded: {output.get('agent_templates_upgraded')}")
+            print(f"- handoff_posting_supported: {output.get('handoff_posting_supported')}")
+            print(f"- approval_draft_supported: {output.get('approval_draft_supported')}")
+        return 0
+
+    if args.company_agent_workflow_dry_run:
+        output = build_company_agent_workflow_dry_run(args.channel or "marketing-brief", args.message or args.text or "")
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Discord company agent workflow dry-run")
+            print(f"- selected_agent: {output.get('selected_agent')}")
+            print(f"- handoff_target: {output.get('handoff_target')}")
+            print(f"- approval_draft_created: {output.get('approval_draft_created')}")
+            print(f"- external_execution_performed: {output.get('external_execution_performed')}")
+        return 0
+
     if args.run_company_agent_runtime:
         if args.allow_company_agent_runtime:
             return run_company_agent_runtime_forever(allow_flag_present=True)
@@ -4015,6 +4043,8 @@ def main(argv: list[str] | None = None) -> int:
         or args.allow_actual_read_only_live_soak
         or args.company_agent_org_report
         or args.company_agent_router_dry_run
+        or args.company_agent_workflow_v01_report
+        or args.company_agent_workflow_dry_run
         or args.run_company_agent_runtime
         or args.allow_company_agent_runtime
         or args.actual_phase74_limited_auto_mode

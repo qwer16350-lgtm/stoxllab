@@ -15,7 +15,7 @@ from company_agent_registry import (
 from company_handoff import build_handoff_message, get_handoff_rule
 
 
-COMMAND_RE = re.compile(r"^!(lucy|marin|meiko|kasumi|reze|agent|route|handoff|agents|help)(?:\s+(.+))?$", re.I)
+COMMAND_RE = re.compile(r"^!(lucy|marin|meiko|kasumi|reze|agent|route|handoff|review|approve-draft|agents|help)(?:\s+(.+))?$", re.I)
 EXTERNAL_ACTION_WORDS = (
     "publish",
     "deploy",
@@ -54,6 +54,32 @@ def _is_strategy(message: str) -> bool:
 def _target_channel_for_agent(agent_id: str) -> str:
     agent = get_agent(agent_id)
     return str(agent.get("default_channel")) if agent else "unknown"
+
+
+EXACT_CHANNEL_DEFAULTS = {
+    "meiko-검토": "meiko",
+    "lucy-검토": "lucy",
+    "marin-초안": "marin",
+    "kasumi-리서치": "kasumi",
+    "reze-전략기획": "reze",
+}
+
+
+def _exact_channel_default(channel_name: str) -> tuple[str | None, str, str] | None:
+    agent_id = EXACT_CHANNEL_DEFAULTS.get(channel_name)
+    if not agent_id:
+        return None
+    return agent_id, _target_channel_for_agent(agent_id), "exact_channel_default"
+
+
+def _handoff_command_target(target: str) -> tuple[str, str]:
+    normalized = str(target or "").strip().lower()
+    if normalized == "reze":
+        rule = get_handoff_rule("reze") or {}
+        return "reze", str(rule.get("target_channel") or _target_channel_for_agent("reze"))
+    if normalized in AGENT_IDS:
+        return normalized, _target_channel_for_agent(normalized)
+    return get_default_agent_for_channel(target) or "", target
 
 
 def _route_by_channel(channel_name: str, message: str) -> tuple[str | None, str, str]:
@@ -110,21 +136,53 @@ def _command_route(channel_name: str, message: str) -> dict[str, Any] | None:
     command = match.group(1).lower()
     rest = (match.group(2) or "").strip()
     if command in AGENT_IDS:
-        return _build_route(command, channel_name, rest, f"direct_command_{command}")
+        route = _build_route(command, channel_name, rest, "explicit_command")
+        route["command"] = command
+        return route
     if command == "agent":
         parts = rest.split(maxsplit=1)
         agent_id = parts[0].lower() if parts else ""
         routed_message = parts[1] if len(parts) > 1 else ""
-        return _build_route(agent_id, channel_name, routed_message, "agent_command")
+        route = _build_route(agent_id, channel_name, routed_message, "explicit_command")
+        route["command"] = command
+        route["explicit_agent_id"] = agent_id
+        return route
     if command == "route":
         agent_id, target, reason = _route_by_message(channel_name, rest)
         return _build_route(agent_id or "", channel_name, rest, reason, target_channel=target)
     if command == "handoff":
         parts = rest.split(maxsplit=1)
-        target_agent = parts[0].lower() if parts else ""
+        target = parts[0] if parts else ""
         routed_message = parts[1] if len(parts) > 1 else ""
-        return _build_route(target_agent, channel_name, routed_message, "handoff_command")
+        target_agent, target_channel = _handoff_command_target(target)
+        route = _build_route(target_agent, channel_name, routed_message, "handoff_command", target_channel=target_channel)
+        route["handoff_to"] = target
+        route["handoff_channel"] = target_channel
+        return route
+    if command == "review":
+        agent_id, target, reason = _route_by_channel(channel_name, "review " + rest)
+        return _build_route(agent_id or "", channel_name, rest, "review_command_" + reason, target_channel=target)
+    if command == "approve-draft":
+        agent_id, target, reason = _route_by_channel(channel_name, "approval " + rest)
+        selected_agent = agent_id or "lucy"
+        if selected_agent in {"marin", "kasumi"}:
+            selected_agent = "lucy" if selected_agent == "marin" else "meiko"
+        return _build_route(selected_agent, channel_name, rest, "approve_draft_command_" + reason, target_channel="최종-승인요청")
     if command in {"agents", "help"}:
+        agent_commands = [
+            "!lucy",
+            "!marin",
+            "!meiko",
+            "!kasumi",
+            "!reze",
+            "!agent",
+            "!route",
+            "!handoff",
+            "!review",
+            "!approve-draft",
+            "!agents",
+            "!help",
+        ]
         return {
             **_base_result(channel_name, rest),
             "command": command,
@@ -132,7 +190,8 @@ def _command_route(channel_name: str, message: str) -> dict[str, Any] | None:
             "target_channel": channel_name,
             "reason": f"{command}_command",
             "help_available": True,
-            "agent_commands": ["!lucy", "!marin", "!meiko", "!kasumi", "!reze", "!agent", "!route", "!handoff", "!agents", "!help"],
+            "agent_commands": agent_commands,
+            "agents": ["lucy", "marin", "meiko", "kasumi", "reze"],
             "blocked": False,
         }
     return None
@@ -191,7 +250,7 @@ def _build_route(agent_id: str, channel_name: str, message: str, reason: str, ta
         "handoff_to": handoff_rule.get("to"),
         "handoff_channel": handoff_rule.get("target_channel"),
         "requires_review": bool(agent.get("reviews") or handoff_rule.get("review_required")),
-        "requires_approval": external_requested or target_channel == "최종-승인요청",
+        "requires_approval": external_requested or (target_channel or "") == "최종-승인요청",
         "external_execution_allowed": False,
         "external_execution_requested": external_requested,
         "blocked": external_requested,
@@ -204,6 +263,10 @@ def route_company_agent_message(channel_name: str, message: str) -> dict[str, An
     command_route = _command_route(channel_name, message)
     if command_route is not None:
         return command_route
+    exact_channel_default = _exact_channel_default(channel_name)
+    if exact_channel_default is not None:
+        selected_agent, target_channel, reason = exact_channel_default
+        return _build_route(selected_agent or "", channel_name, message, reason, target_channel=target_channel)
     selected_agent, target_channel, reason = _route_by_message(channel_name, message)
     return _build_route(selected_agent or "", channel_name, message, reason, target_channel=target_channel)
 
@@ -243,7 +306,20 @@ def build_company_agent_org_report() -> dict[str, Any]:
             "grant_submit_allowed": False,
             "external_execution_allowed": False,
         },
-        "command_syntax": ["!lucy", "!marin", "!meiko", "!kasumi", "!reze", "!agent", "!route", "!handoff", "!agents", "!help"],
+        "command_syntax": [
+            "!lucy",
+            "!marin",
+            "!meiko",
+            "!kasumi",
+            "!reze",
+            "!agent",
+            "!route",
+            "!handoff",
+            "!review",
+            "!approve-draft",
+            "!agents",
+            "!help",
+        ],
         "discord_api_send_called": False,
         "discord_message_sent": False,
         "message_sent_count": 0,

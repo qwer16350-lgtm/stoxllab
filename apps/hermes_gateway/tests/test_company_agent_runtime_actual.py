@@ -80,14 +80,41 @@ def test_commands_route_to_correct_agents() -> None:
     assert_true(build_company_agent_message_result("marketing-brief", "!handoff lucy review")["selected_agent"] == "lucy", "handoff")
 
 
+def test_explicit_command_priority_over_channel_and_keywords() -> None:
+    meiko = build_company_agent_message_result("meiko-검토", "!meiko 이 지원사업 넣을만한지 판단해줘")
+    assert_true(meiko["selected_agent"] == "meiko", "explicit meiko selected")
+    assert_true(meiko["agent_display_name"] == "메이코", "explicit meiko display")
+    assert_true(meiko["reason"] == "explicit_command", "explicit reason")
+    content = meiko["response"]["content"]
+    assert_true(content.startswith("[MEIKO_STOXL / 메이코]"), "meiko prefix")
+    assert_true("[KASUMI_STOXL / 카스미]" not in content, "not kasumi")
+    for marker in ("소속: 운영팀 선임", "업무: 실행 판단 / 일정 / 리스크", "판단:", "이유:", "실행 조건:", "리스크:", "next:"):
+        assert_true(marker in content, f"meiko marker {marker}")
+    assert_true(build_company_agent_message_result("operation-brief", "!meiko 지원사업 판단")["selected_agent"] == "meiko", "keyword does not override meiko")
+    assert_true(build_company_agent_message_result("operation-brief", "!kasumi 지원사업 찾아줘")["selected_agent"] == "kasumi", "explicit kasumi")
+    assert_true(build_company_agent_message_result("operation-brief", "지원사업 찾아줘")["selected_agent"] == "kasumi", "plain support route")
+    default_meiko = build_company_agent_message_result("meiko-검토", "이 지원사업 넣을만한지 판단해줘")
+    assert_true(default_meiko["selected_agent"] == "meiko", "meiko channel default")
+    assert_true(default_meiko["reason"] == "exact_channel_default", "channel default reason")
+    assert_true(build_company_agent_message_result("marketing-brief", "!lucy 브랜드톤 검토")["selected_agent"] == "lucy", "explicit lucy")
+    marin = build_company_agent_message_result("lucy-검토", "!marin 콘텐츠 초안")
+    assert_true(marin["selected_agent"] == "marin", "explicit marin overrides lucy channel")
+    assert_true(marin["reason"] == "explicit_command", "explicit marin reason")
+    route_keyword = build_company_agent_message_result("operation-brief", "!route 지원사업 찾아줘")
+    assert_true(route_keyword["selected_agent"] == "kasumi", "route keyword kasumi")
+    assert_true("keyword" in route_keyword["reason"], "keyword reason on route")
+
+
 def test_deterministic_fallback_agent_prefix_and_handoff() -> None:
     marin = build_company_agent_message_result("marketing-brief", "!marin MML 테스트 문구 3개")
     kasumi = build_company_agent_message_result("operation-brief", "!kasumi 지원사업 후보")
     reze = build_company_agent_message_result("reze-전략기획", "!reze 신제품 방향")
     assert_true("[MARIN_STOXL / 마린]" in marin["response"]["content"], "marin prefix")
-    assert_true("handoff: lucy" in marin["response"]["content"], "marin handoff")
+    assert_true("handoff:" in marin["response"]["content"], "marin handoff block")
+    assert_true("to: lucy-" in marin["response"]["content"], "marin handoff target")
     assert_true("[KASUMI_STOXL / 카스미]" in kasumi["response"]["content"], "kasumi prefix")
-    assert_true("handoff: meiko" in kasumi["response"]["content"], "kasumi handoff")
+    assert_true("handoff:" in kasumi["response"]["content"], "kasumi handoff block")
+    assert_true("to: meiko-" in kasumi["response"]["content"], "kasumi handoff target")
     assert_true("[REZE_STOXL / 레제]" in reze["response"]["content"], "reze prefix")
     assert_true("대표-회의실" in reze["response"]["content"], "reze decision channel")
 
@@ -114,6 +141,7 @@ def main() -> int:
         test_runtime_without_allow_flag_blocked,
         test_runtime_start_report_when_allowed_and_token_present,
         test_commands_route_to_correct_agents,
+        test_explicit_command_priority_over_channel_and_keywords,
         test_deterministic_fallback_agent_prefix_and_handoff,
         test_unknown_bot_self_external_and_webhook_fallback,
     ]

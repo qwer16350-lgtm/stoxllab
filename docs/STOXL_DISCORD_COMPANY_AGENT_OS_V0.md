@@ -116,3 +116,65 @@ If webhook personas are not configured, v0 replies as a normal bot message with
 an agent prefix such as `[MARIN_STOXL / 마린]`. SNS publishing, homepage deploy,
 email send, grant submit, RAG, embedding/vector creation, and external command
 execution remain disabled.
+
+## Workflow v0.1
+
+Workflow v0.1 adds upgraded deterministic work templates, optional handoff
+posting, approval draft reports, and command-level workflow helpers.
+
+Report and dry-run commands:
+
+```powershell
+python apps\hermes_gateway\cli.py --company-agent-workflow-v01-report --json
+python apps\hermes_gateway\cli.py --company-agent-workflow-dry-run --json --channel marketing-brief --message "SNS draft"
+python apps\hermes_gateway\cli.py --company-agent-workflow-dry-run --json --channel operation-brief --message "support program research"
+python apps\hermes_gateway\cli.py --company-agent-workflow-dry-run --json --channel reze-전략기획 --message "new product direction"
+```
+
+Template upgrades:
+
+- Marin creates draft candidates and hands off to `lucy-검토`.
+- Lucy reviews marketing output and prepares final approval drafts when needed.
+- Kasumi creates research candidates with deadline, materials, and risk, then
+  hands off to `meiko-검토`.
+- Meiko returns recommendation, hold, or not recommended with execution
+  conditions and risk.
+- Reze provides strategy judgment and reports to `대표-회의실`.
+
+Workflow commands:
+
+- `!handoff <target_agent_or_channel> <message>`
+- `!review <message>`
+- `!approve-draft <message>`
+- `!agents`
+- `!help`
+
+Handoff posting is supported but disabled by default:
+
+```powershell
+$env:HERMES_COMPANY_AGENT_HANDOFF_ENABLED="false"
+```
+
+Only an operator-set `HERMES_COMPANY_AGENT_HANDOFF_ENABLED=true` enables a live
+runtime handoff post to the target channel. Dry-runs never call Discord and
+only report the target channel.
+
+Approval drafts begin with `[APPROVAL_REQUEST]` and remain metadata-only. If a
+request asks for publishing, deployment, submission, email, or another external
+action, the draft can mark `external_execution_requested=true`, but it keeps
+`external_execution_performed=false`.
+
+Recommended operator runtime environment for v0.1:
+
+```powershell
+$env:HERMES_COMPANY_AGENT_LLM_ENABLED="false"
+$env:HERMES_COMPANY_AGENT_REPLY_MODE="deterministic_fallback"
+$env:HERMES_COMPANY_AGENT_HANDOFF_ENABLED="false"
+
+python apps\hermes_gateway\cli.py --run-company-agent-runtime --json --allow-company-agent-runtime
+```
+
+The bot command set is `!lucy`, `!marin`, `!meiko`, `!kasumi`, `!reze`,
+`!agent`, `!route`, `!handoff`, `!review`, `!approve-draft`, `!agents`, and
+`!help`. SNS publishing, homepage deploy, email send, grant submit, RAG,
+embedding/vector creation, and external command execution remain disabled.

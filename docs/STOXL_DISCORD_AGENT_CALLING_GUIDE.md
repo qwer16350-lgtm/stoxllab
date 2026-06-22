@@ -10,6 +10,8 @@ Command syntax:
 - `!agent <agent_id> <message>`
 - `!route <message>`
 - `!handoff <target_agent> <message>`
+- `!review <message>`
+- `!approve-draft <message>`
 - `!agents`
 - `!help`
 
@@ -26,6 +28,23 @@ Default routing:
 - `reze-전략기획`, `brand-rag`, `new-business`, `product-ideas`: Reze.
 - `대표-회의실`: Reze, Lucy, or Meiko depending on message type.
 - `최종-승인요청`: Lucy, Meiko, or Reze report-only routing.
+
+Routing priority:
+
+1. Explicit direct command:
+   `!lucy`, `!marin`, `!meiko`, `!kasumi`, or `!reze`.
+2. Explicit generic command:
+   `!agent <agent_id> <message>`.
+3. Workflow command:
+   `!handoff`, `!review`, or `!approve-draft`.
+4. Exact channel default:
+   `meiko-검토` -> Meiko, `lucy-검토` -> Lucy, `marin-초안` -> Marin,
+   `kasumi-리서치` -> Kasumi, `reze-전략기획` -> Reze.
+5. Keyword route when no explicit command exists.
+
+Example: `!meiko 이 지원사업 넣을만한지 판단해줘` in `meiko-검토`
+must route to Meiko with reason `explicit_command`. The `지원사업` keyword
+must not override the explicit `!meiko` command.
 
 Handoff flow:
 
@@ -95,3 +114,50 @@ not configured, the bot replies as `HERMES_STOXL` with an agent prefix like
 `[MARIN_STOXL / 마린]`. External execution, SNS publish, homepage deploy, email
 send, grant submit, RAG, embedding/vector creation, and raw secret/Discord ID
 logging remain forbidden.
+
+## Workflow v0.1 Calling Notes
+
+Additional command syntax:
+
+- `!review <message>` routes the message to the senior reviewer for the current
+  channel.
+- `!approve-draft <message>` creates a metadata-only approval draft for
+  `최종-승인요청`.
+- `!handoff <target_agent_or_channel> <message>` prepares a handoff draft for
+  Lucy, Meiko, Reze, or a known target channel.
+- `!agents` lists the five company agents and the senior/junior hierarchy.
+- `!help` lists the command syntax.
+
+Workflow v0.1 dry-run examples:
+
+```powershell
+python apps\hermes_gateway\cli.py --company-agent-workflow-v01-report --json
+python apps\hermes_gateway\cli.py --company-agent-workflow-dry-run --json --channel marketing-brief --message "MML test copy"
+python apps\hermes_gateway\cli.py --company-agent-workflow-dry-run --json --channel operation-brief --message "support program research"
+python apps\hermes_gateway\cli.py --company-agent-workflow-dry-run --json --channel reze-전략기획 --message "STOXL new product direction"
+```
+
+Handoff posting:
+
+- Default: `HERMES_COMPANY_AGENT_HANDOFF_ENABLED=false`.
+- Enabled only by operator action:
+  `HERMES_COMPANY_AGENT_HANDOFF_ENABLED=true`.
+- Dry-runs do not call Discord and do not send handoff posts.
+
+Approval drafts:
+
+- Begin with `[APPROVAL_REQUEST]`.
+- Include the writing agent, reviewer, related channel, decision need,
+  recommendation, risk, and next action.
+- Keep `external_execution_performed=false` even when
+  `external_execution_requested=true`.
+
+Operator runtime test environment:
+
+```powershell
+$env:HERMES_COMPANY_AGENT_LLM_ENABLED="false"
+$env:HERMES_COMPANY_AGENT_REPLY_MODE="deterministic_fallback"
+$env:HERMES_COMPANY_AGENT_HANDOFF_ENABLED="false"
+
+python apps\hermes_gateway\cli.py --run-company-agent-runtime --json --allow-company-agent-runtime
+```
