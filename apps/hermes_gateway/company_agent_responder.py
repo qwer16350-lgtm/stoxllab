@@ -5,8 +5,8 @@ from __future__ import annotations
 import os
 from typing import Any, Mapping
 
+from company_agent_llm import generate_agent_reply
 from company_agent_registry import get_agent, get_report_format
-from llm_client import build_llm_client_config, build_mock_llm_response, public_llm_client_config
 
 
 def _flag(value: Any, default: bool = False) -> bool:
@@ -200,6 +200,7 @@ def build_deterministic_company_agent_reply(agent_id: str, message: str, route: 
         "rag_called": False,
         "external_execution": False,
         "raw_content_logged": False,
+        "raw_discord_ids_logged": False,
         "secret_values_logged": False,
     }
 
@@ -211,21 +212,43 @@ def build_company_agent_response(
     env: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
     mode = _reply_mode(env)
-    if mode == "llm" and _llm_enabled(env):
-        config = build_llm_client_config(dict(env or {}))
-        envelope = build_prompt_envelope(agent_id, message, route)
-        llm_result = build_mock_llm_response(envelope, config=config)
-        return {
-            "response_type": "company_agent_response",
-            "reply_text_source": "llm_mock_boundary",
-            "agent_id": agent_id,
-            "llm_config": public_llm_client_config(config),
-            "llm_result": llm_result,
-            "llm_api_call_attempted": False,
-            "llm_api_called": False,
+    if _llm_enabled(env) and mode in {"llm", "llm_with_deterministic_fallback"}:
+        llm_result = generate_agent_reply(agent_id, message, route, dict(env or os.environ))
+        if llm_result.get("llm_succeeded"):
+            agent = get_agent(agent_id) or {}
+            return {
+                "response_type": "company_agent_response",
+                "reply_text_source": "llm",
+                "agent_id": agent_id,
+                "webhook_persona": agent.get("webhook_persona"),
+                "target_channel": route.get("target_channel") or agent.get("default_channel"),
+                "handoff_to": route.get("handoff_to") or agent.get("handoff_target"),
+                "handoff_channel": route.get("handoff_channel") or route.get("target_channel") or agent.get("default_channel"),
+                "content": llm_result.get("response_text", ""),
+                "llm_result": llm_result,
+                "llm_api_call_attempted": True,
+                "llm_api_called": bool(llm_result.get("llm_api_called")),
+                "rag_called": False,
+                "external_execution": False,
+                "raw_content_logged": False,
+                "raw_discord_ids_logged": False,
+                "secret_values_logged": False,
+            }
+        deterministic = build_deterministic_company_agent_reply(agent_id, message, route)
+        deterministic["llm_result"] = llm_result
+        deterministic["llm_api_call_attempted"] = bool(llm_result.get("llm_attempted"))
+        deterministic["llm_api_called"] = bool(llm_result.get("llm_api_called", False))
+        deterministic["fallback_used"] = "deterministic"
+        return deterministic
+    if mode == "llm" and not _llm_enabled(env):
+        deterministic = build_deterministic_company_agent_reply(agent_id, message, route)
+        deterministic["llm_result"] = {
+            "llm_attempted": False,
+            "llm_succeeded": False,
+            "fallback_used": "deterministic",
             "rag_called": False,
+            "embedding_called": False,
             "external_execution": False,
-            "raw_content_logged": False,
-            "secret_values_logged": False,
         }
+        return deterministic
     return build_deterministic_company_agent_reply(agent_id, message, route)

@@ -299,3 +299,56 @@ Agent bot token environment variables:
 
 Reports expose token presence booleans only. They do not include token values,
 guild IDs, channel IDs, raw Discord IDs, webhook URLs, or `.env` content.
+
+## Workflow v0.5 Per-Agent LLM Response Mode
+
+Workflow v0.5 adds separate system prompts for Lucy, Marin, Kasumi, Meiko, and
+Reze. The feature is off by default:
+
+```powershell
+$env:HERMES_COMPANY_AGENT_LLM_ENABLED="false"
+$env:HERMES_COMPANY_AGENT_LLM_MODE="off"
+```
+
+Safe local verification:
+
+```powershell
+python apps\hermes_gateway\cli.py --company-agent-llm-report --json
+python apps\hermes_gateway\cli.py --company-agent-llm-dry-run --json --agent marin --message "MML 인스타 문구 3개 뽑아줘"
+python apps\hermes_gateway\cli.py --company-agent-llm-dry-run --json --agent lucy --message "이 문구 검토해줘"
+python apps\hermes_gateway\cli.py --company-agent-llm-dry-run --json --agent reze --message "제품 방향 제안해줘"
+```
+
+The dry-run path assembles the prompt envelope only. It does not call OpenRouter
+or OpenAI, does not call Discord, and does not create RAG, embedding, or vector
+artifacts.
+
+Actual LLM calls are user-run only and require both the environment gate and the
+allow flag:
+
+```powershell
+$env:HERMES_COMPANY_AGENT_LLM_ENABLED="true"
+$env:HERMES_COMPANY_AGENT_LLM_MODE="manual_command_only"
+
+python apps\hermes_gateway\cli.py --company-agent-llm-one-shot --json --agent marin --message "MML 인스타 문구 3개 뽑아줘" --allow-company-agent-llm-call
+```
+
+Actual runtime with per-agent LLM responses is still manual-command-only:
+
+```powershell
+$env:HERMES_COMPANY_AGENT_LLM_ENABLED="true"
+$env:HERMES_COMPANY_AGENT_LLM_MODE="manual_command_only"
+$env:HERMES_COMPANY_AGENT_REPLY_MODE="llm_with_deterministic_fallback"
+$env:HERMES_COMPANY_AGENT_HANDOFF_ENABLED="true"
+$env:HERMES_COMPANY_AGENT_REAL_BOTS_ENABLED="true"
+$env:HERMES_COMPANY_AGENT_SENDER_MODE="real_bot"
+
+python apps\hermes_gateway\cli.py --run-company-agent-runtime --json --allow-company-agent-runtime
+```
+
+LLM generation is attempted only for explicit manual commands. Plain messages
+and auto-reply paths stay deterministic. Provider failure falls back to the
+deterministic agent template. External execution, publishing, deployment, email
+sending, competition/grant submission, RAG, embedding/vector creation,
+unattended auto replies, token/API key logging, webhook URL logging, and raw
+Discord ID logging remain forbidden.

@@ -50,7 +50,7 @@ COMMAND_SYNTAX = [
 def build_company_agent_router_dry_run(channel: str, message: str) -> dict[str, Any]:
     route = route_company_agent_message(channel, message)
     if route.get("selected_agent"):
-        response = build_company_agent_response(str(route["selected_agent"]), message, route)
+        response = build_company_agent_response(str(route["selected_agent"]), message, route, dict(os.environ))
     else:
         response = {
             "response_type": "company_agent_response",
@@ -256,7 +256,7 @@ def build_company_agent_message_result(channel_name: str, content: str) -> dict[
         }
     selected_agent = str(route.get("selected_agent") or "")
     routed_content = extract_first_command_line(content) or normalize_discord_message_content(content)
-    response = build_company_agent_response(selected_agent, routed_content, route)
+    response = build_company_agent_response(selected_agent, routed_content, route, dict(os.environ))
     webhook_result = send_as_agent(selected_agent, channel_name, str(response.get("content", "")))
     bot_fallback = webhook_result.get("blocked") is True
     return {

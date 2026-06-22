@@ -281,6 +281,11 @@ from company_agent_runtime import (
     build_company_agent_workflow_v01_report,
     run_company_agent_runtime_forever,
 )
+from company_agent_llm import (
+    build_company_agent_llm_dry_run,
+    build_company_agent_llm_one_shot,
+    build_company_agent_llm_report,
+)
 from company_agent_bot_fleet import (
     build_company_agent_real_bot_fleet_report,
     build_company_agent_real_bot_send_dry_run,
@@ -574,6 +579,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--company-agent-webhook-persona-dry-run", action="store_true", help="Build STOXL company agent webhook persona v0.3 dry-run without Discord sends.")
     parser.add_argument("--company-agent-real-bot-fleet-report", action="store_true", help="Print STOXL company agent real bot fleet v0.4 report.")
     parser.add_argument("--company-agent-real-bot-send-dry-run", action="store_true", help="Build STOXL company agent real bot send v0.4 dry-run without Discord login or send.")
+    parser.add_argument("--company-agent-llm-report", action="store_true", help="Print STOXL company agent LLM v0.5 report without API calls.")
+    parser.add_argument("--company-agent-llm-dry-run", action="store_true", help="Build STOXL company agent LLM v0.5 prompt dry-run without API calls.")
+    parser.add_argument("--company-agent-llm-one-shot", action="store_true", help="Run or report one gated company agent LLM call without Discord sends.")
+    parser.add_argument("--allow-company-agent-llm-call", action="store_true", help="Allow one user-run company agent LLM call after env gates pass.")
     parser.add_argument("--run-company-agent-runtime", action="store_true", help="Run or report the STOXL company agent runtime; default blocked without allow flag.")
     parser.add_argument("--allow-company-agent-runtime", action="store_true", help="Record allow flag presence for a later company agent runtime Manual Gate.")
     parser.add_argument("--actual-phase74-limited-auto-mode", action="store_true", help="Print Phase 74 actual path report; blocked until a separate Manual Gate.")
@@ -3755,6 +3764,51 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- would_use_real_bot: {output.get('would_use_real_bot')}")
         return 0
 
+    if args.company_agent_llm_report:
+        output = build_company_agent_llm_report()
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Discord company agent LLM v0.5")
+            print(f"- company_agent_llm_available: {output.get('company_agent_llm_available')}")
+            print(f"- default_llm_enabled: {output.get('default_llm_enabled')}")
+            print(f"- default_llm_mode: {output.get('default_llm_mode')}")
+            print(f"- current_llm_mode: {output.get('current_llm_mode')}")
+        return 0
+
+    if args.company_agent_llm_dry_run:
+        agent_id = args.agent or "marin"
+        output = build_company_agent_llm_dry_run(
+            agent_id,
+            args.message or args.text or "",
+            {"command": agent_id, "source_channel": args.channel or "cli"},
+        )
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Discord company agent LLM dry-run")
+            print(f"- selected_agent: {output.get('selected_agent')}")
+            print(f"- prompt_available: {output.get('prompt_available')}")
+            print(f"- would_attempt_llm: {output.get('would_attempt_llm')}")
+            print(f"- actual_llm_called: {output.get('actual_llm_called')}")
+        return 0
+
+    if args.company_agent_llm_one_shot:
+        output = build_company_agent_llm_one_shot(
+            args.agent or "marin",
+            args.message or args.text or "",
+            allow_company_agent_llm_call=args.allow_company_agent_llm_call,
+        )
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Discord company agent LLM one-shot")
+            print(f"- selected_agent: {output.get('selected_agent')}")
+            print(f"- llm_attempted: {output.get('llm_attempted')}")
+            print(f"- llm_succeeded: {output.get('llm_succeeded')}")
+            print(f"- discord_message_sent: {output.get('discord_message_sent')}")
+        return 0
+
     if args.run_company_agent_runtime:
         if args.allow_company_agent_runtime:
             return run_company_agent_runtime_forever(allow_flag_present=True)
@@ -4141,6 +4195,10 @@ def main(argv: list[str] | None = None) -> int:
         or args.company_agent_webhook_persona_dry_run
         or args.company_agent_real_bot_fleet_report
         or args.company_agent_real_bot_send_dry_run
+        or args.company_agent_llm_report
+        or args.company_agent_llm_dry_run
+        or args.company_agent_llm_one_shot
+        or args.allow_company_agent_llm_call
         or args.run_company_agent_runtime
         or args.allow_company_agent_runtime
         or args.actual_phase74_limited_auto_mode

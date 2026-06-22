@@ -309,3 +309,52 @@ The agent bot clients are send-only. They do not respond to `on_message`, and
 the HERMES runtime ignores bot authors to prevent loops and duplicate replies.
 Reports show token presence as booleans only and never log token values, channel
 IDs, raw Discord IDs, webhook URLs, or API keys.
+
+## Workflow v0.5 Per-Agent LLM Response Mode
+
+Workflow v0.5 adds agent-specific LLM response generation behind a manual gate.
+The default remains deterministic fallback:
+
+```powershell
+$env:HERMES_COMPANY_AGENT_LLM_ENABLED="false"
+$env:HERMES_COMPANY_AGENT_LLM_MODE="off"
+```
+
+Report and dry-run commands do not call the LLM provider and do not send Discord
+messages:
+
+```powershell
+python apps\hermes_gateway\cli.py --company-agent-llm-report --json
+python apps\hermes_gateway\cli.py --company-agent-llm-dry-run --json --agent marin --message "MML 인스타 문구 3개 뽑아줘"
+python apps\hermes_gateway\cli.py --company-agent-llm-dry-run --json --agent lucy --message "이 문구 검토해줘"
+python apps\hermes_gateway\cli.py --company-agent-llm-dry-run --json --agent reze --message "제품 방향 제안해줘"
+```
+
+User-run actual LLM one-shot gate:
+
+```powershell
+$env:HERMES_COMPANY_AGENT_LLM_ENABLED="true"
+$env:HERMES_COMPANY_AGENT_LLM_MODE="manual_command_only"
+
+python apps\hermes_gateway\cli.py --company-agent-llm-one-shot --json --agent marin --message "MML 인스타 문구 3개 뽑아줘" --allow-company-agent-llm-call
+```
+
+User-run Discord runtime with LLM fallback:
+
+```powershell
+$env:HERMES_COMPANY_AGENT_LLM_ENABLED="true"
+$env:HERMES_COMPANY_AGENT_LLM_MODE="manual_command_only"
+$env:HERMES_COMPANY_AGENT_REPLY_MODE="llm_with_deterministic_fallback"
+$env:HERMES_COMPANY_AGENT_HANDOFF_ENABLED="true"
+$env:HERMES_COMPANY_AGENT_REAL_BOTS_ENABLED="true"
+$env:HERMES_COMPANY_AGENT_SENDER_MODE="real_bot"
+
+python apps\hermes_gateway\cli.py --run-company-agent-runtime --json --allow-company-agent-runtime
+```
+
+LLM calls are limited to manual commands such as `!marin`, `!lucy`, `!meiko`,
+`!kasumi`, `!reze`, and `!agent <agent_id>`. Plain auto replies stay
+deterministic. If the provider call fails, the runtime falls back to the
+deterministic template. RAG, embedding/vector creation, external execution,
+automatic posting/submission/email/deployment, token/API key logging, webhook
+URL logging, and raw Discord ID logging remain forbidden.
