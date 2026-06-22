@@ -105,6 +105,24 @@ def test_explicit_command_priority_over_channel_and_keywords() -> None:
     assert_true("keyword" in route_keyword["reason"], "keyword reason on route")
 
 
+def test_prefixed_discord_content_command_extraction() -> None:
+    cases = [
+        ("operation-brief", "#operation-brief\n!meiko 이 지원사업 넣을만한지 판단해줘", "meiko"),
+        ("operation-brief", "<#123456789012345678>\n!meiko 이 지원사업 넣을만한지 판단해줘", "meiko"),
+        ("operation-brief", "\n\n   !meiko 이 지원사업 넣을만한지 판단해줘", "meiko"),
+        ("meiko-검토", "#meiko-검토\n!meiko 이 지원사업 넣을만한지 판단해줘", "meiko"),
+        ("marketing-brief", "#marketing-brief\n!lucy 브랜드톤 검토해줘", "lucy"),
+        ("lucy-검토", "#lucy-검토\n!marin 콘텐츠 초안 잡아줘", "marin"),
+        ("operation-brief", "> quoted\n!meiko 이 지원사업 넣을만한지 판단해줘", "meiko"),
+    ]
+    for channel, message, expected_agent in cases:
+        result = build_company_agent_message_result(channel, message)
+        assert_true(result["selected_agent"] == expected_agent, f"prefixed route {expected_agent}")
+        assert_true(result["reason"] == "explicit_command", "prefixed explicit reason")
+    support = build_company_agent_message_result("operation-brief", "지원사업 찾아줘")
+    assert_true(support["selected_agent"] == "kasumi", "plain support still kasumi")
+
+
 def test_deterministic_fallback_agent_prefix_and_handoff() -> None:
     marin = build_company_agent_message_result("marketing-brief", "!marin MML 테스트 문구 3개")
     kasumi = build_company_agent_message_result("operation-brief", "!kasumi 지원사업 후보")
@@ -142,6 +160,7 @@ def main() -> int:
         test_runtime_start_report_when_allowed_and_token_present,
         test_commands_route_to_correct_agents,
         test_explicit_command_priority_over_channel_and_keywords,
+        test_prefixed_discord_content_command_extraction,
         test_deterministic_fallback_agent_prefix_and_handoff,
         test_unknown_bot_self_external_and_webhook_fallback,
     ]

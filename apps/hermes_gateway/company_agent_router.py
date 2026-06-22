@@ -30,6 +30,25 @@ EXTERNAL_ACTION_WORDS = (
 )
 
 
+def normalize_discord_message_content(content: Any) -> str:
+    text = str(content or "").replace("\r\n", "\n").replace("\r", "\n")
+    lines = [line.strip() for line in text.split("\n")]
+    return "\n".join(lines).strip()
+
+
+def extract_first_command_line(content: Any) -> str:
+    normalized = normalize_discord_message_content(content)
+    for line in normalized.split("\n"):
+        candidate = line.strip()
+        if not candidate:
+            continue
+        if candidate.startswith(">"):
+            candidate = candidate.lstrip(">").strip()
+        if COMMAND_RE.match(candidate):
+            return candidate
+    return ""
+
+
 def _contains_any(text: str, words: tuple[str, ...] | list[str]) -> bool:
     lowered = text.lower()
     return any(word.lower() in lowered for word in words)
@@ -130,7 +149,10 @@ def _route_by_message(channel_name: str, message: str) -> tuple[str | None, str,
 
 
 def _command_route(channel_name: str, message: str) -> dict[str, Any] | None:
-    match = COMMAND_RE.match(message.strip())
+    command_line = extract_first_command_line(message)
+    if not command_line:
+        return None
+    match = COMMAND_RE.match(command_line)
     if not match:
         return None
     command = match.group(1).lower()
@@ -260,15 +282,16 @@ def _build_route(agent_id: str, channel_name: str, message: str, reason: str, ta
 
 
 def route_company_agent_message(channel_name: str, message: str) -> dict[str, Any]:
-    command_route = _command_route(channel_name, message)
+    normalized_message = normalize_discord_message_content(message)
+    command_route = _command_route(channel_name, normalized_message)
     if command_route is not None:
         return command_route
     exact_channel_default = _exact_channel_default(channel_name)
     if exact_channel_default is not None:
         selected_agent, target_channel, reason = exact_channel_default
-        return _build_route(selected_agent or "", channel_name, message, reason, target_channel=target_channel)
-    selected_agent, target_channel, reason = _route_by_message(channel_name, message)
-    return _build_route(selected_agent or "", channel_name, message, reason, target_channel=target_channel)
+        return _build_route(selected_agent or "", channel_name, normalized_message, reason, target_channel=target_channel)
+    selected_agent, target_channel, reason = _route_by_message(channel_name, normalized_message)
+    return _build_route(selected_agent or "", channel_name, normalized_message, reason, target_channel=target_channel)
 
 
 def build_company_agent_org_report() -> dict[str, Any]:

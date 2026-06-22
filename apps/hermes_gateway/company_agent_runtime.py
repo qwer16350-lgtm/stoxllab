@@ -8,7 +8,12 @@ import os
 from typing import Any
 
 from company_agent_registry import get_channel_policy, load_company_registry
-from company_agent_router import build_company_agent_org_report, route_company_agent_message
+from company_agent_router import (
+    build_company_agent_org_report,
+    extract_first_command_line,
+    normalize_discord_message_content,
+    route_company_agent_message,
+)
 from company_agent_responder import build_approval_draft, build_company_agent_response
 from company_webhook_sender import send_as_agent
 from safety_report_builders import build_blocked_report
@@ -197,7 +202,8 @@ def build_company_agent_message_result(channel_name: str, content: str) -> dict[
             "secret_values_logged": False,
         }
     selected_agent = str(route.get("selected_agent") or "")
-    response = build_company_agent_response(selected_agent, content, route)
+    routed_content = extract_first_command_line(content) or normalize_discord_message_content(content)
+    response = build_company_agent_response(selected_agent, routed_content, route)
     webhook_result = send_as_agent(selected_agent, channel_name, str(response.get("content", "")))
     bot_fallback = webhook_result.get("blocked") is True
     return {
@@ -279,8 +285,9 @@ def build_company_agent_workflow_dry_run(channel: str, message: str, env: dict[s
     result = build_company_agent_message_result(channel, message)
     selected_agent = str(result.get("selected_agent") or "")
     approval_draft = {}
-    if selected_agent in {"lucy", "meiko"} or result.get("requires_approval") or str(message).startswith("!approve-draft"):
-        approval_draft = build_approval_draft(selected_agent or "lucy", message, result)
+    routed_message = extract_first_command_line(message) or normalize_discord_message_content(message)
+    if selected_agent in {"lucy", "meiko"} or result.get("requires_approval") or routed_message.startswith("!approve-draft"):
+        approval_draft = build_approval_draft(selected_agent or "lucy", routed_message, result)
     handoff_post = _handoff_post_for_result(result) if result.get("reply_prepared") else {}
     handoff_enabled = _runtime_env(env)["handoff_enabled"]
     if handoff_post:

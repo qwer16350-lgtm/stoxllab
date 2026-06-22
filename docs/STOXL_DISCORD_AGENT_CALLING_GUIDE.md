@@ -46,6 +46,23 @@ Example: `!meiko 이 지원사업 넣을만한지 판단해줘` in `meiko-검토
 must route to Meiko with reason `explicit_command`. The `지원사업` keyword
 must not override the explicit `!meiko` command.
 
+Discord message normalization:
+
+- The router normalizes message content before routing.
+- Leading whitespace, blank lines, Discord channel mentions, channel display
+  labels, and quoted display lines may appear before a command.
+- The first command line in the message is used for explicit command routing
+  even when it is not the first line.
+- Example:
+
+```text
+#operation-brief
+!meiko 이 지원사업 넣을만한지 판단해줘
+```
+
+This routes to Meiko with reason `explicit_command`; the `지원사업` keyword does
+not override `!meiko`.
+
 Handoff flow:
 
 - Marin -> Lucy.

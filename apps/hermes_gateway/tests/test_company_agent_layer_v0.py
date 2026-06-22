@@ -15,7 +15,7 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 from company_agent_registry import CHANNEL_STRUCTURE, load_company_registry
-from company_agent_router import build_company_agent_org_report, route_company_agent_message
+from company_agent_router import build_company_agent_org_report, extract_first_command_line, normalize_discord_message_content, route_company_agent_message
 from company_agent_runtime import build_company_agent_router_dry_run, build_company_agent_runtime_report
 from company_handoff import build_handoff_message
 from company_webhook_sender import send_as_agent
@@ -72,6 +72,23 @@ def test_router_commands_and_blocks() -> None:
     external = route_company_agent_message("marketing-brief", "publish this SNS post now")
     assert_true(external["blocked"] is True, "external execution request blocked")
     assert_true(external["external_execution_allowed"] is False, "external execution false")
+
+
+def test_message_normalization_and_command_extraction() -> None:
+    assert_true(normalize_discord_message_content("   !meiko 판단해줘").startswith("!meiko"), "strip whitespace")
+    examples = [
+        "   !meiko 판단해줘",
+        "\n\n!meiko 판단해줘",
+        "<#123456789012345678>\n!meiko 판단해줘",
+        "#operation-brief\n!meiko 판단해줘",
+        "# operation-brief\n!meiko 판단해줘",
+        "> quoted\n!meiko 판단해줘",
+    ]
+    for example in examples:
+        assert_true(extract_first_command_line(example).startswith("!meiko"), "extract meiko command")
+    prefixed = route_company_agent_message("operation-brief", "#operation-brief\n!meiko 이 지원사업 넣을만한지 판단해줘")
+    assert_true(prefixed["selected_agent"] == "meiko", "prefixed command route")
+    assert_true(prefixed["reason"] == "explicit_command", "prefixed explicit reason")
 
 
 def test_handoff_flow() -> None:
@@ -158,6 +175,7 @@ def main() -> int:
         test_registry_agents_prompts_and_channels,
         test_router_default_and_keyword_routes,
         test_router_commands_and_blocks,
+        test_message_normalization_and_command_extraction,
         test_handoff_flow,
         test_webhook_sender_redacts_and_blocks,
         test_org_report_router_dry_run_and_runtime_default_blocked,

@@ -99,6 +99,27 @@ def test_explicit_command_priority_workflow_dry_run() -> None:
     assert_true(plain_meiko["selected_agent"] == "meiko", "plain meiko channel default")
 
 
+def test_prefixed_discord_content_workflow_dry_run() -> None:
+    prefixed = build_company_agent_workflow_dry_run(
+        "operation-brief",
+        "#operation-brief\n!meiko 이 지원사업 넣을만한지 판단해줘",
+    )
+    assert_true(prefixed["selected_agent"] == "meiko", "channel label meiko")
+    assert_true(prefixed["agent_display_name"] == "메이코", "channel label meiko display")
+    mention = build_company_agent_workflow_dry_run(
+        "operation-brief",
+        "<#123456789012345678>\n!meiko 이 지원사업 넣을만한지 판단해줘",
+    )
+    assert_true(mention["selected_agent"] == "meiko", "mention meiko")
+    assert_true("123456789012345678" not in json.dumps(mention, ensure_ascii=False), "raw channel id hidden")
+    blank = build_company_agent_workflow_dry_run("operation-brief", "\n\n!meiko 이 지원사업 넣을만한지 판단해줘")
+    assert_true(blank["selected_agent"] == "meiko", "blank line meiko")
+    quoted = build_company_agent_workflow_dry_run("operation-brief", "> quoted\n!meiko 이 지원사업 넣을만한지 판단해줘")
+    assert_true(quoted["selected_agent"] == "meiko", "quoted line meiko")
+    plain = build_company_agent_workflow_dry_run("operation-brief", "지원사업 찾아줘")
+    assert_true(plain["selected_agent"] == "kasumi", "plain support still kasumi")
+
+
 def test_commands_agents_help_and_report() -> None:
     report = build_company_agent_workflow_v01_report()
     assert_true(report["workflow_v01_available"] is True, "workflow report")
@@ -139,6 +160,7 @@ def main() -> int:
         test_approval_draft_and_external_blocking,
         test_handoff_posting_and_workflow_dry_run,
         test_explicit_command_priority_workflow_dry_run,
+        test_prefixed_discord_content_workflow_dry_run,
         test_commands_agents_help_and_report,
         test_runtime_path_preserved_and_no_sensitive_values,
     ]
