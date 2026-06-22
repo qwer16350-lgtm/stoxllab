@@ -216,3 +216,86 @@ channel and does not crash.
 
 Reports and messages do not include token values, webhook URLs, raw Discord IDs,
 or channel ID values.
+
+## Workflow v0.3 Webhook Persona Mode
+
+Workflow v0.3 adds optional Discord webhook persona delivery. The visible sender
+can appear as `MARIN_STOXL`, `LUCY_STOXL`, `MEIKO_STOXL`, `KASUMI_STOXL`, or
+`REZE_STOXL` while deterministic fallback remains the content source.
+
+Dry-run commands:
+
+```powershell
+python apps\hermes_gateway\cli.py --company-agent-webhook-persona-report --json
+python apps\hermes_gateway\cli.py --company-agent-webhook-persona-dry-run --json --agent marin --channel marketing-brief --message "MML 인스타 문구 3개 뽑아줘"
+python apps\hermes_gateway\cli.py --company-agent-webhook-persona-dry-run --json --agent lucy --channel lucy-검토 --message "이 문구 검토해줘"
+python apps\hermes_gateway\cli.py --company-agent-webhook-persona-dry-run --json --agent reze --channel reze-전략기획 --message "제품 방향 제안해줘"
+```
+
+Runtime gates:
+
+```powershell
+$env:HERMES_COMPANY_AGENT_WEBHOOK_PERSONA_ENABLED="false"
+$env:HERMES_COMPANY_AGENT_WEBHOOK_CREATE_ENABLED="true"
+```
+
+The default is bot-message fallback. When persona mode is enabled, the runtime
+looks up an existing webhook by persona name and reuses it. If no webhook exists
+and creation is enabled, the runtime creates one by name. If webhook lookup,
+creation, or send fails, the runtime falls back to the normal bot message.
+
+Handoff and approval channel posts use the source/reviewer agent persona when
+persona mode is enabled. Reports never include webhook URLs, webhook IDs,
+channel IDs, token values, or raw Discord IDs.
+
+## Workflow v0.4 Real Multi-Bot Agent Fleet
+
+Workflow v0.4 adds a send-only real bot fleet:
+
+- `HERMES_STOXL`: central router and workflow controller.
+- `LUCY_STOXL`: Lucy sender.
+- `MARIN_STOXL`: Marin sender.
+- `MEIKO_STOXL`: Meiko sender.
+- `KASUMI_STOXL`: Kasumi sender.
+- `REZE_STOXL`: Reze sender.
+
+The five agent clients are logged in only when an operator enables real bot
+mode. They do not listen/respond to messages; HERMES remains the only router.
+
+Dry-run commands:
+
+```powershell
+python apps\hermes_gateway\cli.py --company-agent-real-bot-fleet-report --json
+python apps\hermes_gateway\cli.py --company-agent-real-bot-send-dry-run --json --agent marin --channel marketing-brief --message "MML 인스타 문구 3개 뽑아줘"
+python apps\hermes_gateway\cli.py --company-agent-real-bot-send-dry-run --json --agent lucy --channel lucy-검토 --message "이 문구 검토해줘"
+python apps\hermes_gateway\cli.py --company-agent-real-bot-send-dry-run --json --agent reze --channel reze-전략기획 --message "제품 방향 제안해줘"
+```
+
+Default gates:
+
+```powershell
+$env:HERMES_COMPANY_AGENT_REAL_BOTS_ENABLED="false"
+$env:HERMES_COMPANY_AGENT_SENDER_MODE="bot_fallback"
+```
+
+Actual runtime test gates:
+
+```powershell
+$env:HERMES_COMPANY_AGENT_REAL_BOTS_ENABLED="true"
+$env:HERMES_COMPANY_AGENT_SENDER_MODE="real_bot"
+```
+
+Supported sender modes are `bot_fallback`, `webhook`, `real_bot`, and `auto`.
+`auto` tries real bot, webhook, then HERMES bot fallback. Real bot send failure
+does not crash the runtime.
+
+Agent bot token environment variables:
+
+- `HERMES_DISCORD_LUCY_BOT_TOKEN`
+- `HERMES_DISCORD_MARIN_BOT_TOKEN`
+- `HERMES_DISCORD_MEIKO_BOT_TOKEN`
+- `HERMES_DISCORD_KASUMI_BOT_TOKEN`
+- `HERMES_DISCORD_REZE_BOT_TOKEN`
+
+Reports expose token presence booleans only. They do not include token values,
+guild IDs, channel IDs, raw Discord IDs, webhook URLs, or `.env` content.

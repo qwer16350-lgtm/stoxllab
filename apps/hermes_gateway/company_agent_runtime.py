@@ -7,6 +7,15 @@ import json
 import os
 from typing import Any
 
+from company_agent_bot_fleet import (
+    build_company_agent_real_bot_fleet_report,
+    build_company_agent_real_bot_send_dry_run,
+    resolve_agent_bot_name,
+    send_as_real_agent_bot,
+    sender_order_for_mode,
+    start_agent_bot_clients,
+    stop_agent_bot_clients,
+)
 from company_agent_registry import get_channel_policy, load_company_registry
 from company_agent_router import (
     build_company_agent_org_report,
@@ -17,6 +26,8 @@ from company_agent_router import (
 from company_agent_responder import build_approval_draft, build_company_agent_response
 from company_handoff import build_handoff_post_payload
 from company_webhook_sender import send_as_agent
+from company_webhook_sender import send_as_agent_webhook
+from company_webhook_sender import resolve_agent_webhook_name
 from safety_report_builders import build_blocked_report
 
 
@@ -74,6 +85,10 @@ def _runtime_env(env: dict[str, Any] | None = None) -> dict[str, Any]:
         "llm_enabled": _flag(env_map.get("HERMES_COMPANY_AGENT_LLM_ENABLED", "false")),
         "reply_mode": str(env_map.get("HERMES_COMPANY_AGENT_REPLY_MODE", "deterministic_fallback") or "deterministic_fallback"),
         "handoff_enabled": _flag(env_map.get("HERMES_COMPANY_AGENT_HANDOFF_ENABLED", "false")),
+        "webhook_persona_enabled": _flag(env_map.get("HERMES_COMPANY_AGENT_WEBHOOK_PERSONA_ENABLED", "false")),
+        "webhook_create_enabled": _flag(env_map.get("HERMES_COMPANY_AGENT_WEBHOOK_CREATE_ENABLED", "true"), default=True),
+        "real_bots_enabled": _flag(env_map.get("HERMES_COMPANY_AGENT_REAL_BOTS_ENABLED", "false")),
+        "sender_mode": str(env_map.get("HERMES_COMPANY_AGENT_SENDER_MODE", "bot_fallback") or "bot_fallback").strip().lower(),
     }
 
 
@@ -115,6 +130,10 @@ def build_company_agent_runtime_report(allow_flag_present: bool = False) -> dict
                 "command_syntax": list(COMMAND_SYNTAX),
                 "external_execution": False,
                 "handoff_posting_enabled": bool(runtime_env["handoff_enabled"]),
+                "webhook_persona_enabled": bool(runtime_env["webhook_persona_enabled"]),
+                "webhook_create_enabled": bool(runtime_env["webhook_create_enabled"]),
+                "real_bots_enabled": bool(runtime_env["real_bots_enabled"]),
+                "sender_mode": runtime_env["sender_mode"],
                 "webhook_url_value_logged": False,
                 "raw_discord_ids_logged": False,
                 "secret_values_logged": False,
@@ -174,10 +193,19 @@ def build_company_agent_runtime_start_report(
         "webhook_url_value_logged": False,
         "external_execution": False,
         "handoff_posting_enabled": bool(runtime_env["handoff_enabled"]),
+        "webhook_persona_enabled": bool(runtime_env["webhook_persona_enabled"]),
+        "webhook_create_enabled": bool(runtime_env["webhook_create_enabled"]),
+        "real_bots_enabled": bool(runtime_env["real_bots_enabled"]),
+        "sender_mode": runtime_env["sender_mode"],
+        "sender_order": sender_order_for_mode(
+            runtime_env["sender_mode"],
+            real_bots_enabled=bool(runtime_env["real_bots_enabled"]),
+            webhook_enabled=bool(runtime_env["webhook_persona_enabled"]),
+        ),
     }
 
 
-def should_ignore_message(message: Any, bot_user: Any | None = None) -> tuple[bool, str]:
+def should_ignore_message(message: Any, bot_user: Any | None = None, agent_bot_user_ids: set[Any] | None = None) -> tuple[bool, str]:
     content = str(getattr(message, "content", "") or "").strip()
     author = getattr(message, "author", None)
     if not content:
@@ -186,6 +214,8 @@ def should_ignore_message(message: Any, bot_user: Any | None = None) -> tuple[bo
         return True, "bot_message"
     if bot_user is not None and getattr(author, "id", None) == getattr(bot_user, "id", None):
         return True, "self_message"
+    if agent_bot_user_ids and getattr(author, "id", None) in agent_bot_user_ids:
+        return True, "agent_bot_message"
     channel_name = str(getattr(getattr(message, "channel", None), "name", "") or "")
     if not get_channel_policy(channel_name)["known_channel"]:
         return True, "unknown_channel"
@@ -289,6 +319,8 @@ def build_company_agent_handoff_dry_run(channel: str, message: str, env: dict[st
         "report_type": "company_agent_handoff_dry_run",
         "selected_agent": result.get("selected_agent"),
         "agent_display_name": result.get("agent_display_name"),
+        "agent_bot_name": resolve_agent_bot_name(str(result.get("selected_agent") or "")),
+        "webhook_name": resolve_agent_webhook_name(str(result.get("selected_agent") or "")),
         "handoff_enabled": bool(_runtime_env(env)["handoff_enabled"]),
         "handoff_supported": bool(payload.get("handoff_supported")),
         "handoff_target_channel": payload.get("handoff_target_channel") or result.get("handoff_channel"),
@@ -316,6 +348,8 @@ def build_company_agent_approval_dry_run(channel: str, message: str, env: dict[s
         "report_type": "company_agent_approval_dry_run",
         "selected_agent": result.get("selected_agent"),
         "agent_display_name": result.get("agent_display_name"),
+        "agent_bot_name": resolve_agent_bot_name(str(result.get("selected_agent") or "")),
+        "webhook_name": resolve_agent_webhook_name(str(result.get("selected_agent") or "")),
         "handoff_enabled": bool(_runtime_env(env)["handoff_enabled"]),
         "approval_draft_supported": True,
         "approval_target_channel": draft.get("approval_channel"),
@@ -394,12 +428,64 @@ def build_company_agent_workflow_dry_run(channel: str, message: str, env: dict[s
     }
 
 
-async def _send_runtime_reply(message: Any, result: dict[str, Any]) -> None:
+async def _send_agent_content(client: Any, agent_id: str, channel: Any, content: str) -> dict[str, Any]:
+    env = _runtime_env()
+    channel_name = str(getattr(channel, "name", "") or "")
+    order = sender_order_for_mode(
+        env["sender_mode"],
+        real_bots_enabled=bool(env["real_bots_enabled"]),
+        webhook_enabled=bool(env["webhook_persona_enabled"]),
+    )
+    attempts: list[str] = []
+    for sender in order:
+        attempts.append(sender)
+        if sender == "real_bot":
+            fleet = getattr(client, "_agent_bot_fleet", None)
+            real_result = await send_as_real_agent_bot(fleet, agent_id, channel_name, content)
+            if not real_result.get("blocked"):
+                return {**real_result, "send_strategy": "real_bot", "sender_attempt_order": attempts}
+        elif sender == "webhook":
+            webhook_result = await send_as_agent_webhook(
+                agent_id,
+                channel,
+                content,
+                create_enabled=bool(env["webhook_create_enabled"]),
+            )
+            if not webhook_result.get("blocked"):
+                return {**webhook_result, "send_strategy": "webhook", "sender_attempt_order": attempts}
+        elif sender == "bot_fallback":
+            await channel.send(str(content or "")[:1900])
+            return {
+                "sent": True,
+                "send_strategy": "bot_fallback",
+                "sender_attempt_order": attempts,
+                "bot_message_fallback_used": True,
+                "webhook_url_value_logged": False,
+                "raw_discord_ids_logged": False,
+                "secret_values_logged": False,
+            }
+    await channel.send(str(content or "")[:1900])
+    return {
+        "sent": True,
+        "send_strategy": "bot_fallback",
+        "sender_attempt_order": attempts + ["bot_fallback"],
+        "bot_message_fallback_used": True,
+        "webhook_url_value_logged": False,
+        "raw_discord_ids_logged": False,
+        "secret_values_logged": False,
+    }
+
+
+async def _send_runtime_reply(message: Any, result: dict[str, Any], client: Any | None = None) -> dict[str, Any]:
     response = result.get("response", {})
     content = str(response.get("content", "") or "")
     if not content:
-        return
+        return {"sent": False, "send_strategy": "empty_content"}
+    selected_agent = str(result.get("selected_agent") or "")
+    if client is not None and selected_agent:
+        return await _send_agent_content(client, selected_agent, message.channel, content)
     await message.channel.send(content[:1900])
+    return {"sent": True, "send_strategy": "bot_fallback", "bot_message_fallback_used": True}
 
 
 async def _send_handoff_post(client: Any, result: dict[str, Any]) -> None:
@@ -429,6 +515,9 @@ async def _send_handoff_post(client: Any, result: dict[str, Any]) -> None:
                 "external_execution_performed: false"
             )
         return
+    if selected_agent:
+        await _send_agent_content(client, selected_agent, target_channel, content)
+        return
     await target_channel.send(content[:1900])
 
 
@@ -449,6 +538,9 @@ async def _run_discord_client(token: str, start_report: dict[str, Any]) -> dict[
     intents.messages = True
     intents.message_content = True
     client = discord.Client(intents=intents)
+    client._agent_bot_fleet = None
+    if _runtime_env()["real_bots_enabled"]:
+        client._agent_bot_fleet = await start_agent_bot_clients()
     printed_ready = False
 
     @client.event
@@ -460,13 +552,15 @@ async def _run_discord_client(token: str, start_report: dict[str, Any]) -> dict[
 
     @client.event
     async def on_message(message: Any) -> None:
-        ignored, _reason = should_ignore_message(message, bot_user=client.user)
+        fleet = getattr(client, "_agent_bot_fleet", None)
+        agent_bot_user_ids = getattr(fleet, "agent_bot_user_ids", set()) if fleet is not None else set()
+        ignored, _reason = should_ignore_message(message, bot_user=client.user, agent_bot_user_ids=agent_bot_user_ids)
         if ignored:
             return
         channel_name = str(getattr(message.channel, "name", "") or "")
         result = build_company_agent_message_result(channel_name, str(getattr(message, "content", "") or ""))
         if result.get("reply_prepared") and result.get("bot_message_fallback_used"):
-            await _send_runtime_reply(message, result)
+            await _send_runtime_reply(message, result, client=client)
             client._current_message_channel = message.channel
             await _send_handoff_post(client, result)
             client._current_message_channel = None
@@ -474,6 +568,7 @@ async def _run_discord_client(token: str, start_report: dict[str, Any]) -> dict[
     try:
         await client.start(token)
     finally:
+        await stop_agent_bot_clients(getattr(client, "_agent_bot_fleet", None))
         shutdown = {
             "report_type": "company_agent_runtime_shutdown",
             "shutdown": True,

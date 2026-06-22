@@ -281,6 +281,14 @@ from company_agent_runtime import (
     build_company_agent_workflow_v01_report,
     run_company_agent_runtime_forever,
 )
+from company_agent_bot_fleet import (
+    build_company_agent_real_bot_fleet_report,
+    build_company_agent_real_bot_send_dry_run,
+)
+from company_webhook_sender import (
+    build_company_agent_webhook_persona_dry_run,
+    build_company_agent_webhook_persona_report,
+)
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight, render_rag_evidence_private_test_send_preflight_markdown
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope, render_rag_evidence_prompt_envelope_markdown
 from rag_evidence_review_packet import build_rag_evidence_review_packet, render_rag_evidence_review_packet_markdown
@@ -562,6 +570,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--company-agent-workflow-dry-run", action="store_true", help="Run STOXL company agent workflow v0.1 without Discord sends.")
     parser.add_argument("--company-agent-handoff-dry-run", action="store_true", help="Build STOXL company agent handoff v0.2 dry-run without Discord sends.")
     parser.add_argument("--company-agent-approval-dry-run", action="store_true", help="Build STOXL company agent approval v0.2 dry-run without Discord sends.")
+    parser.add_argument("--company-agent-webhook-persona-report", action="store_true", help="Print STOXL company agent webhook persona v0.3 report.")
+    parser.add_argument("--company-agent-webhook-persona-dry-run", action="store_true", help="Build STOXL company agent webhook persona v0.3 dry-run without Discord sends.")
+    parser.add_argument("--company-agent-real-bot-fleet-report", action="store_true", help="Print STOXL company agent real bot fleet v0.4 report.")
+    parser.add_argument("--company-agent-real-bot-send-dry-run", action="store_true", help="Build STOXL company agent real bot send v0.4 dry-run without Discord login or send.")
     parser.add_argument("--run-company-agent-runtime", action="store_true", help="Run or report the STOXL company agent runtime; default blocked without allow flag.")
     parser.add_argument("--allow-company-agent-runtime", action="store_true", help="Record allow flag presence for a later company agent runtime Manual Gate.")
     parser.add_argument("--actual-phase74-limited-auto-mode", action="store_true", help="Print Phase 74 actual path report; blocked until a separate Manual Gate.")
@@ -3691,6 +3703,58 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- approval_message_preview_present: {output.get('approval_message_preview_present')}")
         return 0
 
+    if args.company_agent_webhook_persona_report:
+        output = build_company_agent_webhook_persona_report()
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Discord company agent webhook persona report")
+            print(f"- webhook_persona_mode_available: {output.get('webhook_persona_mode_available')}")
+            print(f"- default_webhook_persona_enabled: {output.get('default_webhook_persona_enabled')}")
+            print(f"- bot_message_fallback_supported: {output.get('bot_message_fallback_supported')}")
+        return 0
+
+    if args.company_agent_webhook_persona_dry_run:
+        output = build_company_agent_webhook_persona_dry_run(
+            args.agent or "marin",
+            args.channel or "marketing-brief",
+            args.message or args.text or "",
+        )
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Discord company agent webhook persona dry-run")
+            print(f"- selected_agent: {output.get('selected_agent')}")
+            print(f"- webhook_name: {output.get('webhook_name')}")
+            print(f"- would_use_webhook_persona: {output.get('would_use_webhook_persona')}")
+        return 0
+
+    if args.company_agent_real_bot_fleet_report:
+        output = build_company_agent_real_bot_fleet_report()
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Discord company agent real bot fleet report")
+            print(f"- real_bot_fleet_available: {output.get('real_bot_fleet_available')}")
+            print(f"- default_real_bots_enabled: {output.get('default_real_bots_enabled')}")
+            print(f"- default_sender_mode: {output.get('default_sender_mode')}")
+        return 0
+
+    if args.company_agent_real_bot_send_dry_run:
+        output = build_company_agent_real_bot_send_dry_run(
+            args.agent or "marin",
+            args.channel or "marketing-brief",
+            args.message or args.text or "",
+        )
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Discord company agent real bot send dry-run")
+            print(f"- selected_agent: {output.get('selected_agent')}")
+            print(f"- agent_bot_name: {output.get('agent_bot_name')}")
+            print(f"- would_use_real_bot: {output.get('would_use_real_bot')}")
+        return 0
+
     if args.run_company_agent_runtime:
         if args.allow_company_agent_runtime:
             return run_company_agent_runtime_forever(allow_flag_present=True)
@@ -4073,6 +4137,10 @@ def main(argv: list[str] | None = None) -> int:
         or args.company_agent_workflow_dry_run
         or args.company_agent_handoff_dry_run
         or args.company_agent_approval_dry_run
+        or args.company_agent_webhook_persona_report
+        or args.company_agent_webhook_persona_dry_run
+        or args.company_agent_real_bot_fleet_report
+        or args.company_agent_real_bot_send_dry_run
         or args.run_company_agent_runtime
         or args.allow_company_agent_runtime
         or args.actual_phase74_limited_auto_mode
