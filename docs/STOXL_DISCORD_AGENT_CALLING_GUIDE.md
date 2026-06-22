@@ -24,7 +24,7 @@ Default routing:
 - `kasumi-리서치`: Kasumi.
 - `meiko-검토`, `일정-마감관리`: Meiko.
 - `reze-전략기획`, `brand-rag`, `new-business`, `product-ideas`: Reze.
-- `대주주회의실`: Reze, Lucy, or Meiko depending on message type.
+- `대표-회의실`: Reze, Lucy, or Meiko depending on message type.
 - `최종-승인요청`: Lucy, Meiko, or Reze report-only routing.
 
 Handoff flow:
@@ -33,7 +33,7 @@ Handoff flow:
 - Lucy -> `최종-승인요청`.
 - Kasumi -> Meiko.
 - Meiko -> `최종-승인요청`.
-- Reze -> `대주주회의실`.
+- Reze -> `대표-회의실`.
 
 Handoff format:
 
@@ -81,9 +81,17 @@ Runtime:
 python apps\hermes_gateway\cli.py --run-company-agent-runtime --json
 ```
 
-The default runtime command is blocked. Actual runtime requires a separate
+The default runtime command is blocked. Actual runtime requires an explicit
 operator action:
 
 ```powershell
+$env:HERMES_COMPANY_AGENT_LLM_ENABLED="false"
+$env:HERMES_COMPANY_AGENT_REPLY_MODE="deterministic_fallback"
 python apps\hermes_gateway\cli.py --run-company-agent-runtime --json --allow-company-agent-runtime
 ```
+
+Runtime v0 uses deterministic fallback first. If webhook persona delivery is
+not configured, the bot replies as `HERMES_STOXL` with an agent prefix like
+`[MARIN_STOXL / 마린]`. External execution, SNS publish, homepage deploy, email
+send, grant submit, RAG, embedding/vector creation, and raw secret/Discord ID
+logging remain forbidden.

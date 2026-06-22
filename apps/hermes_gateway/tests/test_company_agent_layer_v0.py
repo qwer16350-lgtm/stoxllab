@@ -1,17 +1,25 @@
 from __future__ import annotations
 
+import io
+import os
 import sys
+import urllib.error
 from pathlib import Path
+from unittest.mock import patch
 
 APP_DIR = Path(__file__).resolve().parents[1]
 if str(APP_DIR) not in sys.path:
     sys.path.insert(0, str(APP_DIR))
+SCRIPT_DIR = APP_DIR.parents[1] / "scripts"
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
 
 from company_agent_registry import CHANNEL_STRUCTURE, load_company_registry
 from company_agent_router import build_company_agent_org_report, route_company_agent_message
 from company_agent_runtime import build_company_agent_router_dry_run, build_company_agent_runtime_report
 from company_handoff import build_handoff_message
 from company_webhook_sender import send_as_agent
+import setup_discord_company_os
 
 
 def assert_true(condition: bool, message: str) -> None:
@@ -63,7 +71,7 @@ def test_handoff_flow() -> None:
     assert_true(marin["to"] == "lucy", "marin handoff")
     assert_true(kasumi["to"] == "meiko", "kasumi handoff")
     assert_true(reze["to"] == "decision-meeting", "reze decision meeting")
-    assert_true(reze["target_channel"] == "대주주회의실", "reze reports to decision meeting")
+    assert_true(reze["target_channel"] == "대표-회의실", "reze reports to representative meeting")
 
 
 def test_webhook_sender_redacts_and_blocks() -> None:
@@ -91,6 +99,50 @@ def test_org_report_router_dry_run_and_runtime_default_blocked() -> None:
     assert_true(runtime["message_sent_count"] == 0, "runtime no send")
 
 
+def test_discord_setup_request_headers_and_http_error_report() -> None:
+    captured = {}
+
+    class FakeResponse:
+        status = 200
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def read(self) -> bytes:
+            return b"{}"
+
+    def fake_opener(request, timeout):
+        captured["user_agent"] = request.get_header("User-agent")
+        captured["authorization"] = request.get_header("Authorization")
+        captured["timeout"] = timeout
+        return FakeResponse()
+
+    setup_discord_company_os._request("token-value", "GET", "/users/@me", opener=fake_opener)
+    assert_true(captured["user_agent"] == "STOXL-Hermes-Gateway (local setup)", "User-Agent")
+    assert_true(captured["authorization"] == "Bot token-value", "Authorization")
+    error = urllib.error.HTTPError(
+        "https://discord.example",
+        403,
+        "Forbidden",
+        hdrs=None,
+        fp=io.BytesIO(b'{"message":"Missing Access"}'),
+    )
+    with patch.dict(os.environ, {"DISCORD_BOT_TOKEN": "present", "DISCORD_GUILD_ID": "123456789012345678"}, clear=False):
+        with patch("setup_discord_company_os._request", side_effect=error):
+            report = setup_discord_company_os.build_execute_report(True)
+    assert_true(report["blocked"] is True, "blocked")
+    assert_true(report["http_status"] == 403, "HTTP status")
+    assert_true(report["blocked_reasons"] == ["discord_api_forbidden"], "status reason")
+    assert_true(report["blocked_reason_detail"] == "discord_api_forbidden_or_request_rejected", "detail")
+    assert_true(report["discord_error_code"] is None, "Discord code redacted")
+    assert_true(report["discord_error_message_present"] is True, "Discord message present")
+    assert_true(report["discord_token_value_logged"] is False, "token hidden")
+    assert_true(report["discord_guild_id_value_logged"] is False, "guild hidden")
+
+
 def main() -> int:
     tests = [
         test_registry_agents_prompts_and_channels,
@@ -99,6 +151,7 @@ def main() -> int:
         test_handoff_flow,
         test_webhook_sender_redacts_and_blocks,
         test_org_report_router_dry_run_and_runtime_default_blocked,
+        test_discord_setup_request_headers_and_http_error_report,
     ]
     for test in tests:
         test()

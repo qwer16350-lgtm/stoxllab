@@ -26,6 +26,7 @@ REQUIRED_ROLES = [
 ]
 WEBHOOK_PERSONAS = ["LUCY_STOXL", "MARIN_STOXL", "MEIKO_STOXL", "KASUMI_STOXL", "REZE_STOXL"]
 DISCORD_API_BASE = "https://discord.com/api/v10"
+DISCORD_USER_AGENT = "STOXL-Hermes-Gateway (local setup)"
 
 
 def _base_report(report_type: str) -> dict[str, Any]:
@@ -56,7 +57,13 @@ def build_dry_run_report() -> dict[str, Any]:
     return _base_report("stoxl_discord_company_setup_dry_run")
 
 
-def _request(token: str, method: str, path: str, payload: dict[str, Any] | None = None) -> tuple[int, Any]:
+def _request(
+    token: str,
+    method: str,
+    path: str,
+    payload: dict[str, Any] | None = None,
+    opener: Any | None = None,
+) -> tuple[int, Any]:
     data = None if payload is None else json.dumps(payload).encode("utf-8")
     request = urllib.request.Request(
         DISCORD_API_BASE + path,
@@ -65,9 +72,11 @@ def _request(token: str, method: str, path: str, payload: dict[str, Any] | None 
         headers={
             "Authorization": "Bot " + token,
             "Content-Type": "application/json",
+            "User-Agent": DISCORD_USER_AGENT,
         },
     )
-    with urllib.request.urlopen(request, timeout=30) as response:
+    open_func = opener or urllib.request.urlopen
+    with open_func(request, timeout=30) as response:
         body = response.read().decode("utf-8")
         parsed = json.loads(body) if body else {}
         return int(response.status), parsed
@@ -75,6 +84,49 @@ def _request(token: str, method: str, path: str, payload: dict[str, Any] | None 
 
 def _status(name: str, status: str) -> dict[str, str]:
     return {"name": name, "status": status}
+
+
+def _blocked_reason_for_status(status: int | None) -> str:
+    if status == 401:
+        return "discord_api_unauthorized"
+    if status == 403:
+        return "discord_api_forbidden"
+    if status == 404:
+        return "discord_guild_not_found_or_inaccessible"
+    if status == 429:
+        return "discord_rate_limited"
+    return "discord_api_setup_failed"
+
+
+def _discord_error_body(exc: urllib.error.HTTPError) -> dict[str, Any]:
+    try:
+        body = exc.read().decode("utf-8", errors="replace")
+    except Exception:
+        body = ""
+    try:
+        parsed = json.loads(body) if body else {}
+    except json.JSONDecodeError:
+        parsed = {}
+    return parsed if isinstance(parsed, dict) else {}
+
+
+def _apply_discord_api_error(report: dict[str, Any], exc: BaseException) -> None:
+    status = exc.code if isinstance(exc, urllib.error.HTTPError) else None
+    discord_error_code = None
+    discord_error_message_present = False
+    if isinstance(exc, urllib.error.HTTPError):
+        body = _discord_error_body(exc)
+        discord_error_code = body.get("code")
+        discord_error_message_present = bool(body.get("message"))
+    reason = _blocked_reason_for_status(status)
+    report["blocked"] = True
+    report["blocked_reasons"] = [reason]
+    report["blocked_reason_detail"] = "discord_api_forbidden_or_request_rejected" if status == 403 else reason
+    report["http_status"] = status
+    report["discord_error_code"] = discord_error_code
+    report["discord_error_message_present"] = discord_error_message_present
+    report["error_type"] = exc.__class__.__name__
+    report["discord_setup_executed"] = False
 
 
 def build_execute_report(allow: bool) -> dict[str, Any]:
@@ -105,10 +157,7 @@ def build_execute_report(allow: bool) -> dict[str, Any]:
         _, channels = _request(token, "GET", f"/guilds/{guild_id}/channels")
         _, roles = _request(token, "GET", f"/guilds/{guild_id}/roles")
     except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError) as exc:
-        report["blocked"] = True
-        report["blocked_reasons"] = ["discord_api_setup_failed"]
-        report["error_type"] = exc.__class__.__name__
-        report["discord_setup_executed"] = False
+        _apply_discord_api_error(report, exc)
         return report
 
     role_names = {item.get("name") for item in roles if isinstance(item, dict)}

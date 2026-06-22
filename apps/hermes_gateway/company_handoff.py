@@ -12,7 +12,7 @@ HANDOFF_RULES = {
     "lucy": {"to": "final-approval", "target_channel": "최종-승인요청", "status": "검토", "review_required": True},
     "kasumi": {"to": "meiko", "target_channel": "meiko-검토", "status": "리서치", "review_required": True},
     "meiko": {"to": "final-approval", "target_channel": "최종-승인요청", "status": "검토", "review_required": True},
-    "reze": {"to": "decision-meeting", "target_channel": "대주주회의실", "status": "전략의견", "review_required": True},
+    "reze": {"to": "decision-meeting", "target_channel": "대표-회의실", "status": "전략의견", "review_required": True},
 }
 
 

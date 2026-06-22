@@ -275,6 +275,7 @@ from company_agent_runtime import (
     build_company_agent_org_runtime_report,
     build_company_agent_router_dry_run,
     build_company_agent_runtime_report,
+    run_company_agent_runtime_forever,
 )
 from rag_evidence_private_test_send_preflight import build_rag_evidence_private_test_send_preflight, render_rag_evidence_private_test_send_preflight_markdown
 from rag_evidence_prompt_envelope import build_rag_evidence_prompt_envelope, render_rag_evidence_prompt_envelope_markdown
@@ -3637,6 +3638,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.run_company_agent_runtime:
+        if args.allow_company_agent_runtime:
+            return run_company_agent_runtime_forever(allow_flag_present=True)
         output = build_company_agent_runtime_report(allow_flag_present=args.allow_company_agent_runtime)
         if args.json:
             print(json.dumps(output, ensure_ascii=False, indent=2))

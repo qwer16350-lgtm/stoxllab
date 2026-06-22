@@ -71,17 +71,17 @@ def _route_by_channel(channel_name: str, message: str) -> tuple[str | None, str,
         return "meiko", "meiko-검토", "operation_review_channel"
     if channel_name in {"reze-전략기획", "brand-rag", "new-business", "product-ideas"}:
         return "reze", "reze-전략기획", "strategy_request"
-    if channel_name == "대주주회의실":
+    if channel_name == "대표-회의실":
         if _is_marketing(message):
             return "lucy", "최종-승인요청", "decision_marketing_review"
         if _is_operation(message):
             return "meiko", "최종-승인요청", "decision_operation_review"
-        return "reze", "대주주회의실", "decision_strategy_review"
+        return "reze", "대표-회의실", "decision_strategy_review"
     if channel_name == "최종-승인요청":
         if _is_operation(message):
             return "meiko", "최종-승인요청", "final_operation_approval_request"
         if _is_strategy(message):
-            return "reze", "대주주회의실", "final_strategy_approval_request"
+            return "reze", "대표-회의실", "final_strategy_approval_request"
         return "lucy", "최종-승인요청", "final_marketing_approval_request"
     default_agent = get_default_agent_for_channel(channel_name)
     if default_agent:
@@ -189,6 +189,7 @@ def _build_route(agent_id: str, channel_name: str, message: str, reason: str, ta
         "source_channel": channel_name,
         "target_channel": target_channel or agent["default_channel"],
         "handoff_to": handoff_rule.get("to"),
+        "handoff_channel": handoff_rule.get("target_channel"),
         "requires_review": bool(agent.get("reviews") or handoff_rule.get("review_required")),
         "requires_approval": external_requested or target_channel == "최종-승인요청",
         "external_execution_allowed": False,

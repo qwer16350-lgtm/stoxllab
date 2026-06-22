@@ -48,11 +48,21 @@ def build_deterministic_company_agent_reply(agent_id: str, message: str, route: 
     agent = get_agent(agent_id) or {}
     target = route.get("target_channel") or agent.get("default_channel")
     handoff = route.get("handoff_to") or agent.get("handoff_target")
+    handoff_channel = route.get("handoff_channel") or target
+    role = agent.get("role", "company agent")
+    display_name = agent.get("display_name", agent_id)
+    persona = agent.get("webhook_persona", agent_id.upper())
     content = (
-        f"[{agent.get('webhook_persona', agent_id)}]\n"
-        f"summary: {agent.get('display_name', agent_id)} handled the request as a draft/review packet.\n"
+        f"[{persona} / {display_name}]\n"
+        f"요청: {message[:120] or 'agent command'}\n"
+        f"역할: {role}\n"
+        "결과:\n"
+        "1. 요청을 회사 agent workflow 안에서 접수했습니다.\n"
+        "2. 외부 실행 없이 Discord 답변 초안만 준비합니다.\n"
+        "3. 필요한 경우 다음 검토 채널로 handoff합니다.\n"
         f"target_channel: {target}\n"
-        f"handoff_to: {handoff}\n"
+        f"handoff: {handoff}\n"
+        f"handoff_channel: {handoff_channel}\n"
         "external_execution_allowed: false\n"
         "approval_required_for_external_action: true"
     )

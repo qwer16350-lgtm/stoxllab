@@ -100,7 +100,7 @@ DEPARTMENTS = {
 }
 
 CHANNEL_STRUCTURE: dict[str, list[str]] = {
-    "00-결정권자": ["공지-결정사항", "대주주회의실", "최종-승인요청"],
+    "00-결정권자": ["공지-결정사항", "대표-회의실", "최종-승인요청"],
     "10-마케팅팀": ["marketing-brief", "lucy-검토", "marin-초안", "sns-콘텐츠", "homepage"],
     "20-운영팀": ["operation-brief", "meiko-검토", "kasumi-리서치", "공모전-지원사업", "일정-마감관리"],
     "30-전략기획실": ["reze-전략기획", "brand-rag", "new-business", "product-ideas"],
@@ -123,7 +123,7 @@ CHANNEL_DEFAULT_AGENT = {
     "brand-rag": "reze",
     "new-business": "reze",
     "product-ideas": "reze",
-    "대주주회의실": "reze",
+    "대표-회의실": "reze",
     "최종-승인요청": "lucy",
     "hermes-private-test": "marin",
     "hermes-canary": "marin",
