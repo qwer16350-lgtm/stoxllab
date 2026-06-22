@@ -67,6 +67,24 @@ def test_agent_prompts_exist_and_roles_are_specific() -> None:
     assert_true("strategy office" in prompts["reze"], "Reze role")
 
 
+def test_agent_prompts_require_role_specific_work_products() -> None:
+    prompts = {agent: get_agent_system_prompt(agent) for agent in ("marin", "lucy", "kasumi", "meiko", "reze")}
+    assert_true("at least three complete, usable copy lines" in prompts["marin"], "Marin actual copy")
+    assert_true("Lucy 검토 포인트" in prompts["marin"], "Marin Lucy handoff")
+    assert_true("rewrite the weak lines" in prompts["lucy"], "Lucy concrete revisions")
+    assert_true("발행 가능, 수정 필요, or 보류" in prompts["lucy"], "Lucy decision status")
+    assert_true("Never invent an unknown grant" in prompts["kasumi"], "Kasumi no invented grants")
+    assert_true("후보, 마감, 필요자료, and 리스크" in prompts["kasumi"], "Kasumi structure")
+    assert_true("추천, 보류, or 비추천" in prompts["meiko"], "Meiko recommendation status")
+    assert_true("실행 조건, 담당, 마감, and 리스크" in prompts["meiko"], "Meiko execution structure")
+    assert_true("스톡슬 적합성" in prompts["reze"], "Reze STOXL fit")
+    assert_true("central strategic tension" in prompts["reze"], "Reze strategy critique")
+    for agent, prompt in prompts.items():
+        assert_true("Do not perform external execution" in prompt, f"{agent} no external")
+        assert_true("raw Discord IDs" in prompt, f"{agent} no raw IDs")
+        assert_true("Do not call RAG" in prompt, f"{agent} no RAG")
+
+
 def test_dry_run_assembles_prompt_without_calls() -> None:
     dry = build_company_agent_llm_dry_run(
         "marin",
@@ -155,7 +173,7 @@ def test_one_shot_failure_reports_real_fallback_preview() -> None:
     assert_true(report["fallback_used"] == "deterministic", "fallback used")
     assert_true(report["fallback_preview_present"] is True, "fallback preview present")
     assert_true(report["fallback_preview"].startswith("[MARIN_STOXL / 마린]"), "real preview")
-    assert_true("작은 구조가 만드는 큰 변화, MML." in report["fallback_preview"], "draft line")
+    assert_true("[인스타 첫 문장] 작은 구조가 만드는 큰 변화, MML." in report["fallback_preview"], "draft line")
     assert_true("deterministic_template_available" not in report["fallback_preview"], "no placeholder")
     assert_true(report["llm_error_message_redacted"] is True, "error redacted")
     assert_safe(report)
@@ -182,12 +200,14 @@ def test_deterministic_fallbacks_are_useful_and_reze_typo_is_fixed() -> None:
         agent: build_deterministic_company_agent_reply(agent, "검토 요청", route)["content"]
         for agent in ("marin", "lucy", "kasumi", "meiko", "reze")
     }
-    assert_true("작은 구조가 만드는 큰 변화, MML." in replies["marin"], "Marin concrete draft")
+    assert_true("[인스타 첫 문장] 작은 구조가 만드는 큰 변화, MML." in replies["marin"], "Marin concrete draft")
+    assert_true("[홈페이지 소개]" in replies["marin"] and "Lucy 검토 포인트:" in replies["marin"], "Marin placements and review")
     assert_true("핵심 장점을 먼저 보여주는 짧은 문구" not in replies["marin"], "Marin no placeholder")
     assert_true("판정: 수정 필요" in replies["lucy"], "Lucy concrete review")
-    assert_true("제품 특징이 아직 구체적으로 드러나지 않습니다." in replies["lucy"], "Lucy reason")
+    assert_true("첫 문장:" in replies["lucy"] and "보조 문장:" in replies["lucy"], "Lucy direct revisions")
     assert_true("실시간 검색 미사용으로 최신성 검증 필요" in replies["kasumi"], "Kasumi latestness caveat")
-    assert_true("공고 URL 확인" in replies["meiko"] and "담당자 지정" in replies["meiko"], "Meiko execution conditions")
+    assert_true("Meiko 판단 포인트:" in replies["kasumi"], "Kasumi handoff judgment")
+    assert_true("공고 URL 확인" in replies["meiko"] and "담당:" in replies["meiko"], "Meiko execution conditions")
     assert_true("스톡슬 적합성" in replies["reze"], "Reze STOXL spelling")
     assert_true("스톡스 적합성" not in replies["reze"], "Reze typo removed")
     for agent, content in replies.items():
@@ -249,6 +269,7 @@ def main() -> int:
     tests = [
         test_report_defaults_and_supported_mode,
         test_agent_prompts_exist_and_roles_are_specific,
+        test_agent_prompts_require_role_specific_work_products,
         test_dry_run_assembles_prompt_without_calls,
         test_external_execution_request_is_refused_in_prompt,
         test_llm_failure_and_exception_fall_back_to_deterministic,

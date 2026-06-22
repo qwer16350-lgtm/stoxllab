@@ -98,6 +98,67 @@ def build_approval_draft(agent_id: str, message: str, route: dict[str, Any]) -> 
 
 def _template_for_agent(agent_id: str, message: str, route: dict[str, Any]) -> str:
     summary = _summary(message)
+    context = route.get("handoff_context") if isinstance(route.get("handoff_context"), dict) else None
+    context_source = str((context or {}).get("source_agent") or "").lower()
+    context_content = redact_company_agent_text(str((context or {}).get("handoff_content") or ""), 900)
+    if agent_id == "meiko" and context and context_source == "kasumi":
+        return (
+            "[MEIKO_STOXL / 메이코]\n"
+            "소속: 운영팀 선임\n"
+            "업무: 실행 판단 / 일정 / 리스크\n"
+            "상태: 보류\n\n"
+            "카스미가 넘긴 내용 기준으로 보면, 현재 자료만으로 즉시 신청을 확정하기보다 "
+            "후보의 실제 공고 조건을 검증하는 것이 맞습니다.\n\n"
+            "전달 근거:\n"
+            f"{context_content}\n\n"
+            "1차 판단:\n"
+            "- 추천도: 보류\n"
+            "- 이유: 마감/자격/자부담/평가항목이 특정되지 않은 후보 단계\n"
+            "- 가능성: 시제품/PoC/사업화 지원 유형은 STOXL 제품 개발과 연결 가능\n\n"
+            "우선 확인:\n"
+            "1. 실제 공고명\n"
+            "2. 마감일\n"
+            "3. 신청 자격\n"
+            "4. 자부담 여부\n"
+            "5. 제출물\n"
+            "6. STOXL 사업자 조건 적합성\n\n"
+            "next:\n"
+            "카스미가 실제 공고 URL/마감/자격을 확인하면 메이코가 최종 지원 여부를 판단합니다."
+        )
+    if agent_id == "lucy" and context and context_source == "marin":
+        return (
+            "[LUCY_STOXL / 루시]\n"
+            "소속: 마케팅팀 시니어\n"
+            "업무: 검토 / 발행 판단\n\n"
+            "마린이 넘긴 초안 기준 검토 결과:\n"
+            "판정: 수정 필요\n\n"
+            "검토 대상:\n"
+            f"{context_content}\n\n"
+            "이유:\n"
+            "- 제품 특징과 사용 장면이 함께 드러나는 문장을 우선해야 합니다.\n"
+            "- 사실 확인 전에는 조합 방식이나 효과를 단정하지 않는 편이 안전합니다.\n\n"
+            "수정 제안:\n"
+            "1. 첫 문장: '작은 구조가 만드는 큰 변화, MML.'\n"
+            "2. 보조 문장: '쌓고 돌리며 배치를 바꾸는 미니 모듈 라이트입니다.'\n"
+            "3. 이미지 캡션: '책상 위 작은 구조, MML.'\n\n"
+            "최종승인 필요 여부:\n"
+            "true\n\n"
+            "next:\n"
+            "제품 사양 확인 후 최종-승인요청"
+        )
+    if agent_id == "reze" and context:
+        return (
+            "[REZE_STOXL / 레제]\n"
+            "소속: 전략기획실\n"
+            "업무: 브랜드 전략/제품 방향 비평\n\n"
+            "대표-회의실 전달 내용 기준 전략 판단:\n"
+            f"{context_content}\n\n"
+            "- 브랜드 방향성: 전달안의 중심 가설을 한 문장으로 고정할 필요가 있음\n"
+            "- 스톡슬 적합성: 구조와 사용 논리가 드러나는지 우선 검증\n"
+            "- 리스크: 실행 항목이 늘어나면 핵심 가설이 흐려짐\n"
+            "- 실험 가능성: 가장 작은 고객 반응 테스트 1개로 축소\n"
+            "- 우선순위: 가설 선명화 후 판단"
+        )
     if agent_id == "marin":
         return (
             "[MARIN_STOXL / 마린]\n"
@@ -105,13 +166,14 @@ def _template_for_agent(agent_id: str, message: str, route: dict[str, Any]) -> s
             "업무: 초안 생성\n\n"
             f"요청 요약:\n{summary}\n\n"
             "초안:\n"
-            "1. 작은 구조가 만드는 큰 변화, MML.\n"
-            "2. 쌓고, 돌리고, 바꾸는 미니 모듈 라이트.\n"
-            "3. 책상 위에 놓인 작은 건축, MML.\n\n"
+            "1. [인스타 첫 문장] 작은 구조가 만드는 큰 변화, MML.\n"
+            "2. [인스타 보조 문장] 쌓고, 돌리고, 바꾸며 내 공간에 맞추는 미니 모듈 라이트.\n"
+            "3. [홈페이지 소개] 책상 위 작은 구조에서 시작하는 모듈 조명, MML.\n\n"
             "체크 필요:\n"
-            "- 제품 특징이 실제 사양과 맞는지\n"
-            "- 스톡슬 톤에 맞게 과장 표현을 줄일지\n"
-            "- 이미지와 함께 쓸 경우 첫 문장을 더 짧게 줄일지\n\n"
+            "Lucy 검토 포인트:\n"
+            "- '모듈'과 조합 방식이 실제 제품 사양과 맞는지\n"
+            "- '작은 건축'의 스톡슬 톤 적합성과 과장 여부\n"
+            "- 제품 이미지가 없을 때도 첫 문장이 이해되는지\n\n"
             "handoff:\n"
             "to: lucy-검토\n"
             "reason: 마케팅 시니어 검토 필요"
@@ -123,12 +185,12 @@ def _template_for_agent(agent_id: str, message: str, route: dict[str, Any]) -> s
             "업무: 검토 / 발행 판단\n\n"
             "판정: 수정 필요\n"
             "이유:\n"
-            "- 제품 특징이 아직 구체적으로 드러나지 않습니다.\n"
-            "- '작은 건축' 표현은 좋지만 이미지와 함께 쓰는 편이 안전합니다.\n\n"
+            "- '작은 건축'은 스톡슬다운 표현이지만 제품 기능을 단독으로 설명하지는 못합니다.\n"
+            "- '내 공간에 맞춘다'는 문장은 실제 조합 방식이 확인될 때만 사용할 수 있습니다.\n\n"
             "수정 제안:\n"
-            "1. '작은 구조가 만드는 큰 변화, MML.'은 유지 가능\n"
-            "2. '건축' 표현을 쓸 경우 제품 이미지와 함께 배치\n"
-            "3. 게시 전 소재/제작 방식 표기 여부 확인\n\n"
+            "1. 첫 문장: '작은 구조가 만드는 큰 변화, MML.'\n"
+            "2. 보조 문장: '쌓고 돌리며 배치를 바꾸는 미니 모듈 라이트입니다.'\n"
+            "3. 이미지 캡션: '책상 위 작은 구조, MML.'\n\n"
             "최종승인 필요 여부:\n"
             "true\n\n"
             "next:\n"
@@ -141,11 +203,13 @@ def _template_for_agent(agent_id: str, message: str, route: dict[str, Any]) -> s
             "업무: 리서치 / 후보 정리\n\n"
             "리서치 후보:\n"
             "1. 디자인 지원사업 후보\n"
-            "   목적: 제품/브랜드 홍보 또는 전시 지원 가능성 확인\n"
+            "   후보: 제품/브랜드 홍보 또는 전시 지원 분야\n"
             "   마감: 확인 필요\n"
-            "   필요자료: 공고문 기준 확인 필요\n"
-            "   확인 필요: 공고명, 마감일, 신청 자격, 제출물\n"
+            "   필요자료: 공고문, 신청 자격, 제출물 목록\n"
             "   리스크: 현재 실시간 검색 미사용으로 최신성 검증 필요\n\n"
+            "Meiko 판단 포인트:\n"
+            "- 공고 원문 확인 후 일정 대비 준비 비용이 타당한지\n"
+            "- 전시/홍보 목적이 현재 제품 단계와 맞는지\n\n"
             "handoff:\n"
             "to: meiko-검토\n"
             "reason: 운영 시니어 판단 필요"
@@ -162,13 +226,17 @@ def _template_for_agent(agent_id: str, message: str, route: dict[str, Any]) -> s
             "- 지원 가능성은 있으나 일정과 제출물 확인이 먼저입니다.\n\n"
             "실행 조건:\n"
             "- 공고 URL 확인\n"
-            "- 마감일 확인\n"
             "- 제출물 목록 정리\n"
-            "- 담당자 지정\n\n"
+            "담당:\n"
+            "- Kasumi: 공고 원문과 제출물 확인\n"
+            "- Meiko: 일정 및 투입 비용 판단\n"
+            "마감:\n"
+            "- 공고 마감일 확인 전 일정 확정 금지\n\n"
             "리스크:\n"
+            "- 최신 공고 미확인 상태에서 자격과 일정을 단정할 수 없음\n"
             "- 승인 전 제출 금지\n\n"
             "next:\n"
-            "최종-승인요청 또는 kasumi-리서치"
+            "Kasumi가 공고 원문을 확보한 뒤 Meiko가 지원 여부를 재판정"
         )
     if agent_id == "reze":
         return (
@@ -176,11 +244,11 @@ def _template_for_agent(agent_id: str, message: str, route: dict[str, Any]) -> s
             "소속: 전략기획실\n"
             "업무: 브랜드 전략/제품 방향 비평\n\n"
             "전략 판단:\n"
-            "- 방향성: 검토 가치 있음\n"
-            "- 스톡슬 적합성: 브랜드 톤과 연결 가능\n"
-            "- 리스크: 실행 범위가 커지면 승인 필요\n"
-            "- 실험 가능성: 작은 메시지 테스트부터 가능\n"
-            "- 우선순위: 중간\n\n"
+            "- 브랜드 방향성: 로우테크를 외형이 아니라 사용자가 구조를 이해하고 바꾸는 경험으로 정의해야 함\n"
+            "- 스톡슬 적합성: 구조와 조립 논리가 보일 때 강함; 단순 빈티지 스타일이면 약함\n"
+            "- 리스크: 제품군 기준 없이 소재와 형태만 늘리면 브랜드가 소품 모음처럼 보임\n"
+            "- 실험 가능성: 대표 구조 1개를 정해 조합 전후 이미지와 설명 문구를 소규모 비교\n"
+            "- 우선순위: 높음, 단 제품 확장보다 시리즈 원칙 정의가 먼저\n\n"
             "보고:\n"
             "to: 대표-회의실"
         )
@@ -205,7 +273,13 @@ def build_deterministic_company_agent_reply(agent_id: str, message: str, route: 
         "llm_api_call_attempted": False,
         "llm_api_called": False,
         "rag_called": False,
+        "embedding_called": False,
+        "vector_index_created": False,
         "external_execution": False,
+        "handoff_context_used": bool(route.get("handoff_context")),
+        "handoff_context_source_agent": (route.get("handoff_context") or {}).get("source_agent")
+        if isinstance(route.get("handoff_context"), dict)
+        else None,
         "raw_content_logged": False,
         "raw_discord_ids_logged": False,
         "secret_values_logged": False,

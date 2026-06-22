@@ -6,6 +6,7 @@ import os
 import re
 from typing import Any, Callable
 
+from company_context_store import format_handoff_context_block
 from company_agent_prompts import agent_prompts_available, get_agent_system_prompt
 from llm_client import SUPPORTED_PROVIDERS, build_llm_client_config, call_llm_once, redact_text
 
@@ -131,6 +132,9 @@ def build_agent_llm_messages(agent_id: str, user_message: str, context: dict[str
     safe_user = redact_company_agent_text(user_message, 1200)
     route_context = context or {}
     safe_channel = redact_company_agent_text(str(route_context.get("source_channel", "") or ""), 120)
+    handoff_context = route_context.get("handoff_context")
+    context_block = format_handoff_context_block(handoff_context) if isinstance(handoff_context, dict) else ""
+    contextual_request = f"{context_block}\n\nRequest: {safe_user}" if context_block else f"Request: {safe_user}"
     return {
         "envelope_type": "company_agent_llm_prompt",
         "agent_id": agent_id,
@@ -141,7 +145,7 @@ def build_agent_llm_messages(agent_id: str, user_message: str, context: dict[str
                 "role": "user",
                 "content": (
                     f"Channel: {safe_channel}\n"
-                    f"Request: {safe_user}\n\n"
+                    f"{contextual_request}\n\n"
                     "Stay inside the assigned role. Do not perform external execution."
                 ),
             },
@@ -149,6 +153,7 @@ def build_agent_llm_messages(agent_id: str, user_message: str, context: dict[str
         "rag_called": False,
         "embedding_called": False,
         "external_execution": False,
+        "handoff_context_used": bool(context_block),
         "secret_values_logged": False,
         "raw_discord_ids_logged": False,
     }

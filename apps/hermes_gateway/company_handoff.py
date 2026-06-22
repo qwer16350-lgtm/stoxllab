@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from company_context_store import HandoffContext, sanitize_company_context_text, store_handoff_context
 from company_agent_registry import get_agent
 
 
@@ -56,6 +57,32 @@ def _recipient_label(agent_id: str, target_channel: str) -> str:
     return target_channel
 
 
+def store_company_handoff_context(
+    source_agent: str,
+    target_agent: str,
+    source_channel: str,
+    target_channel: str,
+    status: str,
+    request_summary: str,
+    handoff_content: str,
+    next_action: str,
+) -> dict[str, Any]:
+    return store_handoff_context(
+        target_channel,
+        HandoffContext(
+            context_type="handoff",
+            source_agent=source_agent,
+            target_agent=target_agent,
+            source_channel=source_channel,
+            target_channel=target_channel,
+            status=status,
+            request_summary=request_summary,
+            handoff_content=handoff_content,
+            next_action=next_action,
+        ),
+    )
+
+
 def build_handoff_post_payload(result: dict[str, Any], request_summary: str = "") -> dict[str, Any]:
     agent_id = str(result.get("selected_agent") or "").lower()
     rule = get_handoff_rule(agent_id)
@@ -72,28 +99,44 @@ def build_handoff_post_payload(result: dict[str, Any], request_summary: str = ""
             "raw_discord_ids_logged": False,
             "secret_values_logged": False,
         }
-    summary = (request_summary or "handoff requested").strip()[:300]
-    delivery = str(response.get("content") or "handoff content unavailable").strip()[:1200]
+    summary = sanitize_company_context_text(request_summary or "handoff requested", 300).strip()
+    delivery = sanitize_company_context_text(response.get("content") or "handoff content unavailable", 1200).strip()
+    target_agent = str(rule.get("to") or "")
+    status = STATUS_LABELS.get(agent_id, rule.get("status", "handoff ready"))
+    next_action = NEXT_ACTIONS.get(agent_id, "검토 필요")
     content = (
         "[HANDOFF]\n"
         f"from_agent: {_agent_label(agent_id)}\n"
         f"to: {_recipient_label(agent_id, target_channel)}\n"
         f"target_channel: {target_channel}\n"
         f"source_channel: {result.get('source_channel')}\n"
-        f"status: {STATUS_LABELS.get(agent_id, rule.get('status', 'handoff ready'))}\n"
+        f"status: {status}\n"
         f"review_required: {str(bool(rule.get('review_required'))).lower()}\n\n"
         "요청 요약:\n"
         f"{summary}\n\n"
         "전달 내용:\n"
         f"{delivery}\n\n"
         "다음 액션:\n"
-        f"{NEXT_ACTIONS.get(agent_id, '검토 필요')}"
+        f"{next_action}"
+    )
+    stored_context = store_company_handoff_context(
+        agent_id,
+        target_agent,
+        str(result.get("source_channel") or ""),
+        target_channel,
+        str(status),
+        summary,
+        delivery,
+        next_action,
     )
     return {
         "handoff_supported": True,
         "handoff_target_channel": target_channel,
         "handoff_message_preview_present": True,
         "handoff_message": content,
+        "handoff_context_saved": True,
+        "handoff_context_source_agent": stored_context.get("source_agent"),
+        "handoff_context_target_agent": stored_context.get("target_agent"),
         "blocked": False,
         "blocked_reasons": [],
         "discord_api_send_called": False,
@@ -116,7 +159,17 @@ def build_handoff_message(from_agent: str, message: str = "", source_channel: st
             "raw_discord_ids_logged": False,
             "secret_values_logged": False,
         }
-    summary = (message or "handoff requested").strip()[:300]
+    summary = sanitize_company_context_text(message or "handoff requested", 300).strip()
+    stored_context = store_company_handoff_context(
+        agent_id,
+        str(rule["to"]),
+        source_channel,
+        str(rule["target_channel"]),
+        str(STATUS_LABELS.get(agent_id, rule["status"])),
+        summary,
+        summary,
+        NEXT_ACTIONS.get(agent_id, "검토 필요"),
+    )
     return {
         "handoff_available": True,
         "blocked": False,
@@ -129,6 +182,9 @@ def build_handoff_message(from_agent: str, message: str = "", source_channel: st
         "review_required": rule["review_required"],
         "summary": summary,
         "message_format": "[handoff]",
+        "handoff_context_saved": True,
+        "handoff_context_source_agent": stored_context.get("source_agent"),
+        "handoff_context_target_agent": stored_context.get("target_agent"),
         "external_execution_allowed": False,
         "raw_discord_ids_logged": False,
         "secret_values_logged": False,

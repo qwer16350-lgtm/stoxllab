@@ -273,6 +273,8 @@ from read_only_soak_plan import (
 )
 from company_agent_runtime import (
     build_company_agent_approval_dry_run,
+    build_company_agent_context_dry_run,
+    build_company_agent_context_handoff_simulation,
     build_company_agent_handoff_dry_run,
     build_company_agent_org_runtime_report,
     build_company_agent_router_dry_run,
@@ -450,6 +452,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--text", help="Local request text.")
     parser.add_argument("--channel", help="Source channel name for --text input, or channel filter for operations viewer.")
     parser.add_argument("--message", help="Company agent router dry-run message.")
+    parser.add_argument("--content", help="Safe local content for company agent context simulation.")
+    parser.add_argument("--source-agent", help="Source agent for company handoff context simulation.")
+    parser.add_argument("--target-agent", help="Target agent for company handoff context simulation.")
+    parser.add_argument("--target-channel", help="Target channel name for company handoff context simulation.")
     parser.add_argument("--author-role", default="Decision Maker", help="Author role for --text input.")
     parser.add_argument("--event", help="Path to a local JSON event.")
     parser.add_argument("--discord-readiness", action="store_true", help="Run Phase 17 read-only Discord readiness checks.")
@@ -575,6 +581,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--company-agent-workflow-v01-report", action="store_true", help="Print STOXL company agent workflow v0.1 report.")
     parser.add_argument("--company-agent-workflow-dry-run", action="store_true", help="Run STOXL company agent workflow v0.1 without Discord sends.")
     parser.add_argument("--company-agent-handoff-dry-run", action="store_true", help="Build STOXL company agent handoff v0.2 dry-run without Discord sends.")
+    parser.add_argument("--company-agent-context-dry-run", action="store_true", help="Resolve STOXL company agent handoff context without Discord or LLM calls.")
+    parser.add_argument("--company-agent-context-simulate-handoff", action="store_true", help="Store and inspect one in-memory handoff context without Discord sends.")
     parser.add_argument("--company-agent-approval-dry-run", action="store_true", help="Build STOXL company agent approval v0.2 dry-run without Discord sends.")
     parser.add_argument("--company-agent-webhook-persona-report", action="store_true", help="Print STOXL company agent webhook persona v0.3 report.")
     parser.add_argument("--company-agent-webhook-persona-dry-run", action="store_true", help="Build STOXL company agent webhook persona v0.3 dry-run without Discord sends.")
@@ -3703,6 +3711,36 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- handoff_message_preview_present: {output.get('handoff_message_preview_present')}")
         return 0
 
+    if args.company_agent_context_simulate_handoff:
+        output = build_company_agent_context_handoff_simulation(
+            args.source_agent or "kasumi",
+            args.target_agent or "meiko",
+            args.target_channel or "meiko-검토",
+            args.content or args.message or args.text or "simulated handoff context",
+        )
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL company agent context handoff simulation")
+            print(f"- handoff_context_saved: {output.get('handoff_context_saved')}")
+            print(f"- context_source_agent: {output.get('context_source_agent')}")
+            print(f"- context_target_agent: {output.get('context_target_agent')}")
+        return 0
+
+    if args.company_agent_context_dry_run:
+        output = build_company_agent_context_dry_run(
+            args.channel or "meiko-검토",
+            args.message or args.text or "",
+        )
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL company agent context dry-run")
+            print(f"- context_reference_detected: {output.get('context_reference_detected')}")
+            print(f"- latest_context_available: {output.get('latest_context_available')}")
+            print(f"- context_used: {output.get('context_used')}")
+        return 0
+
     if args.company_agent_approval_dry_run:
         output = build_company_agent_approval_dry_run(args.channel or "lucy-검토", args.message or args.text or "")
         if args.json:
@@ -4206,6 +4244,8 @@ def main(argv: list[str] | None = None) -> int:
         or args.company_agent_workflow_v01_report
         or args.company_agent_workflow_dry_run
         or args.company_agent_handoff_dry_run
+        or args.company_agent_context_dry_run
+        or args.company_agent_context_simulate_handoff
         or args.company_agent_approval_dry_run
         or args.company_agent_webhook_persona_report
         or args.company_agent_webhook_persona_dry_run

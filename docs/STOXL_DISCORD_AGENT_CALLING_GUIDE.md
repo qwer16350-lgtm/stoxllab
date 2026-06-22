@@ -366,3 +366,35 @@ one-shot reports a short reason code such as `api_key_missing`,
 `response_source=deterministic_fallback`, and includes a redacted preview of the
 real deterministic reply. Provider error text, API key values, URLs, and raw IDs
 are not included.
+
+## Workflow v0.5.1 Agent Voice Tuning
+
+Agent prompts now require concrete role-specific work instead of generic template
+advice. Marin returns at least three placed copy options and Lucy review points.
+Lucy gives a publish decision, reasons, direct rewrites, and final-approval status.
+Kasumi never invents unknown notices and separates candidate, deadline, materials,
+and risk with a latestness caveat. Meiko chooses recommend, hold, or do-not-recommend
+and separates conditions, owner, deadline, risk, and next action. Reze gives a
+compressed representative-meeting critique covering brand direction, `스톡슬 적합성`,
+risk, experimentability, and priority.
+
+The deterministic fallback follows the same output contracts. This tuning does not
+change routing, handoff, approval, or real-bot sender behavior. It does not enable
+Discord sends, RAG, embeddings, vector indexes, or external execution.
+
+## Workflow v0.5.2 Handoff Context Awareness
+
+The runtime keeps the latest handoff for each target channel in memory. References
+such as `방금`, `이 지원사업`, `이 문구`, `위 내용`, and `handoff` select that
+channel context. A Discord reply to a `[HANDOFF]` or agent output takes priority over
+the latest channel context. Context is cleared whenever the runtime process restarts.
+
+```powershell
+python apps\hermes_gateway\cli.py --company-agent-context-simulate-handoff --json --source-agent kasumi --target-agent meiko --target-channel meiko-검토 --content "이번 달 지원사업 후보 초안"
+python apps\hermes_gateway\cli.py --company-agent-context-dry-run --json --channel meiko-검토 --message "!meiko 이 지원사업 넣을만한지 판단해줘"
+```
+
+The simulation stores and immediately verifies one context in its own process. Since
+the store is intentionally in-memory, the standalone dry-run uses a clearly labeled
+`dry_run_fixture` when no runtime context exists. Actual runtime responses use only
+real handoffs or replied messages. Reports never expose raw Discord IDs or secrets.

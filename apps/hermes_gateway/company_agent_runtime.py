@@ -7,6 +7,12 @@ import json
 import os
 from typing import Any
 
+from company_context_store import (
+    context_from_replied_message,
+    detect_context_reference_terms,
+    get_latest_context_for_channel,
+    resolve_handoff_context,
+)
 from company_agent_bot_fleet import (
     build_company_agent_real_bot_fleet_report,
     build_company_agent_real_bot_send_dry_run,
@@ -24,7 +30,7 @@ from company_agent_router import (
     route_company_agent_message,
 )
 from company_agent_responder import build_approval_draft, build_company_agent_response
-from company_handoff import build_handoff_post_payload
+from company_handoff import build_handoff_post_payload, store_company_handoff_context
 from company_webhook_sender import send_as_agent
 from company_webhook_sender import send_as_agent_webhook
 from company_webhook_sender import resolve_agent_webhook_name
@@ -222,7 +228,12 @@ def should_ignore_message(message: Any, bot_user: Any | None = None, agent_bot_u
     return False, ""
 
 
-def build_company_agent_message_result(channel_name: str, content: str) -> dict[str, Any]:
+def build_company_agent_message_result(
+    channel_name: str,
+    content: str,
+    replied_message_content: str = "",
+    env: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     route = route_company_agent_message(channel_name, content)
     if route.get("blocked"):
         return {
@@ -256,7 +267,15 @@ def build_company_agent_message_result(channel_name: str, content: str) -> dict[
         }
     selected_agent = str(route.get("selected_agent") or "")
     routed_content = extract_first_command_line(content) or normalize_discord_message_content(content)
-    response = build_company_agent_response(selected_agent, routed_content, route, dict(os.environ))
+    replied_context = context_from_replied_message(replied_message_content, channel_name, selected_agent)
+    context_resolution = resolve_handoff_context(selected_agent, routed_content, channel_name, replied_context)
+    route["context_reference_detected"] = bool(context_resolution["context_reference_detected"])
+    route["handoff_context_used"] = bool(context_resolution["context_used"])
+    route["handoff_context_priority"] = context_resolution["context_priority"]
+    route["handoff_context_source_agent"] = context_resolution["context_source_agent"]
+    if context_resolution.get("context_used"):
+        route["handoff_context"] = context_resolution["context"]
+    response = build_company_agent_response(selected_agent, routed_content, route, dict(os.environ if env is None else env))
     webhook_result = send_as_agent(selected_agent, channel_name, str(response.get("content", "")))
     bot_fallback = webhook_result.get("blocked") is True
     return {
@@ -270,6 +289,108 @@ def build_company_agent_message_result(channel_name: str, content: str) -> dict[
         "discord_message_sent": False,
         "message_sent_count": 0,
         "webhook_url_value_logged": False,
+        "raw_discord_ids_logged": False,
+        "secret_values_logged": False,
+    }
+
+
+def build_company_agent_context_dry_run(
+    channel: str,
+    message: str,
+    replied_message_content: str = "",
+) -> dict[str, Any]:
+    latest = get_latest_context_for_channel(channel)
+    context_origin = "in_memory_store"
+    if latest is None and detect_context_reference_terms(message):
+        known_pairs = {
+            "meiko-검토": ("kasumi", "meiko", "kasumi-리서치"),
+            "lucy-검토": ("marin", "lucy", "marketing-brief"),
+            "대표-회의실": ("reze", "reze", "reze-전략기획"),
+        }
+        pair = known_pairs.get(channel)
+        if pair:
+            store_company_handoff_context(
+                pair[0],
+                pair[1],
+                pair[2],
+                channel,
+                "dry-run fixture",
+                "context resolution dry-run",
+                "dry-run simulated recent handoff; runtime uses only actual in-memory handoffs",
+                f"{pair[1]} 검토 필요",
+            )
+            latest = get_latest_context_for_channel(channel)
+            context_origin = "dry_run_fixture"
+    safe_env = dict(os.environ)
+    safe_env["HERMES_COMPANY_AGENT_LLM_ENABLED"] = "false"
+    safe_env["HERMES_COMPANY_AGENT_LLM_MODE"] = "off"
+    safe_env["HERMES_COMPANY_AGENT_REPLY_MODE"] = "deterministic_fallback"
+    result = build_company_agent_message_result(channel, message, replied_message_content, safe_env)
+    response = result.get("response", {}) if isinstance(result.get("response"), dict) else {}
+    return {
+        "report_type": "company_agent_context_dry_run",
+        "channel": channel,
+        "selected_agent": result.get("selected_agent"),
+        "context_reference_detected": detect_context_reference_terms(message),
+        "latest_context_available": latest is not None,
+        "reply_context_available": bool(replied_message_content),
+        "context_source_agent": result.get("handoff_context_source_agent"),
+        "context_target_agent": (latest or {}).get("target_agent") if latest else result.get("selected_agent"),
+        "context_used": bool(result.get("handoff_context_used")),
+        "context_priority": result.get("handoff_context_priority", "none"),
+        "context_origin": context_origin if latest else "none",
+        "deterministic_response_context_used": bool(response.get("handoff_context_used")),
+        "discord_api_send_called": False,
+        "discord_message_sent": False,
+        "llm_api_called": False,
+        "rag_called": False,
+        "embedding_called": False,
+        "vector_index_created": False,
+        "external_execution": False,
+        "raw_discord_ids_logged": False,
+        "secret_values_logged": False,
+    }
+
+
+def build_company_agent_context_handoff_simulation(
+    source_agent: str,
+    target_agent: str,
+    target_channel: str,
+    content: str,
+) -> dict[str, Any]:
+    source_channels = {
+        "marin": "marketing-brief",
+        "kasumi": "kasumi-리서치",
+        "reze": "reze-전략기획",
+        "lucy": "lucy-검토",
+        "meiko": "meiko-검토",
+    }
+    stored = store_company_handoff_context(
+        source_agent,
+        target_agent,
+        source_channels.get(source_agent, "company-agent-source"),
+        target_channel,
+        "simulated handoff",
+        content,
+        content,
+        f"{target_agent} 검토 필요",
+    )
+    latest = get_latest_context_for_channel(target_channel)
+    return {
+        "report_type": "company_agent_context_simulate_handoff",
+        "handoff_context_saved": latest is not None,
+        "target_channel": target_channel,
+        "context_source_agent": stored.get("source_agent"),
+        "context_target_agent": stored.get("target_agent"),
+        "latest_context_available": latest is not None,
+        "created_at_present": bool(stored.get("created_at_present")),
+        "discord_api_send_called": False,
+        "discord_message_sent": False,
+        "llm_api_called": False,
+        "rag_called": False,
+        "embedding_called": False,
+        "vector_index_created": False,
+        "external_execution": False,
         "raw_discord_ids_logged": False,
         "secret_values_logged": False,
     }
@@ -488,6 +609,25 @@ async def _send_runtime_reply(message: Any, result: dict[str, Any], client: Any 
     return {"sent": True, "send_strategy": "bot_fallback", "bot_message_fallback_used": True}
 
 
+async def _referenced_message_content(message: Any) -> str:
+    referenced = getattr(message, "referenced_message", None)
+    reference = getattr(message, "reference", None)
+    if referenced is None and reference is not None:
+        referenced = getattr(reference, "resolved", None)
+    content = str(getattr(referenced, "content", "") or "")
+    if content or reference is None:
+        return content
+    message_id = getattr(reference, "message_id", None)
+    fetch_message = getattr(getattr(message, "channel", None), "fetch_message", None)
+    if message_id is None or not callable(fetch_message):
+        return ""
+    try:
+        fetched = await fetch_message(message_id)
+    except Exception:
+        return ""
+    return str(getattr(fetched, "content", "") or "")
+
+
 async def _send_handoff_post(client: Any, result: dict[str, Any]) -> None:
     if not _runtime_env()["handoff_enabled"]:
         return
@@ -498,6 +638,17 @@ async def _send_handoff_post(client: Any, result: dict[str, Any]) -> None:
         approval = build_approval_draft(selected_agent, routed_message, result)
         target_name = str(approval.get("approval_channel") or "")
         content = str(approval.get("content") or "")
+        if target_name and content:
+            store_company_handoff_context(
+                selected_agent,
+                "final-approval",
+                str(result.get("source_channel") or ""),
+                target_name,
+                "approval requested",
+                routed_message,
+                content,
+                "최종 승인 검토 필요",
+            )
     else:
         payload = build_handoff_post_payload(result)
         target_name = str(payload.get("handoff_target_channel") or "")
@@ -558,7 +709,12 @@ async def _run_discord_client(token: str, start_report: dict[str, Any]) -> dict[
         if ignored:
             return
         channel_name = str(getattr(message.channel, "name", "") or "")
-        result = build_company_agent_message_result(channel_name, str(getattr(message, "content", "") or ""))
+        replied_content = await _referenced_message_content(message)
+        result = build_company_agent_message_result(
+            channel_name,
+            str(getattr(message, "content", "") or ""),
+            replied_content,
+        )
         if result.get("reply_prepared") and result.get("bot_message_fallback_used"):
             await _send_runtime_reply(message, result, client=client)
             client._current_message_channel = message.channel

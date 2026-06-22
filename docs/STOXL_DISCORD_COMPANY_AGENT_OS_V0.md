@@ -361,3 +361,31 @@ their protected values. Failed calls use a bounded reason code and return
 Marin now returns concrete copy options, Lucy returns a concrete review, Kasumi
 marks research latestness, Meiko lists execution conditions, and Reze uses the
 correct `스톡슬 적합성` label.
+
+## Workflow v0.5.1 Agent Voice And Prompt Quality
+
+v0.5.1 sharpens each role without changing the runtime boundary. Marin must produce
+usable copy lines with placement labels. Lucy must make a clear publish-readiness
+decision and directly rewrite weak wording. Kasumi must not invent unknown grants
+or deadlines and must flag unverified freshness. Meiko must choose one recommendation
+status and separate conditions, owner, deadline, risk, and next action. Reze must
+deliver a concise `대표-회의실` strategy critique using brand direction,
+`스톡슬 적합성`, risk, experimentability, and priority.
+
+Deterministic fallback responses mirror these contracts. Handoff, approval, and
+real-bot sender behavior remain unchanged. RAG, embedding/vector creation, external
+execution, publishing, deployment, email, and submission remain disabled.
+
+## Workflow v0.5.2 Handoff Context Awareness
+
+v0.5.2 adds a process-local handoff context store. Marin handoffs feed `lucy-검토`,
+Kasumi handoffs feed `meiko-검토`, Reze reports feed `대표-회의실`, and Lucy/Meiko
+approval handoffs feed `최종-승인요청`. Context is selected only for an explicit
+reference term, unless the user replies directly to a handoff or agent output; reply
+context always wins.
+
+The LLM prompt receives a bounded `[CONTEXT_FROM_RECENT_HANDOFF]` block. The
+deterministic fallback uses the same context boundary, allowing Lucy and Meiko to
+review transferred work without requesting already-provided material again. The
+store does not persist across runtime restarts and does not enable RAG, embeddings,
+vector indexes, Discord sends, or external execution.
