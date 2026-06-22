@@ -325,6 +325,7 @@ messages:
 
 ```powershell
 python apps\hermes_gateway\cli.py --company-agent-llm-report --json
+python apps\hermes_gateway\cli.py --company-agent-llm-diagnostics --json
 python apps\hermes_gateway\cli.py --company-agent-llm-dry-run --json --agent marin --message "MML 인스타 문구 3개 뽑아줘"
 python apps\hermes_gateway\cli.py --company-agent-llm-dry-run --json --agent lucy --message "이 문구 검토해줘"
 python apps\hermes_gateway\cli.py --company-agent-llm-dry-run --json --agent reze --message "제품 방향 제안해줘"
@@ -358,3 +359,10 @@ deterministic. If the provider call fails, the runtime falls back to the
 deterministic template. RAG, embedding/vector creation, external execution,
 automatic posting/submission/email/deployment, token/API key logging, webhook
 URL logging, and raw Discord ID logging remain forbidden.
+
+The diagnostics command exposes configuration presence as booleans only. A failed
+one-shot reports a short reason code such as `api_key_missing`,
+`insufficient_quota`, `timeout`, or `provider_exception`, sets
+`response_source=deterministic_fallback`, and includes a redacted preview of the
+real deterministic reply. Provider error text, API key values, URLs, and raw IDs
+are not included.

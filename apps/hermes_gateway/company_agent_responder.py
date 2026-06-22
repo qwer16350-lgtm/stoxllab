@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from typing import Any, Mapping
 
-from company_agent_llm import generate_agent_reply
+from company_agent_llm import generate_agent_reply, redact_company_agent_text
 from company_agent_registry import get_agent, get_report_format
 
 
@@ -45,7 +45,7 @@ def build_prompt_envelope(agent_id: str, message: str, route: dict[str, Any]) ->
 
 
 def _summary(message: str) -> str:
-    return (message or "요청 내용 없음").strip()[:300]
+    return redact_company_agent_text((message or "요청 내용 없음").strip(), 300)
 
 
 def _external_requested(message: str, route: dict[str, Any]) -> bool:
@@ -105,13 +105,13 @@ def _template_for_agent(agent_id: str, message: str, route: dict[str, Any]) -> s
             "업무: 초안 생성\n\n"
             f"요청 요약:\n{summary}\n\n"
             "초안:\n"
-            "1. 핵심 장점을 먼저 보여주는 짧은 문구\n"
-            "2. 사용자가 바로 이해할 수 있는 보조 문구\n"
-            "3. SNS/홈페이지에 맞게 다듬을 수 있는 대안 문구\n\n"
+            "1. 작은 구조가 만드는 큰 변화, MML.\n"
+            "2. 쌓고, 돌리고, 바꾸는 미니 모듈 라이트.\n"
+            "3. 책상 위에 놓인 작은 건축, MML.\n\n"
             "체크 필요:\n"
-            "- 어색한 말투\n"
-            "- 브랜드 적합성\n"
-            "- 게시 가능성\n\n"
+            "- 제품 특징이 실제 사양과 맞는지\n"
+            "- 스톡슬 톤에 맞게 과장 표현을 줄일지\n"
+            "- 이미지와 함께 쓸 경우 첫 문장을 더 짧게 줄일지\n\n"
             "handoff:\n"
             "to: lucy-검토\n"
             "reason: 마케팅 시니어 검토 필요"
@@ -121,10 +121,14 @@ def _template_for_agent(agent_id: str, message: str, route: dict[str, Any]) -> s
             "[LUCY_STOXL / 루시]\n"
             "소속: 마케팅팀 시니어\n"
             "업무: 검토 / 발행 판단\n\n"
-            "검토 결과:\n"
-            "- 판정: 수정 필요\n"
-            "- 이유: 공개 전 브랜드 톤과 과장 표현을 한 번 더 확인해야 합니다.\n"
-            "- 수정 제안: 핵심 이점은 유지하고 단정적인 표현은 낮춥니다.\n\n"
+            "판정: 수정 필요\n"
+            "이유:\n"
+            "- 제품 특징이 아직 구체적으로 드러나지 않습니다.\n"
+            "- '작은 건축' 표현은 좋지만 이미지와 함께 쓰는 편이 안전합니다.\n\n"
+            "수정 제안:\n"
+            "1. '작은 구조가 만드는 큰 변화, MML.'은 유지 가능\n"
+            "2. '건축' 표현을 쓸 경우 제품 이미지와 함께 배치\n"
+            "3. 게시 전 소재/제작 방식 표기 여부 확인\n\n"
             "최종승인 필요 여부:\n"
             "true\n\n"
             "next:\n"
@@ -136,11 +140,12 @@ def _template_for_agent(agent_id: str, message: str, route: dict[str, Any]) -> s
             "소속: 운영팀 주니어\n"
             "업무: 리서치 / 후보 정리\n\n"
             "리서치 후보:\n"
-            "1. 이름: 후보 1\n"
-            "   목적: 지원 가능성 확인\n"
+            "1. 디자인 지원사업 후보\n"
+            "   목적: 제품/브랜드 홍보 또는 전시 지원 가능성 확인\n"
             "   마감: 확인 필요\n"
-            "   필요자료: 사업자 정보, 소개서, 예산안\n"
-            "   리스크: 조건 불확실\n\n"
+            "   필요자료: 공고문 기준 확인 필요\n"
+            "   확인 필요: 공고명, 마감일, 신청 자격, 제출물\n"
+            "   리스크: 현재 실시간 검색 미사용으로 최신성 검증 필요\n\n"
             "handoff:\n"
             "to: meiko-검토\n"
             "reason: 운영 시니어 판단 필요"
@@ -153,11 +158,13 @@ def _template_for_agent(agent_id: str, message: str, route: dict[str, Any]) -> s
             "판단:\n"
             "- 추천 / 보류 / 비추천: 보류\n\n"
             "이유:\n"
-            "- 마감, 제출자료, 내부 담당이 아직 확정되지 않았습니다.\n\n"
+            "- 현재 공고명/마감/지원조건이 확정되지 않았습니다.\n"
+            "- 지원 가능성은 있으나 일정과 제출물 확인이 먼저입니다.\n\n"
             "실행 조건:\n"
-            "- 필요자료: 공고 원문, 회사 소개자료, 예산 정보\n"
-            "- 마감: 확인 필요\n"
-            "- 해당: 운영팀 검토\n\n"
+            "- 공고 URL 확인\n"
+            "- 마감일 확인\n"
+            "- 제출물 목록 정리\n"
+            "- 담당자 지정\n\n"
             "리스크:\n"
             "- 승인 전 제출 금지\n\n"
             "next:\n"
@@ -170,7 +177,7 @@ def _template_for_agent(agent_id: str, message: str, route: dict[str, Any]) -> s
             "업무: 브랜드 전략/제품 방향 비평\n\n"
             "전략 판단:\n"
             "- 방향성: 검토 가치 있음\n"
-            "- 스톡스 적합성: 브랜드 톤과 연결 가능\n"
+            "- 스톡슬 적합성: 브랜드 톤과 연결 가능\n"
             "- 리스크: 실행 범위가 커지면 승인 필요\n"
             "- 실험 가능성: 작은 메시지 테스트부터 가능\n"
             "- 우선순위: 중간\n\n"

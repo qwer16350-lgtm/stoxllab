@@ -3,14 +3,16 @@
 from __future__ import annotations
 
 import os
+import re
 from typing import Any, Callable
 
 from company_agent_prompts import agent_prompts_available, get_agent_system_prompt
-from llm_client import build_llm_client_config, call_llm_once, public_llm_client_config, redact_text
+from llm_client import SUPPORTED_PROVIDERS, build_llm_client_config, call_llm_once, redact_text
 
 
 SUPPORTED_LLM_MODES = ["off", "manual_command_only"]
 OPENROUTER_KEY_ALIASES = ["HERMES_LLM_API_KEY", "OPENROUTER_API_KEY", "HERMES_OPENROUTER_API_KEY"]
+URL_RE = re.compile(r"https?://\S+", re.IGNORECASE)
 
 
 def _flag(value: Any, default: bool = False) -> bool:
@@ -49,6 +51,10 @@ def _api_key(env: dict[str, Any]) -> str:
     return ""
 
 
+def redact_company_agent_text(text: str | None, max_chars: int = 1200) -> str:
+    return URL_RE.sub("[REDACTED_URL]", redact_text(text, max_chars))[:max(max_chars, 0)]
+
+
 def _llm_config(env: dict[str, Any] | None = None) -> dict[str, Any]:
     env_map = _env(env)
     merged = dict(env_map)
@@ -69,9 +75,62 @@ def _llm_config(env: dict[str, Any] | None = None) -> dict[str, Any]:
     return build_llm_client_config(merged)
 
 
+def _public_provider(config: dict[str, Any]) -> str:
+    provider = str(config.get("provider", "") or "").strip().lower()
+    if provider in {"openrouter", "openai"}:
+        return provider
+    if provider and provider != "disabled":
+        return "configured_provider"
+    return "unknown"
+
+
+def _failure_reason(result: dict[str, Any], config: dict[str, Any], response_text: str) -> str | None:
+    provider = str(config.get("provider", "") or "").strip().lower()
+    if provider not in SUPPORTED_PROVIDERS:
+        return "provider_not_configured"
+    if not config.get("api_key_present"):
+        return "api_key_missing"
+    error_type = str(result.get("error_type", "") or "").strip().lower()
+    error_code = str(result.get("provider_error_code", "") or "").strip().lower()
+    if error_code in {"insufficient_credits", "insufficient_quota"}:
+        return "insufficient_quota"
+    if error_type == "timeout" or error_code == "timeout":
+        return "timeout"
+    if result.get("api_call_succeeded") and not response_text:
+        return "invalid_response"
+    if error_type in {"provider_error", "provider_exception"} or result.get("api_call_attempted"):
+        return "provider_exception"
+    return "unknown"
+
+
+def build_company_agent_llm_diagnostics(env: dict[str, Any] | None = None) -> dict[str, Any]:
+    config = _llm_config(env)
+    enabled = is_company_agent_llm_enabled(env)
+    provider_config_present = str(config.get("provider", "")).strip().lower() in SUPPORTED_PROVIDERS
+    api_key_present = bool(config.get("api_key_present"))
+    model_config_present = bool(config.get("model"))
+    return {
+        "report_type": "company_agent_llm_diagnostics",
+        "company_agent_llm_enabled": enabled,
+        "company_agent_llm_mode": _company_llm_mode(env),
+        "provider_config_present": provider_config_present,
+        "api_key_present": api_key_present,
+        "api_key_value_logged": False,
+        "model_config_present": model_config_present,
+        "can_attempt_llm": enabled and provider_config_present and api_key_present and model_config_present,
+        "rag_called": False,
+        "embedding_called": False,
+        "vector_index_created": False,
+        "external_execution": False,
+        "raw_discord_ids_logged": False,
+        "secret_values_logged": False,
+    }
+
+
 def build_agent_llm_messages(agent_id: str, user_message: str, context: dict[str, Any] | None = None) -> dict[str, Any]:
-    safe_user = redact_text(user_message, 1200)
+    safe_user = redact_company_agent_text(user_message, 1200)
     route_context = context or {}
+    safe_channel = redact_company_agent_text(str(route_context.get("source_channel", "") or ""), 120)
     return {
         "envelope_type": "company_agent_llm_prompt",
         "agent_id": agent_id,
@@ -81,7 +140,7 @@ def build_agent_llm_messages(agent_id: str, user_message: str, context: dict[str
             {
                 "role": "user",
                 "content": (
-                    f"Channel: {route_context.get('source_channel', '')}\n"
+                    f"Channel: {safe_channel}\n"
                     f"Request: {safe_user}\n\n"
                     "Stay inside the assigned role. Do not perform external execution."
                 ),
@@ -96,6 +155,7 @@ def build_agent_llm_messages(agent_id: str, user_message: str, context: dict[str
 
 
 def build_company_agent_llm_report(env: dict[str, Any] | None = None) -> dict[str, Any]:
+    diagnostics = build_company_agent_llm_diagnostics(env)
     return {
         "report_type": "company_agent_llm_report",
         "company_agent_llm_available": True,
@@ -105,6 +165,10 @@ def build_company_agent_llm_report(env: dict[str, Any] | None = None) -> dict[st
         "current_llm_mode": _company_llm_mode(env),
         "supported_llm_modes": list(SUPPORTED_LLM_MODES),
         "agent_prompts_available": agent_prompts_available(),
+        "provider_config_present": diagnostics["provider_config_present"],
+        "api_key_present": diagnostics["api_key_present"],
+        "model_config_present": diagnostics["model_config_present"],
+        "can_attempt_llm": diagnostics["can_attempt_llm"],
         "rag_called": False,
         "embedding_called": False,
         "vector_index_created": False,
@@ -156,6 +220,8 @@ def generate_agent_reply(
             "llm_attempted": False,
             "llm_succeeded": False,
             "fallback_used": "deterministic",
+            "response_source": "deterministic_fallback",
+            "llm_failure_reason": None,
             "blocked_reasons": [] if manual else ["not_manual_command"],
             "prompt_envelope": prompt,
             "rag_called": False,
@@ -176,16 +242,22 @@ def generate_agent_reply(
             "api_call_failed": True,
             "error_type": exc.__class__.__name__,
         }
-    text = redact_text(str(result.get("response_text", "") or ""), 1200)
+    text = redact_company_agent_text(str(result.get("response_text", "") or ""), 1200)
     succeeded = bool(result.get("api_call_succeeded")) and bool(text)
+    failure_reason = None if succeeded else _failure_reason(result, config, text)
     return {
         "llm_attempted": True,
         "llm_succeeded": succeeded,
         "llm_api_called": bool(result.get("api_call_attempted")),
         "fallback_used": None if succeeded else "deterministic",
+        "response_source": "llm" if succeeded else "deterministic_fallback",
+        "llm_failure_reason": failure_reason,
+        "llm_provider": _public_provider(config),
+        "llm_model_configured": bool(config.get("model")),
+        "llm_api_key_present": bool(config.get("api_key_present")),
+        "llm_api_key_value_logged": False,
+        "llm_error_message_redacted": not succeeded,
         "response_text": text if succeeded else "",
-        "client_result": {key: value for key, value in result.items() if key != "response_text"},
-        "llm_config": public_llm_client_config(config),
         "prompt_envelope": prompt,
         "rag_called": False,
         "embedding_called": False,
@@ -202,6 +274,7 @@ def build_company_agent_llm_one_shot(
     *,
     allow_company_agent_llm_call: bool = False,
     env: dict[str, Any] | None = None,
+    llm_caller: Callable[[dict[str, Any], dict[str, Any]], dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     result = generate_agent_reply(
         agent_id,
@@ -209,18 +282,37 @@ def build_company_agent_llm_one_shot(
         {"command": agent_id, "source_channel": "cli_one_shot"},
         env,
         allow_llm_call=allow_company_agent_llm_call,
+        llm_caller=llm_caller,
     )
-    fallback_preview = f"{agent_id}_deterministic_template_available"
-    response_preview = result.get("response_text", "") or (fallback_preview if result.get("fallback_used") == "deterministic" else "")
+    fallback_preview = ""
+    if result.get("fallback_used") == "deterministic":
+        from company_agent_responder import build_deterministic_company_agent_reply
+
+        fallback = build_deterministic_company_agent_reply(
+            agent_id,
+            message,
+            {"command": agent_id, "source_channel": "cli_one_shot"},
+        )
+        fallback_preview = redact_company_agent_text(fallback.get("content", ""), 1200)
+    response_preview = result.get("response_text", "") or fallback_preview
     return {
         "report_type": "company_agent_llm_one_shot",
         "selected_agent": agent_id,
         "allow_company_agent_llm_call": bool(allow_company_agent_llm_call),
         "llm_attempted": bool(result.get("llm_attempted")),
         "llm_succeeded": bool(result.get("llm_succeeded")),
-        "fallback_used": result.get("fallback_used") or "",
+        "llm_api_called": bool(result.get("llm_api_called")),
+        "llm_failure_reason": result.get("llm_failure_reason"),
+        "llm_provider": result.get("llm_provider", "unknown"),
+        "llm_model_configured": bool(result.get("llm_model_configured")),
+        "llm_api_key_present": bool(result.get("llm_api_key_present")),
+        "llm_api_key_value_logged": False,
+        "llm_error_message_redacted": bool(result.get("llm_error_message_redacted")),
+        "response_source": result.get("response_source"),
+        "fallback_used": result.get("fallback_used"),
         "response_preview": response_preview,
-        "fallback_preview_available": bool(result.get("fallback_used") == "deterministic"),
+        "fallback_preview_present": bool(fallback_preview),
+        "fallback_preview": fallback_preview,
         "discord_api_send_called": False,
         "discord_message_sent": False,
         "rag_called": False,

@@ -314,6 +314,7 @@ Safe local verification:
 
 ```powershell
 python apps\hermes_gateway\cli.py --company-agent-llm-report --json
+python apps\hermes_gateway\cli.py --company-agent-llm-diagnostics --json
 python apps\hermes_gateway\cli.py --company-agent-llm-dry-run --json --agent marin --message "MML 인스타 문구 3개 뽑아줘"
 python apps\hermes_gateway\cli.py --company-agent-llm-dry-run --json --agent lucy --message "이 문구 검토해줘"
 python apps\hermes_gateway\cli.py --company-agent-llm-dry-run --json --agent reze --message "제품 방향 제안해줘"
@@ -352,3 +353,11 @@ deterministic agent template. External execution, publishing, deployment, email
 sending, competition/grant submission, RAG, embedding/vector creation,
 unattended auto replies, token/API key logging, webhook URL logging, and raw
 Discord ID logging remain forbidden.
+
+The v0.5 hotfix adds redacted failure diagnostics and useful deterministic
+fallbacks. Reports expose provider, model, and API-key presence without exposing
+their protected values. Failed calls use a bounded reason code and return
+`response_source=deterministic_fallback` with the actual agent reply preview.
+Marin now returns concrete copy options, Lucy returns a concrete review, Kasumi
+marks research latestness, Meiko lists execution conditions, and Reze uses the
+correct `스톡슬 적합성` label.

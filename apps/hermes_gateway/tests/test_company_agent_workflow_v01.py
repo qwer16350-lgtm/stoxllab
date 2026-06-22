@@ -48,7 +48,7 @@ def test_agent_templates_upgraded() -> None:
     assert_true("리스크:" in meiko, "meiko risk")
     reze = response_for("reze", "reze-전략기획", "신제품 방향")
     assert_true("전략 판단:" in reze, "reze strategy")
-    assert_true("스톡스 적합성:" in reze, "reze fit")
+    assert_true("스톡슬 적합성:" in reze, "reze fit")
     assert_true("대표-회의실" in reze, "reze meeting")
 
 

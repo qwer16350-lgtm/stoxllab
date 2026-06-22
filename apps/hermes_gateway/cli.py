@@ -282,6 +282,7 @@ from company_agent_runtime import (
     run_company_agent_runtime_forever,
 )
 from company_agent_llm import (
+    build_company_agent_llm_diagnostics,
     build_company_agent_llm_dry_run,
     build_company_agent_llm_one_shot,
     build_company_agent_llm_report,
@@ -580,6 +581,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--company-agent-real-bot-fleet-report", action="store_true", help="Print STOXL company agent real bot fleet v0.4 report.")
     parser.add_argument("--company-agent-real-bot-send-dry-run", action="store_true", help="Build STOXL company agent real bot send v0.4 dry-run without Discord login or send.")
     parser.add_argument("--company-agent-llm-report", action="store_true", help="Print STOXL company agent LLM v0.5 report without API calls.")
+    parser.add_argument("--company-agent-llm-diagnostics", action="store_true", help="Print redacted STOXL company agent LLM v0.5 configuration diagnostics.")
     parser.add_argument("--company-agent-llm-dry-run", action="store_true", help="Build STOXL company agent LLM v0.5 prompt dry-run without API calls.")
     parser.add_argument("--company-agent-llm-one-shot", action="store_true", help="Run or report one gated company agent LLM call without Discord sends.")
     parser.add_argument("--allow-company-agent-llm-call", action="store_true", help="Allow one user-run company agent LLM call after env gates pass.")
@@ -3776,6 +3778,20 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- current_llm_mode: {output.get('current_llm_mode')}")
         return 0
 
+    if args.company_agent_llm_diagnostics:
+        output = build_company_agent_llm_diagnostics()
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Discord company agent LLM diagnostics")
+            print(f"- company_agent_llm_enabled: {output.get('company_agent_llm_enabled')}")
+            print(f"- company_agent_llm_mode: {output.get('company_agent_llm_mode')}")
+            print(f"- provider_config_present: {output.get('provider_config_present')}")
+            print(f"- api_key_present: {output.get('api_key_present')}")
+            print(f"- model_config_present: {output.get('model_config_present')}")
+            print(f"- can_attempt_llm: {output.get('can_attempt_llm')}")
+        return 0
+
     if args.company_agent_llm_dry_run:
         agent_id = args.agent or "marin"
         output = build_company_agent_llm_dry_run(
@@ -4196,6 +4212,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.company_agent_real_bot_fleet_report
         or args.company_agent_real_bot_send_dry_run
         or args.company_agent_llm_report
+        or args.company_agent_llm_diagnostics
         or args.company_agent_llm_dry_run
         or args.company_agent_llm_one_shot
         or args.allow_company_agent_llm_call

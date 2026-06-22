@@ -10,12 +10,14 @@ if str(APP_DIR) not in sys.path:
 
 from company_agent_llm import (
     build_agent_llm_messages,
+    build_company_agent_llm_diagnostics,
     build_company_agent_llm_dry_run,
+    build_company_agent_llm_one_shot,
     build_company_agent_llm_report,
     generate_agent_reply,
 )
 from company_agent_prompts import get_agent_system_prompt
-from company_agent_responder import build_company_agent_response
+from company_agent_responder import build_company_agent_response, build_deterministic_company_agent_reply
 
 
 def assert_true(condition: bool, message: str) -> None:
@@ -112,6 +114,8 @@ def test_llm_failure_and_exception_fall_back_to_deterministic() -> None:
     )
     assert_true(failed["llm_attempted"] is True, "attempted")
     assert_true(failed["llm_succeeded"] is False, "failed")
+    assert_true(failed["llm_failure_reason"] == "provider_exception", "failure reason")
+    assert_true(failed["response_source"] == "deterministic_fallback", "response source")
     assert_true(failed["fallback_used"] == "deterministic", "fallback")
     assert_safe(failed)
 
@@ -123,8 +127,71 @@ def test_llm_failure_and_exception_fall_back_to_deterministic() -> None:
         llm_caller=lambda _prompt, _config: (_ for _ in ()).throw(RuntimeError("provider failed")),
     )
     assert_true(raised["llm_attempted"] is True, "exception attempted")
+    assert_true(raised["llm_failure_reason"] == "provider_exception", "exception reason")
     assert_true(raised["fallback_used"] == "deterministic", "exception fallback")
+    raised_text = json.dumps(raised, ensure_ascii=False)
+    assert_true("provider failed" not in raised_text, "raw exception omitted")
     assert_safe(raised)
+
+
+def test_one_shot_failure_reports_real_fallback_preview() -> None:
+    report = build_company_agent_llm_one_shot(
+        "marin",
+        "MML Instagram copy please",
+        allow_company_agent_llm_call=True,
+        env=llm_env(),
+        llm_caller=lambda _prompt, _config: {
+            "api_call_attempted": True,
+            "api_call_succeeded": False,
+            "api_call_failed": True,
+            "error_type": "provider_error",
+            "provider_error_code": "insufficient_credits",
+            "provider_error_message": "quota failure with sk-secret https://provider.example/error",
+        },
+    )
+    assert_true(report["llm_failure_reason"] == "insufficient_quota", "quota reason")
+    assert_true(report["llm_api_called"] is True, "provider call represented")
+    assert_true(report["response_source"] == "deterministic_fallback", "fallback source")
+    assert_true(report["fallback_used"] == "deterministic", "fallback used")
+    assert_true(report["fallback_preview_present"] is True, "fallback preview present")
+    assert_true(report["fallback_preview"].startswith("[MARIN_STOXL / 마린]"), "real preview")
+    assert_true("작은 구조가 만드는 큰 변화, MML." in report["fallback_preview"], "draft line")
+    assert_true("deterministic_template_available" not in report["fallback_preview"], "no placeholder")
+    assert_true(report["llm_error_message_redacted"] is True, "error redacted")
+    assert_safe(report)
+
+
+def test_diagnostics_only_exposes_configuration_status() -> None:
+    env = llm_env() | {
+        "HERMES_COMPANY_AGENT_LLM_PROVIDER": "openrouter",
+        "HERMES_COMPANY_AGENT_LLM_MODEL": "configured-model",
+    }
+    report = build_company_agent_llm_diagnostics(env)
+    assert_true(report["company_agent_llm_enabled"] is True, "enabled")
+    assert_true(report["provider_config_present"] is True, "provider present")
+    assert_true(report["api_key_present"] is True, "key present boolean")
+    assert_true(type(report["api_key_present"]) is bool, "key status is boolean")
+    assert_true(report["model_config_present"] is True, "model present")
+    assert_true(report["can_attempt_llm"] is True, "can attempt")
+    assert_safe(report)
+
+
+def test_deterministic_fallbacks_are_useful_and_reze_typo_is_fixed() -> None:
+    route = {"target_channel": "private-test"}
+    replies = {
+        agent: build_deterministic_company_agent_reply(agent, "검토 요청", route)["content"]
+        for agent in ("marin", "lucy", "kasumi", "meiko", "reze")
+    }
+    assert_true("작은 구조가 만드는 큰 변화, MML." in replies["marin"], "Marin concrete draft")
+    assert_true("핵심 장점을 먼저 보여주는 짧은 문구" not in replies["marin"], "Marin no placeholder")
+    assert_true("판정: 수정 필요" in replies["lucy"], "Lucy concrete review")
+    assert_true("제품 특징이 아직 구체적으로 드러나지 않습니다." in replies["lucy"], "Lucy reason")
+    assert_true("실시간 검색 미사용으로 최신성 검증 필요" in replies["kasumi"], "Kasumi latestness caveat")
+    assert_true("공고 URL 확인" in replies["meiko"] and "담당자 지정" in replies["meiko"], "Meiko execution conditions")
+    assert_true("스톡슬 적합성" in replies["reze"], "Reze STOXL spelling")
+    assert_true("스톡스 적합성" not in replies["reze"], "Reze typo removed")
+    for agent, content in replies.items():
+        assert_true(bool(content), f"{agent} fallback content")
 
 
 def test_runtime_uses_deterministic_when_llm_disabled() -> None:
@@ -185,6 +252,9 @@ def main() -> int:
         test_dry_run_assembles_prompt_without_calls,
         test_external_execution_request_is_refused_in_prompt,
         test_llm_failure_and_exception_fall_back_to_deterministic,
+        test_one_shot_failure_reports_real_fallback_preview,
+        test_diagnostics_only_exposes_configuration_status,
+        test_deterministic_fallbacks_are_useful_and_reze_typo_is_fixed,
         test_runtime_uses_deterministic_when_llm_disabled,
         test_llm_attempts_only_when_enabled_and_manual_command,
     ]
