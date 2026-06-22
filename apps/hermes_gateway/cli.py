@@ -272,6 +272,8 @@ from read_only_soak_plan import (
     build_hermes_read_only_soak_preflight,
 )
 from company_agent_runtime import (
+    build_company_agent_approval_dry_run,
+    build_company_agent_handoff_dry_run,
     build_company_agent_org_runtime_report,
     build_company_agent_router_dry_run,
     build_company_agent_runtime_report,
@@ -558,6 +560,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--company-agent-router-dry-run", action="store_true", help="Route a company agent message without Discord API calls.")
     parser.add_argument("--company-agent-workflow-v01-report", action="store_true", help="Print STOXL company agent workflow v0.1 report.")
     parser.add_argument("--company-agent-workflow-dry-run", action="store_true", help="Run STOXL company agent workflow v0.1 without Discord sends.")
+    parser.add_argument("--company-agent-handoff-dry-run", action="store_true", help="Build STOXL company agent handoff v0.2 dry-run without Discord sends.")
+    parser.add_argument("--company-agent-approval-dry-run", action="store_true", help="Build STOXL company agent approval v0.2 dry-run without Discord sends.")
     parser.add_argument("--run-company-agent-runtime", action="store_true", help="Run or report the STOXL company agent runtime; default blocked without allow flag.")
     parser.add_argument("--allow-company-agent-runtime", action="store_true", help="Record allow flag presence for a later company agent runtime Manual Gate.")
     parser.add_argument("--actual-phase74-limited-auto-mode", action="store_true", help="Print Phase 74 actual path report; blocked until a separate Manual Gate.")
@@ -3665,6 +3669,28 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- external_execution_performed: {output.get('external_execution_performed')}")
         return 0
 
+    if args.company_agent_handoff_dry_run:
+        output = build_company_agent_handoff_dry_run(args.channel or "marketing-brief", args.message or args.text or "")
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Discord company agent handoff dry-run")
+            print(f"- selected_agent: {output.get('selected_agent')}")
+            print(f"- handoff_target_channel: {output.get('handoff_target_channel')}")
+            print(f"- handoff_message_preview_present: {output.get('handoff_message_preview_present')}")
+        return 0
+
+    if args.company_agent_approval_dry_run:
+        output = build_company_agent_approval_dry_run(args.channel or "lucy-검토", args.message or args.text or "")
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL Discord company agent approval dry-run")
+            print(f"- selected_agent: {output.get('selected_agent')}")
+            print(f"- approval_target_channel: {output.get('approval_target_channel')}")
+            print(f"- approval_message_preview_present: {output.get('approval_message_preview_present')}")
+        return 0
+
     if args.run_company_agent_runtime:
         if args.allow_company_agent_runtime:
             return run_company_agent_runtime_forever(allow_flag_present=True)
@@ -4045,6 +4071,8 @@ def main(argv: list[str] | None = None) -> int:
         or args.company_agent_router_dry_run
         or args.company_agent_workflow_v01_report
         or args.company_agent_workflow_dry_run
+        or args.company_agent_handoff_dry_run
+        or args.company_agent_approval_dry_run
         or args.run_company_agent_runtime
         or args.allow_company_agent_runtime
         or args.actual_phase74_limited_auto_mode

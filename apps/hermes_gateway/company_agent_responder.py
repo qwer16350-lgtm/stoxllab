@@ -82,8 +82,8 @@ def build_approval_draft(agent_id: str, message: str, route: dict[str, Any]) -> 
         "추천안: 승인 전까지 초안/검토 상태로 보류합니다.\n"
         "리스크: 공개, 제출, 배포, 외부 발송은 승인 전 실행할 수 없습니다.\n"
         "다음 액션: 결정권자 검토 후 승인/보류/폐기를 선택합니다.\n"
-        f"external_execution_requested={str(external_requested).lower()}\n"
-        "external_execution_performed=false"
+        f"external_execution_requested: {str(external_requested).lower()}\n"
+        "external_execution_performed: false"
     )
     return {
         "approval_draft_created": True,

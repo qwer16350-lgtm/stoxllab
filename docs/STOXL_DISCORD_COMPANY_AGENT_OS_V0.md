@@ -178,3 +178,41 @@ The bot command set is `!lucy`, `!marin`, `!meiko`, `!kasumi`, `!reze`,
 `!agent`, `!route`, `!handoff`, `!review`, `!approve-draft`, `!agents`, and
 `!help`. SNS publishing, homepage deploy, email send, grant submit, RAG,
 embedding/vector creation, and external command execution remain disabled.
+
+## Workflow v0.2 Handoff And Approval Channel
+
+Workflow v0.2 supports optional live handoff posting behind an environment gate.
+It remains deterministic by default and does not enable LLM, RAG, embedding,
+publishing, deployment, email, grant submission, or external execution.
+
+Dry-run commands:
+
+```powershell
+python apps\hermes_gateway\cli.py --company-agent-handoff-dry-run --json --channel marketing-brief --message "!marin MML 인스타 문구 3개 뽑아줘"
+python apps\hermes_gateway\cli.py --company-agent-handoff-dry-run --json --channel kasumi-리서치 --message "!kasumi 올해 12월까지 디자인 지원사업 찾아줘"
+python apps\hermes_gateway\cli.py --company-agent-handoff-dry-run --json --channel reze-전략기획 --message "!reze 스톡슬 신규 제품 방향 제안해줘"
+python apps\hermes_gateway\cli.py --company-agent-approval-dry-run --json --channel lucy-검토 --message "!approve-draft 이 문구 발행 승인 요청서 만들어줘"
+```
+
+Handoff targets:
+
+- Marin -> `lucy-검토`
+- Kasumi -> `meiko-검토`
+- Reze -> `대표-회의실`
+- Lucy approval draft -> `최종-승인요청`
+- Meiko approval draft -> `최종-승인요청`
+
+Runtime gate:
+
+```powershell
+$env:HERMES_COMPANY_AGENT_HANDOFF_ENABLED="false"
+```
+
+The default `false` value replies only in the current channel. When an operator
+sets `HERMES_COMPANY_AGENT_HANDOFF_ENABLED=true`, the runtime posts `[HANDOFF]`
+or `[APPROVAL_REQUEST]` to the resolved target channel by name. If the target
+channel is missing, the runtime reports a safe blocked message in the current
+channel and does not crash.
+
+Reports and messages do not include token values, webhook URLs, raw Discord IDs,
+or channel ID values.

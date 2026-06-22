@@ -15,6 +15,7 @@ from company_agent_router import (
     route_company_agent_message,
 )
 from company_agent_responder import build_approval_draft, build_company_agent_response
+from company_handoff import build_handoff_post_payload
 from company_webhook_sender import send_as_agent
 from safety_report_builders import build_blocked_report
 
@@ -74,6 +75,27 @@ def _runtime_env(env: dict[str, Any] | None = None) -> dict[str, Any]:
         "reply_mode": str(env_map.get("HERMES_COMPANY_AGENT_REPLY_MODE", "deterministic_fallback") or "deterministic_fallback"),
         "handoff_enabled": _flag(env_map.get("HERMES_COMPANY_AGENT_HANDOFF_ENABLED", "false")),
     }
+
+
+def resolve_target_channel_by_name(channels: Any, target_name: str) -> dict[str, Any]:
+    found = False
+    for channel in channels or []:
+        if getattr(channel, "name", "") == target_name:
+            found = True
+            break
+    return {
+        "target_channel_name": target_name,
+        "target_channel_found": found,
+        "raw_discord_ids_logged": False,
+        "secret_values_logged": False,
+    }
+
+
+def _find_target_channel(client: Any, target_name: str) -> Any | None:
+    for channel in client.get_all_channels():
+        if getattr(channel, "name", "") == target_name:
+            return channel
+    return None
 
 
 def build_company_agent_runtime_report(allow_flag_present: bool = False) -> dict[str, Any]:
@@ -151,6 +173,7 @@ def build_company_agent_runtime_start_report(
         "secret_values_logged": False,
         "webhook_url_value_logged": False,
         "external_execution": False,
+        "handoff_posting_enabled": bool(runtime_env["handoff_enabled"]),
     }
 
 
@@ -242,17 +265,70 @@ def _handoff_post_for_result(result: dict[str, Any]) -> dict[str, Any]:
     response = result.get("response", {})
     target_channel = result.get("handoff_channel") or result.get("target_channel")
     selected_agent = result.get("selected_agent")
+    payload = build_handoff_post_payload(result)
     return {
-        "handoff_post_supported": True,
+        "handoff_post_supported": bool(payload.get("handoff_supported")),
         "handoff_posting_enabled": _runtime_env()["handoff_enabled"],
         "handoff_target_channel": target_channel,
         "handoff_from_agent": selected_agent,
-        "handoff_message_present": bool(response.get("content")),
+        "handoff_message_present": bool(payload.get("handoff_message") or response.get("content")),
+        "handoff_message_preview_present": bool(payload.get("handoff_message_preview_present")),
         "discord_api_send_called": False,
         "discord_message_sent": False,
         "message_sent_count": 0,
         "raw_discord_ids_logged": False,
         "secret_values_logged": False,
+    }
+
+
+def build_company_agent_handoff_dry_run(channel: str, message: str, env: dict[str, Any] | None = None) -> dict[str, Any]:
+    result = build_company_agent_message_result(channel, message)
+    routed_message = extract_first_command_line(message) or normalize_discord_message_content(message)
+    payload = build_handoff_post_payload(result, routed_message)
+    return {
+        "report_type": "company_agent_handoff_dry_run",
+        "selected_agent": result.get("selected_agent"),
+        "agent_display_name": result.get("agent_display_name"),
+        "handoff_enabled": bool(_runtime_env(env)["handoff_enabled"]),
+        "handoff_supported": bool(payload.get("handoff_supported")),
+        "handoff_target_channel": payload.get("handoff_target_channel") or result.get("handoff_channel"),
+        "handoff_message_preview_present": bool(payload.get("handoff_message_preview_present")),
+        "handoff_message_preview": payload.get("handoff_message", ""),
+        "blocked": bool(payload.get("blocked", False)),
+        "blocked_reasons": list(payload.get("blocked_reasons", [])),
+        "discord_api_send_called": False,
+        "discord_message_sent": False,
+        "message_sent_count": 0,
+        "external_execution_allowed": False,
+        "external_execution_performed": False,
+        "raw_discord_ids_logged": False,
+        "secret_values_logged": False,
+        "webhook_url_value_logged": False,
+    }
+
+
+def build_company_agent_approval_dry_run(channel: str, message: str, env: dict[str, Any] | None = None) -> dict[str, Any]:
+    result = build_company_agent_message_result(channel, message)
+    selected_agent = str(result.get("selected_agent") or "lucy")
+    routed_message = extract_first_command_line(message) or normalize_discord_message_content(message)
+    draft = build_approval_draft(selected_agent, routed_message, result)
+    return {
+        "report_type": "company_agent_approval_dry_run",
+        "selected_agent": result.get("selected_agent"),
+        "agent_display_name": result.get("agent_display_name"),
+        "handoff_enabled": bool(_runtime_env(env)["handoff_enabled"]),
+        "approval_draft_supported": True,
+        "approval_target_channel": draft.get("approval_channel"),
+        "approval_message_preview_present": bool(draft.get("content")),
+        "approval_message_preview": draft.get("content", ""),
+        "external_execution_requested": bool(draft.get("external_execution_requested")),
+        "external_execution_performed": False,
+        "discord_api_send_called": False,
+        "discord_message_sent": False,
+        "message_sent_count": 0,
+        "raw_discord_ids_logged": False,
+        "secret_values_logged": False,
+        "webhook_url_value_logged": False,
     }
 
 
@@ -329,22 +405,31 @@ async def _send_runtime_reply(message: Any, result: dict[str, Any]) -> None:
 async def _send_handoff_post(client: Any, result: dict[str, Any]) -> None:
     if not _runtime_env()["handoff_enabled"]:
         return
-    target_name = str(result.get("handoff_channel") or "")
-    if not target_name:
+    selected_agent = str(result.get("selected_agent") or "")
+    command = str(result.get("command") or "")
+    if selected_agent in {"lucy", "meiko"} and (command == "approve-draft" or result.get("requires_approval")):
+        routed_message = str(result.get("response", {}).get("content", "") or "")
+        approval = build_approval_draft(selected_agent, routed_message, result)
+        target_name = str(approval.get("approval_channel") or "")
+        content = str(approval.get("content") or "")
+    else:
+        payload = build_handoff_post_payload(result)
+        target_name = str(payload.get("handoff_target_channel") or "")
+        content = str(payload.get("handoff_message") or "")
+    if not target_name or not content:
         return
-    response = result.get("response", {})
-    content = str(response.get("content", "") or "")
-    if not content:
-        return
-    target_channel = None
-    for channel in client.get_all_channels():
-        if getattr(channel, "name", "") == target_name:
-            target_channel = channel
-            break
+    target_channel = _find_target_channel(client, target_name)
     if target_channel is None:
+        current_channel = getattr(client, "_current_message_channel", None)
+        if current_channel is not None:
+            await current_channel.send(
+                "[HANDOFF_BLOCKED]\n"
+                f"target_channel: {target_name}\n"
+                "reason: target_channel_missing\n"
+                "external_execution_performed: false"
+            )
         return
-    handoff_content = "[handoff]\n" + content[:1800]
-    await target_channel.send(handoff_content)
+    await target_channel.send(content[:1900])
 
 
 async def _run_discord_client(token: str, start_report: dict[str, Any]) -> dict[str, Any]:
@@ -382,7 +467,9 @@ async def _run_discord_client(token: str, start_report: dict[str, Any]) -> dict[
         result = build_company_agent_message_result(channel_name, str(getattr(message, "content", "") or ""))
         if result.get("reply_prepared") and result.get("bot_message_fallback_used"):
             await _send_runtime_reply(message, result)
+            client._current_message_channel = message.channel
             await _send_handoff_post(client, result)
+            client._current_message_channel = None
 
     try:
         await client.start(token)

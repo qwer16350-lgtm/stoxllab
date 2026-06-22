@@ -178,3 +178,45 @@ $env:HERMES_COMPANY_AGENT_HANDOFF_ENABLED="false"
 
 python apps\hermes_gateway\cli.py --run-company-agent-runtime --json --allow-company-agent-runtime
 ```
+
+## Workflow v0.2 Handoff And Approval
+
+Workflow v0.2 adds optional real handoff posting for the live runtime.
+
+Dry-run commands:
+
+```powershell
+python apps\hermes_gateway\cli.py --company-agent-handoff-dry-run --json --channel marketing-brief --message "!marin MML 인스타 문구 3개 뽑아줘"
+python apps\hermes_gateway\cli.py --company-agent-handoff-dry-run --json --channel kasumi-리서치 --message "!kasumi 올해 12월까지 디자인 지원사업 찾아줘"
+python apps\hermes_gateway\cli.py --company-agent-handoff-dry-run --json --channel reze-전략기획 --message "!reze 스톡슬 신규 제품 방향 제안해줘"
+python apps\hermes_gateway\cli.py --company-agent-approval-dry-run --json --channel lucy-검토 --message "!approve-draft 이 문구 발행 승인 요청서 만들어줘"
+```
+
+Default runtime behavior keeps `HERMES_COMPANY_AGENT_HANDOFF_ENABLED=false`:
+
+- The agent replies only in the current channel.
+- The handoff target is shown in the report/dry-run.
+- No target channel post is made.
+
+When the operator explicitly sets `HERMES_COMPANY_AGENT_HANDOFF_ENABLED=true`:
+
+- Marin replies in the current channel and posts `[HANDOFF]` to `lucy-검토`.
+- Kasumi replies in the current channel and posts `[HANDOFF]` to `meiko-검토`.
+- Reze replies in the current channel and posts `[HANDOFF]` to `대표-회의실`.
+- Lucy or Meiko approval drafts can post `[APPROVAL_REQUEST]` to
+  `최종-승인요청`.
+
+Runtime operator command:
+
+```powershell
+$env:HERMES_COMPANY_AGENT_LLM_ENABLED="false"
+$env:HERMES_COMPANY_AGENT_REPLY_MODE="deterministic_fallback"
+$env:HERMES_COMPANY_AGENT_HANDOFF_ENABLED="true"
+
+python apps\hermes_gateway\cli.py --run-company-agent-runtime --json --allow-company-agent-runtime
+```
+
+Channel lookup is by channel name only. Reports do not log token values,
+webhook URLs, raw Discord IDs, or channel IDs. Publishing, deployment, email,
+grant submission, RAG, embedding/vector creation, and external execution remain
+forbidden.
