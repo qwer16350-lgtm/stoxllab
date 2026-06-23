@@ -477,3 +477,56 @@ required materials, URL, source type, current status, risk, and verification nee
 Deadline extraction recognizes Korean date ranges, dotted date ranges, notice-to-date
 ranges, and D-day markers. Result-announcement pages are labeled as
 `선정결과/결과안내` so they are not mistaken for fresh application candidates.
+## Workflow v0.7B Agent Command Web Intent Bridge
+
+Explicit agent commands can now enter the web-reference path when the message has
+web intent and the manual web-reference gate is enabled. This applies to `!kasumi`,
+`!meiko`, `!lucy`, `!marin`, and `!reze`, while short non-web commands such as
+`!kasumi ping` keep the normal deterministic agent response path.
+
+The bridge preserves each agent scope: Kasumi uses research discovery, Meiko uses
+operational verification, Marin uses content reference, Lucy uses publication
+review, and Reze uses strategy/market reference. Existing `!web`, `!search`,
+`!research`, `!find`, and `!검증` commands keep their previous behavior.
+
+If the bridge fails, the runtime prepares a bounded fallback reply with a short
+reason code and still passes it through the global outbound guard. No provider
+error body, token, API key, webhook URL, raw Discord ID, or `.env` value is shown.
+
+## Workflow v0.7B Outbound Guard And Chunking
+
+All company-agent Discord replies now pass through a shared outbound guard before
+send. The guard applies to real bot, webhook, bot fallback, and auto sender modes,
+including normal agent replies, handoffs, approvals, command help, memory recall,
+deterministic fallback, LLM responses, and web-reference output.
+
+Short responses are sent as a single message. Long responses are split into
+bounded chunks with headers such as `[KASUMI_STOXL] 1/3`, and every chunk stays
+below the Discord message limit. If content exceeds the configured chunk count,
+the Discord-visible tail explicitly says the remaining detail is preserved in
+memory/context.
+
+Large web-reference and support-program verification responses are compacted for
+Discord by default. The full candidate data and `[SUPPORT_PROGRAM_VERIFICATION]`
+block remain in memory/context for Meiko review. Send failures are reported with
+bounded reason codes and never include token values, API keys, webhook URLs, raw
+Discord IDs, or `.env` values.
+
+## Workflow v0.7B Official Source Verification
+
+v0.7B adds a read-only official-source extraction step after search ranking.
+Only URLs classified as `official` are fetched for extraction. Intermediary
+sources are skipped by default unless no official source is available, in which
+case they remain reference-only and low confidence.
+
+Official page reads use bounded HTTP GET only. The extracted text is not dumped
+to reports or memory. The parser stores only bounded fields: application period,
+deadline, eligibility, support content, support scale, self-payment, required
+documents, application method, contact, institution, region, source verification,
+status, confidence, risk, and verification needs.
+
+Kasumi output now includes a `[SUPPORT_PROGRAM_VERIFICATION]` block for Meiko.
+It summarizes candidate count, official source count, official page extraction
+count, and Meiko checkpoints such as STOXL eligibility, self-payment, deadline
+readiness, and document readiness. Reports expose only safe aggregate fields and
+keep Discord send, LLM, RAG, embedding/vector, and external execution disabled.

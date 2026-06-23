@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import os
 import re
+import socket
+import html
+import urllib.error
 import urllib.parse
+import urllib.request
 from datetime import datetime, timezone
 from typing import Any, Callable
 
@@ -43,6 +47,31 @@ AGENT_TERMS = {
 }
 WEB_COMMANDS = {"web", "search", "research", "find", "검증"}
 SearchRunner = Callable[[str, list[str], int], dict[str, Any]]
+OfficialFetcher = Callable[[str], dict[str, Any]]
+AGENT_COMMAND_WEB_INTENT_TERMS = (
+    "찾아줘",
+    "검색",
+    "조사",
+    "리서치",
+    "후보",
+    "공고",
+    "지원사업",
+    "마감",
+    "최신",
+    "현재",
+    "요즘",
+    "이번 달",
+    "이번달",
+    "검증",
+    "확인",
+    "레퍼런스",
+    "reference",
+    "web",
+    "search",
+    "research",
+    "trend",
+    "market",
+)
 
 OFFICIAL_SOURCE_HOSTS = {
     "bizinfo.go.kr",
@@ -81,6 +110,27 @@ DEADLINE_PATTERNS = (
     re.compile(r"(?:공고일|공고일자)?\s*[^~\n]{0,20}~\s*(\d{4})[.\-](\d{1,2})[.\-](\d{1,2})(?:\.[^0-9]|[^0-9]|$)"),
     re.compile(r"마감(?:까지)?\s*[:.]?\s*(D-\d+)", re.IGNORECASE),
 )
+HTML_REMOVE_RE = re.compile(
+    r"<(script|style|noscript|nav|footer|header)\b[^>]*>.*?</\1>",
+    re.IGNORECASE | re.DOTALL,
+)
+AD_BLOCK_RE = re.compile(
+    r"<[^>]*(?:class|id)=['\"][^'\"]*(?:advertisement|advert|banner|popup)[^'\"]*['\"][^>]*>.*?</[^>]+>",
+    re.IGNORECASE | re.DOTALL,
+)
+TAG_RE = re.compile(r"<[^>]+>")
+SECTION_PATTERNS = {
+    "application_period": ("신청기간", "접수기간", "모집기간", "공고기간"),
+    "eligibility": ("지원대상", "신청대상", "모집대상", "지원자격", "신청자격", "대상기업", "참여기업", "중소기업", "소상공인"),
+    "support_content": ("지원내용", "지원규모", "지원금", "지원한도", "사업비", "디자인개발", "제품디자인", "시각디자인", "브랜드", "BI", "CI", "패키지", "UX", "UI"),
+    "support_scale": ("지원금", "지원규모", "지원한도", "총사업비", "지원비율"),
+    "self_payment": ("자부담", "기업부담금", "부담금", "민간부담", "매칭", "현금부담", "총사업비"),
+    "required_documents": ("제출서류", "신청서", "사업계획서", "구비서류", "첨부서류", "증빙서류", "사업자등록증", "개인정보", "동의서"),
+    "application_method": ("신청방법", "접수방법", "온라인 접수", "이메일 접수", "방문 접수", "우편 접수", "기업마당", "홈페이지", "신청서 제출"),
+    "contact": ("문의처", "문의", "담당자", "전화", "이메일"),
+    "host_institution": ("주관기관", "수행기관", "소관부처", "기관명"),
+    "region": ("전국", "서울", "부산", "인천", "경기", "경상북도", "금천구"),
+}
 
 
 def _env(env: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -188,30 +238,279 @@ def _first_matching_sentence(text: str, keywords: tuple[str, ...]) -> str:
     return "확인 필요"
 
 
+def cleanup_html_to_text(raw_html: str) -> str:
+    cleaned = HTML_REMOVE_RE.sub(" ", str(raw_html or ""))
+    cleaned = AD_BLOCK_RE.sub(" ", cleaned)
+    text = html.unescape(TAG_RE.sub(" ", cleaned))
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def fetch_official_source_text(url: str, opener: Any | None = None) -> dict[str, Any]:
+    source_type = classify_source_type(url)
+    if source_type != "official":
+        return {
+            "fetch_attempted": False,
+            "fetch_succeeded": False,
+            "failure_reason": "non_official_source",
+            "source_type": source_type,
+            "text": "",
+            "read_only": True,
+            "external_execution": False,
+            "rag_called": False,
+            "embedding_called": False,
+            "vector_index_created": False,
+            "api_key_value_logged": False,
+            "raw_discord_ids_logged": False,
+            "secret_values_logged": False,
+        }
+    request = urllib.request.Request(url, headers={"User-Agent": "STOXL-Hermes-Reference/0.7B"}, method="GET")
+    try:
+        with (opener or urllib.request.urlopen)(request, timeout=15) as response:
+            raw = response.read(300_000).decode("utf-8", errors="replace")
+    except (TimeoutError, socket.timeout):
+        reason = "timeout"
+        raw = ""
+    except (urllib.error.URLError, urllib.error.HTTPError, OSError, ValueError):
+        reason = "provider_exception"
+        raw = ""
+    else:
+        reason = ""
+    text = cleanup_html_to_text(raw) if raw else ""
+    return {
+        "fetch_attempted": True,
+        "fetch_succeeded": bool(text),
+        "failure_reason": reason or ("" if text else "empty_body"),
+        "source_type": source_type,
+        "text": redact_text(text, 10_000),
+        "read_only": True,
+        "external_execution": False,
+        "rag_called": False,
+        "embedding_called": False,
+        "vector_index_created": False,
+        "api_key_value_logged": False,
+        "raw_discord_ids_logged": False,
+        "secret_values_logged": False,
+    }
+
+
+def _field_sentence(text: str, field: str) -> str:
+    return _first_matching_sentence(text, SECTION_PATTERNS[field])
+
+
+def extract_application_period(text: str) -> str:
+    source = str(text or "")
+    for pattern in DEADLINE_PATTERNS[:4]:
+        match = pattern.search(source)
+        if not match:
+            continue
+        groups = match.groups()
+        if len(groups) >= 6:
+            return f"{int(groups[0]):04d}년 {int(groups[1])}월 {int(groups[2])}일 ~ {int(groups[3]):04d}년 {int(groups[4])}월 {int(groups[5])}일"
+        year, month, day = groups[-3], groups[-2], groups[-1]
+        return f"확인 필요 ~ {int(year):04d}년 {int(month)}월 {int(day)}일"
+    return "확인 필요"
+
+
+def _deadline_date_tuple(deadline: str) -> tuple[int, int, int] | None:
+    match = re.search(r"(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일", str(deadline or ""))
+    if not match:
+        return None
+    return (int(match.group(1)), int(match.group(2)), int(match.group(3)))
+
+
+def classify_program_status(text: str, source_type: str = "unknown", deadline: str = "확인 필요") -> str:
+    if source_type == "intermediary":
+        return "참고용 비공식"
+    source = str(text or "")
+    if any(keyword in source for keyword in RESULT_GUIDE_KEYWORDS + ("평가 결과", "선정 공고")):
+        return "선정결과/결과안내"
+    deadline_tuple = _deadline_date_tuple(deadline)
+    if deadline_tuple:
+        now = datetime.now(timezone.utc)
+        if deadline_tuple < (now.year, now.month, now.day):
+            return "마감 추정"
+        return "모집중 추정"
+    if any(keyword in source for keyword in ("예정", "공고예정")):
+        return "예정/공고전"
+    if any(keyword in source for keyword in ("모집", "신청", "접수", "공고")):
+        return "모집중 추정"
+    return "확인 필요"
+
+
+def _confidence_label(score: float, status: str) -> str:
+    if status == "선정결과/결과안내":
+        return "낮음"
+    if score >= 0.8:
+        return "높음"
+    if score >= 0.45:
+        return "중간"
+    return "낮음"
+
+
+def parse_support_program_details(result: dict[str, Any], source_text: str = "") -> dict[str, Any]:
+    title = redact_text(str(result.get("title") or "후보명 확인 필요"), 240)
+    url = str(result.get("url") or "")[:800] or "확인 필요"
+    source_type = str(result.get("source_type") or classify_source_type(url))
+    summary = str(result.get("snippet") or result.get("summary") or "")
+    text = f"{title} {summary} {source_text}".strip()
+    application_period = extract_application_period(text)
+    deadline = extract_deadline(text)
+    status = classify_program_status(text, source_type, deadline)
+    official_verified = source_type == "official" and bool(source_text)
+    extracted_fields = [
+        _field_sentence(text, "eligibility"),
+        _field_sentence(text, "support_content"),
+        _field_sentence(text, "support_scale"),
+        _field_sentence(text, "self_payment"),
+        _field_sentence(text, "required_documents"),
+        _field_sentence(text, "application_method"),
+    ]
+    non_empty_count = sum(1 for value in extracted_fields if value != "확인 필요")
+    if source_type == "intermediary":
+        confidence_score = 0.2
+    elif official_verified:
+        confidence_score = min(0.95, 0.45 + non_empty_count * 0.1)
+    else:
+        confidence_score = 0.5
+    confidence = _confidence_label(confidence_score, status)
+    if status == "선정결과/결과안내":
+        risk = "신규 신청 공고가 아닐 가능성 높음"
+    elif source_type == "intermediary":
+        risk = "비공식 요약 기준으로 공식 원문 확인 필요"
+    else:
+        risk = "최종 신청 전 원문 공고 검증 필요"
+    return {
+        "candidate_name": title,
+        "title": title,
+        "institution": redact_text(str(result.get("institution") or result.get("source") or _host_from_url(url) or "확인 필요"), 160),
+        "host_institution": _field_sentence(text, "host_institution"),
+        "region": _field_sentence(text, "region"),
+        "application_period": application_period,
+        "deadline": deadline,
+        "eligibility": extracted_fields[0],
+        "support_details": extracted_fields[1],
+        "support_content": extracted_fields[1],
+        "support_scale": extracted_fields[2],
+        "self_payment": extracted_fields[3],
+        "required_materials": extracted_fields[4],
+        "required_documents": extracted_fields[4],
+        "application_method": extracted_fields[5],
+        "contact": _field_sentence(text, "contact"),
+        "url": url,
+        "source_type": source_type,
+        "source_verified": "원문확인 성공" if official_verified else ("원문확인 실패" if source_type == "official" else "비공식 참고"),
+        "official_source_fetched": official_verified,
+        "current_status": status,
+        "confidence": confidence,
+        "source_confidence_score": round(confidence_score, 2),
+        "risk": risk,
+        "needs_verification": "자격, 마감, 자부담, 제출서류, STOXL 업종 적합성",
+    }
+
+
+def extract_official_source_details(
+    results: list[dict[str, Any]],
+    official_fetcher: OfficialFetcher | None = None,
+    opener: Any | None = None,
+) -> dict[str, Any]:
+    ranked = rank_search_results(results)
+    official_count = sum(1 for item in ranked if item.get("source_type") == "official")
+    details: list[dict[str, Any]] = []
+    attempted = 0
+    success_count = 0
+    failed_count = 0
+    fetcher = official_fetcher or (lambda url: fetch_official_source_text(url, opener=opener))
+    seen_keys: set[tuple[str, str, str]] = set()
+    for item in ranked:
+        title = str(item.get("title") or "")
+        url = str(item.get("url") or "")
+        key = (title.casefold(), _host_from_url(url), url)
+        if key in seen_keys:
+            continue
+        seen_keys.add(key)
+        source_text = ""
+        if item.get("source_type") == "official":
+            attempted += 1
+            fetched = fetcher(url)
+            if fetched.get("fetch_succeeded"):
+                success_count += 1
+                source_text = str(fetched.get("text") or "")
+            else:
+                failed_count += 1
+        detail = parse_support_program_details(item, source_text)
+        if item.get("source_type") == "intermediary" and official_count > 0:
+            continue
+        details.append(detail)
+        if len(details) >= 5:
+            break
+    verification_block = build_source_verification_block(details, official_count, success_count)
+    return {
+        "official_extract_attempted": attempted > 0,
+        "official_extract_attempt_count": attempted,
+        "official_extract_success_count": success_count,
+        "official_extract_failed_count": failed_count,
+        "candidate_count": len(details),
+        "candidate_extraction_succeeded": bool(details),
+        "verification_block_written": bool(verification_block),
+        "ready_for_meiko_verification": bool(details),
+        "ready_for_rag_phase": bool(details),
+        "candidates": details,
+        "verification_block": verification_block,
+        "read_only": True,
+        "external_execution": False,
+        "rag_called": False,
+        "embedding_called": False,
+        "vector_index_created": False,
+        "api_key_value_logged": False,
+        "raw_discord_ids_logged": False,
+        "secret_values_logged": False,
+    }
+
+
+def build_source_verification_block(candidates: list[dict[str, Any]], official_source_count: int, official_extract_success_count: int) -> str:
+    lines = [
+        "[SUPPORT_PROGRAM_VERIFICATION]",
+        f"candidate_count: {len(candidates)}",
+        f"official_source_count: {official_source_count}",
+        f"extracted_from_official_pages: {official_extract_success_count}",
+        "requires_manual_confirmation: true",
+        "",
+    ]
+    for index, card in enumerate(candidates[:5], start=1):
+        lines.extend(
+            [
+                f"Candidate {index}:",
+                f"- title: {card.get('title', '확인 필요')}",
+                f"- source_type: {card.get('source_type', 'unknown')}",
+                f"- original_url: {card.get('url', '확인 필요')}",
+                f"- deadline: {card.get('deadline', '확인 필요')}",
+                f"- eligibility: {card.get('eligibility', '확인 필요')}",
+                f"- support_content: {card.get('support_content', '확인 필요')}",
+                f"- required_documents: {card.get('required_documents', '확인 필요')}",
+                f"- self_payment: {card.get('self_payment', '확인 필요')}",
+                f"- confidence: {card.get('confidence', '낮음')}",
+                f"- status: {card.get('current_status', '확인 필요')}",
+                "- meiko_checkpoints:",
+                "  - STOXL 소재지/업종 적합성",
+                "  - 중소기업/디자인 전문기업 해당 여부",
+                "  - 자부담 존재 여부",
+                "  - 마감일까지 준비 가능 여부",
+                "  - 제출서류 준비 가능 여부",
+                "",
+            ]
+        )
+    lines.append("[/SUPPORT_PROGRAM_VERIFICATION]")
+    return "\n".join(lines)
+
+
 def build_candidate_cards(results: list[dict[str, Any]]) -> list[dict[str, str]]:
     cards: list[dict[str, str]] = []
     for item in rank_search_results(results)[:5]:
-        title = redact_text(str(item.get("title") or "후보명 확인 필요"), 240)
-        summary = str(item.get("snippet") or item.get("summary") or "")
-        host = str(item.get("host") or _host_from_url(str(item.get("url") or "")) or "확인 필요")
-        combined = f"{title} {summary}"
-        cards.append(
-            {
-                "candidate_name": title,
-                "institution": redact_text(str(item.get("institution") or item.get("source") or host), 160) or host,
-                "region": _first_matching_sentence(combined, ("전국", "서울", "부산", "인천", "경기", "경상북도", "금천구")),
-                "deadline": extract_deadline(combined),
-                "eligibility": _first_matching_sentence(combined, ("지원대상", "모집대상", "신청대상", "자격", "중소기업", "기업")),
-                "support_details": _first_matching_sentence(combined, ("지원내용", "지원금", "디자인개발", "BI", "CI", "패키지", "UX", "UI")),
-                "required_materials": _first_matching_sentence(combined, ("필요자료", "제출서류", "신청서", "사업계획서")),
-                "url": str(item.get("url") or "")[:800] or "확인 필요",
-                "source_type": str(item.get("source_type") or classify_source_type(str(item.get("url") or ""))),
-                "source_type": str(item.get("source_type") or classify_source_type(str(item.get("url") or ""))),
-                "current_status": classify_candidate_status(combined),
-                "risk": "최종 신청 전 원문 공고 검증 필요",
-                "needs_verification": "자격, 마감, 지원금, 제출자료",
-            }
-        )
+        if item.get("source_verified") and item.get("application_period"):
+            details = dict(item)
+        else:
+            details = parse_support_program_details(item, str(item.get("official_text") or ""))
+        cards.append({key: redact_text(value, 600) if isinstance(value, str) else value for key, value in details.items()})
     return cards
 
 
@@ -239,6 +538,48 @@ def detect_web_reference_intent(agent_id: str, message: str, context: dict[str, 
     lowered = str(message or "").strip().lower()
     terms = GENERIC_TERMS + KOREAN_GENERIC_TERMS + AGENT_TERMS.get(selected_agent, ()) + KOREAN_AGENT_TERMS.get(selected_agent, ())
     return any(term.lower() in lowered for term in terms)
+
+
+def detect_agent_command_web_intent(agent_id: str, message: str, context: dict[str, Any] | None = None) -> bool:
+    selected_agent = str(agent_id or "").strip().lower()
+    if selected_agent not in ALLOWED_AGENTS:
+        return False
+    command = str((context or {}).get("command") or "").strip().lower()
+    if command not in ALLOWED_AGENTS and command != "agent":
+        return False
+    lowered = str(message or "").strip().lower()
+    if not lowered.startswith(f"!{selected_agent}") and command != "agent":
+        return False
+    return any(term.lower() in lowered for term in AGENT_COMMAND_WEB_INTENT_TERMS) or detect_web_reference_intent(selected_agent, message, context)
+
+
+def build_web_reference_bridge_failure_response(agent_id: str, reason: str) -> dict[str, Any]:
+    safe_reason = str(reason or "web_reference_runtime_exception").strip() or "web_reference_runtime_exception"
+    return {
+        "report_type": "company_agent_web_reference_bridge_failure",
+        "response_type": "company_agent_response",
+        "agent_id": agent_id,
+        "reply_text_source": "web_reference_bridge_failure",
+        "content": (
+            f"[{str(agent_id or 'hermes').upper()}_STOXL]\n"
+            "웹 참조 작업을 시작했지만 완료하지 못했습니다.\n"
+            f"reason: {safe_reason}\n"
+            "다시 시도하거나 `!web <검색어>`로 실행해 주세요."
+        ),
+        "web_reference_bridge_failed": True,
+        "web_reference_failure_reason": safe_reason,
+        "discord_api_send_called": False,
+        "discord_message_sent": False,
+        "llm_api_call_attempted": False,
+        "llm_api_called": False,
+        "rag_called": False,
+        "embedding_called": False,
+        "vector_index_created": False,
+        "external_execution": False,
+        "api_key_value_logged": False,
+        "raw_discord_ids_logged": False,
+        "secret_values_logged": False,
+    }
 
 
 def _manual_command(agent_id: str, message: str, context: dict[str, Any] | None = None) -> bool:
@@ -366,13 +707,20 @@ def format_agent_web_reference_block(agent_id: str, results: list[dict[str, Any]
                     f"{index}. 후보명: {card['candidate_name']}",
                     f"   기관: {card['institution']}",
                     f"   지역: {card['region']}",
-                    f"   마감: {card['deadline']}",
+                    f"   신청기간: {card['application_period']}",
+                    f"   마감일: {card['deadline']}",
                     f"   지원대상: {card['eligibility']}",
                     f"   지원내용: {card['support_details']}",
+                    f"   지원금/지원규모: {card['support_scale']}",
+                    f"   자부담: {card['self_payment']}",
                     f"   필요자료: {card['required_materials']}",
+                    f"   신청방법: {card['application_method']}",
+                    f"   문의처: {card['contact']}",
                     f"   URL: {card['url']}",
                     f"   출처유형: {card['source_type']}",
+                    f"   원문확인: {card['source_verified']}",
                     f"   현재상태: {card['current_status']}",
+                    f"   신뢰도: {card['confidence']}",
                     f"   리스크: {card['risk']}",
                     f"   확인 필요: {card['needs_verification']}",
                     "",
@@ -514,6 +862,7 @@ def build_company_agent_web_reference_one_shot(
     allow_web_reference: bool = False,
     env: dict[str, Any] | None = None,
     search_runner: SearchRunner | None = None,
+    official_fetcher: OfficialFetcher | None = None,
     context: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     env_map = _env(env)
@@ -538,21 +887,49 @@ def build_company_agent_web_reference_one_shot(
     official_result_count = sum(1 for item in ranked_results if item.get("source_type") == "official")
     intermediary_result_count = sum(1 for item in ranked_results if item.get("source_type") == "intermediary")
     success = bool(search.get("search_succeeded")) and bool(ranked_results)
+    official_extraction = (
+        extract_official_source_details(ranked_results, official_fetcher=official_fetcher)
+        if success and agent_id == "kasumi"
+        else {
+            "official_extract_attempted": False,
+            "official_extract_attempt_count": 0,
+            "official_extract_success_count": 0,
+            "official_extract_failed_count": 0,
+            "candidate_count": len(candidate_cards) if agent_id == "kasumi" else len(ranked_results),
+            "candidate_extraction_succeeded": success,
+            "verification_block_written": False,
+            "ready_for_meiko_verification": False,
+            "ready_for_rag_phase": False,
+            "candidates": candidate_cards,
+            "verification_block": "",
+        }
+    )
+    if agent_id == "kasumi":
+        candidate_cards = list(official_extraction.get("candidates") or candidate_cards)
     report_text = (
-        format_agent_web_reference_block(agent_id, ranked_results, queries[0])
+        format_agent_web_reference_block(agent_id, candidate_cards if agent_id == "kasumi" else ranked_results, queries[0])
         if success
         else format_agent_web_failure(agent_id, str(search.get("failure_reason") or "no_results"))
     )
+    if success and agent_id == "kasumi" and official_extraction.get("verification_block"):
+        report_text = f"{report_text}\n\n{official_extraction['verification_block']}"
     memory = {"record_written": False}
     if success:
         memory = append_memory_record(
             "recent_item",
             {
                 "item_type": "web_reference",
+                "type": "web_reference_support_program_candidates" if agent_id == "kasumi" else "web_reference",
                 "agent": agent_id,
                 "title": f"{redact_text(queries[0], 100)} web reference",
                 "summary": f"{agent_id} web reference {len(ranked_results)}건",
                 "content": report_text,
+                "original_query": redact_text(str(message or ""), 320),
+                "normalized_search_query": queries[0],
+                "candidate_count": len(candidate_cards) if agent_id == "kasumi" else len(ranked_results),
+                "official_source_count": official_result_count,
+                "official_extract_success_count": int(official_extraction.get("official_extract_success_count") or 0),
+                "candidates": candidate_cards[:5],
                 "source_urls_present": any(item.get("url") for item in ranked_results),
                 "external_execution_performed": False,
                 "rag_called": False,
@@ -578,7 +955,13 @@ def build_company_agent_web_reference_one_shot(
         "official_result_count": official_result_count,
         "intermediary_result_count": intermediary_result_count,
         "candidate_count": len(candidate_cards) if agent_id == "kasumi" else len(ranked_results),
-        "candidate_extraction_succeeded": success and (agent_id != "kasumi" or bool(candidate_cards)),
+        "official_extract_attempted": bool(official_extraction.get("official_extract_attempted")),
+        "official_extract_success_count": int(official_extraction.get("official_extract_success_count") or 0),
+        "official_extract_failed_count": int(official_extraction.get("official_extract_failed_count") or 0),
+        "candidate_extraction_succeeded": bool(official_extraction.get("candidate_extraction_succeeded")) if agent_id == "kasumi" else success,
+        "verification_block_written": bool(official_extraction.get("verification_block_written")),
+        "ready_for_meiko_verification": bool(official_extraction.get("ready_for_meiko_verification")),
+        "ready_for_rag_phase": bool(official_extraction.get("ready_for_rag_phase")),
         "reference_report": report_text,
         "web_reference_results_block": block,
         "persistent_memory_written": bool(memory.get("record_written")),

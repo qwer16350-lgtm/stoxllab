@@ -25,6 +25,12 @@ CONTEXT_REFERENCE_TERMS = (
     "해당",
     "그 문구",
     "그 지원사업",
+    "지원사업 검토",
+    "후보 검토",
+    "방금 후보",
+    "방금 Kasumi",
+    "방금 카스미",
+    "카스미가 찾은",
     "카스미가 넘긴",
     "마린이 넘긴",
     "handoff",
@@ -128,6 +134,30 @@ def get_latest_context_by_agent_pair(source_agent: str, target_agent: str) -> di
     return None
 
 
+def get_latest_web_reference_context_for_agent(target_agent: str) -> dict[str, Any] | None:
+    if str(target_agent or "").strip().lower() != "meiko":
+        return None
+    for record in load_recent_records("recent_item", limit=20):
+        if str(record.get("agent") or "").strip().lower() != "kasumi":
+            continue
+        if str(record.get("item_type") or "") != "web_reference" and "web_reference" not in str(record.get("type") or ""):
+            continue
+        return _normalized_context(
+            "meiko-검토",
+            {
+                "source_agent": "kasumi",
+                "target_agent": "meiko",
+                "source_channel": "persistent_memory",
+                "target_channel": "meiko-검토",
+                "status": "web_reference_support_program_candidates",
+                "request_summary": record.get("summary") or record.get("title"),
+                "handoff_content": record.get("content") or record.get("summary"),
+                "next_action": "Meiko verification",
+            },
+        )
+    return None
+
+
 def _context_from_memory_record(record: dict[str, Any]) -> dict[str, Any]:
     return _normalized_context(
         str(record.get("target_channel") or ""),
@@ -203,13 +233,14 @@ def resolve_handoff_context(
 ) -> dict[str, Any]:
     reference_detected = detect_context_reference_terms(user_message)
     latest = get_latest_context_for_channel(channel_name)
-    selected = dict(replied_context) if replied_context else (latest if reference_detected else None)
+    memory_reference = get_latest_web_reference_context_for_agent(agent_id) if reference_detected and latest is None else None
+    selected = dict(replied_context) if replied_context else ((latest or memory_reference) if reference_detected else None)
     return {
         "context_reference_detected": reference_detected,
         "latest_context_available": latest is not None,
         "reply_context_available": replied_context is not None,
         "context_used": selected is not None,
-        "context_priority": "reply" if replied_context else "latest_channel" if selected else "none",
+        "context_priority": "reply" if replied_context else "latest_channel" if latest and selected else "persistent_memory" if memory_reference and selected else "none",
         "context": selected,
         "context_source_agent": (selected or {}).get("source_agent"),
         "context_target_agent": (selected or {}).get("target_agent") or agent_id,

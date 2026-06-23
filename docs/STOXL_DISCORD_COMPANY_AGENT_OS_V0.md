@@ -451,3 +451,55 @@ candidates.
 
 This change does not enable Discord sends, LLM calls, RAG, embedding/vector
 creation, application submission, publishing, payment, or external execution.
+## Workflow v0.7B Agent Command Web Intent Bridge
+
+The runtime now bridges explicit agent commands with web intent into the same
+web-reference path used by `!web`, `!search`, `!research`, `!find`, and `!검증`.
+For example, `!kasumi 지원사업 후보 찾아줘` runs under Kasumi's
+`research_discovery` scope instead of falling back to a normal short deterministic
+reply. `!kasumi ping` remains a normal quick command and does not trigger web
+reference.
+
+Bridge failures return a bounded fallback response and expose only safe reason
+codes such as `web_reference_runtime_exception` or
+`web_reference_provider_exception`. The fallback response also goes through the
+global outbound guard and chunking layer.
+
+## Workflow v0.7B Outbound Guard And Chunking
+
+The live Discord runtime now prepares every outbound agent response through a
+global guard. The same guard is used before real-bot sends, webhook persona sends,
+bot fallback sends, auto sender fallback, handoff posts, approval requests, command
+help, memory recall, deterministic fallback, LLM responses, and web-reference
+responses.
+
+The guard records original response length, chunking usage, chunk count, Discord
+truncation status, and whether full content remains preserved in memory/context.
+Long responses are split into bounded chunks instead of being silently cut at the
+sender boundary. If the max chunk count is reached, the final Discord chunk states
+that remaining details are preserved in memory/context.
+
+Web-reference reports are compacted for Discord while preserving the full
+structured candidate data and verification block for Meiko context. Sender
+failures use bounded reason codes and never expose token values, API keys, raw
+Discord IDs, webhook URLs, or `.env` content.
+
+## Workflow v0.7B Official Source Verification
+
+v0.7B completes the pre-RAG web-reference flow by adding official page extraction
+and a Meiko-ready verification block. After search ranking, official URLs are read
+with bounded HTTP GET and parsed into support-program fields. Non-official
+intermediary pages are not fetched by default and stay reference-only.
+
+Extracted candidate cards include application period, deadline, eligibility,
+support content, support scale, self-payment, required documents, application
+method, contact, institution, region, source verification state, status,
+confidence, risk, and verification needs. Full HTML and full page text are not
+stored.
+
+Successful Kasumi reports write a bounded
+`web_reference_support_program_candidates` memory item and append a
+`[SUPPORT_PROGRAM_VERIFICATION]` block for Meiko. The report marks
+`ready_for_meiko_verification=true` and `ready_for_rag_phase=true` when candidate
+extraction succeeds. Discord sends, LLM calls, RAG, embeddings, vectors,
+submissions, publishing, payments, and external execution remain disabled.
