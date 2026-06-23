@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import re
+import urllib.parse
 from datetime import datetime, timezone
 from typing import Any, Callable
 
@@ -25,6 +26,14 @@ AGENT_SCOPES = {
     "reze": "strategy_market_reference",
 }
 GENERIC_TERMS = ("최신", "검색", "찾아줘", "조사", "검증", "공고", "마감", "트렌드", "경쟁사", "레퍼런스", "사례", "시장", "요즘", "현재")
+KOREAN_GENERIC_TERMS = ("최신", "검색", "찾아줘", "조사", "검증", "공고", "마감", "트렌드", "경쟁사", "레퍼런스", "사례", "시장", "요즘", "현재")
+KOREAN_AGENT_TERMS = {
+    "kasumi": ("지원사업", "공모전", "공시", "정부지원", "창업지원", "후보", "자료조사", "디자인 지원"),
+    "meiko": ("공고 원문", "자격", "자격요건", "제출서류", "지원금", "리스크", "넣을만한지"),
+    "marin": ("sns", "인스타", "홈페이지", "콘텐츠", "유사 표현", "캠페인", "문구"),
+    "lucy": ("발행", "표현 리스크", "브랜드 문맥", "공개", "오해 가능성", "검토"),
+    "reze": ("시장 흐름", "사업방식", "제품 방향", "브랜드 방향", "전략", "방향성"),
+}
 AGENT_TERMS = {
     "kasumi": ("지원사업", "공모전", "전시", "정부지원", "창업지원", "후보", "자료조사", "디자인 지원"),
     "meiko": ("공고 원문", "자격", "자격요건", "제출서류", "자부담", "리스크", "넣을만한지"),
@@ -35,6 +44,44 @@ AGENT_TERMS = {
 WEB_COMMANDS = {"web", "search", "research", "find", "검증"}
 SearchRunner = Callable[[str, list[str], int], dict[str, Any]]
 
+OFFICIAL_SOURCE_HOSTS = {
+    "bizinfo.go.kr",
+    "k-startup.go.kr",
+    "kidp.or.kr",
+    "busan.go.kr",
+    "dcb.or.kr",
+    "seouldesign.or.kr",
+    "rdcdp.or.kr",
+    "gov.kr",
+    "mss.go.kr",
+    "seoul.go.kr",
+    "gyeonggi.go.kr",
+    "incheon.go.kr",
+}
+INTERMEDIARY_SOURCE_HOSTS = {
+    "govhelpers.com",
+    "blog.naver.com",
+    "tistory.com",
+    "brunch.co.kr",
+    "medium.com",
+    "namu.wiki",
+}
+RESULT_GUIDE_KEYWORDS = (
+    "선정평가 결과",
+    "선정 결과",
+    "결과 안내",
+    "최종 선정",
+    "선정기업",
+    "지원과제 선정",
+)
+DEADLINE_PATTERNS = (
+    re.compile(r"(\d{4})\s*년\s*(\d{1,2})\s*월\s*(\d{1,2})\s*일?\s*[~\-]\s*(\d{4})\s*년\s*(\d{1,2})\s*월\s*(\d{1,2})\s*일?"),
+    re.compile(r"(\d{4})[.\-](\d{1,2})[.\-](\d{1,2})\s*[~\-]\s*(\d{4})[.\-](\d{1,2})[.\-](\d{1,2})"),
+    re.compile(r"(?:신청기간|모집기간)\s*[:.]?\s*[^~\n]{0,30}~\s*(\d{4})[.\-](\d{1,2})[.\-](\d{1,2})(?:\.[^0-9]|[^0-9]|$)"),
+    re.compile(r"(?:공고일|공고일자)?\s*[^~\n]{0,20}~\s*(\d{4})[.\-](\d{1,2})[.\-](\d{1,2})(?:\.[^0-9]|[^0-9]|$)"),
+    re.compile(r"마감(?:까지)?\s*[:.]?\s*(D-\d+)", re.IGNORECASE),
+)
+
 
 def _env(env: dict[str, Any] | None = None) -> dict[str, Any]:
     return dict(os.environ if env is None else env)
@@ -42,6 +89,130 @@ def _env(env: dict[str, Any] | None = None) -> dict[str, Any]:
 
 def _flag(value: Any) -> bool:
     return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _host_from_url(url: str) -> str:
+    parsed = urllib.parse.urlparse(str(url or ""))
+    return (parsed.hostname or "").lower().removeprefix("www.")
+
+
+def classify_source_type(url: str) -> str:
+    host = _host_from_url(url)
+    if not host:
+        return "unknown"
+    if any(host == official or host.endswith(f".{official}") for official in OFFICIAL_SOURCE_HOSTS):
+        return "official"
+    if any(host == intermediary or host.endswith(f".{intermediary}") for intermediary in INTERMEDIARY_SOURCE_HOSTS):
+        return "intermediary"
+    return "unknown"
+
+
+def _source_rank(source_type: str) -> int:
+    return {"official": 0, "unknown": 1, "intermediary": 2}.get(source_type, 1)
+
+
+def rank_search_results(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    ranked: list[tuple[int, str, int, dict[str, Any]]] = []
+    for index, item in enumerate(results):
+        enriched = dict(item)
+        host = _host_from_url(str(item.get("url") or ""))
+        source_type = classify_source_type(str(item.get("url") or ""))
+        enriched["host"] = host
+        enriched["source_type"] = source_type
+        ranked.append((_source_rank(source_type), host, index, enriched))
+    return [value[3] for value in sorted(ranked, key=lambda value: value[:3])]
+
+
+def _current_year_month() -> str:
+    now = datetime.now(timezone.utc)
+    return f"{now.year}년 {now.month}월"
+
+
+def normalize_search_query(agent_id: str, message: str, context: dict[str, Any] | None = None) -> str:
+    cleaned = re.sub(
+        r"^!(?:web|search|research|find|검증|lucy|marin|meiko|kasumi|reze|agent\s+\w+)\s+",
+        "",
+        str(message or "").strip(),
+        flags=re.IGNORECASE,
+    )
+    cleaned = redact_text(cleaned, 320).strip() or "최신 자료 확인"
+    lowered = cleaned.lower()
+    when = _current_year_month() if any(term in lowered for term in ("이번 달", "이번달", "이달", "현재", "요즘")) else ""
+    base = f"{when} {cleaned}".strip()
+    if agent_id == "kasumi":
+        terms = ["전국", "중소기업", "공고", "신청기간", "마감", "지원대상", "지원내용"]
+        if "디자인" in cleaned or "design" in lowered:
+            terms.insert(2, "디자인")
+            terms.insert(3, "디자인개발")
+        if "지원사업" in cleaned or "공고" in cleaned or "후보" in cleaned:
+            return " ".join(dict.fromkeys((base, *terms, "모집")).keys())
+    scope_terms = {
+        "meiko": "공식 공고 자격요건 마감 제출서류 지원금",
+        "marin": "콘텐츠 사례 레퍼런스 캠페인 표현",
+        "lucy": "공개 표현 브랜드 커뮤니케이션 최신 사례 리스크",
+        "reze": "시장 경쟁사 브랜드 전략 트렌드",
+    }
+    return f"{base} {scope_terms.get(agent_id, '')}".strip()
+
+
+def extract_deadline(text: str) -> str:
+    source = str(text or "")
+    for pattern in DEADLINE_PATTERNS:
+        match = pattern.search(source)
+        if not match:
+            continue
+        groups = match.groups()
+        if groups[-1].upper().startswith("D-"):
+            return groups[-1].upper()
+        year, month, day = groups[-3], groups[-2], groups[-1]
+        return f"{int(year):04d}년 {int(month)}월 {int(day)}일"
+    return "확인 필요"
+
+
+def classify_candidate_status(text: str) -> str:
+    source = str(text or "")
+    if any(keyword in source for keyword in RESULT_GUIDE_KEYWORDS):
+        return "선정결과/결과안내"
+    if "마감" in source:
+        return "마감 추정"
+    if any(keyword in source for keyword in ("모집", "신청", "접수", "공고")):
+        return "모집중 추정"
+    return "확인 필요"
+
+
+def _first_matching_sentence(text: str, keywords: tuple[str, ...]) -> str:
+    compact = re.sub(r"\s+", " ", str(text or "")).strip()
+    for sentence in re.split(r"(?<=[.!?。])\s+|[|\n]", compact):
+        if any(keyword in sentence for keyword in keywords):
+            return redact_text(sentence, 220)
+    return "확인 필요"
+
+
+def build_candidate_cards(results: list[dict[str, Any]]) -> list[dict[str, str]]:
+    cards: list[dict[str, str]] = []
+    for item in rank_search_results(results)[:5]:
+        title = redact_text(str(item.get("title") or "후보명 확인 필요"), 240)
+        summary = str(item.get("snippet") or item.get("summary") or "")
+        host = str(item.get("host") or _host_from_url(str(item.get("url") or "")) or "확인 필요")
+        combined = f"{title} {summary}"
+        cards.append(
+            {
+                "candidate_name": title,
+                "institution": redact_text(str(item.get("institution") or item.get("source") or host), 160) or host,
+                "region": _first_matching_sentence(combined, ("전국", "서울", "부산", "인천", "경기", "경상북도", "금천구")),
+                "deadline": extract_deadline(combined),
+                "eligibility": _first_matching_sentence(combined, ("지원대상", "모집대상", "신청대상", "자격", "중소기업", "기업")),
+                "support_details": _first_matching_sentence(combined, ("지원내용", "지원금", "디자인개발", "BI", "CI", "패키지", "UX", "UI")),
+                "required_materials": _first_matching_sentence(combined, ("필요자료", "제출서류", "신청서", "사업계획서")),
+                "url": str(item.get("url") or "")[:800] or "확인 필요",
+                "source_type": str(item.get("source_type") or classify_source_type(str(item.get("url") or ""))),
+                "source_type": str(item.get("source_type") or classify_source_type(str(item.get("url") or ""))),
+                "current_status": classify_candidate_status(combined),
+                "risk": "최종 신청 전 원문 공고 검증 필요",
+                "needs_verification": "자격, 마감, 지원금, 제출자료",
+            }
+        )
+    return cards
 
 
 def _mode(env: dict[str, Any] | None = None) -> str:
@@ -66,7 +237,7 @@ def detect_web_reference_intent(agent_id: str, message: str, context: dict[str, 
     if command in WEB_COMMANDS:
         return True
     lowered = str(message or "").strip().lower()
-    terms = GENERIC_TERMS + AGENT_TERMS.get(selected_agent, ())
+    terms = GENERIC_TERMS + KOREAN_GENERIC_TERMS + AGENT_TERMS.get(selected_agent, ()) + KOREAN_AGENT_TERMS.get(selected_agent, ())
     return any(term.lower() in lowered for term in terms)
 
 
@@ -96,6 +267,13 @@ def build_agent_search_queries(agent_id: str, message: str, context: dict[str, A
     }
     year = datetime.now(timezone.utc).year
     queries = [cleaned, f"{cleaned} {scope_terms.get(agent_id, '')} {year}".strip()]
+    return list(dict.fromkeys(queries))[:3]
+
+
+def build_agent_search_queries(agent_id: str, message: str, context: dict[str, Any] | None = None) -> list[str]:
+    normalized = normalize_search_query(agent_id, message, context)
+    year = datetime.now(timezone.utc).year
+    queries = [normalized, f"{normalized} {year}".strip()]
     return list(dict.fromkeys(queries))[:3]
 
 
@@ -135,12 +313,13 @@ def fetch_readonly_page_summary(url: str, opener: Any | None = None) -> dict[str
 
 def _normalized_results(results: list[dict[str, Any]]) -> list[dict[str, str]]:
     normalized: list[dict[str, str]] = []
-    for item in results:
+    for item in rank_search_results(results):
         normalized.append(
             {
                 "title": redact_text(str(item.get("title") or "제목 확인 필요"), 240),
                 "source": redact_text(str(item.get("institution") or item.get("source") or "출처 확인 필요"), 160),
                 "url": str(item.get("url") or "")[:800] or "확인 필요",
+                "source_type": str(item.get("source_type") or classify_source_type(str(item.get("url") or ""))),
                 "summary": redact_text(str(item.get("snippet") or item.get("summary") or "요약 확인 필요"), 600),
                 "needs_verification": "검색 결과 기준, 최종 사용 전 원문 확인 필요",
             }
@@ -164,6 +343,7 @@ def _common_reference_block(agent_id: str, query: str, results: list[dict[str, s
             [
                 f"{index}. 제목: {item['title']}",
                 f"   출처: {item['source']}",
+                f"   source_type: {item['source_type']}",
                 f"   URL: {item['url']}",
                 f"   요약: {item['summary']}",
                 f"   확인 필요: {item['needs_verification']}",
@@ -177,6 +357,28 @@ def _common_reference_block(agent_id: str, query: str, results: list[dict[str, s
 def format_agent_web_reference_block(agent_id: str, results: list[dict[str, Any]], query: str = "") -> str:
     normalized = _normalized_results(results)
     lines = _common_reference_block(agent_id, query, normalized)
+    if agent_id == "kasumi":
+        cards = build_candidate_cards(results)
+        lines.extend(["", "지원사업 후보:"])
+        for index, card in enumerate(cards, start=1):
+            lines.extend(
+                [
+                    f"{index}. 후보명: {card['candidate_name']}",
+                    f"   기관: {card['institution']}",
+                    f"   지역: {card['region']}",
+                    f"   마감: {card['deadline']}",
+                    f"   지원대상: {card['eligibility']}",
+                    f"   지원내용: {card['support_details']}",
+                    f"   필요자료: {card['required_materials']}",
+                    f"   URL: {card['url']}",
+                    f"   출처유형: {card['source_type']}",
+                    f"   현재상태: {card['current_status']}",
+                    f"   리스크: {card['risk']}",
+                    f"   확인 필요: {card['needs_verification']}",
+                    "",
+                ]
+            )
+        return "\n".join(lines)[:6000]
     first = normalized[0] if normalized else {"title": "확인 필요", "source": "확인 필요", "url": "확인 필요", "summary": "확인 필요"}
     if agent_id == "kasumi":
         lines.extend(
@@ -330,9 +532,14 @@ def build_company_agent_web_reference_one_shot(
         search = {"search_succeeded": False, "failure_reason": reason, "provider": "unknown", "results": []}
     else:
         search = (search_runner or (lambda a, q, n: run_readonly_web_search(a, q, n, env_map)))(agent_id, queries, 5)
-    success = bool(search.get("search_succeeded")) and bool(search.get("results"))
+    ranked_results = rank_search_results(list(search.get("results") or []))
+    search = {**search, "results": ranked_results}
+    candidate_cards = build_candidate_cards(ranked_results) if agent_id == "kasumi" else []
+    official_result_count = sum(1 for item in ranked_results if item.get("source_type") == "official")
+    intermediary_result_count = sum(1 for item in ranked_results if item.get("source_type") == "intermediary")
+    success = bool(search.get("search_succeeded")) and bool(ranked_results)
     report_text = (
-        format_agent_web_reference_block(agent_id, list(search.get("results") or []), queries[0])
+        format_agent_web_reference_block(agent_id, ranked_results, queries[0])
         if success
         else format_agent_web_failure(agent_id, str(search.get("failure_reason") or "no_results"))
     )
@@ -344,9 +551,9 @@ def build_company_agent_web_reference_one_shot(
                 "item_type": "web_reference",
                 "agent": agent_id,
                 "title": f"{redact_text(queries[0], 100)} web reference",
-                "summary": f"{agent_id} web reference {len(search.get('results') or [])}건",
+                "summary": f"{agent_id} web reference {len(ranked_results)}건",
                 "content": report_text,
-                "source_urls_present": any(item.get("url") for item in search.get("results") or []),
+                "source_urls_present": any(item.get("url") for item in ranked_results),
                 "external_execution_performed": False,
                 "rag_called": False,
                 "embedding_called": False,
@@ -365,7 +572,13 @@ def build_company_agent_web_reference_one_shot(
         "web_search_succeeded": success,
         "failure_reason": search.get("failure_reason") or ("no_results" if not success and not reason else reason),
         "provider": search.get("provider", "unknown"),
-        "result_count": len(search.get("results") or []),
+        "result_count": len(ranked_results),
+        "original_query": redact_text(str(message or ""), 320),
+        "normalized_search_query": queries[0],
+        "official_result_count": official_result_count,
+        "intermediary_result_count": intermediary_result_count,
+        "candidate_count": len(candidate_cards) if agent_id == "kasumi" else len(ranked_results),
+        "candidate_extraction_succeeded": success and (agent_id != "kasumi" or bool(candidate_cards)),
         "reference_report": report_text,
         "web_reference_results_block": block,
         "persistent_memory_written": bool(memory.get("record_written")),

@@ -426,3 +426,28 @@ items and included in normal handoffs. An optional LLM receives only the bounded
 `[WEB_REFERENCE_RESULTS]` block. Provider keys and raw errors are never logged. The
 feature does not permit login, forms, downloads, applications, submissions, payments,
 email, publishing, RAG, embeddings, vector indexes, or external execution.
+## Workflow v0.7A Tavily Ranking And Candidate Extraction
+
+The read-only web-reference layer now normalizes natural Korean requests into
+provider search queries before calling Tavily or another configured provider. The
+normalized query keeps the original intent but adds role-scoped search terms such
+as current year/month, national support-program scope, official notice language,
+deadline, eligibility, and support details.
+
+Result handling is metadata-only and read-only. Official public sources are ranked
+ahead of intermediary summaries, while intermediary results remain available with
+`source_type=intermediary`. Reports include safe aggregate fields such as
+`original_query`, `normalized_search_query`, `official_result_count`,
+`intermediary_result_count`, `candidate_count`, and
+`candidate_extraction_succeeded`.
+
+Kasumi candidate extraction renders up to five candidate cards. Each card separates
+candidate name, institution, region, deadline, eligibility, support details,
+required materials, source URL, source type, current status, risk, and verification
+needs. Deadline extraction covers Korean date ranges, dotted date ranges,
+notice-to-date ranges, and D-day markers. Result-announcement pages are marked as
+`선정결과/결과안내` so they are not treated as recommended fresh application
+candidates.
+
+This change does not enable Discord sends, LLM calls, RAG, embedding/vector
+creation, application submission, publishing, payment, or external execution.

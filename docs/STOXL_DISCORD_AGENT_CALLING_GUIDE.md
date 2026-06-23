@@ -458,3 +458,22 @@ normal handoffs. Generic commands are `!web`, `!search`, `!research`, `!find`, a
 `!검증`. Searching and reading are allowed; login, form input, download,
 application, submission, email, publish, payment, RAG, embeddings, vectors, and any
 external execution remain forbidden.
+## Workflow v0.7A Web Reference Ranking
+
+v0.7A improves Tavily result handling without changing the safety boundary. User
+phrases such as "이번 달 디자인 지원사업 후보 찾아줘" are normalized into a
+search-oriented query with current year/month, national support-program terms,
+deadline, eligibility, and support-detail terms before reaching the provider.
+
+Search results are re-ranked by source type. Official hosts such as
+`bizinfo.go.kr`, `k-startup.go.kr`, `kidp.or.kr`, `busan.go.kr`, `dcb.or.kr`,
+`seouldesign.or.kr`, and government domains are shown before intermediary sites
+such as `govhelpers.com`, blogs, or wiki-style summaries. Intermediary results are
+not discarded; they are demoted and labeled with `source_type`.
+
+Kasumi web-reference output now renders up to five candidate cards, each with
+candidate name, institution, region, deadline, eligibility, support details,
+required materials, URL, source type, current status, risk, and verification needs.
+Deadline extraction recognizes Korean date ranges, dotted date ranges, notice-to-date
+ranges, and D-day markers. Result-announcement pages are labeled as
+`선정결과/결과안내` so they are not mistaken for fresh application candidates.
