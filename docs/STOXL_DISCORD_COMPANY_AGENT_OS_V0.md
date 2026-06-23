@@ -406,3 +406,23 @@ content dumps.
 This backend is deliberately plain JSONL. It does not perform document ingestion,
 semantic retrieval, RAG, embedding generation, vector indexing, Discord sends, or
 external execution. Write failures return a safe warning and do not crash runtime.
+
+## Workflow v0.7 Role-Scoped Read-Only Web Reference
+
+v0.7 adds a manually gated search-provider boundary for all five agents. The feature
+defaults to `HERMES_COMPANY_AGENT_WEB_REFERENCE_ENABLED=false` and mode `off`.
+Role scopes are `research_discovery` for Kasumi, `operational_verification` for Meiko,
+`content_reference` for Marin, `publication_review` for Lucy, and
+`strategy_market_reference` for Reze.
+
+With `manual_command_only` enabled, explicit agent commands or `!web`, `!search`,
+`!research`, `!find`, and `!검증` may query a configured Serper, Brave, Tavily, or
+custom provider boundary. Common results preserve title, source, URL, summary, and
+verification caveats; role formatters then produce the appropriate work product.
+Unknown values remain `확인 필요` and source URLs must not be invented.
+
+Successful reports are written to persistent recent work memory as `web_reference`
+items and included in normal handoffs. An optional LLM receives only the bounded
+`[WEB_REFERENCE_RESULTS]` block. Provider keys and raw errors are never logged. The
+feature does not permit login, forms, downloads, applications, submissions, payments,
+email, publishing, RAG, embeddings, vector indexes, or external execution.

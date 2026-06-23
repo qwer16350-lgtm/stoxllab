@@ -130,6 +130,9 @@ def build_approval_draft(agent_id: str, message: str, route: dict[str, Any]) -> 
 
 def _template_for_agent(agent_id: str, message: str, route: dict[str, Any]) -> str:
     summary = _summary(message)
+    web_reference = route.get("web_reference_report") if isinstance(route.get("web_reference_report"), dict) else None
+    if web_reference:
+        return str(web_reference.get("reference_report") or "현재 web reference 결과를 정리하지 못했습니다.")
     context = route.get("handoff_context") if isinstance(route.get("handoff_context"), dict) else None
     context_source = str((context or {}).get("source_agent") or "").lower()
     context_content = _handoff_excerpt(str((context or {}).get("handoff_content") or ""))
@@ -376,6 +379,9 @@ def build_company_agent_response(
     route: dict[str, Any],
     env: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
+    web_reference = route.get("web_reference_report") if isinstance(route.get("web_reference_report"), dict) else None
+    if web_reference and not web_reference.get("web_search_succeeded"):
+        return build_deterministic_company_agent_reply(agent_id, message, route)
     mode = _reply_mode(env)
     if _llm_enabled(env) and mode in {"llm", "llm_with_deterministic_fallback"}:
         llm_result = generate_agent_reply(agent_id, message, route, dict(env or os.environ))

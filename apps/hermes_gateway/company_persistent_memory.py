@@ -41,6 +41,9 @@ ALLOWED_FIELDS = {
     "external_execution_requested",
     "external_execution_performed",
     "item_type",
+    "source_urls_present",
+    "rag_called",
+    "embedding_called",
 }
 
 
@@ -77,6 +80,8 @@ def redact_memory_record(record: dict[str, Any]) -> dict[str, Any]:
             max_chars = 1800 if normalized_key == "content" else 600
             safe[normalized_key] = _safe_text(value, max_chars)
     safe["external_execution_performed"] = False
+    safe["rag_called"] = False
+    safe["embedding_called"] = False
     safe["raw_discord_ids_logged"] = False
     safe["secret_values_logged"] = False
     return safe

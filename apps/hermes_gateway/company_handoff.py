@@ -121,6 +121,7 @@ def build_handoff_post_payload(result: dict[str, Any], request_summary: str = ""
         }
     summary = sanitize_company_context_text(request_summary or "handoff requested", 300).strip()
     delivery = sanitize_company_context_text(response.get("content") or "handoff content unavailable", 1200).strip()
+    web_reference_included = bool(result.get("web_reference_report"))
     target_agent = str(rule.get("to") or "")
     status = STATUS_LABELS.get(agent_id, rule.get("status", "handoff ready"))
     next_action = NEXT_ACTIONS.get(agent_id, "검토 필요")
@@ -157,6 +158,7 @@ def build_handoff_post_payload(result: dict[str, Any], request_summary: str = ""
         "handoff_context_saved": True,
         "handoff_context_source_agent": stored_context.get("source_agent"),
         "handoff_context_target_agent": stored_context.get("target_agent"),
+        "web_reference_summary_included": web_reference_included,
         "blocked": False,
         "blocked_reasons": [],
         "discord_api_send_called": False,

@@ -294,6 +294,11 @@ from company_persistent_memory import (
     build_company_agent_memory_report,
     build_memory_query_report,
 )
+from company_web_reference import (
+    build_company_agent_web_reference_dry_run,
+    build_company_agent_web_reference_one_shot,
+    build_company_agent_web_reference_report,
+)
 from company_agent_bot_fleet import (
     build_company_agent_real_bot_fleet_report,
     build_company_agent_real_bot_send_dry_run,
@@ -593,6 +598,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--company-agent-memory-report", action="store_true", help="Print STOXL company agent JSONL memory report without external calls.")
     parser.add_argument("--company-agent-memory-simulate-write", action="store_true", help="Write one safe local STOXL company memory simulation record.")
     parser.add_argument("--company-agent-memory-query", action="store_true", help="Query safe local STOXL company memory without RAG or embeddings.")
+    parser.add_argument("--company-agent-web-reference-report", action="store_true", help="Print role-scoped read-only company web reference v0.7 report.")
+    parser.add_argument("--company-agent-web-reference-dry-run", action="store_true", help="Build role-scoped web reference intent dry-run without web calls.")
+    parser.add_argument("--company-agent-web-reference-one-shot", action="store_true", help="Run one gated read-only company web reference without Discord sends.")
+    parser.add_argument("--allow-web-reference", action="store_true", help="Allow one user-run read-only web reference call after env gates pass.")
     parser.add_argument("--company-agent-approval-dry-run", action="store_true", help="Build STOXL company agent approval v0.2 dry-run without Discord sends.")
     parser.add_argument("--company-agent-webhook-persona-report", action="store_true", help="Print STOXL company agent webhook persona v0.3 report.")
     parser.add_argument("--company-agent-webhook-persona-dry-run", action="store_true", help="Build STOXL company agent webhook persona v0.3 dry-run without Discord sends.")
@@ -3801,6 +3810,49 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- results_count: {output.get('results_count')}")
         return 0
 
+    if args.company_agent_web_reference_report:
+        output = build_company_agent_web_reference_report()
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL company agent role-scoped web reference")
+            print(f"- web_reference_available: {output.get('web_reference_available')}")
+            print(f"- current_web_reference_enabled: {output.get('current_web_reference_enabled')}")
+            print(f"- current_web_reference_mode: {output.get('current_web_reference_mode')}")
+        return 0
+
+    if args.company_agent_web_reference_dry_run:
+        agent_id = args.agent or "kasumi"
+        output = build_company_agent_web_reference_dry_run(
+            agent_id,
+            args.message or args.text or "",
+            {"command": agent_id, "source_channel": args.channel or "cli"},
+        )
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL company agent web reference dry-run")
+            print(f"- intent_detected: {output.get('intent_detected')}")
+            print(f"- would_search_web: {output.get('would_search_web')}")
+            print(f"- actual_web_called: {output.get('actual_web_called')}")
+        return 0
+
+    if args.company_agent_web_reference_one_shot:
+        output = build_company_agent_web_reference_one_shot(
+            args.agent or "kasumi",
+            args.message or args.text or "",
+            allow_web_reference=args.allow_web_reference,
+            context={"command": args.agent or "kasumi", "source_channel": args.channel or "cli"},
+        )
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL company agent web reference one-shot")
+            print(f"- web_search_attempted: {output.get('web_search_attempted')}")
+            print(f"- web_search_succeeded: {output.get('web_search_succeeded')}")
+            print(f"- failure_reason: {output.get('failure_reason')}")
+        return 0
+
     if args.company_agent_approval_dry_run:
         output = build_company_agent_approval_dry_run(args.channel or "lucy-검토", args.message or args.text or "")
         if args.json:
@@ -4309,6 +4361,10 @@ def main(argv: list[str] | None = None) -> int:
         or args.company_agent_memory_report
         or args.company_agent_memory_simulate_write
         or args.company_agent_memory_query
+        or args.company_agent_web_reference_report
+        or args.company_agent_web_reference_dry_run
+        or args.company_agent_web_reference_one_shot
+        or args.allow_web_reference
         or args.company_agent_approval_dry_run
         or args.company_agent_webhook_persona_report
         or args.company_agent_webhook_persona_dry_run

@@ -35,6 +35,11 @@ from company_persistent_memory import build_memory_command_response
 from company_webhook_sender import send_as_agent
 from company_webhook_sender import send_as_agent_webhook
 from company_webhook_sender import resolve_agent_webhook_name
+from company_web_reference import (
+    build_company_agent_web_reference_one_shot,
+    detect_web_reference_intent,
+    is_web_reference_enabled,
+)
 from safety_report_builders import build_blocked_report
 
 
@@ -56,6 +61,11 @@ COMMAND_SYNTAX = [
     "!memory approvals",
     "!memory decisions",
     "!recall <keyword>",
+    "!web <query>",
+    "!search <query>",
+    "!research <query>",
+    "!find <query>",
+    "!검증 <query>",
 ]
 
 
@@ -101,6 +111,8 @@ def _runtime_env(env: dict[str, Any] | None = None) -> dict[str, Any]:
         "webhook_create_enabled": _flag(env_map.get("HERMES_COMPANY_AGENT_WEBHOOK_CREATE_ENABLED", "true"), default=True),
         "real_bots_enabled": _flag(env_map.get("HERMES_COMPANY_AGENT_REAL_BOTS_ENABLED", "false")),
         "sender_mode": str(env_map.get("HERMES_COMPANY_AGENT_SENDER_MODE", "bot_fallback") or "bot_fallback").strip().lower(),
+        "web_reference_enabled": is_web_reference_enabled(env_map),
+        "web_reference_mode": str(env_map.get("HERMES_COMPANY_AGENT_WEB_REFERENCE_MODE", "off") or "off").strip().lower(),
     }
 
 
@@ -146,6 +158,8 @@ def build_company_agent_runtime_report(allow_flag_present: bool = False) -> dict
                 "webhook_create_enabled": bool(runtime_env["webhook_create_enabled"]),
                 "real_bots_enabled": bool(runtime_env["real_bots_enabled"]),
                 "sender_mode": runtime_env["sender_mode"],
+                "web_reference_enabled": bool(runtime_env["web_reference_enabled"]),
+                "web_reference_mode": runtime_env["web_reference_mode"],
                 "webhook_url_value_logged": False,
                 "raw_discord_ids_logged": False,
                 "secret_values_logged": False,
@@ -209,6 +223,8 @@ def build_company_agent_runtime_start_report(
         "webhook_create_enabled": bool(runtime_env["webhook_create_enabled"]),
         "real_bots_enabled": bool(runtime_env["real_bots_enabled"]),
         "sender_mode": runtime_env["sender_mode"],
+        "web_reference_enabled": bool(runtime_env["web_reference_enabled"]),
+        "web_reference_mode": runtime_env["web_reference_mode"],
         "sender_order": sender_order_for_mode(
             runtime_env["sender_mode"],
             real_bots_enabled=bool(runtime_env["real_bots_enabled"]),
@@ -239,6 +255,7 @@ def build_company_agent_message_result(
     content: str,
     replied_message_content: str = "",
     env: dict[str, Any] | None = None,
+    web_search_runner: Any | None = None,
 ) -> dict[str, Any]:
     route = route_company_agent_message(channel_name, content)
     if route.get("blocked"):
@@ -285,7 +302,24 @@ def build_company_agent_message_result(
     route["handoff_context_source_agent"] = context_resolution["context_source_agent"]
     if context_resolution.get("context_used"):
         route["handoff_context"] = context_resolution["context"]
-    response = build_company_agent_response(selected_agent, routed_content, route, dict(os.environ if env is None else env))
+    env_map = dict(os.environ if env is None else env)
+    web_reference: dict[str, Any] = {}
+    if (
+        selected_agent in {"lucy", "marin", "meiko", "kasumi", "reze"}
+        and detect_web_reference_intent(selected_agent, routed_content, route)
+        and is_web_reference_enabled(env_map)
+    ):
+        web_reference = build_company_agent_web_reference_one_shot(
+            selected_agent,
+            routed_content,
+            allow_web_reference=True,
+            env=env_map,
+            search_runner=web_search_runner,
+            context=route,
+        )
+        route["web_reference_report"] = web_reference
+        route["web_reference_results_block"] = web_reference.get("web_reference_results_block", "")
+    response = build_company_agent_response(selected_agent, routed_content, route, env_map)
     webhook_result = send_as_agent(selected_agent, channel_name, str(response.get("content", "")))
     bot_fallback = webhook_result.get("blocked") is True
     return {
@@ -298,6 +332,9 @@ def build_company_agent_message_result(
         "discord_api_send_called": False,
         "discord_message_sent": False,
         "message_sent_count": 0,
+        "web_reference_attempted": bool(web_reference.get("web_search_attempted")),
+        "web_reference_succeeded": bool(web_reference.get("web_search_succeeded")),
+        "web_reference_failure_reason": web_reference.get("failure_reason") or "",
         "webhook_url_value_logged": False,
         "raw_discord_ids_logged": False,
         "secret_values_logged": False,
@@ -419,7 +456,8 @@ def _command_response_text(command: str) -> str:
     return (
         "Commands: !lucy, !marin, !meiko, !kasumi, !reze, !agent, !route, "
         "!handoff, !review, !approve-draft, !agents, !help, !memory recent, "
-        "!memory handoffs, !memory approvals, !memory decisions, !recall <keyword>"
+        "!memory handoffs, !memory approvals, !memory decisions, !recall <keyword>, "
+        "!web, !search, !research, !find, !검증"
     )
 
 

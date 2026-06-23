@@ -6,7 +6,7 @@ import os
 import re
 from typing import Any, Callable
 
-from company_context_store import format_handoff_context_block
+from company_context_store import format_handoff_context_block, sanitize_company_context_text
 from company_agent_prompts import agent_prompts_available, get_agent_system_prompt
 from llm_client import SUPPORTED_PROVIDERS, build_llm_client_config, call_llm_once, redact_text
 
@@ -134,7 +134,9 @@ def build_agent_llm_messages(agent_id: str, user_message: str, context: dict[str
     safe_channel = redact_company_agent_text(str(route_context.get("source_channel", "") or ""), 120)
     handoff_context = route_context.get("handoff_context")
     context_block = format_handoff_context_block(handoff_context) if isinstance(handoff_context, dict) else ""
-    contextual_request = f"{context_block}\n\nRequest: {safe_user}" if context_block else f"Request: {safe_user}"
+    web_reference_block = sanitize_company_context_text(route_context.get("web_reference_results_block"), 6000)
+    context_parts = [part for part in (context_block, web_reference_block) if part]
+    contextual_request = "\n\n".join(context_parts + [f"Request: {safe_user}"])
     return {
         "envelope_type": "company_agent_llm_prompt",
         "agent_id": agent_id,
@@ -154,6 +156,7 @@ def build_agent_llm_messages(agent_id: str, user_message: str, context: dict[str
         "embedding_called": False,
         "external_execution": False,
         "handoff_context_used": bool(context_block),
+        "web_reference_context_used": bool(web_reference_block),
         "secret_values_logged": False,
         "raw_discord_ids_logged": False,
     }

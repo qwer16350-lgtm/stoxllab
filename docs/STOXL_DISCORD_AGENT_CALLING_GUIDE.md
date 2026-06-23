@@ -428,3 +428,33 @@ python apps\hermes_gateway\cli.py --company-agent-memory-query --json --query "�
 After a runtime restart, context resolution checks the latest 20 persisted handoffs
 when no in-memory handoff exists. No memory command calls an LLM, Discord API, RAG,
 embeddings, vector indexes, or external execution.
+
+## Workflow v0.7 Role-Scoped Read-Only Web Reference
+
+All five agents may use read-only web references for explicit manual commands when
+both web-reference environment gates are enabled. Each agent stays inside its role:
+Kasumi discovers research candidates, Meiko verifies operational facts, Marin studies
+content references, Lucy reviews publication risk, and Reze checks market and strategy
+context. The default remains disabled/off.
+
+```powershell
+python apps\hermes_gateway\cli.py --company-agent-web-reference-report --json
+python apps\hermes_gateway\cli.py --company-agent-web-reference-dry-run --json --agent kasumi --message "이번 달 디자인 지원사업 후보 찾아줘"
+python apps\hermes_gateway\cli.py --company-agent-web-reference-dry-run --json --agent reze --message "로우테크 가구 시장 방향성 봐줘"
+```
+
+User-approved read-only one-shot:
+
+```powershell
+$env:HERMES_COMPANY_AGENT_WEB_REFERENCE_ENABLED="true"
+$env:HERMES_COMPANY_AGENT_WEB_REFERENCE_MODE="manual_command_only"
+python apps\hermes_gateway\cli.py --company-agent-web-reference-one-shot --json --agent kasumi --message "이번 달 디자인 지원사업 후보 찾아줘" --allow-web-reference
+```
+
+Supported providers are configured separately as `serper`, `brave`, or `tavily`.
+Provider failures expose only bounded reason codes. Search results include source URLs
+and a latestness caveat, are stored as `web_reference` recent items, and flow through
+normal handoffs. Generic commands are `!web`, `!search`, `!research`, `!find`, and
+`!검증`. Searching and reading are allowed; login, form input, download,
+application, submission, email, publish, payment, RAG, embeddings, vectors, and any
+external execution remain forbidden.

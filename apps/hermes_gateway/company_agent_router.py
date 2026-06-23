@@ -15,7 +15,7 @@ from company_agent_registry import (
 from company_handoff import build_handoff_message, get_handoff_rule
 
 
-COMMAND_RE = re.compile(r"^!(lucy|marin|meiko|kasumi|reze|agent|route|handoff|review|approve-draft|agents|help|memory|recall)(?:\s+(.+))?$", re.I)
+COMMAND_RE = re.compile(r"^!(lucy|marin|meiko|kasumi|reze|agent|route|handoff|review|approve-draft|agents|help|memory|recall|web|search|research|find|검증)(?:\s+(.+))?$", re.I)
 EXTERNAL_ACTION_WORDS = (
     "publish",
     "deploy",
@@ -190,6 +190,18 @@ def _command_route(channel_name: str, message: str) -> dict[str, Any] | None:
         if selected_agent in {"marin", "kasumi"}:
             selected_agent = "lucy" if selected_agent == "marin" else "meiko"
         return _build_route(selected_agent, channel_name, rest, "approve_draft_command_" + reason, target_channel="최종-승인요청")
+    if command in {"web", "search", "research", "find", "검증"}:
+        exact = _exact_channel_default(channel_name)
+        default_agent = exact[0] if exact else get_default_agent_for_channel(channel_name)
+        if default_agent:
+            target = _target_channel_for_agent(default_agent)
+        else:
+            default_agent, target, _reason = _route_by_message(channel_name, rest)
+        route = _build_route(default_agent or "", channel_name, rest, "web_reference_command", target_channel=target)
+        route["command"] = command
+        route["command_argument"] = rest
+        route["web_reference_requested"] = True
+        return route
     if command in {"memory", "recall"}:
         return {
             **_base_result(channel_name, rest),
@@ -220,6 +232,11 @@ def _command_route(channel_name: str, message: str) -> dict[str, Any] | None:
             "!memory approvals",
             "!memory decisions",
             "!recall <keyword>",
+            "!web <query>",
+            "!search <query>",
+            "!research <query>",
+            "!find <query>",
+            "!검증 <query>",
         ]
         return {
             **_base_result(channel_name, rest),
@@ -363,6 +380,11 @@ def build_company_agent_org_report() -> dict[str, Any]:
             "!memory approvals",
             "!memory decisions",
             "!recall <keyword>",
+            "!web <query>",
+            "!search <query>",
+            "!research <query>",
+            "!find <query>",
+            "!검증 <query>",
         ],
         "discord_api_send_called": False,
         "discord_message_sent": False,
