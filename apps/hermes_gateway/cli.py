@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -294,6 +295,7 @@ from company_persistent_memory import (
     build_company_agent_memory_report,
     build_memory_query_report,
 )
+from company_rag_nas_index import build_nas_index, scan_nas_files, search_nas_index
 from company_web_reference import (
     build_company_agent_web_reference_dry_run,
     build_company_agent_web_reference_one_shot,
@@ -453,6 +455,21 @@ def build_phase30_sample_bundle(root: str | Path | None = None) -> dict[str, Any
             "rag_called": False,
         },
     }
+
+
+def _rag_env_overrides(args: argparse.Namespace) -> dict[str, Any]:
+    env = dict(os.environ)
+    if args.rag_max_files is not None:
+        env["HERMES_RAG_MAX_FILES"] = str(args.rag_max_files)
+    if args.rag_max_total_bytes is not None:
+        env["HERMES_RAG_MAX_TOTAL_BYTES"] = str(args.rag_max_total_bytes)
+    if args.rag_max_file_size_mb is not None:
+        env["HERMES_RAG_MAX_FILE_SIZE_MB"] = str(args.rag_max_file_size_mb)
+    if args.rag_max_image_file_size_mb is not None:
+        env["HERMES_RAG_MAX_IMAGE_FILE_SIZE_MB"] = str(args.rag_max_image_file_size_mb)
+    if args.rag_max_image_pixels is not None:
+        env["HERMES_RAG_MAX_IMAGE_PIXELS"] = str(args.rag_max_image_pixels)
+    return env
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -637,6 +654,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--rag-preflight-report", action="store_true", help="Print Phase 33A RAG preflight without retrieval.")
     parser.add_argument("--rag-local-retrieval-report", action="store_true", help="Print Phase 33B local read-only RAG retrieval report.")
     parser.add_argument("--rag-response-packet-report", action="store_true", help="Print Phase 33C RAG response packet without LLM or Discord send.")
+    parser.add_argument("--rag-scan-nas", action="store_true", help="Run v0.8A read-only NAS RAG scan.")
+    parser.add_argument("--rag-index-nas", action="store_true", help="Build v0.8A local NAS RAG metadata index.")
+    parser.add_argument("--rag-search", nargs="?", const="", help="Search the v0.8A local NAS RAG metadata index.")
+    parser.add_argument("--allow-rag-index-write", action="store_true", help="Allow writing the v0.8A local NAS RAG metadata index outside NAS.")
+    parser.add_argument("--rag-max-files", type=int, help="Override HERMES_RAG_MAX_FILES for v0.8A NAS RAG scan/index.")
+    parser.add_argument("--rag-max-total-bytes", type=int, help="Override HERMES_RAG_MAX_TOTAL_BYTES for v0.8A NAS RAG scan/index.")
+    parser.add_argument("--rag-max-file-size-mb", type=int, help="Override HERMES_RAG_MAX_FILE_SIZE_MB for v0.8A NAS RAG scan/index.")
+    parser.add_argument("--rag-max-image-file-size-mb", type=int, help="Override HERMES_RAG_MAX_IMAGE_FILE_SIZE_MB for v0.8A NAS RAG scan/index.")
+    parser.add_argument("--rag-max-image-pixels", type=int, help="Override HERMES_RAG_MAX_IMAGE_PIXELS for v0.8A NAS RAG scan/index.")
     parser.add_argument("--rag-llm-private-test-reply-report", action="store_true", help="Print Phase 33D-safe RAG+LLM private test reply preflight.")
     parser.add_argument("--rag-llm-prompt-envelope-report", action="store_true", help="Print Phase 33D-safe RAG+LLM prompt envelope preview.")
     parser.add_argument("--rag-llm-would-send-preview", action="store_true", help="Print Phase 33D-safe RAG+LLM would-send preview.")
@@ -761,6 +787,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--readonly-runtime-max-events", type=int, default=10, help="Phase 40T read-only runtime max events. Defaults to 10.")
     parser.add_argument("--readonly-capture-root", default="apps/hermes_gateway/local/captures", help="Phase 40T local ignored capture root.")
     parser.add_argument("--dry-run-export", action="store_true", help="Build export plan without writing files.")
+    parser.add_argument("--dry-run", action="store_true", help="Run supported commands in dry-run/read-only mode.")
     parser.add_argument("--json", action="store_true", help="Print JSON output.")
     args = parser.parse_args(argv)
 
@@ -3671,6 +3698,42 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- message_sent_count: {output.get('message_sent_count')}")
         return 0
 
+    if args.rag_scan_nas:
+        output = scan_nas_files(dry_run=bool(args.dry_run), env=_rag_env_overrides(args))
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL NAS RAG scan")
+            print(f"- report_type: {output.get('report_type')}")
+            print(f"- nas_root_present: {output.get('nas_root_present')}")
+            print(f"- nas_root_accessible: {output.get('nas_root_accessible')}")
+            print(f"- files_supported: {output.get('files_supported')}")
+            print(f"- would_write_index: {output.get('would_write_index')}")
+        return 0
+
+    if args.rag_index_nas:
+        output = build_nas_index(allow_write=bool(args.allow_rag_index_write), env=_rag_env_overrides(args))
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL NAS RAG index")
+            print(f"- blocked: {output.get('blocked')}")
+            print(f"- blocked_reason: {output.get('blocked_reason')}")
+            print(f"- index_file_written: {output.get('index_file_written')}")
+            print(f"- index_record_count: {output.get('index_record_count')}")
+        return 0
+
+    if args.rag_search is not None:
+        query = args.rag_search or args.query or ""
+        output = search_nas_index(query, env=_rag_env_overrides(args))
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL NAS RAG search")
+            print(f"- blocked: {output.get('blocked')}")
+            print(f"- result_count: {output.get('result_count')}")
+        return 0
+
     if args.company_agent_org_report:
         output = build_company_agent_org_runtime_report()
         if args.json:
@@ -4163,6 +4226,15 @@ def main(argv: list[str] | None = None) -> int:
         or args.rag_preflight_report
         or args.rag_local_retrieval_report
         or args.rag_response_packet_report
+        or args.rag_scan_nas
+        or args.rag_index_nas
+        or args.rag_search is not None
+        or args.allow_rag_index_write
+        or args.rag_max_files is not None
+        or args.rag_max_total_bytes is not None
+        or args.rag_max_file_size_mb is not None
+        or args.rag_max_image_file_size_mb is not None
+        or args.rag_max_image_pixels is not None
         or args.rag_llm_private_test_reply_report
         or args.rag_llm_prompt_envelope_report
         or args.rag_llm_would_send_preview
@@ -4400,6 +4472,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.readonly_runtime_max_events != 10
         or args.readonly_capture_root != "apps/hermes_gateway/local/captures"
         or args.dry_run_export
+        or args.dry_run
         or args.markdown
         or args.limit != 20
         or args.date
