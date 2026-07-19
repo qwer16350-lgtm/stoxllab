@@ -40,6 +40,8 @@ from company_discord_outbound_guard import (
 )
 from company_handoff import build_handoff_post_payload, store_company_handoff_context
 from company_persistent_memory import build_memory_command_response, load_recent_records
+from company_rag_nas_index import build_rag_discord_command_response, parse_rag_discord_command
+from runtime_dotenv import DISCORD_BOT_TOKEN_ALIASES
 from company_webhook_sender import send_as_agent
 from company_webhook_sender import send_as_agent_webhook
 from company_webhook_sender import resolve_agent_webhook_name
@@ -72,6 +74,10 @@ COMMAND_SYNTAX = [
     "!memory approvals",
     "!memory decisions",
     "!recall <keyword>",
+    "!rag-status",
+    "!rag-search <query>",
+    "!docs <query>",
+    "!recall-doc <query>",
     "!web <query>",
     "!search <query>",
     "!research <query>",
@@ -380,9 +386,10 @@ def _flag(value: Any, default: bool = False) -> bool:
 
 def _runtime_env(env: dict[str, Any] | None = None) -> dict[str, Any]:
     env_map = dict(os.environ if env is None else env)
+    discord_token = next((str(env_map.get(key) or "") for key in DISCORD_BOT_TOKEN_ALIASES if env_map.get(key)), "")
     return {
-        "discord_token_present": bool(env_map.get("DISCORD_BOT_TOKEN") or env_map.get("HERMES_DISCORD_TOKEN")),
-        "_discord_token": env_map.get("DISCORD_BOT_TOKEN") or env_map.get("HERMES_DISCORD_TOKEN") or "",
+        "discord_token_present": bool(discord_token),
+        "_discord_token": discord_token,
         "llm_enabled": _flag(env_map.get("HERMES_COMPANY_AGENT_LLM_ENABLED", "false")),
         "reply_mode": str(env_map.get("HERMES_COMPANY_AGENT_REPLY_MODE", "deterministic_fallback") or "deterministic_fallback"),
         "handoff_enabled": _flag(env_map.get("HERMES_COMPANY_AGENT_HANDOFF_ENABLED", "false")),
@@ -927,6 +934,8 @@ def build_company_agent_runtime_report(allow_flag_present: bool = False) -> dict
                 "discord_api_send_called": False,
                 "discord_message_sent": False,
                 "message_sent_count": 0,
+                "discord_token_present": bool(runtime_env["discord_token_present"]),
+                "token_value_logged": False,
                 "command_syntax": list(COMMAND_SYNTAX),
                 "external_execution": False,
                 "handoff_posting_enabled": bool(runtime_env["handoff_enabled"]),
@@ -1033,6 +1042,52 @@ def build_company_agent_message_result(
     env: dict[str, Any] | None = None,
     web_search_runner: Any | None = None,
 ) -> dict[str, Any]:
+    rag_command = parse_rag_discord_command(content)
+    if rag_command.get("rag_runtime_command"):
+        env_map = dict(os.environ if env is None else env)
+        command_response = build_rag_discord_command_response(
+            str(rag_command.get("command") or ""),
+            str(rag_command.get("query") or ""),
+            env=env_map,
+        )
+        return {
+            "report_type": "company_agent_rag_discord_command",
+            "source_channel": channel_name,
+            "selected_agent": "hermes",
+            "agent_display_name": "HERMES_STOXL",
+            "reason": "rag_runtime_command",
+            "command": rag_command.get("command"),
+            "query_present": bool(str(rag_command.get("query") or "").strip()),
+            "reply_prepared": True,
+            "response": command_response,
+            **_outbound_guard_preview(str(command_response.get("content") or ""), "hermes"),
+            "webhook_send_available": False,
+            "bot_message_fallback_used": True,
+            "send_strategy": "bot_message_fallback",
+            "discord_api_send_called": False,
+            "discord_message_sent": False,
+            "message_sent_count": 0,
+            "rag_runtime_command": True,
+            "rag_mode": "keyword_only",
+            "nas_write_attempted": False,
+            "nas_file_modified": False,
+            "nas_file_deleted": False,
+            "index_write_attempted_from_runtime": False,
+            "rag_called": False,
+            "embedding_called": False,
+            "vector_index_created": False,
+            "llm_called": False,
+            "llm_api_called": False,
+            "web_search_called": False,
+            "vision_api_called": False,
+            "ocr_called": False,
+            "external_execution": False,
+            "raw_nas_absolute_path_logged": False,
+            "raw_index_absolute_path_logged": False,
+            "raw_discord_ids_logged": False,
+            "secret_values_logged": False,
+            "webhook_url_value_logged": False,
+        }
     route = route_company_agent_message(channel_name, content)
     if route.get("blocked"):
         return {

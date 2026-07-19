@@ -46,6 +46,7 @@ MAX_HASH_BYTES = 1024 * 1024
 MAX_PREVIEW_BYTES = 32 * 1024
 INDEX_FILE_NAME = "nas_rag_index.json"
 SKIP_IMAGE_PIXEL_TOO_LARGE = "[image_pixel_too_large]"
+MAX_RAG_QUERY_CHARS = 200
 
 
 def _flag(value: Any, default: bool = False) -> bool:
@@ -149,6 +150,17 @@ def _is_accessible_dir(path: Path | None) -> bool:
 
 def _hash_path_label(relative_path: str) -> str:
     return hashlib.sha256(relative_path.replace("\\", "/").encode("utf-8", errors="ignore")).hexdigest()[:16]
+
+
+def _safe_relative_path(value: Any) -> str:
+    raw = str(value or "").replace("\\", "/").strip()
+    parts = [part for part in raw.split("/") if part not in {"", ".", ".."}]
+    return "/".join(parts)[:500]
+
+
+def _source_label(file_name: str) -> str:
+    stem = Path(str(file_name or "document")).stem.replace("_", " ").replace("-", " ").strip()
+    return (stem or str(file_name or "document")).strip()[:120]
 
 
 def _content_hash(path: Path) -> str:
@@ -300,8 +312,12 @@ def _file_record(root: Path, path: Path, dimensions: tuple[int | None, int | Non
         "path_hash": _hash_path_label(relative),
         "file_name": path.name[:240],
         "folder_name": parent_name[:160],
+        "relative_path": _safe_relative_path(relative),
+        "source_label": _source_label(path.name),
+        "chunk_index": 0,
         "extension": extension,
         "asset_type": "image_metadata" if extension in IMAGE_EXTENSIONS else "document_metadata",
+        "media_type": "image" if extension in IMAGE_EXTENSIONS else "document",
         "size_bytes": int(stat.st_size) if stat else 0,
         "modified_at_present": stat is not None,
         "content_hash": _content_hash(path),
@@ -311,6 +327,29 @@ def _file_record(root: Path, path: Path, dimensions: tuple[int | None, int | Non
         "vision_api_called": False,
         "ocr_called": False,
         "raw_nas_absolute_path_logged": False,
+    }
+
+
+def _rag_runtime_safety_fields() -> dict[str, Any]:
+    return {
+        "rag_runtime_command": True,
+        "rag_mode": "keyword_only",
+        "nas_write_attempted": False,
+        "nas_file_modified": False,
+        "nas_file_deleted": False,
+        "index_write_attempted_from_runtime": False,
+        "rag_called": False,
+        "embedding_called": False,
+        "vector_index_created": False,
+        "llm_called": False,
+        "llm_api_called": False,
+        "web_search_called": False,
+        "vision_api_called": False,
+        "ocr_called": False,
+        "external_execution": False,
+        "raw_nas_absolute_path_logged": False,
+        "raw_index_absolute_path_logged": False,
+        "secret_value_logged": False,
     }
 
 
@@ -537,53 +576,302 @@ def build_nas_index(*, allow_write: bool = False, env: dict[str, Any] | None = N
     }
 
 
-def search_nas_index(query: str, *, env: dict[str, Any] | None = None, limit: int = 10) -> dict[str, Any]:
+def _load_index_payload(env: dict[str, Any] | None = None) -> tuple[dict[str, Any] | None, str]:
     index_path = _index_dir(env) / INDEX_FILE_NAME
-    report = {
+    try:
+        payload = json.loads(index_path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return None, "local_index_missing"
+    except (OSError, json.JSONDecodeError):
+        return None, "local_index_unreadable"
+    return payload if isinstance(payload, dict) else {}, ""
+
+
+def get_rag_index_status(*, env: dict[str, Any] | None = None) -> dict[str, Any]:
+    payload, failure_reason = _load_index_payload(env)
+    records = payload.get("records") if isinstance(payload, dict) else []
+    if not isinstance(records, list):
+        records = []
+    return {
+        **_base_report("rag_index_status"),
+        **_rag_runtime_safety_fields(),
+        "index_available": failure_reason == "",
+        "index_present": failure_reason == "",
+        "record_count": len(records) if failure_reason == "" else 0,
+        "mode": "keyword_only",
+        "blocked": failure_reason != "",
+        "blocked_reason": failure_reason,
+        "index_dir_value_logged": False,
+        "raw_index_absolute_path_logged": False,
+    }
+
+
+def _snippet_for_record(record: dict[str, Any], query_terms: list[str], limit: int = 240) -> str:
+    preview = str(record.get("content_preview") or "").replace("\r", " ").strip()
+    if not preview:
+        if str(record.get("media_type") or record.get("asset_type") or "").startswith("image"):
+            width = record.get("width")
+            height = record.get("height")
+            size = f" {width}x{height}" if width and height else ""
+            return f"Image asset metadata.{size}".strip()[:limit]
+        return "Document metadata."
+    folded = preview.casefold()
+    start = 0
+    for term in query_terms:
+        found = folded.find(term)
+        if found >= 0:
+            start = max(0, found - 50)
+            break
+    return preview[start : start + limit].strip().replace("\n", " ")[:limit]
+
+
+def _record_score(record: dict[str, Any], query_terms: list[str]) -> float:
+    haystack = " ".join(
+        str(record.get(key) or "")
+        for key in (
+            "source_label",
+            "relative_path",
+            "file_name",
+            "folder_name",
+            "extension",
+            "asset_type",
+            "media_type",
+            "content_preview",
+        )
+    ).casefold()
+    score = 0.0
+    for term in query_terms:
+        count = haystack.count(term)
+        score += 1.0 + min(count, 8) if count else 0.0
+    return round(score, 2)
+
+
+def _search_result_from_record(record: dict[str, Any], query_terms: list[str]) -> dict[str, Any]:
+    file_name = str(record.get("file_name") or "document")
+    folder_name = str(record.get("folder_name") or "")
+    relative_path = _safe_relative_path(record.get("relative_path") or "/".join(part for part in (folder_name, file_name) if part))
+    media_type = str(record.get("media_type") or "")
+    asset_type = str(record.get("asset_type") or "")
+    is_image = media_type == "image" or asset_type == "image_metadata"
+    chunk_index = int(record.get("chunk_index") or 0)
+    return {
+        "source_label": str(record.get("source_label") or _source_label(file_name)),
+        "relative_path": relative_path,
+        "file_name": file_name[:240],
+        "folder_name": folder_name[:160],
+        "extension": str(record.get("extension") or ""),
+        "asset_type": asset_type or ("image_metadata" if is_image else "document_metadata"),
+        "media_type": "image" if is_image else "document",
+        "chunk_index": chunk_index,
+        "chunk_id": f"{'image' if is_image else 'doc'}#{chunk_index}",
+        "score": _record_score(record, query_terms),
+        "snippet": _snippet_for_record(record, query_terms),
+        "width": record.get("width") if is_image else None,
+        "height": record.get("height") if is_image else None,
+        "path_hash": record.get("path_hash"),
+        "raw_nas_absolute_path_logged": False,
+        "raw_index_absolute_path_logged": False,
+    }
+
+
+def search_rag_index(query: str, *, env: dict[str, Any] | None = None, limit: int = 5) -> dict[str, Any]:
+    query_text = str(query or "").strip()
+    base = {
         **_base_report("rag_search_nas_index"),
-        "query_present": bool(str(query or "").strip()),
+        **_rag_runtime_safety_fields(),
+        "query_present": bool(query_text),
+        "query_too_long": len(query_text) > MAX_RAG_QUERY_CHARS,
         "index_dir_value_logged": False,
         "index_present": False,
         "search_attempted": False,
         "result_count": 0,
         "results": [],
-        "vector_index_created": False,
+        "mode": "keyword_only",
+        "limit": max(1, min(int(limit or 5), 10)),
     }
-    if not report["query_present"]:
-        return {**report, "blocked": True, "blocked_reason": "query_missing"}
-    try:
-        payload = json.loads(index_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return {**report, "blocked": True, "blocked_reason": "local_index_missing"}
+    if not query_text:
+        return {**base, "blocked": True, "blocked_reason": "query_missing"}
+    if len(query_text) > MAX_RAG_QUERY_CHARS:
+        return {**base, "blocked": True, "blocked_reason": "query_too_long", "query": query_text[:MAX_RAG_QUERY_CHARS]}
+    payload, failure_reason = _load_index_payload(env)
+    if failure_reason:
+        return {**base, "blocked": True, "blocked_reason": failure_reason}
     records = payload.get("records") if isinstance(payload, dict) else []
     if not isinstance(records, list):
         records = []
-    query_terms = [part.casefold() for part in str(query or "").split() if part.strip()]
+    query_terms = [part.casefold() for part in query_text.split() if part.strip()]
     matches: list[dict[str, Any]] = []
     for record in records:
+        if not isinstance(record, dict):
+            continue
         haystack = " ".join(
             str(record.get(key) or "")
-            for key in ("file_name", "folder_name", "extension", "asset_type", "content_preview")
+            for key in (
+                "source_label",
+                "relative_path",
+                "file_name",
+                "folder_name",
+                "extension",
+                "asset_type",
+                "media_type",
+                "content_preview",
+            )
         ).casefold()
         if all(term in haystack for term in query_terms):
-            matches.append(
-                {
-                    "path_hash": record.get("path_hash"),
-                    "file_name": record.get("file_name"),
-                    "folder_name": record.get("folder_name"),
-                    "extension": record.get("extension"),
-                    "asset_type": record.get("asset_type"),
-                    "size_bytes": record.get("size_bytes"),
-                    "raw_nas_absolute_path_logged": False,
-                }
-            )
-        if len(matches) >= max(1, min(limit, 50)):
-            break
+            matches.append(_search_result_from_record(record, query_terms))
+    matches.sort(key=lambda item: float(item.get("score") or 0), reverse=True)
+    selected = matches[: int(base["limit"])]
     return {
-        **report,
+        **base,
         "blocked": False,
+        "blocked_reason": "",
+        "query": query_text,
         "index_present": True,
+        "index_available": True,
         "search_attempted": True,
-        "result_count": len(matches),
-        "results": matches,
+        "record_count": len(records),
+        "result_count": len(selected),
+        "results": selected,
     }
+
+
+def search_nas_index(query: str, *, env: dict[str, Any] | None = None, limit: int = 10) -> dict[str, Any]:
+    return search_rag_index(query, env=env, limit=limit)
+
+
+def _display_query(query: str) -> str:
+    return str(query or "").replace("\r", " ").replace("\n", " ").strip()[:120]
+
+
+def format_rag_status_for_discord(status: dict[str, Any]) -> str:
+    if not status.get("index_available"):
+        return (
+            "[HERMES_STOXL] RAG status\n\n"
+            "index: not available\n"
+            "Please build the local NAS index from CLI first.\n\n"
+            "python apps\\hermes_gateway\\cli.py --rag-index-nas --json --allow-rag-index-write\n\n"
+            "nas write: false\n"
+            "llm: false\n"
+            "embedding: false\n"
+            "vision: false\n"
+            "ocr: false"
+        )
+    return (
+        "[HERMES_STOXL] RAG status\n\n"
+        "index: available\n"
+        f"records: {int(status.get('record_count') or 0)}\n"
+        "mode: keyword_only\n"
+        "nas write: false\n"
+        "llm: false\n"
+        "embedding: false\n"
+        "vision: false\n"
+        "ocr: false\n\n"
+        "commands:\n"
+        "!rag-search <query>\n"
+        "!docs <query>\n"
+        "!recall-doc <query>"
+    )
+
+
+def format_rag_search_results_for_discord(result: dict[str, Any]) -> str:
+    query = _display_query(str(result.get("query") or ""))
+    reason = str(result.get("blocked_reason") or "")
+    if reason == "query_missing":
+        return (
+            "[HERMES_STOXL]\n"
+            "Please enter a search query.\n\n"
+            "Examples:\n"
+            "!rag-search brand guide\n"
+            "!docs homepage copy\n"
+            "!recall-doc support documents"
+        )
+    if reason == "query_too_long":
+        return "[HERMES_STOXL]\nRAG query is too long.\nreason: query_too_long"
+    if reason:
+        return (
+            "[HERMES_STOXL]\n"
+            "RAG index is not available.\n"
+            "Please build the local index from CLI first.\n"
+            "reason: local_index_missing"
+        )
+    results = list(result.get("results") or [])
+    if not results:
+        return (
+            "[HERMES_STOXL] RAG search results\n\n"
+            f"query: {query}\n"
+            "results: 0\n"
+            "mode: keyword_only\n\n"
+            "No matching results found. Try another keyword."
+        )
+    lines = [
+        "[HERMES_STOXL] RAG search results",
+        "",
+        f"query: {query}",
+        f"results: {len(results)}",
+        "mode: keyword_only",
+        "",
+    ]
+    for index, item in enumerate(results, start=1):
+        lines.extend(
+            [
+                f"{index}. {item.get('source_label')}",
+                f"   path: {item.get('relative_path')}",
+                f"   type: {item.get('media_type')}",
+                f"   chunk: {item.get('chunk_id')}",
+                f"   score: {item.get('score')}",
+            ]
+        )
+        if item.get("media_type") == "image" and item.get("width") and item.get("height"):
+            lines.append(f"   size: {item.get('width')}x{item.get('height')}")
+        lines.extend([f"   snippet: {item.get('snippet')}", ""])
+    return "\n".join(lines).strip()
+
+
+def build_rag_discord_command_response(command: str, query: str = "", *, env: dict[str, Any] | None = None) -> dict[str, Any]:
+    normalized = str(command or "").strip().lower()
+    try:
+        if normalized == "rag-status":
+            status = get_rag_index_status(env=env)
+            return {
+                **status,
+                "response_type": "rag_discord_command_response",
+                "reply_text_source": "rag_status",
+                "command": normalized,
+                "content": format_rag_status_for_discord(status),
+            }
+        search = search_rag_index(query, env=env, limit=5)
+        return {
+            **search,
+            "response_type": "rag_discord_command_response",
+            "reply_text_source": "rag_search",
+            "command": normalized,
+            "content": format_rag_search_results_for_discord(search),
+        }
+    except Exception:
+        return {
+            **_base_report("rag_discord_runtime_exception"),
+            **_rag_runtime_safety_fields(),
+            "response_type": "rag_discord_command_response",
+            "reply_text_source": "rag_runtime_exception",
+            "command": normalized,
+            "blocked": True,
+            "blocked_reason": "rag_search_runtime_exception",
+            "content": "[HERMES_STOXL]\nRAG search failed.\nreason: rag_search_runtime_exception",
+        }
+
+
+def parse_rag_discord_command(content: str) -> dict[str, Any]:
+    lines = [line.strip() for line in str(content or "").replace("\r\n", "\n").split("\n")]
+    for line in lines:
+        if not line.startswith("!"):
+            continue
+        parts = line.split(maxsplit=1)
+        command = parts[0].lstrip("!").strip().lower()
+        if command not in {"rag-status", "rag-search", "docs", "recall-doc"}:
+            continue
+        return {
+            "rag_runtime_command": True,
+            "command": command,
+            "query": parts[1].strip() if len(parts) > 1 else "",
+        }
+    return {"rag_runtime_command": False, "command": "", "query": ""}
