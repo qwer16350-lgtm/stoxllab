@@ -134,9 +134,10 @@ def build_agent_llm_messages(agent_id: str, user_message: str, context: dict[str
     safe_channel = redact_company_agent_text(str(route_context.get("source_channel", "") or ""), 120)
     handoff_context = route_context.get("handoff_context")
     context_block = format_handoff_context_block(handoff_context) if isinstance(handoff_context, dict) else ""
+    internal_rag_block = sanitize_company_context_text(route_context.get("internal_rag_prompt_context"), 6000)
     web_reference_block = sanitize_company_context_text(route_context.get("web_reference_results_block"), 6000)
-    context_parts = [part for part in (context_block, web_reference_block) if part]
-    contextual_request = "\n\n".join(context_parts + [f"Request: {safe_user}"])
+    context_parts = [part for part in (internal_rag_block, web_reference_block, context_block) if part]
+    contextual_request = "\n\n".join([f"Request: {safe_user}"] + context_parts)
     return {
         "envelope_type": "company_agent_llm_prompt",
         "agent_id": agent_id,
@@ -152,11 +153,21 @@ def build_agent_llm_messages(agent_id: str, user_message: str, context: dict[str
                 ),
             },
         ],
-        "rag_called": False,
-        "embedding_called": False,
+        "rag_called": bool(internal_rag_block),
+        "embedding_called": bool(route_context.get("agent_rag_used")),
         "external_execution": False,
         "handoff_context_used": bool(context_block),
+        "internal_rag_context_used": bool(internal_rag_block),
         "web_reference_context_used": bool(web_reference_block),
+        "context_order": [
+            "system_policy",
+            "agent_role",
+            "approval_tool_safety",
+            "current_user_request",
+            "internal_rag_reference",
+            "web_reference",
+            "conversation_memory",
+        ],
         "secret_values_logged": False,
         "raw_discord_ids_logged": False,
     }
@@ -232,8 +243,8 @@ def generate_agent_reply(
             "llm_failure_reason": None,
             "blocked_reasons": [] if manual else ["not_manual_command"],
             "prompt_envelope": prompt,
-            "rag_called": False,
-            "embedding_called": False,
+            "rag_called": bool(prompt.get("internal_rag_context_used")),
+            "embedding_called": bool((context or {}).get("agent_rag_used")) if isinstance(context, dict) else False,
             "external_execution": False,
             "api_key_value_logged": False,
             "secret_values_logged": False,
@@ -267,8 +278,8 @@ def generate_agent_reply(
         "llm_error_message_redacted": not succeeded,
         "response_text": text if succeeded else "",
         "prompt_envelope": prompt,
-        "rag_called": False,
-        "embedding_called": False,
+        "rag_called": bool(prompt.get("internal_rag_context_used")),
+        "embedding_called": bool((context or {}).get("agent_rag_used")) if isinstance(context, dict) else False,
         "external_execution": False,
         "api_key_value_logged": False,
         "secret_values_logged": False,

@@ -30,6 +30,13 @@ def _llm_enabled(env: Mapping[str, str] | None = None) -> bool:
 
 def build_prompt_envelope(agent_id: str, message: str, route: dict[str, Any]) -> dict[str, Any]:
     agent = get_agent(agent_id) or {}
+    internal_rag_context = str(route.get("internal_rag_prompt_context") or "")
+    messages_preview = [
+        {"role": "system", "content": f"Use {agent.get('display_name', agent_id)} persona. External execution is forbidden."},
+        {"role": "user", "content": message[:1200]},
+    ]
+    if internal_rag_context:
+        messages_preview.append({"role": "user", "content": internal_rag_context[:1200]})
     return {
         "envelope_type": "company_agent_prompt_envelope",
         "agent_id": agent_id,
@@ -38,10 +45,8 @@ def build_prompt_envelope(agent_id: str, message: str, route: dict[str, Any]) ->
         "report_format": get_report_format(agent_id),
         "route_reason": route.get("reason"),
         "external_execution_allowed": False,
-        "messages_preview": [
-            {"role": "system", "content": f"Use {agent.get('display_name', agent_id)} persona. External execution is forbidden."},
-            {"role": "user", "content": message[:1200]},
-        ],
+        "internal_rag_context_used": bool(internal_rag_context),
+        "messages_preview": messages_preview,
     }
 
 
@@ -301,6 +306,8 @@ def build_deterministic_company_agent_reply(agent_id: str, message: str, route: 
     handoff = route.get("handoff_to") or agent.get("handoff_target")
     handoff_channel = route.get("handoff_channel") or target
     content = _template_for_agent(agent_id, message, route)
+    if route.get("agent_rag_used") and _flag(route.get("agent_rag_show_usage"), False):
+        content = f"내부 자료 {int(route.get('agent_rag_result_count') or 0)}건을 참고했습니다.\n\n{content}"
     return {
         "response_type": "company_agent_response",
         "reply_text_source": "deterministic_fallback",
@@ -312,8 +319,14 @@ def build_deterministic_company_agent_reply(agent_id: str, message: str, route: 
         "content": content,
         "llm_api_call_attempted": False,
         "llm_api_called": False,
-        "rag_called": False,
-        "embedding_called": False,
+        "agent_rag_used": bool(route.get("agent_rag_used")),
+        "agent_rag_mode": route.get("agent_rag_mode") or "none",
+        "agent_rag_result_count": int(route.get("agent_rag_result_count") or 0),
+        "agent_rag_context_chars": int(route.get("agent_rag_context_chars") or 0),
+        "agent_rag_fallback_reason": route.get("agent_rag_fallback_reason") or "",
+        "possible_prompt_injection_detected": bool(route.get("possible_prompt_injection_detected")),
+        "rag_called": bool(route.get("agent_rag_used")),
+        "embedding_called": bool(route.get("agent_rag_used")),
         "vector_index_created": False,
         "external_execution": False,
         "handoff_context_used": bool(route.get("handoff_context")),
@@ -399,7 +412,14 @@ def build_company_agent_response(
                 "llm_result": llm_result,
                 "llm_api_call_attempted": True,
                 "llm_api_called": bool(llm_result.get("llm_api_called")),
-                "rag_called": False,
+                "agent_rag_used": bool(route.get("agent_rag_used")),
+                "agent_rag_mode": route.get("agent_rag_mode") or "none",
+                "agent_rag_result_count": int(route.get("agent_rag_result_count") or 0),
+                "agent_rag_context_chars": int(route.get("agent_rag_context_chars") or 0),
+                "agent_rag_fallback_reason": route.get("agent_rag_fallback_reason") or "",
+                "possible_prompt_injection_detected": bool(route.get("possible_prompt_injection_detected")),
+                "rag_called": bool(route.get("agent_rag_used")),
+                "embedding_called": bool(route.get("agent_rag_used")),
                 "external_execution": False,
                 "raw_content_logged": False,
                 "raw_discord_ids_logged": False,

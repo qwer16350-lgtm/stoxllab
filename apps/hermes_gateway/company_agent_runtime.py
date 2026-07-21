@@ -33,6 +33,14 @@ from company_agent_router import (
     route_company_agent_message,
 )
 from company_agent_responder import build_approval_draft, build_company_agent_response
+from company_agent_rag import (
+    build_agent_rag_debug,
+    build_agent_rag_report_fields,
+    build_agent_rag_status,
+    build_handoff_rag_context,
+    format_agent_rag_status_for_discord,
+    retrieve_agent_rag_context,
+)
 from company_discord_outbound_guard import (
     classify_discord_send_failure,
     prepare_discord_outbound_messages,
@@ -82,6 +90,7 @@ COMMAND_SYNTAX = [
     "!rag-semantic <query>",
     "!rag-hybrid <query>",
     "!rag-vector-status",
+    "!agent-rag-status",
     "!web <query>",
     "!search <query>",
     "!research <query>",
@@ -1063,6 +1072,98 @@ def build_company_agent_message_result(
     env: dict[str, Any] | None = None,
     web_search_runner: Any | None = None,
 ) -> dict[str, Any]:
+    env_map = dict(os.environ if env is None else env)
+    command_line = extract_first_command_line(content) or normalize_discord_message_content(content)
+    lowered_command_line = command_line.strip().lower()
+    if lowered_command_line.startswith("!agent-rag-status"):
+        status = build_agent_rag_status(env_map)
+        command_response = {
+            **status,
+            "response_type": "company_agent_command_response",
+            "reply_text_source": "agent_rag_status",
+            "content": format_agent_rag_status_for_discord(env_map),
+            "llm_api_call_attempted": False,
+            "llm_api_called": False,
+            "rag_called": False,
+            "embedding_called": False,
+            "vector_index_created": False,
+            "external_execution": False,
+        }
+        return {
+            "report_type": "company_agent_rag_status_command",
+            "source_channel": channel_name,
+            "selected_agent": "hermes",
+            "agent_display_name": "HERMES_STOXL",
+            "reason": "agent_rag_status_command",
+            "command": "agent-rag-status",
+            "reply_prepared": True,
+            "response": command_response,
+            **_outbound_guard_preview(str(command_response.get("content") or ""), "hermes"),
+            "webhook_send_available": False,
+            "bot_message_fallback_used": True,
+            "send_strategy": "bot_message_fallback",
+            "discord_api_send_called": False,
+            "discord_message_sent": False,
+            "message_sent_count": 0,
+            "runtime_index_build": False,
+            "nas_write": False,
+            "external_embedding_api": False,
+            "vision": False,
+            "ocr": False,
+            "external_execution": False,
+            "raw_nas_absolute_path_logged": False,
+            "raw_vector_logged": False,
+            "raw_discord_ids_logged": False,
+            "secret_values_logged": False,
+        }
+    if lowered_command_line.startswith("!agent-rag-debug"):
+        parts = command_line.split(maxsplit=2)
+        agent = parts[1] if len(parts) >= 2 else "hermes"
+        query = parts[2] if len(parts) >= 3 else ""
+        debug = build_agent_rag_debug(agent, query, env_map)
+        command_response = {
+            **debug,
+            "response_type": "company_agent_command_response",
+            "reply_text_source": "agent_rag_debug",
+            "content": (
+                "[HERMES_STOXL] Agent RAG debug\n\n"
+                f"blocked: {str(debug.get('blocked', False)).lower()}\n"
+                f"reason: {debug.get('blocked_reason') or debug.get('agent_rag_fallback_reason') or ''}\n"
+                f"agent scope: {debug.get('agent_scope') or agent}\n"
+                f"used: {str(debug.get('agent_rag_used', False)).lower()}\n"
+                f"results: {int(debug.get('agent_rag_result_count') or 0)}"
+            ),
+            "llm_api_call_attempted": False,
+            "llm_api_called": False,
+            "external_execution": False,
+        }
+        return {
+            "report_type": "company_agent_rag_debug_command",
+            "source_channel": channel_name,
+            "selected_agent": "hermes",
+            "agent_display_name": "HERMES_STOXL",
+            "reason": "agent_rag_debug_command",
+            "command": "agent-rag-debug",
+            "reply_prepared": True,
+            "response": command_response,
+            **_outbound_guard_preview(str(command_response.get("content") or ""), "hermes"),
+            "webhook_send_available": False,
+            "bot_message_fallback_used": True,
+            "send_strategy": "bot_message_fallback",
+            "discord_api_send_called": False,
+            "discord_message_sent": False,
+            "message_sent_count": 0,
+            "runtime_index_build": False,
+            "nas_write": False,
+            "external_embedding_api": False,
+            "vision": False,
+            "ocr": False,
+            "external_execution": False,
+            "raw_nas_absolute_path_logged": False,
+            "raw_vector_logged": False,
+            "raw_discord_ids_logged": False,
+            "secret_values_logged": False,
+        }
     rag_vector_command = _parse_rag_vector_discord_command(content)
     if rag_vector_command.get("rag_runtime_command"):
         env_map = dict(os.environ if env is None else env)
@@ -1258,6 +1359,40 @@ def build_company_agent_message_result(
     if context_resolution.get("context_used"):
         route["handoff_context"] = context_resolution["context"]
     env_map = dict(os.environ if env is None else env)
+    agent_rag_context = None
+    if selected_agent in {"hermes", "lucy", "marin", "meiko", "kasumi", "reze"}:
+        conversation_context = []
+        if isinstance(route.get("handoff_context"), dict):
+            conversation_context.append(route["handoff_context"])
+        try:
+            agent_rag_context = retrieve_agent_rag_context(
+                agent_name=selected_agent,
+                user_message=routed_content,
+                conversation_context=conversation_context,
+                env=env_map,
+            )
+        except Exception:
+            agent_rag_context = None
+            route.update(
+                {
+                    "agent_rag_used": False,
+                    "agent_rag_fallback": True,
+                    "agent_rag_fallback_reason": "rag_runtime_exception",
+                    "agent_response_continued": True,
+                    "possible_prompt_injection_detected": False,
+                    "raw_nas_absolute_path_logged": False,
+                    "raw_vector_logged": False,
+                    "secret_value_logged": False,
+                }
+            )
+        if agent_rag_context is not None:
+            route.update(build_agent_rag_report_fields(agent_rag_context))
+            route["internal_rag_prompt_context"] = agent_rag_context.prompt_context
+            route["handoff_rag_context"] = build_handoff_rag_context(agent_rag_context)
+            route["agent_response_continued"] = True
+        route["agent_rag_enabled"] = str(env_map.get("HERMES_AGENT_RAG_ENABLED", "false")).strip().lower() in {"1", "true", "yes", "on"}
+        route["agent_rag_auto_enabled"] = str(env_map.get("HERMES_AGENT_RAG_AUTO_ENABLED", "false")).strip().lower() in {"1", "true", "yes", "on"}
+        route["agent_rag_show_usage"] = str(env_map.get("HERMES_AGENT_RAG_SHOW_USAGE", "false")).strip().lower() in {"1", "true", "yes", "on"}
     web_reference: dict[str, Any] = {}
     web_intent_detected = detect_web_reference_intent(selected_agent, routed_content, route)
     agent_command_web_bridge = detect_agent_command_web_intent(selected_agent, routed_content, route)

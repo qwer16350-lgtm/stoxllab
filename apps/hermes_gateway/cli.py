@@ -294,6 +294,7 @@ from company_agent_llm import (
     build_company_agent_llm_one_shot,
     build_company_agent_llm_report,
 )
+from company_agent_rag import build_agent_rag_debug, build_agent_rag_status
 from company_persistent_memory import (
     append_memory_record,
     build_company_agent_memory_report,
@@ -625,6 +626,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--company-agent-memory-report", action="store_true", help="Print STOXL company agent JSONL memory report without external calls.")
     parser.add_argument("--company-agent-memory-simulate-write", action="store_true", help="Write one safe local STOXL company memory simulation record.")
     parser.add_argument("--company-agent-memory-query", action="store_true", help="Query safe local STOXL company memory without RAG or embeddings.")
+    parser.add_argument("--company-agent-rag-status", action="store_true", help="Print STOXL agent-scoped RAG v0.8D status without Discord sends.")
+    parser.add_argument("--company-agent-rag-debug", action="store_true", help="Print gated STOXL agent-scoped RAG v0.8D debug metadata without prompt or secret output.")
     parser.add_argument("--company-agent-web-reference-report", action="store_true", help="Print role-scoped read-only company web reference v0.7 report.")
     parser.add_argument("--company-agent-web-reference-dry-run", action="store_true", help="Build role-scoped web reference intent dry-run without web calls.")
     parser.add_argument("--company-agent-web-reference-one-shot", action="store_true", help="Run one gated read-only company web reference without Discord sends.")
@@ -3939,6 +3942,29 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- results_count: {output.get('results_count')}")
         return 0
 
+    if args.company_agent_rag_status:
+        output = build_agent_rag_status()
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL company agent RAG status")
+            print(f"- enabled: {output.get('agent_rag_enabled')}")
+            print(f"- auto mode: {output.get('agent_rag_auto_enabled')}")
+            print(f"- retrieval mode: {output.get('retrieval_mode')}")
+            print(f"- runtime index build: {output.get('runtime_index_build')}")
+        return 0
+
+    if args.company_agent_rag_debug:
+        output = build_agent_rag_debug(args.agent or "hermes", args.query or args.message or args.text or "")
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL company agent RAG debug")
+            print(f"- blocked: {output.get('blocked')}")
+            print(f"- used: {output.get('agent_rag_used')}")
+            print(f"- result_count: {output.get('agent_rag_result_count')}")
+        return 0
+
     if args.company_agent_web_reference_report:
         output = build_company_agent_web_reference_report()
         if args.json:
@@ -4505,6 +4531,8 @@ def main(argv: list[str] | None = None) -> int:
         or args.company_agent_memory_report
         or args.company_agent_memory_simulate_write
         or args.company_agent_memory_query
+        or args.company_agent_rag_status
+        or args.company_agent_rag_debug
         or args.company_agent_web_reference_report
         or args.company_agent_web_reference_dry_run
         or args.company_agent_web_reference_one_shot
