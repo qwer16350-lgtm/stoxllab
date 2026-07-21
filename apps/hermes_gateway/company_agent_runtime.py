@@ -41,6 +41,7 @@ from company_discord_outbound_guard import (
 from company_handoff import build_handoff_post_payload, store_company_handoff_context
 from company_persistent_memory import build_memory_command_response, load_recent_records
 from company_rag_nas_index import build_rag_discord_command_response, parse_rag_discord_command
+from company_rag_vector_index import build_rag_vector_discord_command_response
 from runtime_dotenv import DISCORD_BOT_TOKEN_ALIASES
 from company_webhook_sender import send_as_agent
 from company_webhook_sender import send_as_agent_webhook
@@ -78,6 +79,9 @@ COMMAND_SYNTAX = [
     "!rag-search <query>",
     "!docs <query>",
     "!recall-doc <query>",
+    "!rag-semantic <query>",
+    "!rag-hybrid <query>",
+    "!rag-vector-status",
     "!web <query>",
     "!search <query>",
     "!research <query>",
@@ -448,6 +452,23 @@ def _extract_agent_web_bridge_query(content: str, route: dict[str, Any]) -> str:
         if command_line.lower().startswith(prefix):
             return command_line[len(prefix) :].strip()
     return str(route.get("command_argument") or command_line).strip()
+
+
+def _parse_rag_vector_discord_command(content: str) -> dict[str, Any]:
+    lines = [line.strip() for line in str(content or "").replace("\r\n", "\n").split("\n")]
+    for line in lines:
+        if not line.startswith("!"):
+            continue
+        parts = line.split(maxsplit=1)
+        command = parts[0].lstrip("!").strip().lower()
+        if command not in {"rag-semantic", "rag-hybrid", "rag-vector-status"}:
+            continue
+        return {
+            "rag_runtime_command": True,
+            "command": command,
+            "query": parts[1].strip() if len(parts) > 1 else "",
+        }
+    return {"rag_runtime_command": False, "command": "", "query": ""}
 
 
 def detect_agent_web_bridge_decision(channel_name: str, content: str, env: dict[str, Any] | None = None) -> AgentWebBridgeDecision:
@@ -1042,14 +1063,69 @@ def build_company_agent_message_result(
     env: dict[str, Any] | None = None,
     web_search_runner: Any | None = None,
 ) -> dict[str, Any]:
+    rag_vector_command = _parse_rag_vector_discord_command(content)
+    if rag_vector_command.get("rag_runtime_command"):
+        env_map = dict(os.environ if env is None else env)
+        command_response = build_rag_vector_discord_command_response(
+            str(rag_vector_command.get("command") or ""),
+            str(rag_vector_command.get("query") or ""),
+            env=env_map,
+        )
+        return {
+            "report_type": "company_agent_rag_discord_command",
+            "source_channel": channel_name,
+            "selected_agent": "hermes",
+            "agent_display_name": "HERMES_STOXL",
+            "reason": "rag_runtime_command",
+            "command": rag_vector_command.get("command"),
+            "query_present": bool(str(rag_vector_command.get("query") or "").strip()),
+            "reply_prepared": True,
+            "response": command_response,
+            **_outbound_guard_preview(str(command_response.get("content") or ""), "hermes"),
+            "webhook_send_available": False,
+            "bot_message_fallback_used": True,
+            "send_strategy": "bot_message_fallback",
+            "discord_api_send_called": False,
+            "discord_message_sent": False,
+            "message_sent_count": 0,
+            "rag_runtime_command": True,
+            "rag_mode": command_response.get("mode") or "hybrid",
+            "nas_write_attempted": False,
+            "nas_file_modified": False,
+            "nas_file_deleted": False,
+            "index_write_attempted_from_runtime": False,
+            "embedding_called": False,
+            "external_embedding_api_called": False,
+            "vector_index_created": False,
+            "llm_called": False,
+            "llm_api_called": False,
+            "web_search_called": False,
+            "vision_api_called": False,
+            "ocr_called": False,
+            "external_execution": False,
+            "raw_nas_absolute_path_logged": False,
+            "raw_index_absolute_path_logged": False,
+            "raw_vector_logged": False,
+            "raw_discord_ids_logged": False,
+            "secret_values_logged": False,
+            "webhook_url_value_logged": False,
+        }
     rag_command = parse_rag_discord_command(content)
     if rag_command.get("rag_runtime_command"):
         env_map = dict(os.environ if env is None else env)
-        command_response = build_rag_discord_command_response(
-            str(rag_command.get("command") or ""),
-            str(rag_command.get("query") or ""),
-            env=env_map,
-        )
+        rag_command_name = str(rag_command.get("command") or "")
+        if rag_command_name == "rag-status":
+            command_response = build_rag_vector_discord_command_response("rag-vector-status", "", env=env_map)
+            command_response["command"] = "rag-status"
+        elif rag_command_name in {"docs", "recall-doc"}:
+            command_response = build_rag_vector_discord_command_response("rag-hybrid", str(rag_command.get("query") or ""), env=env_map)
+            command_response["command"] = rag_command_name
+        else:
+            command_response = build_rag_discord_command_response(
+                rag_command_name,
+                str(rag_command.get("query") or ""),
+                env=env_map,
+            )
         return {
             "report_type": "company_agent_rag_discord_command",
             "source_channel": channel_name,

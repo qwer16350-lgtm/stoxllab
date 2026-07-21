@@ -9,6 +9,10 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from runtime_dotenv import load_cli_repo_root_dotenv
+
+CLI_DOTENV_LOAD_REPORT = load_cli_repo_root_dotenv(__file__)
+
 from agent_response_interface import build_agent_response_interface_report
 from agent_placeholder_response import (
     build_agent_placeholder_response,
@@ -296,6 +300,12 @@ from company_persistent_memory import (
     build_memory_query_report,
 )
 from company_rag_nas_index import build_nas_index, scan_nas_files, search_nas_index
+from company_rag_vector_index import (
+    build_rag_embedding_preflight,
+    build_rag_vector_index,
+    get_rag_vector_status,
+    search_rag_hybrid,
+)
 from company_web_reference import (
     build_company_agent_web_reference_dry_run,
     build_company_agent_web_reference_one_shot,
@@ -657,7 +667,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--rag-scan-nas", action="store_true", help="Run v0.8A read-only NAS RAG scan.")
     parser.add_argument("--rag-index-nas", action="store_true", help="Build v0.8A local NAS RAG metadata index.")
     parser.add_argument("--rag-search", nargs="?", const="", help="Search the v0.8A local NAS RAG metadata index.")
+    parser.add_argument("--rag-search-hybrid", nargs="?", const="", help="Search the v0.8C local hybrid semantic RAG index.")
+    parser.add_argument("--rag-embedding-preflight", action="store_true", help="Print v0.8C local embedding preflight without model calls.")
+    parser.add_argument("--rag-build-vector-index", action="store_true", help="Build v0.8C local vector index outside NAS.")
+    parser.add_argument("--rag-vector-status", action="store_true", help="Print v0.8C local vector index status.")
     parser.add_argument("--allow-rag-index-write", action="store_true", help="Allow writing the v0.8A local NAS RAG metadata index outside NAS.")
+    parser.add_argument("--allow-rag-vector-index-write", action="store_true", help="Allow writing the v0.8C local vector index outside NAS.")
+    parser.add_argument("--allow-local-model-download", action="store_true", help="Allow local sentence-transformers model download for v0.8C vector build.")
     parser.add_argument("--rag-max-files", type=int, help="Override HERMES_RAG_MAX_FILES for v0.8A NAS RAG scan/index.")
     parser.add_argument("--rag-max-total-bytes", type=int, help="Override HERMES_RAG_MAX_TOTAL_BYTES for v0.8A NAS RAG scan/index.")
     parser.add_argument("--rag-max-file-size-mb", type=int, help="Override HERMES_RAG_MAX_FILE_SIZE_MB for v0.8A NAS RAG scan/index.")
@@ -3723,6 +3739,56 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- index_record_count: {output.get('index_record_count')}")
         return 0
 
+    if args.rag_embedding_preflight:
+        output = build_rag_embedding_preflight(env=_rag_env_overrides(args))
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL RAG embedding preflight")
+            print(f"- embedding_enabled: {output.get('embedding_enabled')}")
+            print(f"- embedding_backend: {output.get('embedding_backend')}")
+            print(f"- vector_index_available: {output.get('vector_index_available')}")
+        return 0
+
+    if args.rag_build_vector_index:
+        output = build_rag_vector_index(
+            allow_write=bool(args.allow_rag_vector_index_write),
+            allow_local_model_download=bool(args.allow_local_model_download),
+            env=_rag_env_overrides(args),
+        )
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL RAG vector index")
+            print(f"- blocked: {output.get('blocked')}")
+            print(f"- blocked_reason: {output.get('blocked_reason')}")
+            print(f"- vectors_created: {output.get('vectors_created')}")
+            print(f"- vectors_reused: {output.get('vectors_reused')}")
+        return 0
+
+    if args.rag_vector_status:
+        output = get_rag_vector_status(env=_rag_env_overrides(args))
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL RAG vector status")
+            print(f"- vector_index_available: {output.get('vector_index_available')}")
+            print(f"- vector_record_count: {output.get('vector_record_count')}")
+            print(f"- mode: {output.get('mode')}")
+        return 0
+
+    if args.rag_search_hybrid is not None:
+        query = args.rag_search_hybrid or args.query or ""
+        output = search_rag_hybrid(query, env=_rag_env_overrides(args))
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL RAG hybrid search")
+            print(f"- mode: {output.get('mode')}")
+            print(f"- keyword_fallback: {output.get('keyword_fallback')}")
+            print(f"- result_count: {output.get('result_count')}")
+        return 0
+
     if args.rag_search is not None:
         query = args.rag_search or args.query or ""
         output = search_nas_index(query, env=_rag_env_overrides(args))
@@ -4229,7 +4295,13 @@ def main(argv: list[str] | None = None) -> int:
         or args.rag_scan_nas
         or args.rag_index_nas
         or args.rag_search is not None
+        or args.rag_search_hybrid is not None
+        or args.rag_embedding_preflight
+        or args.rag_build_vector_index
+        or args.rag_vector_status
         or args.allow_rag_index_write
+        or args.allow_rag_vector_index_write
+        or args.allow_local_model_download
         or args.rag_max_files is not None
         or args.rag_max_total_bytes is not None
         or args.rag_max_file_size_mb is not None

@@ -6,9 +6,12 @@ import os
 from pathlib import Path
 from typing import Any
 
+from runtime_dotenv import DISCORD_BOT_TOKEN_ALIASES, apply_discord_token_aliases
+
 
 REQUIRED_ENV_KEYS = [
     "DISCORD_BOT_TOKEN",
+    "HERMES_DISCORD_BOT_TOKEN",
     "DISCORD_GUILD_ID",
     "OWNER_KIM_DISCORD_ID",
     "OWNER_LEE_DISCORD_ID",
@@ -64,7 +67,8 @@ def load_discord_runtime_env(
 ) -> dict[str, Any]:
     repo_root = Path(root or Path.cwd()).resolve()
     env_file_loaded = _load_dotenv_if_available(repo_root) if load_dotenv_file else False
-    token = os.environ.get("DISCORD_BOT_TOKEN", "")
+    apply_discord_token_aliases(os.environ)
+    token = next((os.environ.get(key, "") for key in DISCORD_BOT_TOKEN_ALIASES if os.environ.get(key)), "")
     private_test_channel_id = os.environ.get("HERMES_DISCORD_PRIVATE_TEST_CHANNEL_ID", "")
     runtime = {
         "runtime_mode": os.environ.get("HERMES_DISCORD_RUNTIME_MODE", "readonly"),

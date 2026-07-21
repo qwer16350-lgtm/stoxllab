@@ -34,30 +34,32 @@ def write_index(index_dir: str) -> None:
     (Path(index_dir) / "nas_rag_index.json").write_text(json.dumps(payload), encoding="utf-8")
 
 
-def test_docs_alias_uses_rag_search() -> None:
+def test_docs_alias_uses_hybrid_with_keyword_fallback() -> None:
     with tempfile.TemporaryDirectory() as index_dir:
         write_index(index_dir)
         result = build_company_agent_message_result("operation-brief", "!docs homepage", env={"HERMES_RAG_INDEX_DIR": index_dir})
     assert_true(result["command"] == "docs", "docs command")
-    assert_true(result["response"]["reply_text_source"] == "rag_search", "docs uses RAG search")
+    assert_true(result["response"]["reply_text_source"] == "rag_hybrid_search", "docs uses hybrid bridge")
+    assert_true(result["response"]["keyword_fallback"] is True, "docs keyword fallback without vector")
     assert_true("Homepage Copy" in result["response"]["content"], "docs result")
 
 
-def test_recall_doc_alias_uses_rag_search() -> None:
+def test_recall_doc_alias_uses_hybrid_with_keyword_fallback() -> None:
     with tempfile.TemporaryDirectory() as index_dir:
         write_index(index_dir)
         result = build_company_agent_message_result("operation-brief", "!recall-doc homepage", env={"HERMES_RAG_INDEX_DIR": index_dir})
     assert_true(result["command"] == "recall-doc", "recall-doc command")
-    assert_true(result["response"]["reply_text_source"] == "rag_search", "recall-doc uses RAG search")
+    assert_true(result["response"]["reply_text_source"] == "rag_hybrid_search", "recall-doc uses hybrid bridge")
+    assert_true(result["response"]["keyword_fallback"] is True, "recall-doc keyword fallback without vector")
     assert_true(result["llm_called"] is False, "no LLM")
     assert_true(result["embedding_called"] is False, "no embedding")
 
 
 def main() -> int:
-    test_docs_alias_uses_rag_search()
-    print("PASS test_docs_alias_uses_rag_search")
-    test_recall_doc_alias_uses_rag_search()
-    print("PASS test_recall_doc_alias_uses_rag_search")
+    test_docs_alias_uses_hybrid_with_keyword_fallback()
+    print("PASS test_docs_alias_uses_hybrid_with_keyword_fallback")
+    test_recall_doc_alias_uses_hybrid_with_keyword_fallback()
+    print("PASS test_recall_doc_alias_uses_hybrid_with_keyword_fallback")
     print("All RAG Discord alias command tests passed.")
     return 0
 
