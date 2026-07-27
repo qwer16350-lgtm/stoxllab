@@ -9,6 +9,8 @@ from typing import Any
 
 
 VERSION = "phase32a_no_api_call"
+OUTPUT_LIMIT_NOTICE = "응답이 길어 일부 부가 설명을 생략했습니다."
+PROVIDER_LENGTH_NOTICE = "응답 생성 한도에 도달해 일부 설명이 생략되었습니다."
 LONG_ID_RE = re.compile(r"\b\d{15,25}\b")
 SECRET_RE = re.compile(r"(?i)(sk-[a-z0-9_-]+|xoxb-[a-z0-9_-]+|mfa\.[a-z0-9_-]+|bearer\s+\S+|api[_ -]?key\s*[:=]\s*\S+|token\s*[:=]\s*\S+)")
 EXECUTION_CLAIM_RE = re.compile(r"(?i)(posted|published|submitted|sent|uploaded|confirmed|approved|executed|completed|발행|게시|제출|발송|업로드|확정|실행|완료)")
@@ -81,6 +83,7 @@ def build_llm_safety_policy(env: dict[str, Any] | None = None) -> dict[str, Any]
         "allow_external_execution": False,
         "allow_rag": False,
         "allow_discord_send": allow_discord_send,
+        "max_output_chars": int(_env_value(env, "HERMES_LLM_MAX_OUTPUT_CHARS", "1200") or 1200),
         "require_human_review_for_external_actions": True,
         "blocked_output_intents": list(BLOCKED_OUTPUT_PATTERNS.keys()),
         "allowed_response_sources": [
@@ -93,6 +96,41 @@ def build_llm_safety_policy(env: dict[str, Any] | None = None) -> dict[str, Any]
             "rag_called": False,
             "external_execution": False,
         },
+    }
+
+
+def _sentence_safe_prefix(text: str, limit: int) -> str:
+    candidate = str(text or "")[: max(limit, 0)].rstrip()
+    matches = list(re.finditer(r"(?:[.!?。！？](?=\s|$)|(?:다|한다|입니다|됩니다|있습니다|없습니다)\.?(?=\s|$))", candidate))
+    if matches:
+        return candidate[: matches[-1].end()].rstrip()
+    paragraph = candidate.rfind("\n\n")
+    if paragraph > 0:
+        return candidate[:paragraph].rstrip()
+    return ""
+
+
+def enforce_llm_output_limit(
+    output_text: str,
+    max_output_chars: int,
+    *,
+    provider_output_incomplete: bool = False,
+) -> dict[str, Any]:
+    text = str(output_text or "").strip()
+    notice = PROVIDER_LENGTH_NOTICE if provider_output_incomplete else OUTPUT_LIMIT_NOTICE
+    needs_shortening = provider_output_incomplete or len(text) > max_output_chars
+    if not needs_shortening:
+        return {
+            "safe_output_text": text,
+            "output_was_shortened": False,
+            "sentence_midpoint_truncation": False,
+        }
+    budget = max(1, max_output_chars - len(notice) - 2)
+    safe_prefix = _sentence_safe_prefix(text, budget)
+    return {
+        "safe_output_text": f"{safe_prefix}\n\n{notice}".strip(),
+        "output_was_shortened": True,
+        "sentence_midpoint_truncation": False,
     }
 
 
@@ -126,6 +164,7 @@ def check_llm_output_allowed(output_text: str, policy: dict[str, Any]) -> dict[s
     safe_disclaimer_reasons = _safe_disclaimer_reasons(text)
     safe_disclaimer_detected = bool(safe_disclaimer_reasons)
     max_output_chars = int(policy.get("max_output_chars", 1200) or 1200)
+    bounded = enforce_llm_output_limit(text, max_output_chars)
     if not text.strip():
         blocked_reasons.append("empty_output")
     if len(text) > max_output_chars:
@@ -171,6 +210,7 @@ def check_llm_output_allowed(output_text: str, policy: dict[str, Any]) -> dict[s
         "llm_api_called": False,
         "rag_called": False,
         "external_execution": False,
+        **bounded,
     }
 
 

@@ -163,10 +163,17 @@ def _result(
     provider_error_code: str | None = None,
     provider_error_message: str | None = None,
     provider_response_redacted: bool = False,
+    provider_finish_reason: str = "unknown",
 ) -> dict[str, Any]:
-    safe_response = redact_text(response_text, int(config.get("max_output_chars", 1200)))
+    safe_response = redact_text(
+        response_text,
+        max(len(str(response_text or "")) + 32, int(config.get("max_output_chars", 1200))),
+    )
     safe_error_message = redact_text(provider_error_message, 300) if provider_error_message else None
     selected_usage = usage or {}
+    finish_reason = str(provider_finish_reason or "unknown").strip().lower()
+    if finish_reason not in {"stop", "length"}:
+        finish_reason = "unknown"
     result = {
         "result_type": "llm_client_result",
         "version": VERSION,
@@ -180,6 +187,10 @@ def _result(
         "provider_error_code": provider_error_code,
         "provider_error_message": safe_error_message,
         "provider_response_redacted": bool(provider_response_redacted),
+        "provider_finish_reason": finish_reason,
+        "provider_output_incomplete": finish_reason == "length",
+        "generation_output_chars": len(str(response_text or "")),
+        "generation_limit_chars": int(config.get("max_output_chars", 1200)),
         "response_text": safe_response,
         "usage": {
             "input_chars": int(selected_usage.get("prompt_tokens", input_chars) or input_chars),
@@ -311,15 +322,25 @@ def call_llm_once(prompt_envelope: dict[str, Any], config: dict[str, Any], opene
         )
 
     text = ""
+    finish_reason = "unknown"
     usage = body.get("usage", {}) if isinstance(body, dict) else {}
     try:
         choices = body.get("choices", [])
         message = choices[0].get("message", {}) if choices else {}
         text = str(message.get("content", "") or "")
+        finish_reason = str(choices[0].get("finish_reason", "unknown") or "unknown") if choices else "unknown"
     except (AttributeError, IndexError):
         text = ""
     input_chars = len(json.dumps(prompt_envelope, ensure_ascii=False))
-    return _result(config, attempted=True, succeeded=True, response_text=text, input_chars=input_chars, usage=usage)
+    return _result(
+        config,
+        attempted=True,
+        succeeded=True,
+        response_text=text,
+        input_chars=input_chars,
+        usage=usage,
+        provider_finish_reason=finish_reason,
+    )
 
 
 def assert_llm_client_result_safe(result: dict[str, Any]) -> None:

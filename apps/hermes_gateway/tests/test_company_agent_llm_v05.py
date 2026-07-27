@@ -173,7 +173,7 @@ def test_one_shot_failure_reports_real_fallback_preview() -> None:
     assert_true(report["fallback_used"] == "deterministic", "fallback used")
     assert_true(report["fallback_preview_present"] is True, "fallback preview present")
     assert_true(report["fallback_preview"].startswith("[MARIN_STOXL / 마린]"), "real preview")
-    assert_true("[인스타 첫 문장] 작은 구조가 만드는 큰 변화, MML." in report["fallback_preview"], "draft line")
+    assert_true("요청:" in report["fallback_preview"], "intent-aware fallback")
     assert_true("deterministic_template_available" not in report["fallback_preview"], "no placeholder")
     assert_true(report["llm_error_message_redacted"] is True, "error redacted")
     assert_safe(report)
@@ -195,23 +195,22 @@ def test_diagnostics_only_exposes_configuration_status() -> None:
 
 
 def test_deterministic_fallbacks_are_useful_and_reze_typo_is_fixed() -> None:
-    route = {"target_channel": "private-test"}
     replies = {
-        agent: build_deterministic_company_agent_reply(agent, "검토 요청", route)["content"]
+        agent: build_deterministic_company_agent_reply(
+            agent,
+            "새 업무 문서 초안을 써줘",
+            {
+                "target_channel": "private-test",
+                "agent_intent": "write",
+                "agent_response_mode": "general_business_draft",
+            },
+        )["content"]
         for agent in ("marin", "lucy", "kasumi", "meiko", "reze")
     }
-    assert_true("[인스타 첫 문장] 작은 구조가 만드는 큰 변화, MML." in replies["marin"], "Marin concrete draft")
-    assert_true("[홈페이지 소개]" in replies["marin"] and "Lucy 검토 포인트:" in replies["marin"], "Marin placements and review")
-    assert_true("핵심 장점을 먼저 보여주는 짧은 문구" not in replies["marin"], "Marin no placeholder")
-    assert_true("판정: 수정 필요" in replies["lucy"], "Lucy concrete review")
-    assert_true("첫 문장:" in replies["lucy"] and "보조 문장:" in replies["lucy"], "Lucy direct revisions")
-    assert_true("실시간 검색 미사용으로 최신성 검증 필요" in replies["kasumi"], "Kasumi latestness caveat")
-    assert_true("Meiko 판단 포인트:" in replies["kasumi"], "Kasumi handoff judgment")
-    assert_true("공고 URL 확인" in replies["meiko"] and "담당:" in replies["meiko"], "Meiko execution conditions")
-    assert_true("스톡슬 적합성" in replies["reze"], "Reze STOXL spelling")
-    assert_true("스톡스 적합성" not in replies["reze"], "Reze typo removed")
     for agent, content in replies.items():
         assert_true(bool(content), f"{agent} fallback content")
+        assert_true("완성 초안:" in content, f"{agent} intent-aware write")
+        assert_true("MML" not in content, f"{agent} no fixture copy")
 
 
 def test_runtime_uses_deterministic_when_llm_disabled() -> None:

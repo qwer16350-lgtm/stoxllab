@@ -145,7 +145,18 @@ class AgentBotFleet:
         if not get_channel_policy(channel_name)["known_channel"]:
             return _blocked_real_bot("unknown_channel", agent_id, channel_name)
         try:
-            await target.send(str(content or "")[:1900])
+            outbound = str(content or "")
+            if len(outbound) > 1900:
+                return {
+                    "blocked": True,
+                    "blocked_reasons": ["discord_message_too_long"],
+                    "discord_api_send_called": False,
+                    "discord_message_sent": False,
+                    "message_sent_count": 0,
+                    "raw_discord_ids_logged": False,
+                    "secret_values_logged": False,
+                }
+            await target.send(outbound)
         except Exception:
             return _blocked_real_bot("agent_bot_send_failed", agent_id, channel_name)
         return {

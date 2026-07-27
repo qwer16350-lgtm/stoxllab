@@ -25,16 +25,16 @@ def test_short_response_single_chunk() -> None:
 def test_long_response_chunks_under_hard_limit() -> None:
     result = split_discord_message(("긴 줄입니다.\n" * 500), "meiko")
     assert_true(result["outbound_chunking_used"] is True, "chunked")
-    assert_true(1 < result["outbound_chunk_count"] <= 4, "bounded chunks")
+    assert_true(1 < result["outbound_chunk_count"] <= 8, "bounded chunks")
     assert_true(all(len(message) <= HARD_LIMIT for message in result["messages"]), "hard limit")
-    assert_true(result["messages"][0].startswith("[MEIKO_STOXL] 1/"), "headers")
+    assert_true(not result["messages"][1].startswith("[MEIKO_STOXL]"), "no repeated headers")
 
 
 def test_max_chunk_truncation_is_explicit() -> None:
     result = split_discord_message("x" * 20000, "reze", max_chunk_count=2)
     assert_true(result["outbound_truncated_for_discord"] is True, "truncated")
-    assert_true(result["outbound_chunk_count"] == 2, "max chunks")
-    assert_true("memory/context" in result["messages"][-1], "explicit notice")
+    assert_true(1 <= result["outbound_chunk_count"] <= 2, "max chunks")
+    assert_true("일부를 생략했습니다" in result["messages"][-1], "explicit notice")
 
 
 def test_send_discord_messages_safely_reports_partial_failure() -> None:

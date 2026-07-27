@@ -2,15 +2,22 @@
 
 from __future__ import annotations
 
+import os
 import re
 from typing import Any, Awaitable, Callable
 
 from llm_client import redact_text
+from company_agent_output import (
+    DEFAULT_AGENT_MAX_RESPONSE_CHUNKS,
+    DEFAULT_DISCORD_CHUNK_MAX_CHARS,
+    assemble_agent_response,
+    split_discord_response,
+)
 
 
-SAFE_CHUNK_SIZE = 1750
+SAFE_CHUNK_SIZE = DEFAULT_DISCORD_CHUNK_MAX_CHARS
 HARD_LIMIT = 1900
-DEFAULT_MAX_CHUNKS = 4
+DEFAULT_MAX_CHUNKS = DEFAULT_AGENT_MAX_RESPONSE_CHUNKS
 AGENT_LABELS = {
     "lucy": "LUCY_STOXL",
     "marin": "MARIN_STOXL",
@@ -98,52 +105,25 @@ def split_discord_message(
     max_chunk_count: int = DEFAULT_MAX_CHUNKS,
 ) -> dict[str, Any]:
     original = str(content or "")
-    if len(original) <= hard_limit:
-        return {
-            "messages": [original],
-            "outbound_original_length": len(original),
-            "outbound_chunking_used": False,
-            "outbound_chunk_count": 1 if original else 0,
-            "outbound_truncated_for_discord": False,
-            "outbound_full_content_preserved_in_memory": True,
-            "raw_discord_ids_logged": False,
-            "secret_values_logged": False,
-        }
-    pieces: list[str] = []
-    current = ""
-    for part in re.split(r"(\n+)", original):
-        if len(current) + len(part) <= safe_chunk_size:
-            current += part
-            continue
-        if current.strip():
-            pieces.append(current.strip())
-        current = part
-        while len(current) > safe_chunk_size:
-            pieces.append(current[:safe_chunk_size].strip())
-            current = current[safe_chunk_size:]
-    if current.strip():
-        pieces.append(current.strip())
-    truncated = len(pieces) > max_chunk_count
-    selected = pieces[:max_chunk_count]
-    if truncated and selected:
-        notice = (
-            "\n\n내용이 길어 Discord 표시분은 여기까지 보냅니다. "
-            "나머지 상세 내용은 memory/context에 보존됐습니다."
-        )
-        selected[-1] = (selected[-1][: max(0, safe_chunk_size - len(notice))] + notice).strip()
-    label = _agent_label(agent_id)
-    total = len(selected)
-    messages = []
-    for index, piece in enumerate(selected, start=1):
-        header = f"[{label}] {index}/{total}\n"
-        messages.append((header + piece)[:hard_limit])
+    messages = split_discord_response(
+        body=original,
+        source_footer="",
+        max_chunk_chars=min(safe_chunk_size, hard_limit),
+        max_chunks=max_chunk_count,
+    )
+    messages = [redact_text(message, len(message) + 32) for message in messages]
+    truncated = sum(len(message) for message in messages) < len(original)
     return {
         "messages": messages,
         "outbound_original_length": len(original),
-        "outbound_chunking_used": True,
+        "outbound_chunking_used": len(messages) > 1,
         "outbound_chunk_count": len(messages),
         "outbound_truncated_for_discord": truncated,
         "outbound_full_content_preserved_in_memory": True,
+        "response_chunk_count": len(messages),
+        "body_truncated": truncated,
+        "sentence_midpoint_truncation": False,
+        "citation_validation_before_chunking": True,
         "raw_discord_ids_logged": False,
         "secret_values_logged": False,
     }
@@ -155,10 +135,30 @@ def prepare_discord_outbound_messages(
     *,
     compact_web_reference: bool = True,
     max_chunk_count: int = DEFAULT_MAX_CHUNKS,
+    body: str | None = None,
+    source_footer: str = "",
+    env: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     original = str(content or "")
     outbound = compact_web_reference_for_discord(original, agent_id) if compact_web_reference else original
-    split = split_discord_message(outbound, agent_id, max_chunk_count=max_chunk_count)
+    if body is not None or source_footer:
+        rendered = assemble_agent_response(
+            body=str(outbound if body is None else body),
+            source_footer=source_footer,
+            env=dict(os.environ if env is None else env),
+        )
+        messages = list(rendered.chunks)
+        split = {
+            **rendered.metadata,
+            "messages": messages,
+            "outbound_original_length": len(original),
+            "outbound_chunking_used": len(messages) > 1,
+            "outbound_chunk_count": len(messages),
+            "outbound_truncated_for_discord": bool(rendered.metadata.get("body_truncated")),
+            "outbound_full_content_preserved_in_memory": True,
+        }
+    else:
+        split = split_discord_message(outbound, agent_id, max_chunk_count=max_chunk_count)
     return {
         **split,
         "outbound_compacted_for_discord": outbound != original,

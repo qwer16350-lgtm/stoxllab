@@ -8,11 +8,14 @@ from typing import Any, Callable
 
 from company_context_store import format_handoff_context_block, sanitize_company_context_text
 from company_agent_prompts import agent_prompts_available, get_agent_system_prompt
+from company_agent_intent import build_intent_prompt_context
+from llm_safety_policy import enforce_llm_output_limit
 from llm_client import SUPPORTED_PROVIDERS, build_llm_client_config, call_llm_once, redact_text
 
 
 SUPPORTED_LLM_MODES = ["off", "manual_command_only"]
 OPENROUTER_KEY_ALIASES = ["HERMES_LLM_API_KEY", "OPENROUTER_API_KEY", "HERMES_OPENROUTER_API_KEY"]
+DEFAULT_COMPANY_AGENT_LLM_MAX_OUTPUT_CHARS = 8000
 URL_RE = re.compile(r"https?://\S+", re.IGNORECASE)
 
 
@@ -73,6 +76,19 @@ def _llm_config(env: dict[str, Any] | None = None) -> dict[str, Any]:
     merged["HERMES_DISCORD_SEND_MESSAGES"] = "false"
     merged["HERMES_DISCORD_RAG_ENABLED"] = "false"
     merged["HERMES_DISCORD_EXTERNAL_EXECUTION"] = "false"
+    try:
+        company_max_output_chars = int(
+            env_map.get(
+                "HERMES_COMPANY_AGENT_LLM_MAX_OUTPUT_CHARS",
+                DEFAULT_COMPANY_AGENT_LLM_MAX_OUTPUT_CHARS,
+            )
+            or DEFAULT_COMPANY_AGENT_LLM_MAX_OUTPUT_CHARS
+        )
+    except (TypeError, ValueError):
+        company_max_output_chars = DEFAULT_COMPANY_AGENT_LLM_MAX_OUTPUT_CHARS
+    merged["HERMES_LLM_MAX_OUTPUT_CHARS"] = str(
+        max(200, min(company_max_output_chars, 12000))
+    )
     return build_llm_client_config(merged)
 
 
@@ -135,8 +151,10 @@ def build_agent_llm_messages(agent_id: str, user_message: str, context: dict[str
     handoff_context = route_context.get("handoff_context")
     context_block = format_handoff_context_block(handoff_context) if isinstance(handoff_context, dict) else ""
     internal_rag_block = sanitize_company_context_text(route_context.get("internal_rag_prompt_context"), 6000)
+    grounding_block = sanitize_company_context_text(route_context.get("internal_rag_grounding_instructions"), 3000)
     web_reference_block = sanitize_company_context_text(route_context.get("web_reference_results_block"), 6000)
-    context_parts = [part for part in (internal_rag_block, web_reference_block, context_block) if part]
+    intent_block = sanitize_company_context_text(route_context.get("agent_intent_prompt_context"), 3000)
+    context_parts = [part for part in (intent_block, internal_rag_block, grounding_block, web_reference_block, context_block) if part]
     contextual_request = "\n\n".join([f"Request: {safe_user}"] + context_parts)
     return {
         "envelope_type": "company_agent_llm_prompt",
@@ -158,6 +176,8 @@ def build_agent_llm_messages(agent_id: str, user_message: str, context: dict[str
         "external_execution": False,
         "handoff_context_used": bool(context_block),
         "internal_rag_context_used": bool(internal_rag_block),
+        "grounding_instructions_used": bool(grounding_block),
+        "intent_context_used": bool(intent_block),
         "web_reference_context_used": bool(web_reference_block),
         "context_order": [
             "system_policy",
@@ -261,7 +281,25 @@ def generate_agent_reply(
             "api_call_failed": True,
             "error_type": exc.__class__.__name__,
         }
-    text = redact_company_agent_text(str(result.get("response_text", "") or ""), 1200)
+    raw_response_text = str(result.get("response_text", "") or "")
+    generation_limit_chars = int(
+        config.get("max_output_chars", DEFAULT_COMPANY_AGENT_LLM_MAX_OUTPUT_CHARS)
+        or DEFAULT_COMPANY_AGENT_LLM_MAX_OUTPUT_CHARS
+    )
+    redacted_text = redact_company_agent_text(
+        raw_response_text,
+        max(len(raw_response_text) + 32, generation_limit_chars),
+    )
+    finish_reason = str(result.get("provider_finish_reason", "unknown") or "unknown").strip().lower()
+    if finish_reason not in {"stop", "length"}:
+        finish_reason = "unknown"
+    provider_output_incomplete = finish_reason == "length"
+    bounded = enforce_llm_output_limit(
+        redacted_text,
+        generation_limit_chars,
+        provider_output_incomplete=provider_output_incomplete,
+    )
+    text = str(bounded["safe_output_text"])
     succeeded = bool(result.get("api_call_succeeded")) and bool(text)
     failure_reason = None if succeeded else _failure_reason(result, config, text)
     return {
@@ -276,6 +314,13 @@ def generate_agent_reply(
         "llm_api_key_present": bool(config.get("api_key_present")),
         "llm_api_key_value_logged": False,
         "llm_error_message_redacted": not succeeded,
+        "llm_complete": succeeded and not provider_output_incomplete,
+        "provider_finish_reason": finish_reason,
+        "provider_output_incomplete": provider_output_incomplete,
+        "generation_output_chars": len(raw_response_text),
+        "generation_limit_chars": generation_limit_chars,
+        "generation_output_shortened": bool(bounded["output_was_shortened"]),
+        "generation_sentence_midpoint_truncation": bool(bounded["sentence_midpoint_truncation"]),
         "response_text": text if succeeded else "",
         "prompt_envelope": prompt,
         "rag_called": bool(prompt.get("internal_rag_context_used")),

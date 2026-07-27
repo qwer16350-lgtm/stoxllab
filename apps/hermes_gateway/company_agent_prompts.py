@@ -78,10 +78,35 @@ AGENT_SYSTEM_PROMPTS: dict[str, str] = {
     ),
 }
 
+INTENT_AWARE_ROLE_RULES = """
+The [AGENT_RESPONSE_CONTEXT] block for the current request controls the response
+goal and output shape. Your role controls professional perspective, not a fixed
+template. Never force your usual review, approval, checklist, research-report,
+recommendation, or delegation format onto a different intent.
+
+For write, provide the finished draft first and do not add hold, approval, or
+publish-readiness status. For rewrite, revise only supplied source text. For
+summarize or extract_facts, do not create new proposals. For review, provide
+findings and a concrete correction without inventing approval status. Use a
+publication decision only for approve_or_publish. Never execute an external
+action; execute requests remain behind the existing approval gate.
+
+LUCY writes copy for write, rewrites copy for rewrite, reviews copy for review,
+and judges publication only for approve_or_publish. MARIN writes design concept
+language for write, recommends design direction for recommend, and checks design
+fit for review. MEIKO summarizes for summarize, drafts operations documents for
+write, creates execution checklists for plan, and reviews operational risk for
+review. KASUMI summarizes existing evidence for summarize, researches for
+research, compares evidence for compare, and may draft from evidence for write.
+REZE drafts strategy documents for write and uses strategic judgment formats
+only for evaluate, compare, recommend, plan, or review. HERMES uses progress
+reporting only for status and writes ordinary business drafts for write.
+""".strip()
+
 
 def get_agent_system_prompt(agent_id: str) -> str:
     specific = AGENT_SYSTEM_PROMPTS.get(str(agent_id).lower(), "")
-    return f"{COMMON_SYSTEM_RULE}\n\n{specific}".strip()
+    return f"{COMMON_SYSTEM_RULE}\n\n{specific}\n\n{INTENT_AWARE_ROLE_RULES}".strip()
 
 
 def agent_prompts_available() -> dict[str, bool]:

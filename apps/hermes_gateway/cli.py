@@ -295,6 +295,7 @@ from company_agent_llm import (
     build_company_agent_llm_report,
 )
 from company_agent_rag import build_agent_rag_debug, build_agent_rag_status
+from company_agent_citations import build_source_status
 from company_persistent_memory import (
     append_memory_record,
     build_company_agent_memory_report,
@@ -628,6 +629,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--company-agent-memory-query", action="store_true", help="Query safe local STOXL company memory without RAG or embeddings.")
     parser.add_argument("--company-agent-rag-status", action="store_true", help="Print STOXL agent-scoped RAG v0.8D status without Discord sends.")
     parser.add_argument("--company-agent-rag-debug", action="store_true", help="Print gated STOXL agent-scoped RAG v0.8D debug metadata without prompt or secret output.")
+    parser.add_argument("--company-agent-source-status", action="store_true", help="Print STOXL grounded source citation v0.8E status without Discord sends.")
     parser.add_argument("--company-agent-web-reference-report", action="store_true", help="Print role-scoped read-only company web reference v0.7 report.")
     parser.add_argument("--company-agent-web-reference-dry-run", action="store_true", help="Build role-scoped web reference intent dry-run without web calls.")
     parser.add_argument("--company-agent-web-reference-one-shot", action="store_true", help="Run one gated read-only company web reference without Discord sends.")
@@ -3965,6 +3967,18 @@ def main(argv: list[str] | None = None) -> int:
             print(f"- result_count: {output.get('agent_rag_result_count')}")
         return 0
 
+    if args.company_agent_source_status:
+        output = build_source_status()
+        if args.json:
+            print(json.dumps(output, ensure_ascii=False, indent=2))
+        else:
+            print("STOXL company agent source status")
+            print(f"- grounded answers: {output.get('grounded_answers')}")
+            print(f"- internal citations: {output.get('internal_citations')}")
+            print(f"- style: {output.get('style')}")
+            print(f"- citation validation: {output.get('citation_validation')}")
+        return 0
+
     if args.company_agent_web_reference_report:
         output = build_company_agent_web_reference_report()
         if args.json:
@@ -4533,6 +4547,7 @@ def main(argv: list[str] | None = None) -> int:
         or args.company_agent_memory_query
         or args.company_agent_rag_status
         or args.company_agent_rag_debug
+        or args.company_agent_source_status
         or args.company_agent_web_reference_report
         or args.company_agent_web_reference_dry_run
         or args.company_agent_web_reference_one_shot

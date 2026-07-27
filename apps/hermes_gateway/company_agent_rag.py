@@ -8,6 +8,12 @@ from typing import Any, Callable
 
 from company_rag_nas_index import get_rag_index_status
 from company_rag_vector_index import get_rag_vector_status, search_rag_hybrid
+from company_agent_citations import build_source_status
+from company_agent_intent import (
+    assess_rag_sufficiency,
+    build_agent_rag_query,
+    intent_metadata_boost,
+)
 
 
 AGENT_IDS = ("hermes", "kasumi", "meiko", "marin", "lucy", "reze")
@@ -108,6 +114,10 @@ class AgentRagContext:
     raw_nas_absolute_path_logged: bool = False
     raw_vector_logged: bool = False
     secret_value_logged: bool = False
+    rag_sufficiency: str = "none"
+    intent_relevant_source_count: int = 0
+    agent_retrieval_second_pass_used: bool = False
+    agent_retrieval_second_pass_reason: str = ""
 
 
 def _env(env: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -144,6 +154,13 @@ def _agent_scope(agent_name: str) -> str:
 
 def _strip_prefixes(message: str) -> tuple[str, bool, bool]:
     text = str(message or "").strip()
+    first, *rest = text.split(maxsplit=1)
+    command = first[1:].lower() if first.startswith("!") else ""
+    if command in {"hermes", "lucy", "marin", "meiko", "kasumi", "reze"} and rest:
+        text = rest[0].strip()
+    elif command == "agent" and rest:
+        agent_parts = rest[0].split(maxsplit=1)
+        text = agent_parts[1].strip() if len(agent_parts) > 1 else ""
     forced = False
     disabled = False
     changed = True
@@ -257,10 +274,11 @@ def _source_key(result: dict[str, Any]) -> str:
     return str(result.get("source_id") or result.get("relative_path") or result.get("source_label") or "")
 
 
-def _role_boost(agent: str, result: dict[str, Any]) -> float:
+def _role_boost(agent: str, result: dict[str, Any], intent: str = "general") -> float:
     hints = AGENT_RAG_PATH_HINTS.get(_agent_scope(agent), ())
     haystack = " ".join(str(result.get(key) or "") for key in ("relative_path", "source_label", "asset_type", "media_type")).casefold()
-    return 0.05 if any(hint.casefold() in haystack for hint in hints) else 0.0
+    role = 0.05 if any(hint.casefold() in haystack for hint in hints) else 0.0
+    return role + intent_metadata_boost(intent, result)
 
 
 def _detect_prompt_injection(results: list[dict[str, Any]]) -> bool:
@@ -277,6 +295,7 @@ def _bounded_results(
     max_snippet_chars: int,
     max_chunks_per_source: int,
     min_score: float,
+    intent: str = "general",
 ) -> tuple[list[dict[str, Any]], int]:
     scored: list[dict[str, Any]] = []
     for item in results:
@@ -286,13 +305,17 @@ def _bounded_results(
             score = 0.0
         if score < min_score:
             continue
-        scored.append({**item, "_agent_score": score + _role_boost(agent, item)})
+        scored.append({**item, "_agent_score": score + _role_boost(agent, item, intent)})
     scored.sort(key=lambda item: float(item.get("_agent_score") or 0.0), reverse=True)
     selected: list[dict[str, Any]] = []
     per_source: dict[str, int] = {}
+    seen_chunks: set[tuple[str, str]] = set()
     remaining = max_context_chars
     for item in scored:
         key = _source_key(item)
+        chunk_key = (key, str(item.get("chunk_id") or ""))
+        if chunk_key in seen_chunks:
+            continue
         if per_source.get(key, 0) >= max_chunks_per_source:
             continue
         snippet = _safe_text(item.get("snippet"), min(max_snippet_chars, remaining))
@@ -312,6 +335,7 @@ def _bounded_results(
             "raw_vector_logged": False,
         }
         selected.append(safe)
+        seen_chunks.add(chunk_key)
         per_source[key] = per_source.get(key, 0) + 1
         remaining -= len(snippet)
         if len(selected) >= max_results or remaining <= 0:
@@ -376,6 +400,7 @@ def retrieve_agent_rag_context(
     limit: int | None = None,
     env: dict[str, Any] | None = None,
     search_fn: Callable[..., dict[str, Any]] | None = None,
+    intent: str = "general",
 ) -> AgentRagContext:
     env_map = _env(env)
     decision = should_use_agent_rag(
@@ -396,7 +421,10 @@ def retrieve_agent_rag_context(
         mode = "hybrid"
     try:
         search = search_fn or search_rag_hybrid
-        search_result = search(decision.query, env=env_map, mode=mode, limit=max_results)
+        intent_query = build_agent_rag_query(
+            agent_name=decision.scope, intent=intent, user_message=decision.query
+        )
+        search_result = search(intent_query, env=env_map, mode=mode, limit=max_results)
     except Exception:
         return _empty_context(decision, "rag_runtime_exception", fallback=True)
     raw_results = search_result.get("results") if isinstance(search_result.get("results"), list) else []
@@ -408,10 +436,38 @@ def retrieve_agent_rag_context(
         max_snippet_chars=max_snippet_chars,
         max_chunks_per_source=max_chunks_per_source,
         min_score=min_score,
+        intent=intent,
     )
     if not selected:
         reason = str(search_result.get("fallback_reason") or "rag_no_results")
         return _empty_context(decision, reason, fallback=True)
+    sufficiency = assess_rag_sufficiency(selected, intent)
+    second_pass_used = False
+    second_pass_reason = ""
+    if sufficiency["rag_sufficiency"] == "low":
+        try:
+            second_query = build_agent_rag_query(
+                agent_name=decision.scope,
+                intent=intent,
+                user_message=f"{decision.query} {intent} evidence",
+            )
+            second_result = search(second_query, env=env_map, mode=mode, limit=max_results)
+            combined = raw_results + list(second_result.get("results") or [])
+            selected, context_chars = _bounded_results(
+                agent=decision.scope,
+                results=combined,
+                max_results=max_results,
+                max_context_chars=max_context_chars,
+                max_snippet_chars=max_snippet_chars,
+                max_chunks_per_source=max_chunks_per_source,
+                min_score=min_score,
+                intent=intent,
+            )
+            sufficiency = assess_rag_sufficiency(selected, intent)
+            second_pass_used = True
+            second_pass_reason = "insufficient_intent_relevant_text"
+        except Exception:
+            second_pass_reason = "second_pass_runtime_exception"
     possible_injection = _detect_prompt_injection(selected)
     context = AgentRagContext(
         rag_used=True,
@@ -427,6 +483,10 @@ def retrieve_agent_rag_context(
         keyword_fallback=bool(search_result.get("keyword_fallback")),
         possible_prompt_injection_detected=possible_injection,
         agent_rag_fallback=False,
+        rag_sufficiency=str(sufficiency["rag_sufficiency"]),
+        intent_relevant_source_count=int(sufficiency["intent_relevant_source_count"]),
+        agent_retrieval_second_pass_used=second_pass_used,
+        agent_retrieval_second_pass_reason=second_pass_reason,
     )
     return AgentRagContext(**{**asdict(context), "prompt_context": format_internal_rag_prompt_context(context)})
 
@@ -444,6 +504,10 @@ def build_agent_rag_report_fields(context: AgentRagContext | dict[str, Any] | No
         "agent_rag_fallback_reason": data.get("fallback_reason") or "",
         "agent_rag_fallback": bool(data.get("agent_rag_fallback")),
         "possible_prompt_injection_detected": bool(data.get("possible_prompt_injection_detected")),
+        "rag_sufficiency": data.get("rag_sufficiency") or "none",
+        "intent_relevant_source_count": int(data.get("intent_relevant_source_count") or 0),
+        "intent_second_pass_retrieval_used": bool(data.get("agent_retrieval_second_pass_used")),
+        "agent_retrieval_second_pass_reason": data.get("agent_retrieval_second_pass_reason") or "",
         "raw_nas_absolute_path_logged": False,
         "raw_vector_logged": False,
         "secret_value_logged": False,
@@ -476,6 +540,7 @@ def build_agent_rag_status(env: dict[str, Any] | None = None) -> dict[str, Any]:
     env_map = _env(env)
     keyword_status = get_rag_index_status(env=env_map)
     vector_status = get_rag_vector_status(env=env_map)
+    source_status = build_source_status(env_map)
     return {
         "report_type": "agent_rag_status",
         "agent_rag_enabled": _flag(env_map.get("HERMES_AGENT_RAG_ENABLED"), False),
@@ -488,6 +553,11 @@ def build_agent_rag_status(env: dict[str, Any] | None = None) -> dict[str, Any]:
         "runtime_index_build": False,
         "nas_write": False,
         "external_embedding_api": False,
+        "grounded_answers_enabled": bool(source_status.get("grounded_answers")),
+        "source_citations_enabled": bool(source_status.get("internal_citations")),
+        "source_citation_style": source_status.get("style"),
+        "max_citations": source_status.get("max_citations"),
+        "citation_validator_enabled": bool(source_status.get("citation_validation")),
         "vision": False,
         "ocr": False,
         "model_download": False,
@@ -508,6 +578,11 @@ def format_agent_rag_status_for_discord(env: dict[str, Any] | None = None) -> st
         f"vector index: {'available' if status['vector_index_available'] else 'not available'}\n"
         f"max results: {status['max_results']}\n"
         f"max context chars: {status['max_context_chars']}\n\n"
+        f"grounded answers: {'enabled' if status.get('grounded_answers_enabled') else 'disabled'}\n"
+        f"source citations: {'enabled' if status.get('source_citations_enabled') else 'disabled'}\n"
+        f"citation style: {status.get('source_citation_style')}\n"
+        f"max citations: {status.get('max_citations')}\n"
+        f"citation validator: {'enabled' if status.get('citation_validator_enabled') else 'disabled'}\n\n"
         "runtime index build: false\n"
         "nas write: false\n"
         "external embedding api: false\n"

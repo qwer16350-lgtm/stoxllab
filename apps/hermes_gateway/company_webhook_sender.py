@@ -124,7 +124,10 @@ async def send_as_agent_webhook(
     if hook_result.get("blocked"):
         return hook_result
     try:
-        await hook_result["webhook"].send(str(content or "")[:1900], username=persona)
+        outbound = str(content or "")
+        if len(outbound) > 1900:
+            return _blocked("discord_message_too_long", agent_id, channel_name, persona=persona)
+        await hook_result["webhook"].send(outbound, username=persona)
     except Exception:
         return _blocked("webhook_send_failed", agent_id, channel_name, persona=persona)
     return {

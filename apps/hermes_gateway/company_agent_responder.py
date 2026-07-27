@@ -8,6 +8,9 @@ from typing import Any, Mapping
 from company_agent_llm import generate_agent_reply, redact_company_agent_text
 from company_agent_registry import get_agent, get_report_format
 from company_persistent_memory import append_memory_record
+from company_agent_citations import apply_grounded_answer_citations
+from company_agent_intent import build_intent_aware_deterministic_fallback
+from company_agent_output import assemble_agent_response
 
 
 def _flag(value: Any, default: bool = False) -> bool:
@@ -305,9 +308,20 @@ def build_deterministic_company_agent_reply(agent_id: str, message: str, route: 
     target = route.get("target_channel") or agent.get("default_channel")
     handoff = route.get("handoff_to") or agent.get("handoff_target")
     handoff_channel = route.get("handoff_channel") or target
-    content = _template_for_agent(agent_id, message, route)
+    intent_fallback = build_intent_aware_deterministic_fallback(
+        agent_name=agent_id,
+        intent=str(route.get("agent_intent") or "general"),
+        user_message=message,
+        source_text=str(route.get("source_text") or "") or None,
+        rag_context=route.get("internal_rag_prompt_context"),
+    )
+    content = str(intent_fallback["content"])
+    legacy_header = _template_for_agent(agent_id, "", {}).splitlines()[0]
+    if legacy_header and content.startswith(f"[{agent_id.upper()}_STOXL]"):
+        content = content.replace(f"[{agent_id.upper()}_STOXL]", legacy_header, 1)
     if route.get("agent_rag_used") and _flag(route.get("agent_rag_show_usage"), False):
         content = f"내부 자료 {int(route.get('agent_rag_result_count') or 0)}건을 참고했습니다.\n\n{content}"
+    rendered = assemble_agent_response(body=content)
     return {
         "response_type": "company_agent_response",
         "reply_text_source": "deterministic_fallback",
@@ -316,7 +330,10 @@ def build_deterministic_company_agent_reply(agent_id: str, message: str, route: 
         "target_channel": target,
         "handoff_to": handoff,
         "handoff_channel": handoff_channel,
-        "content": content,
+        "content": rendered.content,
+        "body": rendered.body,
+        "source_footer": rendered.source_footer,
+        **rendered.metadata,
         "llm_api_call_attempted": False,
         "llm_api_called": False,
         "agent_rag_used": bool(route.get("agent_rag_used")),
@@ -336,6 +353,16 @@ def build_deterministic_company_agent_reply(agent_id: str, message: str, route: 
         "raw_content_logged": False,
         "raw_discord_ids_logged": False,
         "secret_values_logged": False,
+        "agent_intent": route.get("agent_intent") or "general",
+        "agent_response_mode": route.get("agent_response_mode") or "general_role_response",
+        "source_text_present": bool(route.get("source_text_present")),
+        "user_instruction_misclassified_as_source_text": False,
+        "fixed_role_template_used": False,
+        "approval_required": bool(route.get("approval_required")),
+        "intent_query_expansion_used": bool(route.get("intent_query_expansion_used")),
+        "intent_second_pass_retrieval_used": bool(route.get("intent_second_pass_retrieval_used")),
+        "rag_sufficiency": route.get("rag_sufficiency") or "none",
+        "deterministic_fallback_intent_aware": True,
     }
 
 
@@ -359,7 +386,9 @@ def _with_persistent_decision(
     message: str,
     route: dict[str, Any],
 ) -> dict[str, Any]:
-    if agent_id not in {"lucy", "meiko", "reze"}:
+    if agent_id not in {"lucy", "meiko", "reze"} or route.get("agent_intent") not in {
+        "review", "evaluate", "approve_or_publish"
+    }:
         return response
     content = str(response.get("content") or "")
     decision = _decision_value(agent_id, content)
@@ -400,6 +429,16 @@ def build_company_agent_response(
         llm_result = generate_agent_reply(agent_id, message, route, dict(env or os.environ))
         if llm_result.get("llm_succeeded"):
             agent = get_agent(agent_id) or {}
+            grounded = apply_grounded_answer_citations(
+                str(llm_result.get("response_text", "") or ""),
+                route.get("internal_source_registry") if isinstance(route.get("internal_source_registry"), list) else [],
+                dict(env or os.environ),
+            )
+            rendered = assemble_agent_response(
+                body=str(grounded.get("body", grounded.get("content", "")) or ""),
+                source_footer=str(grounded.get("source_footer", "") or ""),
+                env=dict(env or os.environ),
+            )
             response = {
                 "response_type": "company_agent_response",
                 "reply_text_source": "llm",
@@ -408,16 +447,33 @@ def build_company_agent_response(
                 "target_channel": route.get("target_channel") or agent.get("default_channel"),
                 "handoff_to": route.get("handoff_to") or agent.get("handoff_target"),
                 "handoff_channel": route.get("handoff_channel") or route.get("target_channel") or agent.get("default_channel"),
-                "content": llm_result.get("response_text", ""),
+                "content": rendered.content,
+                "body": rendered.body,
+                "source_footer": rendered.source_footer,
+                **rendered.metadata,
                 "llm_result": llm_result,
                 "llm_api_call_attempted": True,
                 "llm_api_called": bool(llm_result.get("llm_api_called")),
+                "provider_finish_reason": llm_result.get("provider_finish_reason") or "unknown",
+                "provider_output_incomplete": bool(llm_result.get("provider_output_incomplete")),
+                "generation_output_chars": int(llm_result.get("generation_output_chars") or 0),
+                "generation_limit_chars": int(llm_result.get("generation_limit_chars") or 0),
                 "agent_rag_used": bool(route.get("agent_rag_used")),
                 "agent_rag_mode": route.get("agent_rag_mode") or "none",
                 "agent_rag_result_count": int(route.get("agent_rag_result_count") or 0),
                 "agent_rag_context_chars": int(route.get("agent_rag_context_chars") or 0),
                 "agent_rag_fallback_reason": route.get("agent_rag_fallback_reason") or "",
                 "possible_prompt_injection_detected": bool(route.get("possible_prompt_injection_detected")),
+                "grounded_answer_enabled": bool(grounded.get("grounded_answer_enabled")),
+                "source_registry_count": int(grounded.get("source_registry_count") or 0),
+                "citation_validation_attempted": bool(grounded.get("citation_validation_attempted")),
+                "citation_ids_found_count": int(grounded.get("citation_ids_found_count") or len(grounded.get("citation_ids_found") or [])),
+                "citation_ids_valid_count": int(grounded.get("citation_ids_valid_count") or len(grounded.get("citation_ids_valid") or [])),
+                "citation_ids_invalid_count": int(grounded.get("citation_ids_invalid_count") or len(grounded.get("citation_ids_invalid") or [])),
+                "citation_footer_added": bool(grounded.get("citation_footer_added")),
+                "internal_web_sources_separated": bool(grounded.get("internal_web_sources_separated")),
+                "unsupported_internal_fact_detected": bool(grounded.get("unsupported_internal_fact_detected")),
+                "conflicting_source_signal_detected": bool(grounded.get("conflicting_source_signal_detected")),
                 "rag_called": bool(route.get("agent_rag_used")),
                 "embedding_called": bool(route.get("agent_rag_used")),
                 "external_execution": False,

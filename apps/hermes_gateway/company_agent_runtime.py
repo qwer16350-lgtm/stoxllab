@@ -41,6 +41,17 @@ from company_agent_rag import (
     format_agent_rag_status_for_discord,
     retrieve_agent_rag_context,
 )
+from company_agent_citations import (
+    build_grounding_instructions,
+    build_source_registry,
+    build_source_status,
+    format_source_status_for_discord,
+)
+from company_agent_intent import (
+    build_intent_prompt_context,
+    classify_agent_intent,
+    resolve_agent_response_mode,
+)
 from company_discord_outbound_guard import (
     classify_discord_send_failure,
     prepare_discord_outbound_messages,
@@ -91,6 +102,7 @@ COMMAND_SYNTAX = [
     "!rag-hybrid <query>",
     "!rag-vector-status",
     "!agent-rag-status",
+    "!agent-source-status",
     "!web <query>",
     "!search <query>",
     "!research <query>",
@@ -1116,6 +1128,47 @@ def build_company_agent_message_result(
             "raw_discord_ids_logged": False,
             "secret_values_logged": False,
         }
+    if lowered_command_line.startswith("!agent-source-status"):
+        status = build_source_status(env_map)
+        command_response = {
+            **status,
+            "response_type": "company_agent_command_response",
+            "reply_text_source": "agent_source_status",
+            "content": format_source_status_for_discord(env_map),
+            "llm_api_call_attempted": False,
+            "llm_api_called": False,
+            "rag_called": False,
+            "embedding_called": False,
+            "vector_index_created": False,
+            "external_execution": False,
+        }
+        return {
+            "report_type": "company_agent_source_status_command",
+            "source_channel": channel_name,
+            "selected_agent": "hermes",
+            "agent_display_name": "HERMES_STOXL",
+            "reason": "agent_source_status_command",
+            "command": "agent-source-status",
+            "reply_prepared": True,
+            "response": command_response,
+            **_outbound_guard_preview(str(command_response.get("content") or ""), "hermes"),
+            "webhook_send_available": False,
+            "bot_message_fallback_used": True,
+            "send_strategy": "bot_message_fallback",
+            "discord_api_send_called": False,
+            "discord_message_sent": False,
+            "message_sent_count": 0,
+            "runtime_index_build": False,
+            "nas_write": False,
+            "external_embedding_api": False,
+            "vision": False,
+            "ocr": False,
+            "external_execution": False,
+            "raw_nas_absolute_path_logged": False,
+            "raw_vector_logged": False,
+            "raw_discord_ids_logged": False,
+            "secret_values_logged": False,
+        }
     if lowered_command_line.startswith("!agent-rag-debug"):
         parts = command_line.split(maxsplit=2)
         agent = parts[1] if len(parts) >= 2 else "hermes"
@@ -1359,6 +1412,36 @@ def build_company_agent_message_result(
     if context_resolution.get("context_used"):
         route["handoff_context"] = context_resolution["context"]
     env_map = dict(os.environ if env is None else env)
+    intent_decision = classify_agent_intent(
+        user_message=routed_content,
+        selected_agent=selected_agent,
+        route=route,
+        replied_message_content=replied_message_content,
+    )
+    response_mode = resolve_agent_response_mode(
+        agent_name=selected_agent, intent=intent_decision.intent
+    )
+    route.update(
+        {
+            "user_instruction": routed_content,
+            "source_text_present": intent_decision.source_text_present,
+            "source_text": intent_decision.source_text,
+            "requested_output": response_mode.mode,
+            "agent_intent": intent_decision.intent,
+            "agent_intent_confidence": intent_decision.confidence,
+            "agent_intent_reason": intent_decision.reason,
+            "agent_response_mode": response_mode.mode,
+            "approval_required": intent_decision.approval_required,
+            "user_instruction_misclassified_as_source_text": False,
+            "fixed_role_template_used": False,
+            "agent_intent_prompt_context": build_intent_prompt_context(
+                agent_name=selected_agent,
+                decision=intent_decision,
+                response_mode=response_mode,
+            ),
+            "intent_query_expansion_used": intent_decision.intent != "general",
+        }
+    )
     agent_rag_context = None
     if selected_agent in {"hermes", "lucy", "marin", "meiko", "kasumi", "reze"}:
         conversation_context = []
@@ -1370,6 +1453,7 @@ def build_company_agent_message_result(
                 user_message=routed_content,
                 conversation_context=conversation_context,
                 env=env_map,
+                intent=intent_decision.intent,
             )
         except Exception:
             agent_rag_context = None
@@ -1387,8 +1471,23 @@ def build_company_agent_message_result(
             )
         if agent_rag_context is not None:
             route.update(build_agent_rag_report_fields(agent_rag_context))
+            source_registry = build_source_registry(agent_rag_context.results, env_map) if agent_rag_context.rag_used else []
             route["internal_rag_prompt_context"] = agent_rag_context.prompt_context
+            route["internal_source_registry"] = source_registry
+            route["internal_rag_grounding_instructions"] = build_grounding_instructions(source_registry, env_map)
             route["handoff_rag_context"] = build_handoff_rag_context(agent_rag_context)
+            route["handoff_citation_provenance"] = [
+                {
+                    "source_id": item.get("source_id"),
+                    "source_label": item.get("source_label"),
+                    "relative_path": item.get("relative_path"),
+                    "chunk_id": item.get("chunk_id"),
+                    "raw_nas_absolute_path_logged": False,
+                    "raw_vector_logged": False,
+                }
+                for item in source_registry[:3]
+            ]
+            route["source_registry_count"] = len(source_registry)
             route["agent_response_continued"] = True
         route["agent_rag_enabled"] = str(env_map.get("HERMES_AGENT_RAG_ENABLED", "false")).strip().lower() in {"1", "true", "yes", "on"}
         route["agent_rag_auto_enabled"] = str(env_map.get("HERMES_AGENT_RAG_AUTO_ENABLED", "false")).strip().lower() in {"1", "true", "yes", "on"}
@@ -1739,10 +1838,23 @@ def build_company_agent_workflow_dry_run(channel: str, message: str, env: dict[s
     }
 
 
-async def _send_agent_content(client: Any, agent_id: str, channel: Any, content: str) -> dict[str, Any]:
+async def _send_agent_content(
+    client: Any,
+    agent_id: str,
+    channel: Any,
+    content: str,
+    *,
+    body: str | None = None,
+    source_footer: str = "",
+) -> dict[str, Any]:
     env = _runtime_env()
     channel_name = str(getattr(channel, "name", "") or "")
-    prepared = prepare_discord_outbound_messages(content, agent_id)
+    prepared = prepare_discord_outbound_messages(
+        content,
+        agent_id,
+        body=body,
+        source_footer=source_footer,
+    )
     messages = list(prepared.get("messages") or [])
     if not messages:
         return {**prepared, "sent": False, "send_strategy": "empty_content"}
@@ -1862,8 +1974,20 @@ async def _send_runtime_reply(message: Any, result: dict[str, Any], client: Any 
         return {"sent": False, "send_strategy": "empty_content"}
     selected_agent = str(result.get("selected_agent") or "")
     if client is not None and selected_agent:
-        return await _send_agent_content(client, selected_agent, message.channel, content)
-    prepared = prepare_discord_outbound_messages(content, selected_agent or "hermes")
+        return await _send_agent_content(
+            client,
+            selected_agent,
+            message.channel,
+            content,
+            body=str(response.get("body")) if response.get("body") is not None else None,
+            source_footer=str(response.get("source_footer", "") or ""),
+        )
+    prepared = prepare_discord_outbound_messages(
+        content,
+        selected_agent or "hermes",
+        body=str(response.get("body")) if response.get("body") is not None else None,
+        source_footer=str(response.get("source_footer", "") or ""),
+    )
     send_result = await send_discord_messages_safely(message.channel.send, list(prepared.get("messages") or []), fallback_send_one=message.channel.send)
     return {**prepared, **send_result, "send_strategy": "bot_fallback", "bot_message_fallback_used": True}
 
